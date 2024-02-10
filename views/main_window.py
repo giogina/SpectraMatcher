@@ -1,10 +1,8 @@
 import sys
-
 from viewmodels.main_viewmodel import MainViewModel
-from viewmodels.menu_viewmodel import MenuViewModel
 from views.main_menu import MainMenu
+from utility.icons import Icons
 import dearpygui.dearpygui as dpg
-import DearPyGui_Markdown as markdown
 from screeninfo import get_monitors
 import threading
 import logging
@@ -19,46 +17,25 @@ class MainWindow():
         dpg.create_context()
         dpg.configure_app(auto_device=True)
 
-        font_size = 18
-        default_font_path = './fonts/Sansation_Regular.ttf'
-        bold_font_path = './fonts/Sansation_Bold.ttf'
-        italic_font_path = './fonts/Sansation_Italic.ttf'
-        italic_bold_font_path = './fonts/Sansation_Bold_Italic.ttf'
+        self.fonts = {}
+        fonts_fa = {}
+        self.normal_font = 18
+        with dpg.font_registry() as font_reg:
+            # ! Open/Closed folder icons have been added to this font !
+            # Don't change it, or you will get currency signs instead. (Or add folder icons as \u00a3 and \u00a4)
+            self.fonts[self.normal_font] = dpg.add_font("./fonts/SansationRegular.ttf", self.normal_font)
+            icons = Icons().set_font_registry(font_reg)
+        # self._load_fonts_async()  # todo: Still needed or throw out? Or dynamically load fonts using font_reg?
+        dpg.bind_font(self.fonts[self.normal_font])
 
-        markdown.set_font_registry(dpg.add_font_registry())
-        # You can also put your own fonts load function, this is needed
-        # to add specific characters from the font file (e.g. Cyrillic)
-        # An example of the use can be found in the example folder (example/font.py)
-        # dpg_markdown.set_add_font_function({CUSTOM_ADD_FONT_FUNCTION})
+        with dpg.window(label="Test", width=240, height=210) as testwindow:
+            with dpg.tree_node(label=u"\u00a4  Open folder!"):
+                with dpg.tree_node(label=u"\u00a3  Closed folder!"):
+                    dpg.add_text("HAH!")
 
-        # Function to set fonts, the first time you call it,
-        # you must specify the default font (default argument)
-        # Return the default DPG font
-        dpg_font = markdown.set_font(
-            font_size=font_size,
-            default=default_font_path,
-            bold=bold_font_path,
-            italic=italic_font_path,
-            italic_bold=italic_bold_font_path
-        )
+            icons.insert(dpg.add_button(), icons.open_folder, 24)
+            icons.insert(dpg.add_button(), icons.star, 24)
 
-        # Apply the created DPG font
-        dpg.bind_font(dpg_font)
-
-        # self.fonts = {}
-        # self.normal_font = 16
-        # with dpg.font_registry():
-        #     self.fonts[self.normal_font] = dpg.add_font("./fonts/Sansation_Regular.ttf", self.normal_font)
-        # self._load_fonts_async()
-        # dpg.bind_font(self.fonts[self.normal_font])
-        #
-        # # Minimal example of working with the library
-        # with dpg.window(label="Example", width=240, height=210):
-        #     markdown.add_text("This is text\n"
-        #                       "*This is italic text*\n"
-        #                       "__This is bold text__\n"
-        #                       "***This is bold italic text***\n"
-        #                       "This is underline <u>text</u>")
 
         for icon_file in ["folder_outline"]:
             width, height, channels, icon = dpg.load_image(f"./resources/{icon_file}.png")

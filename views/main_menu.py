@@ -1,21 +1,23 @@
 from launcher import Launcher
 from viewmodels.main_viewmodel import MainViewModel, noop
 import dearpygui.dearpygui as dpg
+from utility.icons import Icons
 import logging
 from screeninfo import get_monitors
-import DearPyGui_Markdown as markdown
+# import DearPyGui_Markdown as markdown
 from contextlib import contextmanager
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import simpledialog
 
 
-class MainMenu():
+class MainMenu:
     """Takes care of the viewport menu as well as keyboard shortcuts (combinations including Ctrl or Alt only)"""
     def __init__(self, viewmodel: MainViewModel):
         self.viewmodel = viewmodel
         self.logger = logging.getLogger(__name__)
         self.viewmodel.set_inquire_close_unsaved_callback(callback=self.inquire_close_unsaved)
+        self.icons = Icons()
 
         # Helper variables for various stuff below; handle with care
         self.currently_pressed = []     # Keeps track of presently pressed keys
@@ -34,12 +36,13 @@ class MainMenu():
         # Register every (shortcuttable, menu-listable) action here; then add it to the menu_items to show in menu.
         with self._actions_registry():  # First argument is the "action" identifactor (basically my tag)
             self._register_action("New", label="New Project...", callback=self._on_new)
-            self._register_action("Open", label="Open Project...", callback=self._on_open, icon="folder_outline")
-            self._register_action("Save", callback=self._on_save)
+            self._register_action("Open", label="Open Project...", callback=self._on_open, icon=Icons.folder_open)
+            self._register_action("Save", callback=self._on_save, icon=Icons.floppy)
             self._register_action("Save as", label="Save As...", callback=self._on_save_as)
-            self._register_action("Exit", callback=self._on_exit)
+            self._register_action("Exit", callback=self._on_exit, icon=Icons.power_off)
 
-            self._register_action("Shortcuts", label="Configure shortcuts...", callback=self._show_configure_shortcuts)
+            self._register_action("Shortcuts", label="Configure shortcuts...", callback=self._show_configure_shortcuts,
+                                  icon=Icons.keyboard)
 
         # Each menu is a dict with "name": [list of items]; items can be actions, menus, or a separator line (sep).
         self.menu_items = {"Projects": ["New", "Open",
@@ -78,8 +81,8 @@ class MainMenu():
 
             # Some standard modal window fillings
             with dpg.child_window(show=False, tag="message and buttons"):
-                self.modal_child_window_tags.append("message and buttons")
-                dpg.add_button(label="Message", height=300, width=-1, tag="button dialog message")
+                self.modal_child_window_tags.append("message and buttons")  # TODO: "warning" icon (button above the message with self.icon.(dpg.add_button(), icon=Icon.exclamation_triangle, size=32)
+                dpg.add_button(label="Message", height=300, width=-1, tag="button dialog message")  # TODO: Same with Icons.x_circle for errors! (Could even write a specialized "show error" function)
                 with dpg.table(header_row=False, show=False, width=-1, tag="three buttons table"):
                     dpg.add_table_column()
                     dpg.add_table_column()
@@ -100,8 +103,8 @@ class MainMenu():
                     with dpg.table_row():
                         dpg.add_spacer(width=10)
                         dpg.add_button(label="Button 1", width=-1, tag="Button 1/1", callback=self._on_modal_button_press, user_data=0)
-
         self.setup_menu_theme()
+
 
     def show_dialog(self, title, message, buttons=None):  # buttons: list of ("label", callback)
         if buttons is None:
@@ -169,7 +172,9 @@ class MainMenu():
                                 if action:
                                     with dpg.table_row():
                                         if action.get("icon"):  # TODO: Replace with iconManager.get(action["icon"]), returning none if not found.
-                                            dpg.add_image_button(action["icon"], width=16, height=16)
+                                            # dpg.add_image_button(action["icon"], width=16, height=16)
+                                            # dpg.add_button(, width=16, height=16)
+                                            self.icons.insert(dpg.add_button(width=16, height=16), action["icon"], 14)
                                         else:
                                             dpg.add_spacer(width=icon_column_width)
                                         dpg.add_selectable(label=action["label"], span_columns=True,
@@ -189,7 +194,7 @@ class MainMenu():
                     i += 1
 
     def setup_menu_theme(self):
-        menu_font = markdown.set_font(font_size=16)
+        # menu_font = markdown.set_font(font_size=16)
         with dpg.theme() as menu_theme:
             with dpg.theme_component(dpg.mvAll):
                 dpg.add_theme_color(dpg.mvThemeCol_Header, [0, 0, 0, 0])
@@ -200,13 +205,8 @@ class MainMenu():
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [0, 0, 0, 0])
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
                 dpg.add_theme_style(dpg.mvStyleVar_ButtonTextAlign, 1, 0.5)
-            with dpg.theme_component(dpg.mvImageButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [0, 0, 0, 0])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [0, 0, 0, 0])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [0, 0, 0, 0])
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
         for key in self.menu_items.keys():
-            dpg.bind_item_font(f"menu_{key}", menu_font)
+            # dpg.bind_item_font(f"menu_{key}", menu_font)
             dpg.bind_item_theme(f"menu_{key}", menu_theme)
 
         with dpg.theme() as modal_child_theme:
