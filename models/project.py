@@ -6,6 +6,7 @@ import threading
 import time
 import ctypes
 from models.settings_manager import SettingsManager
+from models.data_file_manager import Directory, File
 
 
 # Define an observer interface
@@ -82,6 +83,9 @@ class Project:
                     self._logger.warning("Attempting to restore autosave file...")
                     self.load(auto=True)
         self._autosave_thread.start()
+        ##TODO: TEMP!
+        for path in self._data.get("open data folders"):
+            dir = Directory(path)
         return self
 
     def new(self, name, import_data=[]):
