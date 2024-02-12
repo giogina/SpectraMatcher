@@ -1,6 +1,7 @@
 import sys
 from viewmodels.main_viewmodel import MainViewModel
 from views.main_menu import MainMenu
+from views.file_explorer import FileExplorer
 from utility.icons import Icons
 import dearpygui.dearpygui as dpg
 from screeninfo import get_monitors
@@ -8,7 +9,7 @@ import threading
 import logging
 
 
-class MainWindow():
+class MainWindow:
     def __init__(self, path):
         self.result = 0
         self.logger = logging.getLogger(__name__)
@@ -18,7 +19,6 @@ class MainWindow():
         dpg.configure_app(auto_device=True)
 
         self.fonts = {}
-        fonts_fa = {}
         self.normal_font = 18
         with dpg.font_registry() as font_reg:
             # ! Open/Closed folder icons have been added to this font !
@@ -28,30 +28,26 @@ class MainWindow():
         # self._load_fonts_async()  # todo: Still needed or throw out? Or dynamically load fonts using font_reg?
         dpg.bind_font(self.fonts[self.normal_font])
 
-        with dpg.window(label="Test", width=240, height=210) as testwindow:
-            with dpg.tree_node(label=u"\u00a4  Open folder!"):
-                with dpg.tree_node(label=u"\u00a3  Closed folder!"):
-                    dpg.add_text("HAH!")
-
-            icons.insert(dpg.add_button(), icons.open_folder, 24)
-            icons.insert(dpg.add_button(), icons.star, 24)
-
-
-        for icon_file in ["folder_outline"]:
-            width, height, channels, icon = dpg.load_image(f"./resources/{icon_file}.png")
-            with dpg.texture_registry(show=False):
-                dpg.add_static_texture(width=width, height=height, default_value=icon, tag=icon_file)
+        # with dpg.window(label="Test", width=240, height=210) as testwindow:
+        #     with dpg.tree_node(label=u"\u00a4  Open folder!"):
+        #         with dpg.tree_node(label=u"\u00a3  Closed folder!"):
+        #             dpg.add_text("HAH!")
+        #     icons.insert(dpg.add_button(), icons.open_folder, 24)
+        #     icons.insert(dpg.add_button(), icons.star, 24)
 
         monitor = get_monitors()[0]
         dpg.create_viewport(title='SpectraMatcher',
                             width=monitor.width, height=monitor.height, x_pos=0, y_pos=0)
+        self.menu = MainMenu(self.viewModel)
 
         with dpg.window(tag="main window", label="SpectraMatcher", no_resize=True):
-            pass
+            dpg.add_spacer(height=20)
+            with dpg.tab_bar():
+                with dpg.tab(label=" Import Data "):
+                    self.file_manager_panel = FileExplorer(self.viewModel.get_file_manager_viewmodel())
 
         self.configure_theme()
         dpg.set_primary_window("main window", True)
-        self.menu = MainMenu(self.viewModel)
 
         # need to initialize view model here to be able to show messages about the project
         self.viewModel.set_title_callback(callback=self.update_title)

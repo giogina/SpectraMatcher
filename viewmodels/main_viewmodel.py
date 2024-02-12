@@ -1,17 +1,18 @@
 from models.project import ProjectObserver
 from models.project import Project
 from models.settings_manager import SettingsManager
-from models.data_file_manager import Directory
+from viewmodels.data_files_viewmodel import DataFileViewModel
 from launcher import Launcher
-import time
+
 
 def noop(*args, **kwargs):
     pass
 
+
 class MainViewModel(ProjectObserver):
     def __init__(self, path, title_callback=noop, inquire_close_unsaved_project_callback=noop):
         self.path = path
-        self._project = None
+        self._project = Project(self.path)
         self._project_unsaved = False
 
         self._settings = SettingsManager()
@@ -20,8 +21,11 @@ class MainViewModel(ProjectObserver):
         self._message_callback = noop
         self._inquire_close_unsaved_project = inquire_close_unsaved_project_callback
 
+    # Spawn child view models responsible for child windows.
+    def get_file_manager_viewmodel(self):
+        return DataFileViewModel(self._project.data_file_manager)
+
     def load_project(self):
-        self._project = Project(self.path)
         if self._project.check_newer_autosave():
             print(f"attempting to set message...")
             self._message_callback(title="Newer autosave detected!", message="Restore autosave?",

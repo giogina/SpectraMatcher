@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import tempfile
@@ -6,7 +7,7 @@ import threading
 import time
 import ctypes
 from models.settings_manager import SettingsManager
-from models.data_file_manager import Directory, File
+from models.data_file_manager import DataFileManager
 
 
 # Define an observer interface
@@ -24,6 +25,7 @@ class Project:
         self._is_unsaved = False
 
         self._settings = SettingsManager()
+        self.data_file_manager = DataFileManager()
         self.project_file = project_file
         self._autosave_file = self._get_autosave_file_path()
         self._lock_file_path = self.project_file + ".lock"
@@ -45,6 +47,7 @@ class Project:
         self._data_defaults = {
             "name": "Untitled",
             "open data folders": [],
+            "open data files": [],
         }
 
         self.window_title = ""  # For bringing that window to the front in Windows
@@ -83,13 +86,16 @@ class Project:
                     self._logger.warning("Attempting to restore autosave file...")
                     self.load(auto=True)
         self._autosave_thread.start()
-        ##TODO: TEMP!
-        for path in self._data.get("open data folders"):
-            dir = Directory(path)
+        self.data_file_manager.open_directories(self._data.get("open data folders", []),
+                                                self._data.get("open data files", []))
         return self
 
-    def new(self, name, import_data=[]):
-        self._data = {"name": name, "open data folders": import_data}
+    def new(self, name, import_data_dirs=None, import_data_files=None):
+        if import_data_files is None:
+            import_data_files = []
+        if import_data_dirs is None:
+            import_data_dirs = []
+        self._data = {"name": name, "open data folders": import_data_dirs, "open data files": import_data_files}
         self.save()
 
     def _get_autosave_file_path(self):
@@ -106,7 +112,7 @@ class Project:
 
     def save(self, auto=False):
         with self._data_lock:
-            snapshot = dict(self._data)
+            snapshot = copy.deepcopy(self._data)
         save_thread = threading.Thread(target=self._save_project, args=(snapshot, auto,))
         save_thread.start()
 
@@ -229,7 +235,7 @@ class Project:
     def save_and_close_project(self):
         print("Save and close called")
         with self._data_lock:
-            snapshot = dict(self._data)
+            snapshot = copy.deepcopy(self._data)
         # save synced-ly this time to make sure it executes before program closes.
         self._save_project(snapshot, auto=False)
         self.close_project()
