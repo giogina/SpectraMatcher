@@ -16,7 +16,8 @@ class DataFileManager:
             if open_data_files:
                 self.top_level_files.append(File(path))
         # TODO> Temp test
-        self._notify_observers("files changed")
+        self._notify_observers("directory structure changed")  # Need to re-populate the entire list
+        # self._notify_observers("files changed")
 
     ############### Observers ###############
 
@@ -42,7 +43,8 @@ class FileObserver:
 
 
 class Directory:
-    contents = []
+    content_dirs = []
+    content_files = []
     name = ""
     path = ""
     parent_directory = None
@@ -67,7 +69,8 @@ class Directory:
                 files.append(File(join(path, item), name=item, parent=self.tag))
             else:
                 dirs.append(Directory(join(path, item), name=item, parent=self.tag))
-        self.contents = dirs + files
+        self.content_dirs = dirs
+        self.content_files = files
 
 
 class File:

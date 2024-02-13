@@ -51,7 +51,8 @@ class MainMenu:
                            "Tools": ["Shortcuts"]}
 
         # Construct main menu bar from self.menu_items
-        with dpg.viewport_menu_bar() as self.menu_bar:
+        # with dpg.viewport_menu_bar() as self.menu_bar:
+        with dpg.menu_bar() as self.menu_bar:
             self._add_menu(self.menu_items)
 
         # Looks like I can have only one modal window, so I'll toggle the contents instead.
@@ -162,7 +163,7 @@ class MainMenu:
                 while i < len(items):
                     if type(items[i]) == str:  # Start table of actions
                         with dpg.table(header_row=False, policy=dpg.mvTable_SizingFixedFit, no_pad_innerX=True,
-                                       borders_outerH=False, borders_outerV=False):
+                                       borders_outerH=False, borders_outerV=False, no_keep_columns_visible=True):
                             dpg.add_table_column(label="icon", width_fixed=True, init_width_or_weight=icon_column_width)
                             dpg.add_table_column(label="action", width_stretch=True, init_width_or_weight=1)
                             dpg.add_table_column(label="shortcut", width_stretch=True, init_width_or_weight=1)
@@ -180,6 +181,7 @@ class MainMenu:
                                         dpg.add_selectable(label=action["label"], span_columns=True,
                                                            callback=action["callback"], user_data=items[i])
                                         shortcut_label = action.get("shortcut_string", "")
+                                        # if len(shortcut_label):
                                         dpg.add_button(label=shortcut_label, width=-1)
                                 i += 1
                             i -= 1  # Undo last raise (which will be re-done at end of outer while loop)

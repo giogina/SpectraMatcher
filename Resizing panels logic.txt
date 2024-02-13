@@ -1,0 +1,1 @@
+dpg.set_viewport_resize_callback(update) where update is a function that, in this case, runs dpg.set_item_pos("bottom_buttons", (10, dpg.get_viewport_height()-75))

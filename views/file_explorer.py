@@ -1,7 +1,100 @@
 import dearpygui.dearpygui as dpg
 from viewmodels.data_files_viewmodel import DataFileViewModel
+from models.data_file_manager import File, Directory
+from utility.icons import Icons
 
 
 class FileExplorer:
     def __init__(self, viewmodel: DataFileViewModel):
         self.viewmodel = viewmodel
+        self.viewmodel.set_callback("populate file explorer", self.populate_file_explorer)
+
+        self.icons = Icons()
+
+        self.item_padding = 3
+
+        with dpg.child_window(tag="action bar", width=-1, height=32):
+            with dpg.group(horizontal=True):
+                self.icons.insert(dpg.add_button(height=32, width=32), Icons.plus, size=16)
+                self.icons.insert(dpg.add_button(height=32, width=32), Icons.filter, size=16)
+
+        with dpg.child_window(tag="file explorer panel"):
+            dpg.add_spacer(height=16)
+        self.configure_theme()
+        self.node_handlers = dpg.add_item_handler_registry()
+        dpg.add_item_clicked_handler(parent=self.node_handlers, callback=self._togge_directory_node_labels)
+
+    def _togge_directory_node_labels(self, sender, app_data, handler_user_data):
+        item_tag = dpg.get_item_user_data(app_data[1])
+        label = dpg.get_item_label(item_tag)
+        if dpg.get_value(item_tag):
+            label = label.replace('\u00a3', '\u00a4')
+        else:
+            label = label.replace('\u00a4', '\u00a3')
+        dpg.set_item_label(item_tag, label)
+
+    def populate_file_explorer(self, directories, files):
+        with dpg.group(horizontal=True, parent="file explorer panel"):
+            dpg.add_spacer(width=self.item_padding)
+            with dpg.group(horizontal=False) as file_explorer_group:
+                for directory in directories:
+                    self._display_directory(directory, parent=file_explorer_group)
+                self._display_files(files, parent=file_explorer_group)
+
+    def _display_directory(self, directory: Directory, parent: str, depth: int = 0):
+        dpg.add_spacer(height=self.item_padding)
+        with dpg.tree_node(label=u"\u00a4  " + directory.name, parent=parent, tag=directory.tag, default_open=True, user_data=directory.tag):
+            dpg.bind_item_handler_registry(directory.tag, self.node_handlers)
+            dpg.add_spacer(height=self.item_padding)
+            for item in directory.content_dirs:
+                self._display_directory(item, parent=directory.tag, depth=depth+1)
+            self._display_files(directory.content_files, parent=directory.tag, depth=depth+1)
+
+    def _display_files(self, files: list, parent: str, depth: int = 0):
+        # dpg.add_spacer(height=4)
+        with dpg.group(horizontal=True):
+            # dpg.add_spacer(width=80-depth*20)
+            dpg.add_spacer(width=22)
+            with dpg.table(width=-1, tag=f"{parent}-files table", header_row=False, policy=dpg.mvTable_SizingFixedFit):
+                dpg.add_table_column(label="Icon")
+                dpg.add_table_column(label="File Name",  init_width_or_weight=320-depth*20)
+                dpg.add_table_column(label="info")
+                for file in files:
+                    with dpg.table_row():
+                        self.icons.insert(dpg.add_button(), Icons.file_code_o, 15)  # TODO: Just size 16 not working for some reason. Why is that?
+                        dpg.add_selectable(label=file.name, span_columns=True)
+                        self.icons.insert(dpg.add_button(), Icons.check, 15)
+
+    def configure_theme(self):
+        with dpg.theme() as file_explorer_theme:
+            with dpg.theme_component(dpg.mvAll):
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 8, 0)
+                # dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 12, 8)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 12, 0)
+                # dpg.add_theme_style(dpg.mvStyleVar_ItemInnerSpacing, 0)
+                # dpg.add_theme_style(dpg.mvStyleVar_WindowBorderSize, 0)
+                # dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0)
+                dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 0)
+                dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [200, 200, 255, 30])
+            with dpg.theme_component(dpg.mvTreeNode):
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 200])
+            with dpg.theme_component(dpg.mvButton):
+                # dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 150])
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [0, 0, 0, 0])
+                # dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [0, 0, 0, 0])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [0, 0, 0, 0])
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
+            with dpg.theme_component(dpg.mvTable):
+                dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 4, self.item_padding)
+
+
+        dpg.bind_item_theme("file explorer panel", file_explorer_theme)
+
+        with dpg.theme() as action_bar_theme:
+            with dpg.theme_component(dpg.mvAll):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [0, 0, 0, 0])
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 0)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4)
+                dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [200, 200, 255, 80])
+
+        dpg.bind_item_theme("action bar", action_bar_theme)

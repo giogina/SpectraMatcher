@@ -316,13 +316,16 @@ class Icons:
             self._fs = {}
             self._registered_fa = {}
             self._registered_fs = {}  # {size: [list of icon hex codes already registered for this size]}
+            self._is_initialized = True
 
     def set_font_registry(self, font_reg):
+        print(f"In icons: font registry assigned.")
         self._font_reg = font_reg
         return self
 
     def get_icon(self, icon, size, solid=True):  # icon: unicode hex code (e.g. 0xf07c)
         """add icon hex to loaded special characters if necessary; then return string."""
+        # print(f"In get icon: font reg: {self._font_reg}, icon: {icon}, size: {size}, solid: {solid}, fs: {self._fs}, registered: {self._registered_fs}")
         if self._font_reg is None:
             print("Icons: Could not register font, I don't have the registry yet!")
             return ""
@@ -342,8 +345,8 @@ class Icons:
                 self._registered_fa[size].append(icon)
         return chr(icon)
 
-    def insert(self, dpg_item, icon, size=16, solid=True):
-        """Inserts icon character as label of dpg_item"""
+    def insert(self, dpg_item, icon, size, solid=True):
+        """Inserts icon character as label of dpg_item."""
         dpg.configure_item(dpg_item, label=self.get_icon(icon, size, solid))  # automatically ensures that icon char is registered
         if solid:
             dpg.bind_item_font(dpg_item, self._fs[size])

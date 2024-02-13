@@ -1,4 +1,6 @@
 import sys
+
+from launcher import Launcher
 from viewmodels.main_viewmodel import MainViewModel
 from views.main_menu import MainMenu
 from views.file_explorer import FileExplorer
@@ -24,27 +26,25 @@ class MainWindow:
             # ! Open/Closed folder icons have been added to this font !
             # Don't change it, or you will get currency signs instead. (Or add folder icons as \u00a3 and \u00a4)
             self.fonts[self.normal_font] = dpg.add_font("./fonts/SansationRegular.ttf", self.normal_font)
-            icons = Icons().set_font_registry(font_reg)
+            Icons().set_font_registry(font_reg)
         # self._load_fonts_async()  # todo: Still needed or throw out? Or dynamically load fonts using font_reg?
         dpg.bind_font(self.fonts[self.normal_font])
 
-        # with dpg.window(label="Test", width=240, height=210) as testwindow:
-        #     with dpg.tree_node(label=u"\u00a4  Open folder!"):
-        #         with dpg.tree_node(label=u"\u00a3  Closed folder!"):
-        #             dpg.add_text("HAH!")
-        #     icons.insert(dpg.add_button(), icons.open_folder, 24)
-        #     icons.insert(dpg.add_button(), icons.star, 24)
-
         monitor = get_monitors()[0]
         dpg.create_viewport(title='SpectraMatcher',
-                            width=monitor.width, height=monitor.height, x_pos=0, y_pos=0)
-        self.menu = MainMenu(self.viewModel)
+                            width=monitor.width, height=monitor.height-30, x_pos=0, y_pos=0)
 
-        with dpg.window(tag="main window", label="SpectraMatcher", no_resize=True):
-            dpg.add_spacer(height=20)
+        with dpg.window(tag="main window", label="SpectraMatcher", no_scrollbar=True):
+            self.menu = MainMenu(self.viewModel)
             with dpg.tab_bar():
                 with dpg.tab(label=" Import Data "):
-                    self.file_manager_panel = FileExplorer(self.viewModel.get_file_manager_viewmodel())
+                    with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1):
+                        dpg.add_table_column(label="file explorer")
+                        dpg.add_table_column(label="project setup")
+                        with dpg.table_row():
+                            with dpg.table_cell():
+                                self.file_manager_panel = FileExplorer(self.viewModel.get_file_manager_viewmodel())
+                            dpg.add_text("Hi.")
 
         self.configure_theme()
         dpg.set_primary_window("main window", True)
@@ -64,12 +64,17 @@ class MainWindow:
                    [180, 180, 255],  # 7
                    ]  # todo: some kind of centralized color management, using settings to store palette
         with dpg.theme() as global_theme:
+            with dpg.theme_component(dpg.mvTab):
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 0, 0)
+                dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 0, 0)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 0)
             with dpg.theme_component(dpg.mvAll):
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 3, 6)
-                dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 0, 3)
+                dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 0, 0)
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 12, 5)
                 dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0)
+                dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 0)
                 dpg.add_theme_style(dpg.mvStyleVar_PopupBorderSize, 0)
                 dpg.add_theme_color(dpg.mvThemeCol_MenuBarBg, palette[1])
                 dpg.add_theme_color(dpg.mvThemeCol_PopupBg, palette[1])
@@ -91,10 +96,18 @@ class MainWindow:
                 dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrabHovered, palette[3])
                 dpg.add_theme_color(dpg.mvThemeCol_Separator, palette[7]+[100])
                 dpg.add_theme_color(dpg.mvThemeCol_FrameBg, [60, 60, 154, 100])
+                # dpg.add_theme_color(dpg.mvThemeCol_Tab, [144, 0, 255, 100])  # Nice highlight color
+                dpg.add_theme_color(dpg.mvThemeCol_TabActive, [144, 0, 255, 160])
+                dpg.add_theme_color(dpg.mvThemeCol_TabHovered, [144, 0, 255, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_Tab, palette[3] + [160])
+                # dpg.add_theme_color(dpg.mvThemeCol_TabActive, palette[3] + [200])
+                # dpg.add_theme_color(dpg.mvThemeCol_TabHovered, palette[3] + [255])
+                dpg.add_theme_color(dpg.mvThemeCol_TableBorderLight, palette[2] + [100])
 
         dpg.bind_theme(global_theme)
 
     def startup_callback(self):
+        Launcher.maximize_window(dpg.get_viewport_title())
         self.viewModel.load_project()
 
     def show(self):
@@ -106,16 +119,16 @@ class MainWindow:
         dpg.destroy_context()
         return self.result
 
-    def _load_fonts_async(self):
-        fonts_thread = threading.Thread(target=self._load_fonts)
-        fonts_thread.daemon = True
-        fonts_thread.start()
-
-    def _load_fonts(self):
-        with dpg.font_registry():
-            for i in range(5, 33):
-                if not i in self.fonts.keys():
-                    self.fonts[i] = dpg.add_font("./fonts/Sansation_Regular.ttf", i)
+    # def _load_fonts_async(self):
+    #     fonts_thread = threading.Thread(target=self._load_fonts)
+    #     fonts_thread.daemon = True
+    #     fonts_thread.start()
+    #
+    # def _load_fonts(self):
+    #     with dpg.font_registry():
+    #         for i in range(5, 33):
+    #             if not i in self.fonts.keys():
+    #                 self.fonts[i] = dpg.add_font("./fonts/Sansation_Regular.ttf", i)
 
     def update_title(self, title):
         dpg.set_viewport_title(title)

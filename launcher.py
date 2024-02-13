@@ -67,3 +67,10 @@ class Launcher:
             else:
                 print(f"Window with title '{window_title}' not found.")
                 return False
+
+    @staticmethod
+    def maximize_window(window_title):
+        hwnd = win32gui.FindWindow(None, window_title)
+        if hwnd:
+            win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+            return True

@@ -12,7 +12,8 @@ class DataFileViewModel(FileObserver):
 
     def __init__(self, data_file_manager: DataFileManager):
         self._data_file_manager = data_file_manager
-        self._data_file_manager.add_observer(self, "files changed")
+        self._data_file_manager.add_observer(self, "files changed")  # Only properties of existing entries need updating
+        self._data_file_manager.add_observer(self, "directory structure changed")  # Need to re-populate the entire list
 
     def set_callback(self, key, callback):
         if key in self._callbacks.keys():
@@ -22,6 +23,13 @@ class DataFileViewModel(FileObserver):
 
     def update(self, event_type, *args):
         print(f"DataFileViewModel observed event: {event_type}")
+        if event_type == "directory structure changed":
+            self._populate_file_explorer(args)
+
+    def _populate_file_explorer(self, *args):
+        self._callbacks.get("populate file explorer", noop)(self._data_file_manager.top_level_directories,
+                                                            self._data_file_manager.top_level_files)
+
 
 
 
