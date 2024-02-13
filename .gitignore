@@ -1,3 +1,4 @@
-/old/
+./old/
 *.backup
 *_autosave.spm
+./spectraMatcher.log

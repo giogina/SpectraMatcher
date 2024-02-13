@@ -10,7 +10,7 @@ class Icons:
 
     # https://fontawesome.com/v4/cheatsheet/
     open_folder = 0xf07c
-    star = 0x2b50
+    star = 0xf005
     check = 0xf00c
     x = 0xf00d
     adjust = 0xf042
@@ -314,8 +314,8 @@ class Icons:
         if not self._is_initialized:
             self._fa = {}
             self._fs = {}
-            self._registered_fa = {}
-            self._registered_fs = {}  # {size: [list of icon hex codes already registered for this size]}
+            # self._registered_fa = {}
+            # self._registered_fs = {}  # {size: [list of icon hex codes already registered for this size]}
             self._is_initialized = True
 
     def set_font_registry(self, font_reg):
@@ -330,19 +330,21 @@ class Icons:
             print("Icons: Could not register font, I don't have the registry yet!")
             return ""
         if (not solid) and (size not in self._fa.keys()):
-            self._fa[size] = dpg.add_font("./fonts/Font Awesome 6 Free-Regular-400.otf", size, parent=self._font_reg)
-            self._registered_fa[size] = []
+            with dpg.font("./fonts/Font Awesome 6 Free-Regular-400.otf", size, parent=self._font_reg) as self._fa[size]:
+                dpg.add_font_range(0xf000, 0xf300)
+            # self._registered_fa[size] = []
         elif solid and (size not in self._fs.keys()):
-            self._fs[size] = dpg.add_font("./fonts/Font Awesome 6 Free-Solid-900.otf", size, parent=self._font_reg)
-            self._registered_fs[size] = []
-        if solid:
-            if icon not in self._registered_fs.get(size):
-                dpg.add_font_chars([icon], parent=self._fs[size])
-                self._registered_fs[size].append(icon)
-        else:
-            if icon not in self._registered_fa.get(size):
-                dpg.add_font_chars([icon], parent=self._fa[size])
-                self._registered_fa[size].append(icon)
+            with dpg.font("./fonts/Font Awesome 6 Free-Solid-900.otf", size, parent=self._font_reg) as self._fs[size]:
+                dpg.add_font_range(0xf000, 0xf300)
+        #     self._registered_fs[size] = []
+        # if solid:
+        #     if icon not in self._registered_fs.get(size):
+        #         dpg.add_font_chars([icon], parent=self._fs[size])
+        #         self._registered_fs[size].append(icon)
+        # else:
+        #     if icon not in self._registered_fa.get(size):
+        #         dpg.add_font_chars([icon], parent=self._fa[size])
+        #         self._registered_fa[size].append(icon)
         return chr(icon)
 
     def insert(self, dpg_item, icon, size, solid=True):
@@ -352,6 +354,7 @@ class Icons:
             dpg.bind_item_font(dpg_item, self._fs[size])
         else:
             dpg.bind_item_font(dpg_item, self._fa[size])
+        return dpg_item
 
 
 
