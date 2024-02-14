@@ -1,14 +1,8 @@
-import time
-
 import dearpygui.dearpygui as dpg
 from viewmodels.data_files_viewmodel import DataFileViewModel
 from models.data_file_manager import File, Directory
 from utility.icons import Icons
 
-import win32con
-import win32api
-import win32gui
-import ctypes
 
 class FileExplorer:
     def __init__(self, viewmodel: DataFileViewModel):
@@ -17,9 +11,11 @@ class FileExplorer:
         self.viewmodel.set_callback("update file", self.update_file)
         self.icons = Icons()
         self.item_padding = 3
-        self._dragging_resizer_button = None
-        self._table_columns = [("Icons", 16, 16), ("File", 372, 200), ("Status", 60, 50)]  # (Label, start width, min width)
+        self._resizing_column = None  # column number currently being resized
+        self._dragging_button = None  # tag of resizer button being dragged
+        self._table_columns = [["Icons", 16, 16], ["File", 372, 200], ["Status", 60, 50]]  # (Label, start/current width, min width)
         self._file_rows = []
+        self._last_delta = 0
 
         sep = []
         for i in range(24):
@@ -30,7 +26,7 @@ class FileExplorer:
         with dpg.item_handler_registry() as self.node_handlers:
             dpg.add_item_clicked_handler(callback=self._togge_directory_node_labels)
         with dpg.item_handler_registry() as self.table_handlers:
-            dpg.add_item_clicked_handler(callback=self._check_for_mouse_drag)
+            dpg.add_item_clicked_handler(callback=self._start_table_mouse_drag)
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_release_handler(dpg.mvMouseButton_Left, callback=self._on_mouse_left_release)
 
@@ -48,33 +44,46 @@ class FileExplorer:
                 dpg.add_button(label="", width=-1, height=24)
             dpg.add_spacer(height=16)
 
-
         self.configure_theme()
 
-    def _check_for_mouse_drag(self, sender, app_data, handler_user_data):
-        if dpg.is_mouse_button_dragging(dpg.mvMouseButton_Left, threshold=0):
-            dragging_button = app_data[1]
-            print(f"dragging {dragging_button}...")
-            self._dragging_resizer_button = dpg.get_item_user_data(dragging_button)
+    def _tables_resize(self):
+        column = self._resizing_column
+        if column:
+            delta = dpg.get_mouse_drag_delta()[0]
+            if delta != self._last_delta:  # Necessary to avoid bug where delta is last drag's delta when it should be 0
+                item = f"table header {column}"
+                header_width = max(self._table_columns[column][2], self._table_columns[column][1] + delta)
+                dpg.set_item_width(item, header_width)
+                for file in self._file_rows:
+                    item = f"{file.tag}-c{column}"
+                    if column == 1:
+                        width = header_width - 52 - file.depth * 20
+                    else:
+                        width = header_width
+                    dpg.set_item_width(item, width)
+                self._last_delta = delta
 
-            # Todo: Set system cursor (or hide a resizable table) to rezize/drag; drag vertical line with mouse.
+            with dpg.mutex():
+                dpg.set_frame_callback(dpg.get_frame_count() + 1, self._tables_resize)
+
+    def _start_table_mouse_drag(self, sender, app_data, handler_user_data):
+        if dpg.is_mouse_button_dragging(dpg.mvMouseButton_Left, threshold=0):
+            # resize_cursor = ctypes.windll.user32.LoadCursorW(0, 32644)
+            # ctypes.windll.user32.SetCursor(resize_cursor)
+            self._dragging_button = app_data[1]
+            print(f"dragging {self._dragging_button}...")
+            self._resizing_column = dpg.get_item_user_data(self._dragging_button)
+            self._tables_resize()
 
     def _on_mouse_left_release(self):
-        dragged_button = self._dragging_resizer_button
-        if dragged_button:
-            self._dragging_resizer_button = None  # Reset
-            delta = dpg.get_mouse_drag_delta()[0]
-            print(f"Released: {dragged_button, delta}")
-            item = f"table header {dragged_button}"
-            header_width = max(self._table_columns[dragged_button][2], dpg.get_item_width(item)+delta)
-            dpg.set_item_width(item, header_width)
-            for file in self._file_rows:
-                item = f"{file.tag}-c{dragged_button}"
-                if dragged_button == 1:
-                    width = header_width-52-file.depth*20
-                else:
-                    width = header_width
-                dpg.set_item_width(item, width)
+        column = self._resizing_column
+        if column:
+            # arrow_cursor = ctypes.windll.user32.LoadCursorW(0, 32512)
+            # ctypes.windll.user32.SetCursor(arrow_cursor)
+            self._table_columns[column][1] = dpg.get_item_width(f"table header {column}")
+            self._resizing_column = None  # Reset
+
+
 
 
 
