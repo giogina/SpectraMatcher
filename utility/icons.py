@@ -304,6 +304,7 @@ class Icons:
     window_minimize = 0xf2d1
     window_restore = 0xf2d2
     wrench = 0xf0ad
+    person_running = 0xf70c
 
     def __new__(cls):  # Make class a Singleton.
         if cls._instance is None:
@@ -314,6 +315,7 @@ class Icons:
         if not self._is_initialized:
             self._fa = {}
             self._fs = {}
+            self._color_themes = {}
             # self._registered_fa = {}
             # self._registered_fs = {}  # {size: [list of icon hex codes already registered for this size]}
             self._is_initialized = True
@@ -325,30 +327,30 @@ class Icons:
 
     def get_icon(self, icon, size, solid=True):  # icon: unicode hex code (e.g. 0xf07c)
         """add icon hex to loaded special characters if necessary; then return string."""
-        # print(f"In get icon: font reg: {self._font_reg}, icon: {icon}, size: {size}, solid: {solid}, fs: {self._fs}, registered: {self._registered_fs}")
-        if self._font_reg is None:
-            print("Icons: Could not register font, I don't have the registry yet!")
+        if type(icon) == int:
+            if self._font_reg is None:
+                print("Icons: Could not register font, I don't have the registry yet!")
+                return ""
+            if (not solid) and (size not in self._fa.keys()):
+                with dpg.font("./fonts/Font Awesome 6 Free-Regular-400.otf", size, parent=self._font_reg) as self._fa[size]:
+                    dpg.add_font_range(0xf000, 0xf999)
+                # self._registered_fa[size] = []
+            elif solid and (size not in self._fs.keys()):
+                with dpg.font("./fonts/Font Awesome 6 Free-Solid-900.otf", size, parent=self._font_reg) as self._fs[size]:
+                    dpg.add_font_range(0xf000, 0xf999)
+            return chr(icon)
+        else:
             return ""
-        if (not solid) and (size not in self._fa.keys()):
-            with dpg.font("./fonts/Font Awesome 6 Free-Regular-400.otf", size, parent=self._font_reg) as self._fa[size]:
-                dpg.add_font_range(0xf000, 0xf300)
-            # self._registered_fa[size] = []
-        elif solid and (size not in self._fs.keys()):
-            with dpg.font("./fonts/Font Awesome 6 Free-Solid-900.otf", size, parent=self._font_reg) as self._fs[size]:
-                dpg.add_font_range(0xf000, 0xf300)
-        #     self._registered_fs[size] = []
-        # if solid:
-        #     if icon not in self._registered_fs.get(size):
-        #         dpg.add_font_chars([icon], parent=self._fs[size])
-        #         self._registered_fs[size].append(icon)
-        # else:
-        #     if icon not in self._registered_fa.get(size):
-        #         dpg.add_font_chars([icon], parent=self._fa[size])
-        #         self._registered_fa[size].append(icon)
-        return chr(icon)
 
-    def insert(self, dpg_item, icon, size, solid=True):
+    def insert(self, dpg_item, icon, size, solid=True, color=None):
         """Inserts icon character as label of dpg_item."""
+        if color is not None:
+            if not tuple(color) in self._color_themes.keys():
+                with dpg.theme() as self._color_themes[tuple(color)]:
+                    with dpg.theme_component(dpg.mvButton):
+                        dpg.add_theme_color(dpg.mvThemeCol_Text, color)
+            dpg.bind_item_theme(dpg_item, self._color_themes[tuple(color)])
+
         dpg.configure_item(dpg_item, label=self.get_icon(icon, size, solid))  # automatically ensures that icon char is registered
         if solid:
             dpg.bind_item_font(dpg_item, self._fs[size])

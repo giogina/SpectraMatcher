@@ -1,6 +1,6 @@
 import dearpygui.dearpygui as dpg
 from viewmodels.data_files_viewmodel import DataFileViewModel
-from models.data_file_manager import File, Directory
+from models.data_file_manager import File, Directory, GaussianLog, FileType
 from utility.icons import Icons
 
 
@@ -20,8 +20,12 @@ class FileExplorer:
         sep = []
         for i in range(24):
             sep.extend([0.8, 0.8, 1, 0.4])
+        # long_sep = []
+        # for i in range(500):
+        #     long_sep.extend([0.8, 0.8, 1, 0.4])
         with dpg.texture_registry(show=False):
             dpg.add_static_texture(width=1, height=24, default_value=sep, tag="pixel")
+            # dpg.add_static_texture(width=1, height=500, default_value=long_sep, tag="long separator")
 
         with dpg.item_handler_registry() as self.node_handlers:
             dpg.add_item_clicked_handler(callback=self._togge_directory_node_labels)
@@ -35,13 +39,16 @@ class FileExplorer:
                 self.icons.insert(dpg.add_button(height=32, width=32), Icons.plus, size=16)
                 self.icons.insert(dpg.add_button(height=32, width=32), Icons.filter, size=16)
 
+        with dpg.group(horizontal=True, tag="file table header"):
+            for i in range(1, len(self._table_columns)):
+                column = self._table_columns[i]
+                dpg.add_button(label=column[0], width=column[1], height=24, tag=f"table header {i}")
+                dpg.bind_item_handler_registry(dpg.add_image_button("pixel", width=1, height=24, user_data=i, tag=f"sep-button-{i}"), self.table_handlers)
+                # with dpg.tooltip(f"sep-button-{i}"):  # Technically it works but it's wonky
+                #     dpg.add_image("long separator")
+            dpg.add_button(label="", width=-1, height=24)
+
         with dpg.child_window(tag="file explorer panel"):
-            with dpg.group(horizontal=True, tag="file table header"):
-                for i in range(1, len(self._table_columns)):
-                    column = self._table_columns[i]
-                    dpg.add_button(label=column[0], width=column[1], height=24, tag=f"table header {i}")
-                    dpg.bind_item_handler_registry(dpg.add_image_button("pixel", width=1, height=24, user_data=i), self.table_handlers)
-                dpg.add_button(label="", width=-1, height=24)
             dpg.add_spacer(height=16)
 
         self.configure_theme()
@@ -71,8 +78,8 @@ class FileExplorer:
             # resize_cursor = ctypes.windll.user32.LoadCursorW(0, 32644)
             # ctypes.windll.user32.SetCursor(resize_cursor)
             self._dragging_button = app_data[1]
-            print(f"dragging {self._dragging_button}...")
             self._resizing_column = dpg.get_item_user_data(self._dragging_button)
+            self._table_columns[self._resizing_column][1] = dpg.get_item_width(f"table header {self._resizing_column}")
             self._tables_resize()
 
     def _on_mouse_left_release(self):
@@ -83,15 +90,11 @@ class FileExplorer:
             self._table_columns[column][1] = dpg.get_item_width(f"table header {column}")
             self._resizing_column = None  # Reset
 
-
-
-
-
     def _togge_directory_node_labels(self, sender, app_data, handler_user_data):
         item_tag = dpg.get_item_user_data(app_data[1])
         label = dpg.get_item_label(item_tag)
         if label[0] == u'\u00a4':
-            label = u'\u00a3' + label[1:len(label)]  # TODO: Fails due to window minimizing bug
+            label = u'\u00a3' + label[1:len(label)]  # TODO: Fails due to window minimizing bug. Check for coming into view or something?
         else:
             label = u'\u00a4' + label[1:len(label)]
         dpg.set_item_label(item_tag, label)
@@ -129,12 +132,39 @@ class FileExplorer:
 
     def update_file(self, file: File):
         dpg.delete_item(file.tag, children_only=True)
-        self.icons.insert(dpg.add_button(width=self._table_columns[0][1], parent=file.tag, tag=f"{file.tag}-c0"), Icons.file_code_o, 16)
+        # TODO: Decide on file icon: Chk, input, log-freq-ground/excited, log-FC-up/down
+        file_icon = Icons.file
+        if file.type == FileType.GAUSSIAN_INPUT:
+            file_icon = Icons.file_code_o
+        self.icons.insert(dpg.add_button(width=self._table_columns[0][1], parent=file.tag, tag=f"{file.tag}-c0"), file_icon, 16, solid=False)
         dpg.add_selectable(label=file.name, width=self._table_columns[1][1]-52-file.depth*20, span_columns=True, parent=file.tag, tag=f"{file.tag}-c1")
-        if file.type:
-            self.icons.insert(dpg.add_button(width=self._table_columns[2][1], parent=file.tag, tag=f"{file.tag}-c2"), Icons.check, 16)
-        else:
-            self.icons.insert(dpg.add_button(width=self._table_columns[2][1], parent=file.tag, tag=f"{file.tag}-c2"), Icons.x, 16)
+        status_icon = ""
+        color = None
+        dpg.add_button(width=self._table_columns[2][1], parent=file.tag, tag=f"{file.tag}-c2")
+        if file.type == FileType.GAUSSIAN_LOG:  # TODO: These decisions should be made in the viewmodel.
+            if file.properties[GaussianLog.STATUS] == GaussianLog.FINISHED:
+                status_icon = Icons.check
+                color = [0, 200, 0]
+                with dpg.tooltip(f"{file.tag}-c2"):
+                    dpg.add_text("Calculation finished successfully.")
+            elif file.properties[GaussianLog.STATUS] == GaussianLog.NEGATIVE_FREQUENCY:
+                status_icon = Icons.exclamation_triangle
+                color = [200, 0, 0]
+                with dpg.tooltip(f"{file.tag}-c2"):
+                    dpg.add_text("Negative frequencies detected!")
+            elif file.properties[GaussianLog.STATUS] == GaussianLog.ERROR:
+                status_icon = Icons.x
+                color = [200, 0, 0]
+                with dpg.tooltip(f"{file.tag}-c2"):
+                    dpg.add_text("Calculation terminated with an error!")
+            else:
+                status_icon = Icons.hourglass_start
+                with dpg.tooltip(f"{file.tag}-c2"):
+                    dpg.add_text("Calculation running...")
+        self.icons.insert(f"{file.tag}-c2", icon=status_icon, size=16, color=color)
+
+        # TODO: Right-click menu on file.tag row: Open in os file explorer, open in [data analysis tab showing data read from file]
+
         if file.tag not in self._file_rows:
             self._file_rows.append(file)
 
@@ -154,7 +184,7 @@ class FileExplorer:
             with dpg.theme_component(dpg.mvButton):
                 # dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 150])
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [0, 0, 0, 0])
-                # dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [0, 0, 0, 0])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [0, 0, 0, 0])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [0, 0, 0, 0])
                 dpg.add_theme_style(dpg.mvStyleVar_ButtonTextAlign, 0.5, 0.5)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)

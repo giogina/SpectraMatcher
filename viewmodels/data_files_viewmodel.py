@@ -33,6 +33,8 @@ class DataFileViewModel(FileObserver):
         self._callbacks.get("populate file explorer", noop)(self._data_file_manager.top_level_directories,
                                                             self._data_file_manager.top_level_files)
 
-
+    # TODO: Turn Files and Directories into dicts (independent deep-copies)
+    #   pre-decide icons, colors etc
+    #
 
 

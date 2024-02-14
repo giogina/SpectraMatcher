@@ -2,6 +2,7 @@ import os
 from os.path import isfile, join
 import asyncio
 from asyncio import Queue
+import re
 
 
 class DataFileManager:
@@ -74,7 +75,7 @@ class Directory:
     tag = ""  # Unique identifier
 
     def __init__(self, path, manager: DataFileManager, name=None, parent=None, depth=0):
-        self.path = path
+        self.path = path.replace('\\', '/')
         self.manager = manager
         self.tag = f"dir_{path}"
         self.depth = depth
@@ -97,17 +98,41 @@ class Directory:
         self.content_files = files
 
 
+class FileType:
+    OTHER = "Other"
+    GAUSSIAN_LOG = "Gaussian log"
+    GAUSSIAN_INPUT = "Gaussian input"
+    GAUSSIAN_CHECKPOINT = "Gaussian chk"
+
+
+class GaussianLog:
+    CONTENTS = "contents"
+    STATUS = "status"
+    HAS_HPMODES = "hpmodes"
+    ANHARM = "anharm"
+    FINISHED = "finished"
+    ERROR = "error"
+    RUNNING = "running"
+    NEGATIVE_FREQUENCY = "negative frequency"
+    FREQ_GROUND = "Frequency ground state"
+    FREQ_EXCITED = "Frequency excited state"
+    FC_EXCITATION = "FC excitation"
+    FC_EMISSION = "FC emission"
+
+
 class File:
     name = ""
     path = ""
     parent_directory = None
     tag = ""  # Unique identifier
     depth = 0
+    properties = {}
+    extension = ""
 
     type = None
 
     def __init__(self, path, manager: DataFileManager, name=None, parent=None, depth=0):
-        self.path = path
+        self.path = path.replace('\\', '/')
         self.manager = manager
         self.depth = depth
         self.tag = f"file_{path}"
@@ -116,17 +141,73 @@ class File:
         else:
             self.name = os.path.basename(path)
         self.parent_directory = parent
-        filename, extension = os.path.splitext(self.name)
-        if extension == ".log":
-            self.type = "Gaussian log"
-        # asyncio.get_running_loop().call_soon_threadsafe(asyncio.create_task, self.manager.file_queue.put(self))
-        # asyncio.run(self._queue_up())
+        name, self.extension = os.path.splitext(self.name)
+
         self.manager.file_queue.put_nowait(self)
 
-    # async def _queue_up(self):
-    #     await self.manager.file_queue.put(self)  # wait in line to run what_am_i
-
     async def what_am_i(self):
+        properties = {}
+        if self.extension == ".log":  # Gaussian log
+            self.type = FileType.GAUSSIAN_LOG
+            properties[GaussianLog.CONTENTS] = None
+            properties[GaussianLog.ANHARM] = False
+            properties[GaussianLog.HAS_HPMODES] = False
+
+            nr_jobs = 1  # keep track of Gaussian starting new internal jobs
+            nr_finished = 0
+            error = False
+            has_freqs = False
+            has_fc = False
+            emission = False
+            excited = False
+            try:
+                with open(self.path, 'r') as f:
+                    lines = f.readlines()
+                    for line in lines:
+                        if re.search('Frequencies --', line):
+                            has_freqs = True
+                            if re.search('Frequencies ---', line):
+                                properties[GaussianLog.HAS_HPMODES] = True  # TODO: Check for negative frequencies (set state to GaussianLog.NEGATIVE_FREQUENCY, update file)
+                        if re.search('anharmonic', line):
+                            properties[GaussianLog.ANHARM] = True
+                        if re.search('Excited', line):
+                            excited = True
+                        if re.search('Final Spectrum', line):
+                            has_fc = True
+                        if re.search('emission', line):
+                            emission = True
+                        if re.search('Proceeding to internal job step number', line):
+                            nr_jobs += 1
+                        if re.search('Normal termination', line):
+                            nr_finished += 1
+                        if re.search('Error termination', line):
+                            error = True
+                if has_fc:
+                    if emission:
+                        properties[GaussianLog.CONTENTS] = GaussianLog.FC_EMISSION  # TODO: FC files always treat current state as ground state; and contain corresponding geom & freqs. Read from there (maybe just as backup).
+                    else:
+                        properties[GaussianLog.CONTENTS] = GaussianLog.FC_EXCITATION
+                elif has_freqs:
+                    if excited:
+                        properties[GaussianLog.CONTENTS] = GaussianLog.FREQ_EXCITED
+                    else:
+                        properties[GaussianLog.CONTENTS] = GaussianLog.FREQ_GROUND
+                if nr_jobs == nr_finished:
+                    properties[GaussianLog.STATUS] = GaussianLog.FINISHED
+                elif error:
+                    properties[GaussianLog.STATUS] = GaussianLog.ERROR
+                else:
+                    properties[GaussianLog.STATUS] = GaussianLog.RUNNING
+
+            except Exception as e:
+                print(f"File {self.path} couldn't be read! {e}")
+        elif self.extension in [".gjf", ".com"]:
+            self.type = FileType.GAUSSIAN_INPUT
+        elif self.extension == ".chk":
+            self.type = FileType.GAUSSIAN_CHECKPOINT
+        else:
+            self.type = FileType.OTHER
+        self.properties = properties
         self.manager.notify_observers("file changed", self)
 
 
