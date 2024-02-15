@@ -15,7 +15,10 @@ class FileExplorer:
         self._dragging_button = None  # tag of resizer button being dragged
         self._table_columns = [["Icons", 16, 16], ["File", 372, 200], ["Status", 60, 50]]  # (Label, start/current width, min width)
         self._file_rows = []
+        self._directory_nodes = {}
         self._last_delta = 0
+
+        # TODO: Keep track of open/closed status of folders;
 
         with dpg.theme() as self.invisible_button_theme:
             with dpg.theme_component(dpg.mvImageButton):
@@ -42,8 +45,8 @@ class FileExplorer:
 
         with dpg.child_window(tag="action bar", width=-1, height=32):
             with dpg.group(horizontal=True):
-                self.icons.insert(dpg.add_button(height=32, width=32), Icons.folder_plus, size=16)
-                self.icons.insert(dpg.add_button(height=32, width=32), Icons.file_plus, size=16)
+                self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_folder), Icons.folder_plus, size=16)
+                self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_files), Icons.file_plus, size=16)
                 s = dpg.add_image_button("pixel", width=1, height=24)
                 dpg.bind_item_theme(s, self.invisible_button_theme)
                 self.icons.insert(dpg.add_button(height=32, width=32), Icons.filter, size=16)
@@ -103,11 +106,18 @@ class FileExplorer:
     def _togge_directory_node_labels(self, sender, app_data, handler_user_data):
         item_tag = dpg.get_item_user_data(app_data[1])
         label = dpg.get_item_label(item_tag)
-        if label[0] == u'\u00a4':
+        if self._directory_nodes[item_tag]:  # label[0] == u'\u00a4':
             label = u'\u00a3' + label[1:len(label)]  # TODO: Fails due to window minimizing bug. Check for coming into view or something?
         else:
             label = u'\u00a4' + label[1:len(label)]
         dpg.set_item_label(item_tag, label)
+        self._directory_nodes[item_tag] = not self._directory_nodes[item_tag]
+
+    def _add_data_folder(self):
+        self.viewmodel.inquire_open_data_directory()
+
+    def _add_data_files(self):
+        self.viewmodel.inquire_open_data_files()
 
     def populate_file_explorer(self, directories, files):
         self._file_rows = []
@@ -121,12 +131,15 @@ class FileExplorer:
 
     def _display_directory(self, directory: Directory, parent: str):
         dpg.add_spacer(height=self.item_padding)
-        with dpg.tree_node(label=u"\u00a4  " + directory.name, parent=parent, tag=directory.tag, default_open=True, user_data=directory.tag):
+        is_open = self._directory_nodes.get(directory.tag, True)
+        icon = u"\u00a4  " if is_open else u"\u00a3  "
+        with dpg.tree_node(label=icon + directory.name, parent=parent, tag=directory.tag, default_open=is_open, user_data=directory.tag):
             dpg.bind_item_handler_registry(directory.tag, self.node_handlers)
             dpg.add_spacer(height=self.item_padding)
             for item in directory.content_dirs:
                 self._display_directory(item, parent=directory.tag)
             self._display_files(directory.content_files, parent=directory.tag)
+            self._directory_nodes[directory.tag] = is_open
 
     def _display_files(self, files: list, parent: str):
         with dpg.group(horizontal=True):

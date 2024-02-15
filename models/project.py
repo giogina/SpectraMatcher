@@ -7,7 +7,7 @@ import threading
 import time
 import ctypes
 from models.settings_manager import SettingsManager
-from models.data_file_manager import DataFileManager
+from models.data_file_manager import DataFileManager, FileObserver
 
 
 # Define an observer interface
@@ -16,7 +16,7 @@ class ProjectObserver:
         pass
 
 
-class Project:
+class Project(FileObserver):
     def __init__(self, project_file):
         self._project_file_lock = threading.Lock()
         self._data_lock = threading.Lock()
@@ -26,6 +26,7 @@ class Project:
 
         self._settings = SettingsManager()
         self.data_file_manager = DataFileManager()
+        self.data_file_manager.add_observer(self, "directory structure changed")
         self.project_file = project_file
         self._autosave_file = self._get_autosave_file_path()
         self._lock_file_path = self.project_file + ".lock"
@@ -51,6 +52,12 @@ class Project:
         }
 
         self.window_title = ""  # For bringing that window to the front in Windows
+
+    # react to observations from my data file manager
+    def update(self, event_type, *args):
+        self._data["open data folders"] = [d.path for d in self.data_file_manager.top_level_directories]
+        self._data["open data files"] = [file.path for file in self.data_file_manager.top_level_files]
+        self.save()
 
     def load(self, auto=False):
         """Load project file"""

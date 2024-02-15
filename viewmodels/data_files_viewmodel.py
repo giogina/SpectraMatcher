@@ -1,4 +1,5 @@
 from models.data_file_manager import DataFileManager, FileObserver
+from utility.system_file_browser import data_dir_file_dialog, data_files_dialog
 
 
 def noop(*args, **kwargs):
@@ -28,6 +29,18 @@ class DataFileViewModel(FileObserver):
             self._populate_file_explorer(args)
         if event_type == "file changed":
             self._callbacks.get("update file")(args[0][0])
+
+    def inquire_open_data_directory(self):
+        path = data_dir_file_dialog(self._data_file_manager.last_path)
+        if path:
+            print(f"Adding folder: {path}")
+            self._data_file_manager.open_directories([path])
+
+    def inquire_open_data_files(self):
+        files = data_files_dialog(self._data_file_manager.last_path)
+        if files and len(files):
+            print(f"Adding files: {files}")
+            self._data_file_manager.open_directories(open_data_dirs=[], open_data_files=list(files))
 
     def _populate_file_explorer(self, *args):
         self._callbacks.get("populate file explorer", noop)(self._data_file_manager.top_level_directories,

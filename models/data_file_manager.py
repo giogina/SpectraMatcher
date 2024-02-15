@@ -11,27 +11,27 @@ class DataFileManager:
     _observers = {}
     file_queue = None
     num_workers = 5
+    last_path = "/"  # Last added data path; for file dialog root dirs
+    known_tags = []
 
     def __init__(self):
         pass
+        # self._update_open_data_files_callback = update_open_data_files_callback
 
     def open_directories(self, open_data_dirs, open_data_files=None):
         asyncio.run(self._open_directories_async(open_data_dirs, open_data_files))
 
-    async def _open_directories_async(self, open_data_dirs, open_data_files=None):
-        self.file_queue = Queue()
+    # def remove_data_files(self, files: tuple):  # TODO
+    #     for file_path in files:
+    #         if file in self.top_level_files:
+    #             self.top_level_files.remove(file)
+    #     self._update_open_data_files_callback(files=self.top_level_files)
 
-        for path in open_data_dirs:
-            self.top_level_directories.append(Directory(path, self))  # queue gets filled in here
-            if open_data_files:
-                self.top_level_files.append(File(path, self))
-        self.notify_observers("directory structure changed")  # re-populate the entire list
-        workers = [asyncio.create_task(self.worker()) for _ in range(self.num_workers)]
-
-        await self.file_queue.join()  # wait for all items to be processed
-        for worker in workers:        # Cleanup
-            worker.cancel()
-        await asyncio.gather(*workers, return_exceptions=True)
+    # def remove_data_files(self, files: tuple): # TODO
+    #     for file in files:
+    #         if file in self.top_level_files:
+    #             self.top_level_files.remove(file)
+    #     self._update_open_data_files_callback(files=self.top_level_files)
 
     ############### Observers ###############
 
@@ -45,7 +45,6 @@ class DataFileManager:
             self._observers[event_type].remove(observer)
 
     def notify_observers(self, event_type, *args):
-        print(f"Notify called! {event_type, args}")
         if event_type in self._observers:
             for observer in self._observers[event_type]:
                 observer.update(event_type, args)
@@ -57,6 +56,34 @@ class DataFileManager:
             file = await self.file_queue.get()
             await file.what_am_i()
             self.file_queue.task_done()
+
+    async def _open_directories_async(self, open_data_dirs=None, open_data_files=None):
+        self.file_queue = Queue()
+
+        path = None
+        if open_data_dirs:
+            for path in open_data_dirs:
+                directory = Directory(path, self)
+                if directory.tag not in self.known_tags:  # prevent doubling up
+                    self.top_level_directories.append(directory)  # queue gets filled in here
+                    self.known_tags.append(directory.tag)
+        if open_data_files:
+            for path in open_data_files:
+                file = File(path, self)
+                if file.tag not in self.known_tags:
+                    self.top_level_files.append(file)
+                    self.known_tags.append(file.tag)
+        self.last_path = os.path.dirname(path) if path else "/"
+
+        # notify file explorer viewmodel to re-populate the entire list, and parent project to update top level paths.
+        self.notify_observers("directory structure changed")
+
+        workers = [asyncio.create_task(self.worker()) for _ in range(self.num_workers)]
+
+        await self.file_queue.join()  # wait for all items to be processed
+        for worker in workers:        # Cleanup
+            worker.cancel()
+        await asyncio.gather(*workers, return_exceptions=True)
 
 
 # Observer interface
@@ -82,7 +109,7 @@ class Directory:
         if name:
             self.name = name
         else:
-            self.name = os.path.dirname(path)
+            self.name = os.path.basename(path)
         self.parent_directory = parent
         self.crawl_contents(path)
 
@@ -91,9 +118,15 @@ class Directory:
         files = []
         for item in os.listdir(path):
             if isfile(join(path, item)):
-                files.append(File(join(path, item), self.manager, name=item, parent=self.tag, depth=self.depth+1))
+                file = File(join(path, item), self.manager, name=item, parent=self.tag, depth=self.depth+1)
+                if file.tag not in self.manager.known_tags:
+                    files.append(file)
+                    self.manager.known_tags.append(file.tag)
             else:
-                dirs.append(Directory(join(path, item), self.manager, name=item, parent=self.tag, depth=self.depth+1))
+                directory = Directory(join(path, item), self.manager, name=item, parent=self.tag, depth=self.depth+1)
+                if directory.tag not in self.manager.known_tags:
+                    dirs.append(directory)
+                    self.manager.known_tags.append(directory.tag)
         self.content_dirs = dirs
         self.content_files = files
 

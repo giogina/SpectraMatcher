@@ -347,7 +347,6 @@ class Icons:
 
     def insert(self, dpg_item, icon, size, solid=True, color=None):
         """Inserts icon character as label of dpg_item."""
-        print(f"insert: {dpg_item, icon}")
         if color is not None:
             if not tuple(color) in self._color_themes.keys():
                 with dpg.theme() as self._color_themes[tuple(color)]:
@@ -357,10 +356,8 @@ class Icons:
 
         dpg.configure_item(dpg_item, label=self.get_icon(icon, size, solid))  # automatically ensures that icon char is registered
         if solid:
-            print(f"binding solid size {size} font: {dpg_item, icon, self._fs[size]}")
             dpg.bind_item_font(dpg_item, self._fs[size])
         else:
-            print(f"binding regular size {size} font: {dpg_item, self._fa[size]}")
             dpg.bind_item_font(dpg_item, self._fa[size])
         return dpg_item
 
