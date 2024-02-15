@@ -6,13 +6,13 @@ import re
 
 
 class DataFileManager:
-    top_level_directories = []
-    top_level_files = []
+    top_level_directories = {}
+    top_level_files = {}
     _observers = {}
     file_queue = None
     num_workers = 5
     last_path = "/"  # Last added data path; for file dialog root dirs
-    known_tags = []
+    directory_toggle_states = {}  # "directory label": bool - is dir toggled open?
 
     def __init__(self):
         pass
@@ -64,15 +64,11 @@ class DataFileManager:
         if open_data_dirs:
             for path in open_data_dirs:
                 directory = Directory(path, self)
-                if directory.tag not in self.known_tags:  # prevent doubling up
-                    self.top_level_directories.append(directory)  # queue gets filled in here
-                    self.known_tags.append(directory.tag)
+                self.top_level_directories[directory.tag] = directory  # queue gets filled in here
         if open_data_files:
             for path in open_data_files:
                 file = File(path, self)
-                if file.tag not in self.known_tags:
-                    self.top_level_files.append(file)
-                    self.known_tags.append(file.tag)
+                self.top_level_files[file.tag] = file
         self.last_path = os.path.dirname(path) if path else "/"
 
         # notify file explorer viewmodel to re-populate the entire list, and parent project to update top level paths.
@@ -93,8 +89,8 @@ class FileObserver:
 
 
 class Directory:
-    content_dirs = []
-    content_files = []
+    content_dirs = {}
+    content_files = {}
     name = ""
     path = ""
     depth = 0
@@ -114,19 +110,15 @@ class Directory:
         self.crawl_contents(path)
 
     def crawl_contents(self, path):
-        dirs = []
-        files = []
+        dirs = {}
+        files = {}
         for item in os.listdir(path):
             if isfile(join(path, item)):
                 file = File(join(path, item), self.manager, name=item, parent=self.tag, depth=self.depth+1)
-                if file.tag not in self.manager.known_tags:
-                    files.append(file)
-                    self.manager.known_tags.append(file.tag)
+                files[file.tag] = file
             else:
                 directory = Directory(join(path, item), self.manager, name=item, parent=self.tag, depth=self.depth+1)
-                if directory.tag not in self.manager.known_tags:
-                    dirs.append(directory)
-                    self.manager.known_tags.append(directory.tag)
+                dirs[directory.tag] = directory
         self.content_dirs = dirs
         self.content_files = files
 

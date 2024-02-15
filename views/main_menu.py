@@ -137,9 +137,9 @@ class MainMenu:
         dpg.configure_item("the one modal window", no_title_bar=False, label=title)
 
     def _on_modal_button_press(self, s, a, u):
+        dpg.hide_item("the one modal window")
         if u in [0, 1, 2]:
             self.button_callbacks[u]()
-        dpg.hide_item("the one modal window")
 
     def _show_modal_child(self, tag):
         if tag not in self.modal_child_window_tags:

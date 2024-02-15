@@ -55,9 +55,9 @@ class Project(FileObserver):
 
     # react to observations from my data file manager
     def update(self, event_type, *args):
-        self._data["open data folders"] = [d.path for d in self.data_file_manager.top_level_directories]
-        self._data["open data files"] = [file.path for file in self.data_file_manager.top_level_files]
-        self.save()
+        self._data["open data folders"] = [d.path for _, d in self.data_file_manager.top_level_directories.items()]
+        self._data["open data files"] = [file.path for _, file in self.data_file_manager.top_level_files.items()]
+        self._project_unsaved(True)
 
     def load(self, auto=False):
         """Load project file"""
@@ -93,6 +93,11 @@ class Project(FileObserver):
                     self._logger.warning("Attempting to restore autosave file...")
                     self.load(auto=True)
         self._autosave_thread.start()
+
+        if "directory toggle states" not in self._data.keys():
+            self._data["directory toggle states"] = {}
+        # Automatically keeps file manager dicts updated in self._data!
+        self.data_file_manager.directory_toggle_states = self._data.get("directory toggle states", {})
         self.data_file_manager.open_directories(self._data.get("open data folders", []),
                                                 self._data.get("open data files", []))
         return self
@@ -118,6 +123,8 @@ class Project(FileObserver):
             self.save(auto=True)
 
     def save(self, auto=False):
+        # self.gather_extra_data()
+        # Instead: Ensure all important data in sub-models is mutable variables assigned to self._data!
         with self._data_lock:
             snapshot = copy.deepcopy(self._data)
         save_thread = threading.Thread(target=self._save_project, args=(snapshot, auto,))

@@ -30,6 +30,13 @@ class DataFileViewModel(FileObserver):
         if event_type == "file changed":
             self._callbacks.get("update file")(args[0][0])
 
+    def toggle_directory(self, directory_tag, is_open):
+        print(f"Toggling: {directory_tag, is_open}, {self._data_file_manager.directory_toggle_states}")
+        self._data_file_manager.directory_toggle_states[directory_tag] = is_open
+
+    def get_dir_state(self, directory_tag):
+        return self._data_file_manager.directory_toggle_states.get(directory_tag, True)
+
     def inquire_open_data_directory(self):
         path = data_dir_file_dialog(self._data_file_manager.last_path)
         if path:

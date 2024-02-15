@@ -1,6 +1,33 @@
 {
     "name": "Ovalene Test",
     "open data folders": [
-        "C:/Users/Giogina/Documents/ovalene"
-    ]
+        "C:/Users/Giogina/Documents/ovalene",
+        "C:/Users/Giogina/Documents/ovalene/1st excited/FCHT emission",
+        "C:/Users/Giogina/Documents/My Games/Path of Exile",
+        "C:/Users/Giogina/Downloads/depends22_x64"
+    ],
+    "open data files": [
+        "C:/Users/Giogina/Documents/files3.txt",
+        "C:/Users/Giogina/Documents/ovalene/1st excited/ovalene-excited-opt-freq-disp.log",
+        "C:/Users/Giogina/Documents/files.txt",
+        "C:/Users/Giogina/Documents/files2.txt",
+        "C:/Users/Giogina/Documents/installer_script.nsi",
+        "C:/Users/Giogina/Documents/Spectramatcher Dashboard.fbp",
+        "C:/Users/Giogina/Documents/SpectraMatcherInstaller.exe",
+        "C:/Users/Giogina/Documents/Create Project.fbp",
+        "C:/Users/Giogina/Downloads/FontForge-2023-01-01-Windows.exe",
+        "C:/Users/Giogina/Downloads/ChromeSetup.exe",
+        "C:/Users/Giogina/Downloads/ChromeSetup(1).exe",
+        "C:/Users/Giogina/Downloads/d3dcompiler_47.zip",
+        "C:/Users/Giogina/Downloads/472.12-desktop-win7-64bit-international-whql.exe",
+        "C:/Users/Giogina/Downloads/material-icons-png-master/material-icons-png-master/README.md",
+        "C:/Users/Giogina/Downloads/material-icons-png-master/material-icons-png-master/package.json",
+        "C:/Users/Giogina/Downloads/material-icons-png-master/material-icons-png-master/package-lock.json",
+        "C:/Users/Giogina/Downloads/material-icons-png-master/material-icons-png-master/png/white/3d_rotation/baseline.png",
+        "C:/Users/Giogina/Downloads/material-icons-png-master/material-icons-png-master/png/white/3d_rotation/outline-4x.png"
+    ],
+    "directory toggle states": {
+        "dir_C:/Users/Giogina/Documents/ovalene": false,
+        "dir_C:/Users/Giogina/Documents/My Games/Path of Exile": false
+    }
 }

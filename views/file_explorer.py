@@ -7,7 +7,7 @@ from utility.icons import Icons
 class FileExplorer:
     def __init__(self, viewmodel: DataFileViewModel):
         self.viewmodel = viewmodel
-        self.viewmodel.set_callback("populate file explorer", self.populate_file_explorer)
+        self.viewmodel.set_callback("populate file explorer", self.update_file_explorer)
         self.viewmodel.set_callback("update file", self.update_file)
         self.icons = Icons()
         self.item_padding = 3
@@ -15,6 +15,7 @@ class FileExplorer:
         self._dragging_button = None  # tag of resizer button being dragged
         self._table_columns = [["Icons", 16, 16], ["File", 372, 200], ["Status", 60, 50]]  # (Label, start/current width, min width)
         self._file_rows = []
+        self._file_tables = []
         self._directory_nodes = {}
         self._last_delta = 0
 
@@ -37,7 +38,7 @@ class FileExplorer:
             # dpg.add_static_texture(width=1, height=500, default_value=long_sep, tag="long separator")
 
         with dpg.item_handler_registry() as self.node_handlers:
-            dpg.add_item_clicked_handler(callback=self._togge_directory_node_labels)
+            dpg.add_item_clicked_handler(callback=self._toggle_directory_node_labels)
         with dpg.item_handler_registry() as self.table_handlers:
             dpg.add_item_clicked_handler(callback=self._start_table_mouse_drag)
         with dpg.handler_registry() as self.mouse_handlers:
@@ -63,6 +64,9 @@ class FileExplorer:
 
         with dpg.child_window(tag="file explorer panel"):
             dpg.add_spacer(height=16)
+            with dpg.group(horizontal=True):
+                dpg.add_spacer(width=1)
+                dpg.add_group(horizontal=False, tag="file explorer group")
 
         self.configure_theme()
 
@@ -103,7 +107,7 @@ class FileExplorer:
             self._table_columns[column][1] = dpg.get_item_width(f"table header {column}")
             self._resizing_column = None  # Reset
 
-    def _togge_directory_node_labels(self, sender, app_data, handler_user_data):
+    def _toggle_directory_node_labels(self, sender, app_data, handler_user_data):
         item_tag = dpg.get_item_user_data(app_data[1])
         label = dpg.get_item_label(item_tag)
         if self._directory_nodes[item_tag]:  # label[0] == u'\u00a4':
@@ -112,6 +116,7 @@ class FileExplorer:
             label = u'\u00a4' + label[1:len(label)]
         dpg.set_item_label(item_tag, label)
         self._directory_nodes[item_tag] = not self._directory_nodes[item_tag]
+        self.viewmodel.toggle_directory(item_tag, self._directory_nodes[item_tag])
 
     def _add_data_folder(self):
         self.viewmodel.inquire_open_data_directory()
@@ -119,51 +124,68 @@ class FileExplorer:
     def _add_data_files(self):
         self.viewmodel.inquire_open_data_files()
 
-    def populate_file_explorer(self, directories, files):
+    def reset_file_explorer(self, directories, files):
         self._file_rows = []
-        with dpg.group(horizontal=True, parent="file explorer panel"):
-            dpg.add_spacer(width=1)
-            dpg.delete_item("file explorer group")
-            with dpg.group(horizontal=False, tag="file explorer group") as file_explorer_group:
-                for directory in directories:
-                    self._display_directory(directory, parent=file_explorer_group)
-                self._display_files(files, parent=file_explorer_group)
+        self._file_tables = []
+        self._directory_nodes = {}
+        dpg.delete_item("file explorer group", children_only=True)
+        self.update_file_explorer(directories, files)
+
+    def update_file_explorer(self, directories, files):
+        for directory_tag in directories.keys():
+            directory = directories[directory_tag]
+            self._display_directory(directory, parent="file explorer group")
+        self._display_files(files, parent="file explorer group")
 
     def _display_directory(self, directory: Directory, parent: str):
-        dpg.add_spacer(height=self.item_padding)
-        is_open = self._directory_nodes.get(directory.tag, True)
-        icon = u"\u00a4  " if is_open else u"\u00a3  "
-        with dpg.tree_node(label=icon + directory.name, parent=parent, tag=directory.tag, default_open=is_open, user_data=directory.tag):
-            dpg.bind_item_handler_registry(directory.tag, self.node_handlers)
-            dpg.add_spacer(height=self.item_padding)
-            for item in directory.content_dirs:
-                self._display_directory(item, parent=directory.tag)
-            self._display_files(directory.content_files, parent=directory.tag)
-            self._directory_nodes[directory.tag] = is_open
+        # if directory.tag in self._directory_nodes.keys():
+        #     is_open = self._directory_nodes.get(directory.tag, True)  # nothing to change really; just updating open-ness
+        #     icon = u"\u00a4  " if is_open else u"\u00a3  "
+        #     dpg.configure_item(directory.tag, label=icon + directory.name, default_open=is_open)
+        if directory.tag not in self._directory_nodes.keys():
+            dpg.add_spacer(height=self.item_padding, parent=parent)
+            is_open = self.viewmodel.get_dir_state(directory.tag)  # TODO> Save as directory.start_open in project file (for top level dirs)
+            print(f"Open? {directory.name, is_open}")
+            icon = u"\u00a4  " if is_open else u"\u00a3  "
+            with dpg.tree_node(label=icon + directory.name, parent=parent, tag=directory.tag, default_open=is_open, user_data=directory.tag):
+                dpg.bind_item_handler_registry(directory.tag, self.node_handlers)
+                dpg.add_spacer(height=self.item_padding)
+                for dir_tag in directory.content_dirs.keys():
+                    d = directory.content_dirs[dir_tag]
+                    self._display_directory(d, parent=directory.tag)
+                self._display_files(directory.content_files, parent=directory.tag)
+                self._directory_nodes[directory.tag] = is_open
 
-    def _display_files(self, files: list, parent: str):
-        with dpg.group(horizontal=True):
-            dpg.add_spacer(width=22)
-            with dpg.table(width=-1, tag=f"{parent}-files table", header_row=False, policy=dpg.mvTable_SizingFixedFit):
-                dpg.add_table_column(label="Icon")
-                # dpg.add_table_column(label="File Name",  init_width_or_weight=320-depth*20)
-                dpg.add_table_column(label="File Name")
-                dpg.add_table_column(label="status")
-                for file in files:
-                    dpg.add_table_row(tag=file.tag)
-                    self.update_file(file)
+    def _display_files(self, files: dict, parent: str):
+        tag = f"{parent}-files table"
+        if tag not in self._file_tables:
+            self._file_tables.append(tag)
+            with dpg.group(horizontal=True, parent=parent):
+                dpg.add_spacer(width=22)
+                with dpg.table(width=-1, tag=tag, header_row=False, policy=dpg.mvTable_SizingFixedFit):
+                    dpg.add_table_column(label="Icon")
+                    # dpg.add_table_column(label="File Name",  init_width_or_weight=320-depth*20)
+                    dpg.add_table_column(label="File Name")
+                    dpg.add_table_column(label="status")
+        for file_tag in files.keys():
+            self.update_file(files[file_tag], table=f"{parent}-files table")
 
-    def update_file(self, file: File):
-        dpg.delete_item(file.tag, children_only=True)
-        # TODO: Decide on file icon: Chk, input, log-freq-ground/excited, log-FC-up/down
+    def update_file(self, file: File, table=None):
+        if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
+            dpg.add_table_row(tag=file.tag, parent=table)
+            dpg.add_button(width=self._table_columns[0][1], parent=file.tag, tag=f"{file.tag}-c0")
+            dpg.add_selectable(label=file.name, width=self._table_columns[1][1] - 52 - file.depth * 20, span_columns=True,
+                               parent=file.tag, tag=f"{file.tag}-c1")
+            dpg.add_button(width=self._table_columns[2][1], parent=file.tag, tag=f"{file.tag}-c2")
+            self._file_rows.append(file)
+
+        # Gather file info # TODO: Decide on file icon: Chk, input, log-freq-ground/excited, log-FC-up/down
         file_icon = Icons.file
         if file.type == FileType.GAUSSIAN_INPUT:
             file_icon = Icons.file_code
-        self.icons.insert(dpg.add_button(width=self._table_columns[0][1], parent=file.tag, tag=f"{file.tag}-c0"), file_icon, 16, solid=False)
-        dpg.add_selectable(label=file.name, width=self._table_columns[1][1]-52-file.depth*20, span_columns=True, parent=file.tag, tag=f"{file.tag}-c1")
+
         status_icon = ""
         color = None
-        dpg.add_button(width=self._table_columns[2][1], parent=file.tag, tag=f"{file.tag}-c2")
         if file.type == FileType.GAUSSIAN_LOG:  # TODO: These decisions should be made in the viewmodel.
             if file.properties[GaussianLog.STATUS] == GaussianLog.FINISHED:
                 status_icon = Icons.check
@@ -184,12 +206,12 @@ class FileExplorer:
                 status_icon = Icons.hourglass_start
                 with dpg.tooltip(f"{file.tag}-c2"):
                     dpg.add_text("Calculation running...")
+
+        # Insert file info
+        self.icons.insert(f"{file.tag}-c0", file_icon, 16, solid=False)
         self.icons.insert(f"{file.tag}-c2", icon=status_icon, size=16, color=color)
 
         # TODO: Right-click menu on file.tag row: Open in os file explorer, open in [data analysis tab showing data read from file]
-
-        if file.tag not in self._file_rows:
-            self._file_rows.append(file)
 
     def configure_theme(self):
         with dpg.theme() as file_explorer_theme:
@@ -202,7 +224,6 @@ class FileExplorer:
                 # dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0)
                 dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 0)
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [200, 200, 255, 30])
-            with dpg.theme_component(dpg.mvTreeNode):
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 200])
             with dpg.theme_component(dpg.mvButton):
                 # dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 150])
@@ -213,7 +234,6 @@ class FileExplorer:
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
             with dpg.theme_component(dpg.mvTable):
                 dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 4, self.item_padding)
-
 
         dpg.bind_item_theme("file explorer panel", file_explorer_theme)
 
