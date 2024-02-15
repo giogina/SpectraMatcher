@@ -112,8 +112,10 @@ class FileExplorer:
         label = dpg.get_item_label(item_tag)
         if self._directory_nodes[item_tag]:  # label[0] == u'\u00a4':
             label = u'\u00a3' + label[1:len(label)]  # TODO: Fails due to window minimizing bug. Check for coming into view or something?
+            dpg.configure_item(f"after_{item_tag}", height=self.item_padding)  # extra spacing after closed dir
         else:
             label = u'\u00a4' + label[1:len(label)]
+            dpg.configure_item(f"after_{item_tag}", height=0)
         dpg.set_item_label(item_tag, label)
         self._directory_nodes[item_tag] = not self._directory_nodes[item_tag]
         self.viewmodel.toggle_directory(item_tag, self._directory_nodes[item_tag])
@@ -138,13 +140,9 @@ class FileExplorer:
         self._display_files(files, parent="file explorer group")
 
     def _display_directory(self, directory: Directory, parent: str):
-        # if directory.tag in self._directory_nodes.keys():
-        #     is_open = self._directory_nodes.get(directory.tag, True)  # nothing to change really; just updating open-ness
-        #     icon = u"\u00a4  " if is_open else u"\u00a3  "
-        #     dpg.configure_item(directory.tag, label=icon + directory.name, default_open=is_open)
         if directory.tag not in self._directory_nodes.keys():
             dpg.add_spacer(height=self.item_padding, parent=parent)
-            is_open = self.viewmodel.get_dir_state(directory.tag)  # TODO> Save as directory.start_open in project file (for top level dirs)
+            is_open = self.viewmodel.get_dir_state(directory.tag)
             print(f"Open? {directory.name, is_open}")
             icon = u"\u00a4  " if is_open else u"\u00a3  "
             with dpg.tree_node(label=icon + directory.name, parent=parent, tag=directory.tag, default_open=is_open, user_data=directory.tag):
@@ -154,14 +152,18 @@ class FileExplorer:
                     d = directory.content_dirs[dir_tag]
                     self._display_directory(d, parent=directory.tag)
                 self._display_files(directory.content_files, parent=directory.tag)
-                self._directory_nodes[directory.tag] = is_open
+            dpg.add_spacer(height=0 if is_open else self.item_padding, parent=parent, tag=f"after_{directory.tag}", show=not is_open)
+            self._directory_nodes[directory.tag] = is_open
 
     def _display_files(self, files: dict, parent: str):
         tag = f"{parent}-files table"
         if tag not in self._file_tables:
             self._file_tables.append(tag)
             with dpg.group(horizontal=True, parent=parent):
-                dpg.add_spacer(width=22)
+                if parent == "file explorer group":  # Extra indent for top-level files
+                    dpg.add_spacer(width=32)
+                else:
+                    dpg.add_spacer(width=22)
                 with dpg.table(width=-1, tag=tag, header_row=False, policy=dpg.mvTable_SizingFixedFit):
                     dpg.add_table_column(label="Icon")
                     # dpg.add_table_column(label="File Name",  init_width_or_weight=320-depth*20)

@@ -686,3 +686,84 @@
 2024-02-16 06:20:18,345 - models.settings_manager - INFO - Attempting to read./config/settings.json...
 2024-02-16 06:20:18,345 - models.settings_manager - INFO - Settings loaded. {'projectsPath': 'C:/Users/Giogina/SpectraMatcher', 'recentProjects': ['C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm', 'C:/Users/Giogina/SpectraMatcher/test2.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(4).spm', 'C:/Users/Giogina/SpectraMatcher/untitled(2).spm', 'C:/Users/Giogina/SpectraMatcher/TEST.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(3).spm'], 'autoSaveInterval': 60, 'shortcuts': {(16, 17, 79): 'Open', (17, 83): 'Save', (16, 17, 83): 'Save as'}}
 2024-02-16 06:20:18,835 - models.project - INFO - file: C:\Users\Giogina\SpectraMatcher\Ovalene Test.spm, exsits=True
+2024-02-16 06:25:35,301 - root - INFO - Started with flags: ['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene Test.spm']
+2024-02-16 06:25:35,301 - models.settings_manager - INFO - Attempting to read./config/settings.json...
+2024-02-16 06:25:35,301 - models.settings_manager - INFO - Settings loaded. {'projectsPath': 'C:/Users/Giogina/SpectraMatcher', 'recentProjects': ['C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm', 'C:/Users/Giogina/SpectraMatcher/test2.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(4).spm', 'C:/Users/Giogina/SpectraMatcher/untitled(2).spm', 'C:/Users/Giogina/SpectraMatcher/TEST.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(3).spm'], 'autoSaveInterval': 60, 'shortcuts': {(16, 17, 79): 'Open', (17, 83): 'Save', (16, 17, 83): 'Save as'}}
+2024-02-16 06:25:35,781 - models.project - INFO - file: C:\Users\Giogina\SpectraMatcher\Ovalene Test.spm, exsits=True
+2024-02-16 06:27:09,814 - root - INFO - Started with flags: ['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene Test.spm']
+2024-02-16 06:27:09,814 - models.settings_manager - INFO - Attempting to read./config/settings.json...
+2024-02-16 06:27:09,814 - models.settings_manager - INFO - Settings loaded. {'projectsPath': 'C:/Users/Giogina/SpectraMatcher', 'recentProjects': ['C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm', 'C:/Users/Giogina/SpectraMatcher/test2.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(4).spm', 'C:/Users/Giogina/SpectraMatcher/untitled(2).spm', 'C:/Users/Giogina/SpectraMatcher/TEST.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(3).spm'], 'autoSaveInterval': 60, 'shortcuts': {(16, 17, 79): 'Open', (17, 83): 'Save', (16, 17, 83): 'Save as'}}
+2024-02-16 06:27:10,324 - models.project - INFO - file: C:\Users\Giogina\SpectraMatcher\Ovalene Test.spm, exsits=True
+2024-02-16 06:28:10,340 - models.project - INFO - Save successful.
+2024-02-16 06:28:33,201 - root - INFO - Started with flags: ['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene Test.spm']
+2024-02-16 06:28:33,201 - models.settings_manager - INFO - Attempting to read./config/settings.json...
+2024-02-16 06:28:33,201 - models.settings_manager - INFO - Settings loaded. {'projectsPath': 'C:/Users/Giogina/SpectraMatcher', 'recentProjects': ['C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm', 'C:/Users/Giogina/SpectraMatcher/test2.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(4).spm', 'C:/Users/Giogina/SpectraMatcher/untitled(2).spm', 'C:/Users/Giogina/SpectraMatcher/TEST.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(3).spm'], 'autoSaveInterval': 60, 'shortcuts': {(16, 17, 79): 'Open', (17, 83): 'Save', (16, 17, 83): 'Save as'}}
+2024-02-16 06:28:35,941 - models.project - INFO - file: C:\Users\Giogina\SpectraMatcher\Ovalene Test.spm, exsits=True
+2024-02-16 06:32:03,224 - root - INFO - Started with flags: ['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene Test.spm']
+2024-02-16 06:32:03,224 - models.settings_manager - INFO - Attempting to read./config/settings.json...
+2024-02-16 06:32:03,224 - models.settings_manager - INFO - Settings loaded. {'projectsPath': 'C:/Users/Giogina/SpectraMatcher', 'recentProjects': ['C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm', 'C:/Users/Giogina/SpectraMatcher/test2.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(4).spm', 'C:/Users/Giogina/SpectraMatcher/untitled(2).spm', 'C:/Users/Giogina/SpectraMatcher/TEST.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(3).spm'], 'autoSaveInterval': 60, 'shortcuts': {(16, 17, 79): 'Open', (17, 83): 'Save', (16, 17, 83): 'Save as'}}
+2024-02-16 06:32:03,714 - models.project - INFO - file: C:\Users\Giogina\SpectraMatcher\Ovalene Test.spm, exsits=True
+2024-02-16 06:32:12,204 - root - INFO - Started with flags: ['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene Test.spm']
+2024-02-16 06:32:12,204 - models.settings_manager - INFO - Attempting to read./config/settings.json...
+2024-02-16 06:32:12,204 - models.settings_manager - INFO - Settings loaded. {'projectsPath': 'C:/Users/Giogina/SpectraMatcher', 'recentProjects': ['C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm', 'C:/Users/Giogina/SpectraMatcher/test2.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(4).spm', 'C:/Users/Giogina/SpectraMatcher/untitled(2).spm', 'C:/Users/Giogina/SpectraMatcher/TEST.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(3).spm'], 'autoSaveInterval': 60, 'shortcuts': {(16, 17, 79): 'Open', (17, 83): 'Save', (16, 17, 83): 'Save as'}}
+2024-02-16 06:32:12,724 - models.project - INFO - file: C:\Users\Giogina\SpectraMatcher\Ovalene Test.spm, exsits=True
+2024-02-16 06:32:23,884 - root - INFO - Started with flags: ['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene Test.spm']
+2024-02-16 06:32:23,884 - models.settings_manager - INFO - Attempting to read./config/settings.json...
+2024-02-16 06:32:23,884 - models.settings_manager - INFO - Settings loaded. {'projectsPath': 'C:/Users/Giogina/SpectraMatcher', 'recentProjects': ['C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm', 'C:/Users/Giogina/SpectraMatcher/test2.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(4).spm', 'C:/Users/Giogina/SpectraMatcher/untitled(2).spm', 'C:/Users/Giogina/SpectraMatcher/TEST.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(3).spm'], 'autoSaveInterval': 60, 'shortcuts': {(16, 17, 79): 'Open', (17, 83): 'Save', (16, 17, 83): 'Save as'}}
+2024-02-16 06:32:24,384 - models.project - INFO - file: C:\Users\Giogina\SpectraMatcher\Ovalene Test.spm, exsits=True
+2024-02-16 06:33:24,385 - models.project - INFO - Save successful.
+2024-02-16 06:34:24,386 - models.project - INFO - Save successful.
+2024-02-16 06:35:24,386 - models.project - INFO - Save successful.
+2024-02-16 06:35:44,137 - root - INFO - Started with flags: ['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene Test.spm']
+2024-02-16 06:35:44,137 - models.settings_manager - INFO - Attempting to read./config/settings.json...
+2024-02-16 06:35:44,137 - models.settings_manager - INFO - Settings loaded. {'projectsPath': 'C:/Users/Giogina/SpectraMatcher', 'recentProjects': ['C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm', 'C:/Users/Giogina/SpectraMatcher/test2.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(4).spm', 'C:/Users/Giogina/SpectraMatcher/untitled(2).spm', 'C:/Users/Giogina/SpectraMatcher/TEST.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(3).spm'], 'autoSaveInterval': 60, 'shortcuts': {(16, 17, 79): 'Open', (17, 83): 'Save', (16, 17, 83): 'Save as'}}
+2024-02-16 06:35:46,327 - models.project - INFO - file: C:\Users\Giogina\SpectraMatcher\Ovalene Test.spm, exsits=True
+2024-02-16 06:36:46,339 - models.project - INFO - Save successful.
+2024-02-16 06:37:46,341 - models.project - INFO - Save successful.
+2024-02-16 06:38:08,151 - root - INFO - Started with flags: ['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene Test.spm']
+2024-02-16 06:38:08,151 - models.settings_manager - INFO - Attempting to read./config/settings.json...
+2024-02-16 06:38:08,151 - models.settings_manager - INFO - Settings loaded. {'projectsPath': 'C:/Users/Giogina/SpectraMatcher', 'recentProjects': ['C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm', 'C:/Users/Giogina/SpectraMatcher/test2.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(4).spm', 'C:/Users/Giogina/SpectraMatcher/untitled(2).spm', 'C:/Users/Giogina/SpectraMatcher/TEST.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(3).spm'], 'autoSaveInterval': 60, 'shortcuts': {(16, 17, 79): 'Open', (17, 83): 'Save', (16, 17, 83): 'Save as'}}
+2024-02-16 06:38:09,971 - models.project - INFO - file: C:\Users\Giogina\SpectraMatcher\Ovalene Test.spm, exsits=True
+2024-02-16 06:41:38,666 - root - INFO - Started with flags: ['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene Test.spm']
+2024-02-16 06:41:38,666 - models.settings_manager - INFO - Attempting to read./config/settings.json...
+2024-02-16 06:41:38,666 - models.settings_manager - INFO - Settings loaded. {'projectsPath': 'C:/Users/Giogina/SpectraMatcher', 'recentProjects': ['C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm', 'C:/Users/Giogina/SpectraMatcher/test2.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(4).spm', 'C:/Users/Giogina/SpectraMatcher/untitled(2).spm', 'C:/Users/Giogina/SpectraMatcher/TEST.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(3).spm'], 'autoSaveInterval': 60, 'shortcuts': {(16, 17, 79): 'Open', (17, 83): 'Save', (16, 17, 83): 'Save as'}}
+2024-02-16 06:41:39,136 - models.project - INFO - file: C:\Users\Giogina\SpectraMatcher\Ovalene Test.spm, exsits=True
+2024-02-16 06:42:39,147 - models.project - INFO - Save successful.
+2024-02-16 06:43:39,147 - models.project - INFO - Save successful.
+2024-02-16 06:44:19,437 - root - INFO - Started with flags: ['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene Test.spm']
+2024-02-16 06:44:19,437 - models.settings_manager - INFO - Attempting to read./config/settings.json...
+2024-02-16 06:44:19,437 - models.settings_manager - INFO - Settings loaded. {'projectsPath': 'C:/Users/Giogina/SpectraMatcher', 'recentProjects': ['C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm', 'C:/Users/Giogina/SpectraMatcher/test2.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(4).spm', 'C:/Users/Giogina/SpectraMatcher/untitled(2).spm', 'C:/Users/Giogina/SpectraMatcher/TEST.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(3).spm'], 'autoSaveInterval': 60, 'shortcuts': {(16, 17, 79): 'Open', (17, 83): 'Save', (16, 17, 83): 'Save as'}}
+2024-02-16 06:44:19,927 - models.project - INFO - file: C:\Users\Giogina\SpectraMatcher\Ovalene Test.spm, exsits=True
+2024-02-16 06:45:05,488 - root - INFO - Started with flags: ['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene Test.spm']
+2024-02-16 06:45:05,488 - models.settings_manager - INFO - Attempting to read./config/settings.json...
+2024-02-16 06:45:05,488 - models.settings_manager - INFO - Settings loaded. {'projectsPath': 'C:/Users/Giogina/SpectraMatcher', 'recentProjects': ['C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm', 'C:/Users/Giogina/SpectraMatcher/test2.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(4).spm', 'C:/Users/Giogina/SpectraMatcher/untitled(2).spm', 'C:/Users/Giogina/SpectraMatcher/TEST.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(3).spm'], 'autoSaveInterval': 60, 'shortcuts': {(16, 17, 79): 'Open', (17, 83): 'Save', (16, 17, 83): 'Save as'}}
+2024-02-16 06:45:05,998 - models.project - INFO - file: C:\Users\Giogina\SpectraMatcher\Ovalene Test.spm, exsits=True
+2024-02-16 06:47:15,762 - root - INFO - Started with flags: ['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene Test.spm']
+2024-02-16 06:47:15,762 - models.settings_manager - INFO - Attempting to read./config/settings.json...
+2024-02-16 06:47:15,762 - models.settings_manager - INFO - Settings loaded. {'projectsPath': 'C:/Users/Giogina/SpectraMatcher', 'recentProjects': ['C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm', 'C:/Users/Giogina/SpectraMatcher/test2.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(4).spm', 'C:/Users/Giogina/SpectraMatcher/untitled(2).spm', 'C:/Users/Giogina/SpectraMatcher/TEST.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(3).spm'], 'autoSaveInterval': 60, 'shortcuts': {(16, 17, 79): 'Open', (17, 83): 'Save', (16, 17, 83): 'Save as'}}
+2024-02-16 06:47:16,232 - models.project - INFO - file: C:\Users\Giogina\SpectraMatcher\Ovalene Test.spm, exsits=True
+2024-02-16 06:48:16,245 - models.project - INFO - Save successful.
+2024-02-16 06:49:16,247 - models.project - INFO - Save successful.
+2024-02-16 06:50:16,254 - models.project - INFO - Save successful.
+2024-02-16 06:51:16,250 - models.project - INFO - Save successful.
+2024-02-16 06:52:16,250 - models.project - INFO - Save successful.
+2024-02-16 06:53:16,251 - models.project - INFO - Save successful.
+2024-02-16 06:54:16,252 - models.project - INFO - Save successful.
+2024-02-16 06:55:16,253 - models.project - INFO - Save successful.
+2024-02-16 06:56:16,254 - models.project - INFO - Save successful.
+2024-02-16 06:57:16,256 - models.project - INFO - Save successful.
+2024-02-16 06:58:16,258 - models.project - INFO - Save successful.
+2024-02-16 06:59:16,260 - models.project - INFO - Save successful.
+2024-02-16 07:00:16,262 - models.project - INFO - Save successful.
+2024-02-16 07:01:16,265 - models.project - INFO - Save successful.
+2024-02-16 07:02:16,268 - models.project - INFO - Save successful.
+2024-02-16 07:03:16,269 - models.project - INFO - Save successful.
+2024-02-16 07:04:16,269 - models.project - INFO - Save successful.
+2024-02-16 07:05:16,269 - models.project - INFO - Save successful.
+2024-02-16 07:06:16,273 - models.project - INFO - Save successful.
+2024-02-16 07:07:16,104 - root - INFO - Started with flags: ['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene Test.spm']
+2024-02-16 07:07:16,104 - models.settings_manager - INFO - Attempting to read./config/settings.json...
+2024-02-16 07:07:16,104 - models.settings_manager - INFO - Settings loaded. {'projectsPath': 'C:/Users/Giogina/SpectraMatcher', 'recentProjects': ['C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm', 'C:/Users/Giogina/SpectraMatcher/test2.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(4).spm', 'C:/Users/Giogina/SpectraMatcher/untitled(2).spm', 'C:/Users/Giogina/SpectraMatcher/TEST.spm', 'C:/Users/Giogina/SpectraMatcher/untitled(3).spm'], 'autoSaveInterval': 60, 'shortcuts': {(16, 17, 79): 'Open', (17, 83): 'Save', (16, 17, 83): 'Save as'}}
+2024-02-16 07:07:18,044 - models.project - INFO - file: C:\Users\Giogina\SpectraMatcher\Ovalene Test.spm, exsits=True
+2024-02-16 07:07:19,544 - models.project - INFO - Save successful.
+2024-02-16 07:08:18,047 - models.project - INFO - Save successful.
