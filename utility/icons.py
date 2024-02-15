@@ -13,6 +13,11 @@ class Icons:
     star = 0xf005
     check = 0xf00c
     x = 0xf00d
+    folder_plus = 0xf65e  # TODO: Replace with thicker plus
+    folder_minus = 0xf65d
+    file_arrow_up = 0xf574
+    file_arrow_down = 0xf56d
+    file_plus = 0xf477
     adjust = 0xf042
     align_center = 0xf037
     align_justify = 0xf039
@@ -139,18 +144,16 @@ class Icons:
     fast_backward = 0xf049
     fast_forward = 0xf050
     file = 0xf15b
-    file_archive_o = 0xf1c6
-    file_audio_o = 0xf1c7
-    file_code_o = 0xf1c9
-    file_image_o = 0xf1c5
-    file_movie_o = 0xf1c8
-    file_o = 0xf016
-    file_photo_o = 0xf1c5
-    file_picture_o = 0xf1c5
+    file_archive = 0xf1c6
+    file_audio = 0xf1c7
+    file_code = 0xf1c9
+    file_image = 0xf1c5
+    file_movie = 0xf1c8
+    file = 0xf016
     file_text = 0xf15c
-    file_text_o = 0xf0f6
-    file_video_o = 0xf1c8
-    file_zip_o = 0xf1c6
+    file_text = 0xf0f6
+    file_video = 0xf1c8
+    file_zip = 0xf1c6
     copy2 = 0xf0c5
     film = 0xf008
     filter = 0xf0b0
@@ -306,18 +309,18 @@ class Icons:
     wrench = 0xf0ad
     person_running = 0xf70c
 
-    def __new__(cls):  # Make class a Singleton.
+    def __new__(cls, font_reg=None):  # Make class a Singleton.
         if cls._instance is None:
             cls._instance = super(Icons, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self, font_reg=None):
         if not self._is_initialized:
             self._fa = {}
             self._fs = {}
             self._color_themes = {}
-            # self._registered_fa = {}
-            # self._registered_fs = {}  # {size: [list of icon hex codes already registered for this size]}
+            if font_reg:
+                self.set_font_registry(font_reg)
             self._is_initialized = True
 
     def set_font_registry(self, font_reg):
@@ -344,6 +347,7 @@ class Icons:
 
     def insert(self, dpg_item, icon, size, solid=True, color=None):
         """Inserts icon character as label of dpg_item."""
+        print(f"insert: {dpg_item, icon}")
         if color is not None:
             if not tuple(color) in self._color_themes.keys():
                 with dpg.theme() as self._color_themes[tuple(color)]:
@@ -353,8 +357,10 @@ class Icons:
 
         dpg.configure_item(dpg_item, label=self.get_icon(icon, size, solid))  # automatically ensures that icon char is registered
         if solid:
+            print(f"binding solid size {size} font: {dpg_item, icon, self._fs[size]}")
             dpg.bind_item_font(dpg_item, self._fs[size])
         else:
+            print(f"binding regular size {size} font: {dpg_item, self._fa[size]}")
             dpg.bind_item_font(dpg_item, self._fa[size])
         return dpg_item
 

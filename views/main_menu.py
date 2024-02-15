@@ -1,14 +1,13 @@
+from tkinter import simpledialog
+
 from launcher import Launcher
 from viewmodels.main_viewmodel import MainViewModel, noop
 import dearpygui.dearpygui as dpg
 from utility.icons import Icons
+from utility.system_file_browser import *
 import logging
 from screeninfo import get_monitors
-# import DearPyGui_Markdown as markdown
 from contextlib import contextmanager
-import tkinter as tk
-from tkinter import filedialog
-from tkinter import simpledialog
 
 
 class MainMenu:
@@ -16,7 +15,6 @@ class MainMenu:
     def __init__(self, viewmodel: MainViewModel):
         self.viewmodel = viewmodel
         self.logger = logging.getLogger(__name__)
-        self.viewmodel.set_inquire_close_unsaved_callback(callback=self.inquire_close_unsaved)
         self.icons = Icons()
 
         # Helper variables for various stuff below; handle with care
@@ -253,7 +251,7 @@ class MainMenu:
 
     def _on_save_as(self):
         self.logger.info(f"Save as requested")
-        file = self._save_as_file_dialog()
+        file = save_as_file_dialog(self.viewmodel.get_setting("projectsPath", "/"))
         if len(file):
             self.viewmodel.on_save_as(file)
 
@@ -269,7 +267,7 @@ class MainMenu:
 
     def _on_open(self):
         self.logger.info(f"Open project")
-        file = self._open_file_dialog()
+        file = open_project_file_dialog(self.viewmodel.get_setting("projectsPath", "/"))
         if file:
             self.viewmodel.on_open(file)
 
@@ -458,83 +456,5 @@ class MainMenu:
         else:
             return ""
 
-    def _open_file_dialog(
-            self):
-        root = tk.Tk()
-        root.withdraw()  # Hides the tkinter root window
-        file_path = filedialog.askopenfilename(
-            initialdir=self.viewmodel.get_setting("projectsPath", "/"),
-            title="Select project file",
-            filetypes=[("SpectraMatcher Projects", "*.spm"), ("All Files", "*.*")]
-        )
-        root.destroy()
-        return file_path
 
-    def _save_as_file_dialog(self):
-        root = tk.Tk()
-        root.withdraw()  # Hides the tkinter root window
-        file_path = filedialog.asksaveasfilename(
-            initialdir=self.viewmodel.get_setting("projectsPath", "/"),
-            title="Save project as",
-            filetypes=[("SpectraMatcher Project", "*.spm"), ("All Files", "*.*")],
-            defaultextension=".spm",
-        )
-        root.destroy()
-        return file_path
-
-    def inquire_close_unsaved(self):
-        """Returns "discard" or "save" or ("save as", file) """
-        print("project save inquiry dialog....")
-        monitor = get_monitors()[0]
-        pos = (int((monitor.width-300)/2), int((monitor.height-200)/2))
-        root = tk.Tk()
-        root.geometry("+{}+{}".format(pos[0], pos[1]))  # Root does not move yet
-        root.overrideredirect(1)
-        root.withdraw()
-        root.update_idletasks()
-        root.withdraw()  # Hide the root window
-        dialog = SaveChangesDialog(root, self.viewmodel.get("name"))
-        root.destroy()
-        choice = dialog.user_choice  # Return the choice
-        if choice == "save as":
-            path = self._save_as_file_dialog()
-            if path:
-                return "save as", path
-            else:
-                return self.inquire_close_unsaved()  # try again
-        else:
-            return choice
-
-
-class SaveChangesDialog(simpledialog.Dialog):
-    def __init__(self, parent, name):
-        self.user_choice = ""
-        self.name = name
-        super().__init__(parent, title="Save changes?")
-
-    def body(self, master):
-        tk.Label(master, text=f"\nWould you like to save changes to {self.name}?\n").pack()
-        self.bring_to_front()
-        return None  # Override if you need to return a specific widget
-
-    def buttonbox(self):
-        box = tk.Frame(self)
-
-        save_button = tk.Button(box, text="Save", width=20, command=lambda: self.ok("save"), default=tk.ACTIVE)
-        save_button.pack(side=tk.LEFT, padx=5, pady=5)
-        save_as_button = tk.Button(box, text="Save As...", width=20, command=lambda: self.ok("save as"))
-        save_as_button.pack(side=tk.LEFT, padx=5, pady=5)
-        discard_button = tk.Button(box, text="Discard", width=20, command=lambda: self.ok("discard"))
-        discard_button.pack(side=tk.LEFT, padx=5, pady=5)
-
-        self.bind("<Return>", lambda event, choice="save": self.ok(choice))
-
-        box.pack()
-
-    def ok(self, choice=None):
-        self.user_choice = choice  # Store the user's choice
-        super().ok()  # This will close the dialog
-
-    def bring_to_front(self):
-        self.after(100, lambda: Launcher.bring_window_to_front("Save changes?"))
 

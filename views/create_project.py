@@ -1,14 +1,14 @@
 import dearpygui.dearpygui as dpg
 import logging
-import tkinter as tk
-from tkinter import filedialog
 from models.settings_manager import SettingsManager
 from models.project import Project
+from utility.system_file_browser import *
+from utility.icons import Icons
 from screeninfo import get_monitors
 import os
 
 
-class CreateProjectWindow():
+class CreateProjectWindow:
     """Gather fundamental data for new project, create project file, and set its path."""
     def __init__(self, args=[]):
         self.result = None
@@ -22,12 +22,12 @@ class CreateProjectWindow():
         dpg.configure_app(auto_device=True)
 
         self.fonts = {}
-        with dpg.font_registry():
+        with dpg.font_registry() as font_reg:
             for i in [18, 24]:
                 self.fonts[i] = dpg.add_font("./fonts/Sansation_Regular.ttf", i)
+            icons = Icons(font_reg)
         dpg.bind_font(self.fonts[18])
         close_button_theme, selectables_theme, selectables_theme_2 = self.adjust_theme()
-
 
         with dpg.handler_registry() as self.keyReg:
             dpg.add_key_press_handler(dpg.mvKey_Escape, callback=self.on_escape)
@@ -38,27 +38,19 @@ class CreateProjectWindow():
         dash_width = 800
         dash_height = 550
 
-        width, height, channels, data = dpg.load_image("./resources/folder_outline.png")
-        width2, height2, channels2, data2 = dpg.load_image("./resources/delete.png")
-
         if len(self.import_from):
             name = os.path.basename(os.path.normpath(self.import_from[0]))
         else:
             name = ""
-
-        with dpg.texture_registry(show=False):
-            dpg.add_static_texture(width=width, height=height, default_value=data, tag="folder")
-            dpg.add_static_texture(width=width2, height=height2, default_value=data2, tag="delete")
 
         dpg.create_viewport(title='Create new project - SpectraMatcher', width=dash_width, height=dash_height,
                             x_pos=int(monitor.width/2-dash_width/2), y_pos=int(monitor.height/2-dash_height/2))
 
         dpg.set_viewport_decorated(False)
         with dpg.window(label="Create New Project", width=dash_width, height=dash_height, tag="new project window"):
-            dpg.add_button(label="x", pos=[dash_width - 36, 6], width=30, height=30, tag="close-button",
-                           callback=self.on_close)  # todo: make this an image button with a x icon
+            icons.insert(dpg.add_button(pos=[dash_width - 36, 6], width=30, height=30, tag="close-button",
+                                        callback=self.on_close), Icons.x, 16)
             dpg.bind_item_theme("close-button", close_button_theme)
-            dpg.bind_item_font("close-button", self.fonts[24])
             with dpg.child_window(label="inner", pos=[100, 60], width=dash_width-200, height=-1):
                 dpg.add_text("Project name:", color=[131, 131, 255])
                 dpg.add_input_text(width=-1, hint="New Project", default_value=name, callback=self.project_name_entered, tag="name input")
@@ -68,9 +60,11 @@ class CreateProjectWindow():
                 with dpg.group(horizontal=True):
                     dpg.add_input_text(default_value=self.construct_savefile_name(), width=-53, tag="path input", callback=self.path_entered)
                     dpg.add_spacer(width=10)
-                    dpg.add_image_button("folder", width=18, height=18, callback=self.on_save_as)
+                    with dpg.group(horizontal=False):
+                        # dpg.add_spacer(height=1)
+                        icons.insert(dpg.add_button(width=42, height=42, callback=self.on_save_as), Icons.open_folder, 16, solid=False)
 
-                dpg.add_spacer(height=16)
+                dpg.add_spacer(height=6)
                 with dpg.group(horizontal=True):
                     dpg.add_text("Import data:", color=[131, 131, 255])
 
@@ -87,14 +81,15 @@ class CreateProjectWindow():
 
                     dpg.add_spacer(width=10)
                     with dpg.group(horizontal=False):
-                        dpg.add_image_button("folder", width=18, height=18, tag="data_folder", callback=self.on_add_data)
+                        # dpg.add_image_button("folder", width=18, height=18, tag="data_folder", callback=self.on_add_data)
+                        icons.insert(dpg.add_button(width=42, height=42, callback=self.on_add_data), Icons.folder_plus, 16)
                         dpg.add_spacer(height=10)
-                        dpg.add_image_button("delete", width=18, height=18, tag="trash", callback=self.delete_items)
+                        icons.insert(dpg.add_button(width=42, height=42, callback=self.delete_items), Icons.trash, 16)
 
                 dpg.add_spacer(height=52)
                 with dpg.group(horizontal=True):
                     dpg.add_spacer(width=dash_width-200-200)
-                    dpg.add_button(label="OK", width=200, callback=self.on_ok)
+                    dpg.add_button(label="OK", width=200, height=42, callback=self.on_ok)
 
             with dpg.window(label="Overwrite", modal=True, show=False, tag="modal_id", no_title_bar=True, no_resize=True,
                             width=300, height=200, pos=(int(dash_width/2-150), int(dash_height/2-100))):
@@ -142,6 +137,8 @@ class CreateProjectWindow():
                 dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrabActive, [60, 60, 154])
                 dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrabHovered, [60, 60, 154])
                 dpg.add_theme_color(dpg.mvThemeCol_FrameBg, [60, 60, 154, 100])
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
 
         dpg.bind_theme(global_theme)
 
@@ -203,40 +200,17 @@ class CreateProjectWindow():
             dpg.delete_item(r[1])
 
     def on_add_data(self):
-        file = self.data_dir_file_dialog()
+        file = data_dir_file_dialog(self.settings.get("projectsPath", "/"))  # todo: Implement "dataPath" keyword
         self.import_from.append(file)
         s = dpg.add_selectable(label=file, parent=self.selectables_list)
         self.selectables.append((file, s))
 
-    def data_dir_file_dialog(self):
-        root = tk.Tk()
-        root.withdraw()  # Hides the tkinter root window
-        file_path = filedialog.askdirectory(
-            initialdir=self.settings.get("projectsPath", "/"),  # todo: Implement "dataPath" keyword
-            title="Select data directory"
-        )
-        root.destroy()
-        return file_path
-
     def on_save_as(self):
-        file = self.save_as_file_dialog()
+        file = save_as_file_dialog(self.settings.get("projectsPath", "/"))
         if len(file):
             dpg.set_value("path input", file)
             self.path_changed = True
             self.path_from_file_dialog = True
-
-    def save_as_file_dialog(self):
-        root = tk.Tk()
-        root.withdraw()  # Hides the tkinter root window
-        file_path = filedialog.asksaveasfilename(
-            initialdir=self.settings.get("projectsPath", "/"),
-            title="Save project as",
-            filetypes=[("SpectraMatcher Project (.spm)", "*.spm*"), ("All Files", "*.*")],
-            defaultextension=".spm",
-
-        )
-        root.destroy()
-        return file_path
 
     def project_name_entered(self, *args):
         if not self.path_changed:
@@ -259,7 +233,7 @@ class CreateProjectWindow():
         name = dpg.get_value("name input")
         if not len(name):
             name = "Untitled"
-        Project(path).new(name=name, import_data=self.import_from)
+        Project(path).new(name=name, import_data_dirs=self.import_from)
         self.result = ('-open', path)
         dpg.stop_dearpygui()
 

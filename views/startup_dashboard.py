@@ -1,10 +1,9 @@
 import math
 
 import dearpygui.dearpygui as dpg
-import tkinter as tk
-from tkinter import filedialog
 from models.settings_manager import SettingsManager
 from models.spectrum_plots import SpecPlotter
+from utility.system_file_browser import *
 from screeninfo import get_monitors
 import numpy as np
 from pathlib import Path
@@ -427,7 +426,7 @@ class Dashboard:
 
     def open_project(self):
         # Logic to open a project
-        project_path = self.open_file_dialog()
+        project_path = open_project_file_dialog(self.settings.get("projectsPath", "/"))
         if project_path:
             self.result = ('-open', project_path)
             dpg.stop_dearpygui()
@@ -440,17 +439,6 @@ class Dashboard:
         if app_data == dpg.mvKey_Escape:  # Check if the Escape key was pressed
             self.result = ("-exit", )
             dpg.stop_dearpygui()
-
-    def open_file_dialog(self):  # TODO: Instead use https://github.com/hoffstadt/DearPyGui/wiki/Tools-and-Widgets file explorer (for multi selection, matching theme) (also in views/main_menu.py _open_file_dialog)
-        root = tk.Tk()
-        root.withdraw()  # Hides the tkinter root window
-        file_path = filedialog.askopenfilename(
-            initialdir=self.settings.get("projectsPath", "/"),
-            title="Select project file",
-            filetypes=[("SpectraMatcher Projects (.spm)", "*.spm*"), ("All Files", "*.*")]
-        )
-        root.destroy()
-        return file_path
 
     def on_recent_click(self, sender, app_data):
         for i, item in enumerate(self.file_item):

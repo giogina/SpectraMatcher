@@ -3,6 +3,7 @@ from models.project import Project
 from models.settings_manager import SettingsManager
 from viewmodels.data_files_viewmodel import DataFileViewModel
 from launcher import Launcher
+from utility.system_file_browser import inquire_close_unsaved
 
 
 def noop(*args, **kwargs):
@@ -19,7 +20,7 @@ class MainViewModel(ProjectObserver):
 
         self._title_callback = title_callback
         self._message_callback = noop
-        self._inquire_close_unsaved_project = inquire_close_unsaved_project_callback
+        # self._inquire_close_unsaved_project = inquire_close_unsaved_project_callback
 
     # Spawn child view models responsible for child windows.
     def get_file_manager_viewmodel(self):
@@ -65,9 +66,6 @@ class MainViewModel(ProjectObserver):
     def set_message_callback(self, callback):
         self._message_callback = callback
 
-    def set_inquire_close_unsaved_callback(self, callback):
-        self._inquire_close_unsaved_project = callback
-
     def on_save(self):
         self._project.save()
 
@@ -84,7 +82,7 @@ class MainViewModel(ProjectObserver):
         if self._project is None:
             return True
         if self._project_unsaved or self._project.check_newer_autosave():
-            response = self._inquire_close_unsaved_project()  # User either saves, discards (return true) or cancels
+            response = inquire_close_unsaved(project_name=self.get("name"), root_path=self.get_setting("projectsPath", "/"))  # User either saves, discards (return true) or cancels
             if response == "discard":
                 self._project.close_project(close_anyway=True)
                 return True

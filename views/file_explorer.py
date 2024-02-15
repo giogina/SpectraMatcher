@@ -17,6 +17,12 @@ class FileExplorer:
         self._file_rows = []
         self._last_delta = 0
 
+        with dpg.theme() as self.invisible_button_theme:
+            with dpg.theme_component(dpg.mvImageButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [11, 11, 36, 0])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [11, 11, 36, 0])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [11, 11, 36, 0])
+
         sep = []
         for i in range(24):
             sep.extend([0.8, 0.8, 1, 0.4])
@@ -36,8 +42,12 @@ class FileExplorer:
 
         with dpg.child_window(tag="action bar", width=-1, height=32):
             with dpg.group(horizontal=True):
-                self.icons.insert(dpg.add_button(height=32, width=32), Icons.plus, size=16)
+                self.icons.insert(dpg.add_button(height=32, width=32), Icons.folder_plus, size=16)
+                self.icons.insert(dpg.add_button(height=32, width=32), Icons.file_plus, size=16)
+                s = dpg.add_image_button("pixel", width=1, height=24)
+                dpg.bind_item_theme(s, self.invisible_button_theme)
                 self.icons.insert(dpg.add_button(height=32, width=32), Icons.filter, size=16)
+                self.icons.insert(dpg.add_button(height=32, width=32), Icons.eye, size=16)
 
         with dpg.group(horizontal=True, tag="file table header"):
             for i in range(1, len(self._table_columns)):
@@ -135,7 +145,7 @@ class FileExplorer:
         # TODO: Decide on file icon: Chk, input, log-freq-ground/excited, log-FC-up/down
         file_icon = Icons.file
         if file.type == FileType.GAUSSIAN_INPUT:
-            file_icon = Icons.file_code_o
+            file_icon = Icons.file_code
         self.icons.insert(dpg.add_button(width=self._table_columns[0][1], parent=file.tag, tag=f"{file.tag}-c0"), file_icon, 16, solid=False)
         dpg.add_selectable(label=file.name, width=self._table_columns[1][1]-52-file.depth*20, span_columns=True, parent=file.tag, tag=f"{file.tag}-c1")
         status_icon = ""
