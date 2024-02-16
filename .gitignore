@@ -2,3 +2,5 @@ old/
 *.backup
 *_autosave.spm
 spectraMatcher.log
+__pycache__
+venv_win
