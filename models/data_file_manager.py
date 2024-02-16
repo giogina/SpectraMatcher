@@ -128,10 +128,13 @@ class FileType:
     GAUSSIAN_LOG = "Gaussian log"
     GAUSSIAN_INPUT = "Gaussian input"
     GAUSSIAN_CHECKPOINT = "Gaussian chk"
+    FREQ_GROUND = "Frequency ground state"
+    FREQ_EXCITED = "Frequency excited state"
+    FC_EXCITATION = "FC excitation"
+    FC_EMISSION = "FC emission"
 
 
 class GaussianLog:
-    CONTENTS = "contents"
     STATUS = "status"
     HAS_HPMODES = "hpmodes"
     ANHARM = "anharm"
@@ -139,10 +142,6 @@ class GaussianLog:
     ERROR = "error"
     RUNNING = "running"
     NEGATIVE_FREQUENCY = "negative frequency"
-    FREQ_GROUND = "Frequency ground state"
-    FREQ_EXCITED = "Frequency excited state"
-    FC_EXCITATION = "FC excitation"
-    FC_EMISSION = "FC emission"
 
 
 class File:
@@ -174,7 +173,6 @@ class File:
         properties = {}
         if self.extension == ".log":  # Gaussian log
             self.type = FileType.GAUSSIAN_LOG
-            properties[GaussianLog.CONTENTS] = None
             properties[GaussianLog.ANHARM] = False
             properties[GaussianLog.HAS_HPMODES] = False
 
@@ -192,7 +190,7 @@ class File:
                         if re.search('Frequencies --', line):
                             has_freqs = True
                             if re.search('Frequencies ---', line):
-                                properties[GaussianLog.HAS_HPMODES] = True  # TODO: Check for negative frequencies (set state to GaussianLog.NEGATIVE_FREQUENCY, update file)
+                                properties[GaussianLog.HAS_HPMODES] = True  # TODO: Check for negative frequencies (set state to GaussianLog.NEGATIVE_FREQUENCY, update file; set state to ERROR or negfreq!)
                         if re.search('anharmonic', line):
                             properties[GaussianLog.ANHARM] = True
                         if re.search('Excited', line):
@@ -209,14 +207,14 @@ class File:
                             error = True
                 if has_fc:
                     if emission:
-                        properties[GaussianLog.CONTENTS] = GaussianLog.FC_EMISSION  # TODO: FC files always treat current state as ground state; and contain corresponding geom & freqs. Read from there (maybe just as backup).
+                        self.type = FileType.FC_EMISSION  # TODO: FC files always treat current state as ground state; and contain corresponding geom & freqs. Read from there (maybe just as backup).
                     else:
-                        properties[GaussianLog.CONTENTS] = GaussianLog.FC_EXCITATION
+                        self.type = FileType.FC_EXCITATION
                 elif has_freqs:
                     if excited:
-                        properties[GaussianLog.CONTENTS] = GaussianLog.FREQ_EXCITED
+                        self.type = FileType.FREQ_EXCITED
                     else:
-                        properties[GaussianLog.CONTENTS] = GaussianLog.FREQ_GROUND
+                        self.type = FileType.FREQ_GROUND
                 if nr_jobs == nr_finished:
                     properties[GaussianLog.STATUS] = GaussianLog.FINISHED
                 elif error:

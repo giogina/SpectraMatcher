@@ -18,11 +18,15 @@ class FileExplorer:
         self._file_tables = []
         self._directory_nodes = {}
         self._last_delta = 0
-
-        # TODO: Keep track of open/closed status of folders;
+        self._toggling_item = None
+        self.filterable_extensions = [".log", ".gjf", ".com", ".chk", ".txt", ".*"]
 
         with dpg.theme() as self.invisible_button_theme:
             with dpg.theme_component(dpg.mvImageButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [11, 11, 36, 0])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [11, 11, 36, 0])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [11, 11, 36, 0])
+            with dpg.theme_component(dpg.mvButton):
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [11, 11, 36, 0])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [11, 11, 36, 0])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [11, 11, 36, 0])
@@ -38,7 +42,7 @@ class FileExplorer:
             # dpg.add_static_texture(width=1, height=500, default_value=long_sep, tag="long separator")
 
         with dpg.item_handler_registry() as self.node_handlers:
-            dpg.add_item_clicked_handler(callback=self._toggle_directory_node_labels)
+            dpg.add_item_clicked_handler(callback=self._init_toggle_directory_node_labels)
         with dpg.item_handler_registry() as self.table_handlers:
             dpg.add_item_clicked_handler(callback=self._start_table_mouse_drag)
         with dpg.handler_registry() as self.mouse_handlers:
@@ -50,7 +54,27 @@ class FileExplorer:
                 self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_files), Icons.file_plus, size=16)
                 s = dpg.add_image_button("pixel", width=1, height=24)
                 dpg.bind_item_theme(s, self.invisible_button_theme)
-                self.icons.insert(dpg.add_button(height=32, width=32), Icons.filter, size=16)
+                b = dpg.add_button(height=32, width=32)  # Todo: moving this to the right would be better window placement. Maybe put a search bar in the middle?
+                self.icons.insert(b, Icons.filter, size=16)
+                with dpg.popup(b, tag="file filter popup", mousebutton=dpg.mvMouseButton_Left, no_move=False):
+                    dpg.add_button(label="Filter file types", width=200)
+                    dpg.bind_item_theme(dpg.last_item(), self.invisible_button_theme)
+                    # dpg.add_text("   Filter file types:   ")
+                    dpg.add_separator()
+                    for extension in self.filterable_extensions:
+                        dpg.add_checkbox(label=f"  *{extension}", default_value=True, tag=f"check {extension}", callback=self._update_filter)
+                    dpg.add_separator()
+                    dpg.add_checkbox(label="  Done", default_value=True, tag="check-done", callback=self._update_filter)
+                    dpg.add_checkbox(label="  Running", default_value=True, tag="check-running", callback=self._update_filter)
+                    dpg.add_checkbox(label="  Problematic", default_value=True, tag="check-problem", callback=self._update_filter)
+                    dpg.add_separator()
+                    dpg.add_checkbox(label="  Frequency", default_value=True, tag="check-freq", callback=self._update_filter)
+                    dpg.add_checkbox(label="  Franck-Condon", default_value=True, tag="check-fc", callback=self._update_filter)
+                    dpg.add_checkbox(label="  Other .log", default_value=True, tag="check-other-log", callback=self._update_filter)
+                    dpg.add_separator()
+                    dpg.add_checkbox(label="  Excitation", default_value=True, tag="check-excitation", callback=self._update_filter)
+                    dpg.add_checkbox(label="  Emission", default_value=True, tag="check-emission", callback=self._update_filter)
+
                 self.icons.insert(dpg.add_button(height=32, width=32), Icons.eye, size=16)
 
         with dpg.group(horizontal=True, tag="file table header"):
@@ -69,6 +93,31 @@ class FileExplorer:
                 dpg.add_group(horizontal=False, tag="file explorer group")
 
         self.configure_theme()
+
+    def _update_filter(self):
+        for file in self._file_rows:
+            if file.extension == ".log":
+                status = file.properties.get(GaussianLog.STATUS, "")
+                if not dpg.get_value(f'check {file.extension}'):
+                    dpg.configure_item(file.tag, show=False)
+                elif (status == GaussianLog.RUNNING and not dpg.get_value("check-running")) \
+                            or (status == GaussianLog.FINISHED and not dpg.get_value("check-done")) \
+                            or (status in [GaussianLog.ERROR, GaussianLog.NEGATIVE_FREQUENCY]
+                                and not dpg.get_value("check-problem")):
+                    dpg.configure_item(file.tag, show=False)
+                elif file.type in [FileType.FREQ_GROUND, FileType.FREQ_EXCITED] and not dpg.get_value("check-freq") \
+                    or (file.type in [FileType.FC_EXCITATION, FileType.FC_EMISSION] and not dpg.get_value("check-fc")) \
+                    or (file.type == FileType.GAUSSIAN_LOG and not dpg.get_value("check-other-log")):
+                    dpg.configure_item(file.tag, show=False)
+                elif file.type in [FileType.FREQ_EXCITED, FileType.FC_EXCITATION] and not dpg.get_value("check-excitation") \
+                    or (file.type in [FileType.FREQ_GROUND, FileType.FC_EMISSION] and not dpg.get_value("check-emission")):
+                    dpg.configure_item(file.tag, show=False)
+                else:
+                    dpg.configure_item(file.tag, show=True)
+            elif file.extension in self.filterable_extensions:
+                dpg.configure_item(file.tag, show=dpg.get_value(f'check {file.extension}'))
+            else:
+                dpg.configure_item(file.tag, show=dpg.get_value(f'check .*'))
 
     def _tables_resize(self):
         column = self._resizing_column
@@ -106,18 +155,26 @@ class FileExplorer:
             # ctypes.windll.user32.SetCursor(arrow_cursor)
             self._table_columns[column][1] = dpg.get_item_width(f"table header {column}")
             self._resizing_column = None  # Reset
+        item_tag = self._toggling_item
+        if item_tag:
+            self._toggle_directory_node_labels(item_tag)
+            self._toggling_item = None
 
-    def _toggle_directory_node_labels(self, sender, app_data, handler_user_data):
+    def _init_toggle_directory_node_labels(self, sender, app_data, handler_user_data):
         item_tag = dpg.get_item_user_data(app_data[1])
+        self._toggling_item = item_tag
+
+    def _toggle_directory_node_labels(self, item_tag):  # Currently simply makes sure the icon matches the target state.
         label = dpg.get_item_label(item_tag)
-        if self._directory_nodes[item_tag]:  # label[0] == u'\u00a4':
-            label = u'\u00a3' + label[1:len(label)]  # TODO: Fails due to window minimizing bug. Check for coming into view or something?
-            dpg.configure_item(f"after_{item_tag}", height=self.item_padding)  # extra spacing after closed dir
-        else:
+        is_open = dpg.get_value(item_tag)
+        if is_open:  # self._directory_nodes[item_tag]:  # label[0] == u'\u00a4':
             label = u'\u00a4' + label[1:len(label)]
             dpg.configure_item(f"after_{item_tag}", height=0)
+        else:
+            label = u'\u00a3' + label[1:len(label)]
+            dpg.configure_item(f"after_{item_tag}", height=self.item_padding)  # extra spacing after closed dir
         dpg.set_item_label(item_tag, label)
-        self._directory_nodes[item_tag] = not self._directory_nodes[item_tag]
+        self._directory_nodes[item_tag] = is_open
         self.viewmodel.toggle_directory(item_tag, self._directory_nodes[item_tag])
 
     def _add_data_folder(self):
@@ -174,11 +231,11 @@ class FileExplorer:
 
     def update_file(self, file: File, table=None):
         if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
-            dpg.add_table_row(tag=file.tag, parent=table)
-            dpg.add_button(width=self._table_columns[0][1], parent=file.tag, tag=f"{file.tag}-c0")
-            dpg.add_selectable(label=file.name, width=self._table_columns[1][1] - 52 - file.depth * 20, span_columns=True,
-                               parent=file.tag, tag=f"{file.tag}-c1")
-            dpg.add_button(width=self._table_columns[2][1], parent=file.tag, tag=f"{file.tag}-c2")
+            with dpg.table_row(tag=file.tag, parent=table):
+                dpg.add_button(width=self._table_columns[0][1], tag=f"{file.tag}-c0")
+                dpg.add_selectable(label=file.name, width=self._table_columns[1][1] - 52 - file.depth * 20, span_columns=True,
+                                   tag=f"{file.tag}-c1")
+                dpg.add_button(width=self._table_columns[2][1], tag=f"{file.tag}-c2")
             self._file_rows.append(file)
 
         # Gather file info # TODO: Decide on file icon: Chk, input, log-freq-ground/excited, log-FC-up/down
@@ -188,26 +245,28 @@ class FileExplorer:
 
         status_icon = ""
         color = None
-        if file.type == FileType.GAUSSIAN_LOG:  # TODO: These decisions should be made in the viewmodel.
-            if file.properties[GaussianLog.STATUS] == GaussianLog.FINISHED:
-                status_icon = Icons.check
-                color = [0, 200, 0]
-                with dpg.tooltip(f"{file.tag}-c2"):
-                    dpg.add_text("Calculation finished successfully.")
-            elif file.properties[GaussianLog.STATUS] == GaussianLog.NEGATIVE_FREQUENCY:
-                status_icon = Icons.exclamation_triangle
-                color = [200, 0, 0]
-                with dpg.tooltip(f"{file.tag}-c2"):
-                    dpg.add_text("Negative frequencies detected!")
-            elif file.properties[GaussianLog.STATUS] == GaussianLog.ERROR:
-                status_icon = Icons.x
-                color = [200, 0, 0]
-                with dpg.tooltip(f"{file.tag}-c2"):
-                    dpg.add_text("Calculation terminated with an error!")
-            else:
-                status_icon = Icons.hourglass_start
-                with dpg.tooltip(f"{file.tag}-c2"):
-                    dpg.add_text("Calculation running...")
+        if file.extension == ".log":  # TODO: These decisions should be made in the viewmodel.
+            status = file.properties.get(GaussianLog.STATUS)
+            if status:
+                if file.properties[GaussianLog.STATUS] == GaussianLog.FINISHED:
+                    status_icon = Icons.check
+                    color = [0, 200, 0]
+                    with dpg.tooltip(f"{file.tag}-c2"):
+                        dpg.add_text("Calculation finished successfully.")
+                elif file.properties[GaussianLog.STATUS] == GaussianLog.NEGATIVE_FREQUENCY:
+                    status_icon = Icons.exclamation_triangle
+                    color = [200, 0, 0]
+                    with dpg.tooltip(f"{file.tag}-c2"):
+                        dpg.add_text("Negative frequencies detected!")
+                elif file.properties[GaussianLog.STATUS] == GaussianLog.ERROR:
+                    status_icon = Icons.x
+                    color = [200, 0, 0]
+                    with dpg.tooltip(f"{file.tag}-c2"):
+                        dpg.add_text("Calculation terminated with an error!")
+                else:
+                    status_icon = Icons.hourglass_start
+                    with dpg.tooltip(f"{file.tag}-c2"):
+                        dpg.add_text("Calculation running...")
 
         # Insert file info
         self.icons.insert(f"{file.tag}-c0", file_icon, 16, solid=False)
@@ -245,6 +304,7 @@ class FileExplorer:
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 0)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4)
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [200, 200, 255, 80])
+                dpg.add_theme_color(dpg.mvThemeCol_TextDisabled, [200, 200, 255, 50])
 
         dpg.bind_item_theme("action bar", action_bar_theme)
 
