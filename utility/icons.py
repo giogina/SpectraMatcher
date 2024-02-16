@@ -354,7 +354,15 @@ class Icons:
                         dpg.add_theme_color(dpg.mvThemeCol_Text, color)
             dpg.bind_item_theme(dpg_item, self._color_themes[tuple(color)])
 
-        dpg.configure_item(dpg_item, label=self.get_icon(icon, size, solid))  # automatically ensures that icon char is registered
+        if type(icon) == list:  # multiple icons above each other
+            label_list = []
+            for i in icon:
+                label_list.append(self.get_icon(i, size, solid))
+            label = '\n'.join(label_list)
+        else:
+            label = self.get_icon(icon, size, solid)
+        dpg.configure_item(dpg_item, label=label)  # automatically ensures that font is registered
+
         if solid:
             dpg.bind_item_font(dpg_item, self._fs[size])
         else:
@@ -363,6 +371,5 @@ class Icons:
             with dpg.tooltip(dpg_item, delay=0.3):
                 dpg.add_text(f" {tooltip} ")
         return dpg_item
-
 
 

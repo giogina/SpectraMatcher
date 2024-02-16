@@ -52,8 +52,10 @@ class FileExplorer:
             with dpg.group(horizontal=True):
                 self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_folder), Icons.folder_plus, size=16, tooltip="Import data folder")
                 self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_files), Icons.file_plus, size=16, tooltip="Import data files")
-                s = dpg.add_image_button("pixel", width=1, height=24)
-                dpg.bind_item_theme(s, self.invisible_button_theme)
+                dpg.bind_item_theme(dpg.add_image_button("pixel", width=1, height=24), self.invisible_button_theme)
+                self.icons.insert(dpg.add_button(height=32, width=32, tag="collapse all", callback=self._collapse_all, user_data=False), Icons.angle_double_up, size=16, tooltip="Collapse all folders")
+                self.icons.insert(dpg.add_button(height=32, width=32, tag="expand all", callback=self._collapse_all, user_data=True), Icons.angle_double_down, size=16, tooltip="Expand all folders")
+                dpg.bind_item_theme(dpg.add_image_button("pixel", width=1, height=24), self.invisible_button_theme)
                 b = dpg.add_button(height=32, width=32)  # Todo: moving this to the right would be better window placement. Maybe put a search bar in the middle?
                 self.icons.insert(b, Icons.filter, size=16, tooltip="Filter file types")
                 self._setup_filter_popup(b)
@@ -101,6 +103,12 @@ class FileExplorer:
             dpg.add_checkbox(label="  Excitation", default_value=True, tag="check-excitation",
                              callback=self._update_filter)
             dpg.add_checkbox(label="  Emission", default_value=True, tag="check-emission", callback=self._update_filter)
+
+    def _collapse_all(self, s, a, expand=False):
+        print(expand)
+        for directory in self._directory_nodes:
+            dpg.set_value(directory, expand)
+            self._toggle_directory_node_labels(directory)
 
     def _select_columns(self, s, show, i):
         self._table_columns[i][3] = show
@@ -184,7 +192,7 @@ class FileExplorer:
     def _toggle_directory_node_labels(self, item_tag):  # Currently simply makes sure the icon matches the target state.
         label = dpg.get_item_label(item_tag)
         is_open = dpg.get_value(item_tag)
-        if is_open:  # self._directory_nodes[item_tag]:  # label[0] == u'\u00a4':
+        if is_open:
             label = u'\u00a4' + label[1:len(label)]
             dpg.configure_item(f"after_{item_tag}", height=0)
         else:
@@ -317,11 +325,13 @@ class FileExplorer:
             with dpg.theme_component(dpg.mvAll):
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [0, 0, 0, 0])
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 0)
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [200, 200, 255, 80])
                 dpg.add_theme_color(dpg.mvThemeCol_TextDisabled, [200, 200, 255, 50])
 
         dpg.bind_item_theme("action bar", action_bar_theme)
+
+        # "collapse all"
 
         with dpg.theme() as table_header_theme:
             with dpg.theme_component(dpg.mvButton):
