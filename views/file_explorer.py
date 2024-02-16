@@ -37,12 +37,9 @@ class FileExplorer:
         sep = []
         for i in range(24):
             sep.extend([0.8, 0.8, 1, 0.4])
-        # long_sep = []
-        # for i in range(500):
-        #     long_sep.extend([0.8, 0.8, 1, 0.4])
+
         with dpg.texture_registry(show=False):
             dpg.add_static_texture(width=1, height=24, default_value=sep, tag="pixel")
-            # dpg.add_static_texture(width=1, height=500, default_value=long_sep, tag="long separator")
 
         with dpg.item_handler_registry() as self.node_handlers:
             dpg.add_item_clicked_handler(callback=self._init_toggle_directory_node_labels)
@@ -53,46 +50,25 @@ class FileExplorer:
 
         with dpg.child_window(tag="action bar", width=-1, height=32):
             with dpg.group(horizontal=True):
-                self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_folder), Icons.folder_plus, size=16)
-                self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_files), Icons.file_plus, size=16)
+                self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_folder), Icons.folder_plus, size=16, tooltip="Import data folder")
+                self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_files), Icons.file_plus, size=16, tooltip="Import data files")
                 s = dpg.add_image_button("pixel", width=1, height=24)
                 dpg.bind_item_theme(s, self.invisible_button_theme)
                 b = dpg.add_button(height=32, width=32)  # Todo: moving this to the right would be better window placement. Maybe put a search bar in the middle?
-                self.icons.insert(b, Icons.filter, size=16)
-                with dpg.popup(b, tag="file filter popup", mousebutton=dpg.mvMouseButton_Left, no_move=False):
-                    dpg.add_button(label="Filter file types", width=200)
-                    dpg.bind_item_theme(dpg.last_item(), self.invisible_button_theme)
-                    # dpg.add_text("   Filter file types:   ")
-                    dpg.add_separator()
-                    for extension in self.filterable_extensions:
-                        dpg.add_checkbox(label=f"  *{extension}", default_value=True, tag=f"check {extension}", callback=self._update_filter)
-                    dpg.add_separator()
-                    dpg.add_checkbox(label="  Done", default_value=True, tag="check-done", callback=self._update_filter)
-                    dpg.add_checkbox(label="  Running", default_value=True, tag="check-running", callback=self._update_filter)
-                    dpg.add_checkbox(label="  Problematic", default_value=True, tag="check-problem", callback=self._update_filter)
-                    dpg.add_separator()
-                    dpg.add_checkbox(label="  Frequency", default_value=True, tag="check-freq", callback=self._update_filter)
-                    dpg.add_checkbox(label="  Franck-Condon", default_value=True, tag="check-fc", callback=self._update_filter)
-                    dpg.add_checkbox(label="  Other .log", default_value=True, tag="check-other-log", callback=self._update_filter)
-                    dpg.add_separator()
-                    dpg.add_checkbox(label="  Excitation", default_value=True, tag="check-excitation", callback=self._update_filter)
-                    dpg.add_checkbox(label="  Emission", default_value=True, tag="check-emission", callback=self._update_filter)
-
-                self.icons.insert(dpg.add_button(height=32, width=32), Icons.eye, size=16)
-                with dpg.popup(dpg.last_item(), tag="column selector popup", mousebutton=dpg.mvMouseButton_Left):
+                self.icons.insert(b, Icons.filter, size=16, tooltip="Filter file types")
+                self._setup_filter_popup(b)
+                self.icons.insert(dpg.add_button(height=32, width=32, tag="file filter button"), Icons.eye, size=16, tooltip="Select visible columns")
+                with dpg.popup("file filter button", tag="column selector popup", mousebutton=dpg.mvMouseButton_Left):
                     for i, column in enumerate(self._table_columns):
                         if i > 1:
                             dpg.add_checkbox(label=column[0], default_value=column[3], tag=f"file column {i}",
                                              callback=self._select_columns, user_data=i)
-                # TODO: Make a table containig these buttons; search bar in the middle
 
         with dpg.group(horizontal=True, tag="file table header"):
             for i in range(1, len(self._table_columns)):
                 column = self._table_columns[i]
                 dpg.add_button(label=column[0], width=column[1], height=24, tag=f"table header {i}", show=self._table_columns[i][3])
                 dpg.bind_item_handler_registry(dpg.add_image_button("pixel", width=1, height=24, user_data=i, tag=f"sep-button-{i}", show=self._table_columns[i][3]), self.table_handlers)
-                # with dpg.tooltip(f"sep-button-{i}"):  # Technically it works but it's wonky
-                #     dpg.add_image("long separator")
             dpg.add_button(label="", width=-1, height=24)
 
         with dpg.child_window(tag="file explorer panel"):
@@ -103,13 +79,36 @@ class FileExplorer:
 
         self.configure_theme()
 
+    def _setup_filter_popup(self, filter_button):
+        with dpg.popup(filter_button, tag="file filter popup", mousebutton=dpg.mvMouseButton_Left, no_move=False):
+            dpg.add_button(label="Filter file types", width=200)
+            dpg.bind_item_theme(dpg.last_item(), self.invisible_button_theme)
+            dpg.add_separator()
+            for extension in self.filterable_extensions:
+                dpg.add_checkbox(label=f"  *{extension}", default_value=True, tag=f"check {extension}",
+                                 callback=self._update_filter)
+            dpg.add_separator()
+            dpg.add_checkbox(label="  Done", default_value=True, tag="check-done", callback=self._update_filter)
+            dpg.add_checkbox(label="  Running", default_value=True, tag="check-running", callback=self._update_filter)
+            dpg.add_checkbox(label="  Problematic", default_value=True, tag="check-problem",
+                             callback=self._update_filter)
+            dpg.add_separator()
+            dpg.add_checkbox(label="  Frequency", default_value=True, tag="check-freq", callback=self._update_filter)
+            dpg.add_checkbox(label="  Franck-Condon", default_value=True, tag="check-fc", callback=self._update_filter)
+            dpg.add_checkbox(label="  Other .log", default_value=True, tag="check-other-log",
+                             callback=self._update_filter)
+            dpg.add_separator()
+            dpg.add_checkbox(label="  Excitation", default_value=True, tag="check-excitation",
+                             callback=self._update_filter)
+            dpg.add_checkbox(label="  Emission", default_value=True, tag="check-emission", callback=self._update_filter)
+
     def _select_columns(self, s, show, i):
         self._table_columns[i][3] = show
         self.viewmodel.update_column_settings()
         dpg.configure_item(f"table header {i}", show=show)  # header
         dpg.configure_item(f"sep-button-{i}", show=show)
         for file in self._file_rows:                        # file rows
-            dpg.configure_item(f"{file.tag}-c{i}", show=show)  # todo: persist these
+            dpg.configure_item(f"{file.tag}-c{i}", show=show)
 
     def _update_filter(self):
         for file in self._file_rows:
@@ -245,7 +244,7 @@ class FileExplorer:
         for file_tag in files.keys():
             self.update_file(files[file_tag], table=f"{parent}-files table")
 
-    def update_file(self, file: File, table=None):
+    def update_file(self, file: File, table=None):  # TODO: Could also make table rows horizontal groups starting with a selectable. Possible issues: Clicks (for combo boxes?),drag container feasability.
         if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
             with dpg.table_row(tag=file.tag, parent=table):
                 for i, column in enumerate(self._table_columns):
@@ -264,32 +263,29 @@ class FileExplorer:
 
         status_icon = ""
         color = None
+        status_tooltip = None
         if file.extension == ".log":  # TODO: These decisions should be made in the viewmodel.
             status = file.properties.get(GaussianLog.STATUS)
             if status:
                 if file.properties[GaussianLog.STATUS] == GaussianLog.FINISHED:
                     status_icon = Icons.check
                     color = [0, 200, 0]
-                    with dpg.tooltip(f"{file.tag}-c2"):
-                        dpg.add_text("Calculation finished successfully.")
+                    status_tooltip = "Calculation finished successfully."
                 elif file.properties[GaussianLog.STATUS] == GaussianLog.NEGATIVE_FREQUENCY:
                     status_icon = Icons.exclamation_triangle
                     color = [200, 0, 0]
-                    with dpg.tooltip(f"{file.tag}-c2"):
-                        dpg.add_text("Negative frequencies detected!")
+                    status_tooltip = "Negative frequencies detected!"
                 elif file.properties[GaussianLog.STATUS] == GaussianLog.ERROR:
                     status_icon = Icons.x
                     color = [200, 0, 0]
-                    with dpg.tooltip(f"{file.tag}-c2"):
-                        dpg.add_text("Calculation terminated with an error!")
+                    status_tooltip = "Calculation terminated with an error!"
                 else:
                     status_icon = Icons.hourglass_start
-                    with dpg.tooltip(f"{file.tag}-c2"):
-                        dpg.add_text("Calculation running...")
+                    status_tooltip = "Calculation running..."
 
         # Insert file info
         self.icons.insert(f"{file.tag}-c0", file_icon, 16, solid=False)
-        self.icons.insert(f"{file.tag}-c2", icon=status_icon, size=16, color=color)
+        self.icons.insert(f"{file.tag}-c2", icon=status_icon, size=16, color=color, tooltip=status_tooltip)
 
         # TODO: Right-click menu on file.tag row: Open in os file explorer, open in [data analysis tab showing data read from file]
 

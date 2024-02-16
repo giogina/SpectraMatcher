@@ -345,7 +345,7 @@ class Icons:
         else:
             return ""
 
-    def insert(self, dpg_item, icon, size, solid=True, color=None):
+    def insert(self, dpg_item, icon, size, solid=True, color=None, tooltip=None):
         """Inserts icon character as label of dpg_item."""
         if color is not None:
             if not tuple(color) in self._color_themes.keys():
@@ -359,6 +359,9 @@ class Icons:
             dpg.bind_item_font(dpg_item, self._fs[size])
         else:
             dpg.bind_item_font(dpg_item, self._fa[size])
+        if tooltip:
+            with dpg.tooltip(dpg_item, delay=0.3):
+                dpg.add_text(f" {tooltip} ")
         return dpg_item
 
 
