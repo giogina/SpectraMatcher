@@ -13,7 +13,10 @@ class FileExplorer:
         self.item_padding = 3
         self._resizing_column = None  # column number currently being resized
         self._dragging_button = None  # tag of resizer button being dragged
-        self._table_columns = [["Icons", 16, 16], ["File", 372, 200], ["Status", 60, 50]]  # (Label, start/current width, min width)
+        # [Label, start/current width, min width, default show value]
+        # New columns: Just add here, then fill in display_file.
+        # self._table_columns = [["Icons", 16, 16, True], ["File", 372, 200, True], ["Status", 60, 50, True]]
+        self._table_columns = self.viewmodel.table_columns
         self._file_rows = []
         self._file_tables = []
         self._directory_nodes = {}
@@ -76,12 +79,18 @@ class FileExplorer:
                     dpg.add_checkbox(label="  Emission", default_value=True, tag="check-emission", callback=self._update_filter)
 
                 self.icons.insert(dpg.add_button(height=32, width=32), Icons.eye, size=16)
+                with dpg.popup(dpg.last_item(), tag="column selector popup", mousebutton=dpg.mvMouseButton_Left):
+                    for i, column in enumerate(self._table_columns):
+                        if i > 1:
+                            dpg.add_checkbox(label=column[0], default_value=column[3], tag=f"file column {i}",
+                                             callback=self._select_columns, user_data=i)
+                # TODO: Make a table containig these buttons; search bar in the middle
 
         with dpg.group(horizontal=True, tag="file table header"):
             for i in range(1, len(self._table_columns)):
                 column = self._table_columns[i]
-                dpg.add_button(label=column[0], width=column[1], height=24, tag=f"table header {i}")
-                dpg.bind_item_handler_registry(dpg.add_image_button("pixel", width=1, height=24, user_data=i, tag=f"sep-button-{i}"), self.table_handlers)
+                dpg.add_button(label=column[0], width=column[1], height=24, tag=f"table header {i}", show=self._table_columns[i][3])
+                dpg.bind_item_handler_registry(dpg.add_image_button("pixel", width=1, height=24, user_data=i, tag=f"sep-button-{i}", show=self._table_columns[i][3]), self.table_handlers)
                 # with dpg.tooltip(f"sep-button-{i}"):  # Technically it works but it's wonky
                 #     dpg.add_image("long separator")
             dpg.add_button(label="", width=-1, height=24)
@@ -93,6 +102,14 @@ class FileExplorer:
                 dpg.add_group(horizontal=False, tag="file explorer group")
 
         self.configure_theme()
+
+    def _select_columns(self, s, show, i):
+        self._table_columns[i][3] = show
+        self.viewmodel.update_column_settings()
+        dpg.configure_item(f"table header {i}", show=show)  # header
+        dpg.configure_item(f"sep-button-{i}", show=show)
+        for file in self._file_rows:                        # file rows
+            dpg.configure_item(f"{file.tag}-c{i}", show=show)  # todo: persist these
 
     def _update_filter(self):
         for file in self._file_rows:
@@ -155,6 +172,7 @@ class FileExplorer:
             # ctypes.windll.user32.SetCursor(arrow_cursor)
             self._table_columns[column][1] = dpg.get_item_width(f"table header {column}")
             self._resizing_column = None  # Reset
+            self.viewmodel.update_column_settings()
         item_tag = self._toggling_item
         if item_tag:
             self._toggle_directory_node_labels(item_tag)
@@ -222,20 +240,21 @@ class FileExplorer:
                 else:
                     dpg.add_spacer(width=22)
                 with dpg.table(width=-1, tag=tag, header_row=False, policy=dpg.mvTable_SizingFixedFit):
-                    dpg.add_table_column(label="Icon")
-                    # dpg.add_table_column(label="File Name",  init_width_or_weight=320-depth*20)
-                    dpg.add_table_column(label="File Name")
-                    dpg.add_table_column(label="status")
+                    for column in self._table_columns:
+                        dpg.add_table_column(label=column[0])
         for file_tag in files.keys():
             self.update_file(files[file_tag], table=f"{parent}-files table")
 
     def update_file(self, file: File, table=None):
         if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
             with dpg.table_row(tag=file.tag, parent=table):
-                dpg.add_button(width=self._table_columns[0][1], tag=f"{file.tag}-c0")
-                dpg.add_selectable(label=file.name, width=self._table_columns[1][1] - 52 - file.depth * 20, span_columns=True,
-                                   tag=f"{file.tag}-c1")
-                dpg.add_button(width=self._table_columns[2][1], tag=f"{file.tag}-c2")
+                for i, column in enumerate(self._table_columns):
+                    width = self._table_columns[i][1]
+                    if i == 1:  # file name, adjust indent of following columns
+                        width -= 52 + file.depth * 20
+                        dpg.add_selectable(label=file.name, width=width, span_columns=True, tag=f"{file.tag}-c1")
+                    else:
+                        dpg.add_button(width=width, tag=f"{file.tag}-c{i}", show=self._table_columns[i][3])
             self._file_rows.append(file)
 
         # Gather file info # TODO: Decide on file icon: Chk, input, log-freq-ground/excited, log-FC-up/down

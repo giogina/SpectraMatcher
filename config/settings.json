@@ -13,5 +13,25 @@
         "(16, 17, 79)": "Open",
         "(17, 83)": "Save",
         "(16, 17, 83)": "Save as"
-    }
+    },
+    "file explorer columns": [
+        [
+            "Icons",
+            16,
+            16,
+            true
+        ],
+        [
+            "File",
+            380,
+            200,
+            true
+        ],
+        [
+            "Status",
+            140,
+            50,
+            true
+        ]
+    ]
 }

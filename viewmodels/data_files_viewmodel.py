@@ -1,4 +1,5 @@
 from models.data_file_manager import DataFileManager, FileObserver
+from models.settings_manager import SettingsManager, Settings
 from utility.system_file_browser import data_dir_file_dialog, data_files_dialog
 
 
@@ -16,6 +17,11 @@ class DataFileViewModel(FileObserver):
         self._data_file_manager = data_file_manager
         self._data_file_manager.add_observer(self, "file changed")  # Only properties of one existing file need updating
         self._data_file_manager.add_observer(self, "directory structure changed")  # Need to re-populate the entire list
+        self.settings = SettingsManager()
+        self.table_columns = self.settings.get(Settings.FILE_EXPLORER_COLUMNS)
+
+    def update_column_settings(self):
+        self.settings.update_settings({Settings.FILE_EXPLORER_COLUMNS: self.table_columns})
 
     def set_callback(self, key, callback):
         if key in self._callbacks.keys():
@@ -36,6 +42,12 @@ class DataFileViewModel(FileObserver):
 
     def get_dir_state(self, directory_tag):
         return self._data_file_manager.directory_toggle_states.get(directory_tag, True)
+    #
+    # def toggle_column_visibility(self, column_index: int, show: bool):
+    #     pass
+    #
+    # def toggle_column_visibility(self, column_index: int, show: bool):
+    #     pass
 
     def inquire_open_data_directory(self):
         path = data_dir_file_dialog(self._data_file_manager.last_path)

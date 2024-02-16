@@ -7,17 +7,27 @@ import threading
 import copy
 
 
+class Settings:
+    """Keys of settings"""
+    PROJECTS_PATH = "projectsPath"
+    RECENT_PROJECTS = "recentProjects"
+    AUTO_SAVE_INTERVAL = "autoSaveInterval"
+    SHORTCUTS = "shortcuts"
+    FILE_EXPLORER_COLUMNS = "file explorer columns"
+
+
 class SettingsManager:
     _DEFAULT_SETTINGS = {
-        "projectsPath": os.path.join(os.path.expanduser("~"), "SpectraMatcher"),
-        "recentProjects": [],
-        "autoSaveInterval": 60,  # Seconds
-        "shortcuts": {
+        Settings.PROJECTS_PATH: os.path.join(os.path.expanduser("~"), "SpectraMatcher"),
+        Settings.RECENT_PROJECTS: [],
+        Settings.AUTO_SAVE_INTERVAL: 60,  # Seconds
+        Settings.SHORTCUTS: {
             (16, 17, 79): "Open",
             (17, 83): "Save",
             (16, 17, 83): "Save as",
 
-        }  # 17: Ctrl, 16: Shift, 18: Alt
+        },  # 17: Ctrl, 16: Shift, 18: Alt
+        Settings.FILE_EXPLORER_COLUMNS: [["Icons", 16, 16, True], ["File", 372, 200, True], ["Status", 60, 50, True]]
     }
 
     _instance = None
@@ -93,7 +103,7 @@ class SettingsManager:
 
     def _save_settings_async(self):
         with self.update_lock:
-            settings_snapshot = dict(self._settings_dict)
+            settings_snapshot = copy.deepcopy(self._settings_dict)
         settings_snapshot = self._convert_dict_keys_to_string(settings_snapshot)
         save_thread = threading.Thread(target=self._save_settings, args=(settings_snapshot,))
         save_thread.start()
@@ -134,10 +144,12 @@ class SettingsManager:
                     os.remove(temp_file_path)
 
     def get(self, key, default=None):
+        """Always returns deepcopy"""
         if key in self._settings_dict:
-            return self._settings_dict[key]
+            return copy.deepcopy(self._settings_dict[key])
         elif key in SettingsManager._DEFAULT_SETTINGS:
-            return SettingsManager._DEFAULT_SETTINGS[key]
+            self._settings_dict[key] = copy.deepcopy(SettingsManager._DEFAULT_SETTINGS[key])
+            return copy.deepcopy(self._settings_dict[key])
         else:
             self.logger.info(f"Tried to get setting {key} which did not exist.")
             return default
@@ -146,40 +158,40 @@ class SettingsManager:
         for key in new_settings:
             if key not in SettingsManager._DEFAULT_SETTINGS:
                 self.logger.info(f"Used an unknown setting '{key}' which is not in default settings")
-            if key in ["recentProjects"]:
+            if key in [Settings.RECENT_PROJECTS]:
                 self.logger.warning(f"Attempted to assign protected setting '{key}'. Ignoring.")
                 return
             with self.update_lock:
-                self._settings_dict[key] = new_settings[key]
+                self._settings_dict[key] = copy.deepcopy(new_settings[key])
         self._save_settings_async()
 
     def reset_shortcuts(self):
-        del self._settings_dict["shortcuts"]
+        del self._settings_dict[Settings.SHORTCUTS]
         self._save_settings_async()
-        print(f"Default: {SettingsManager._DEFAULT_SETTINGS['shortcuts']}")
-        self._settings_dict["shortcuts"] = copy.deepcopy(SettingsManager._DEFAULT_SETTINGS["shortcuts"])
+        print(f"Default: {SettingsManager._DEFAULT_SETTINGS[Settings.SHORTCUTS]}")
+        self._settings_dict[Settings.SHORTCUTS] = copy.deepcopy(SettingsManager._DEFAULT_SETTINGS[Settings.SHORTCUTS])
         print(f"Settings set: {self._settings_dict}")
 
     def set_shortcut(self, action: str, shortcut: tuple):
-        if self._settings_dict.get("shortcuts"):
+        if self._settings_dict.get(Settings.SHORTCUTS):
             dels = []
-            for key, value in self._settings_dict["shortcuts"].items():
+            for key, value in self._settings_dict[Settings.SHORTCUTS].items():
                 if value == action:
                     dels.append(key)
             for key in dels:
-                del self._settings_dict["shortcuts"][key]
+                del self._settings_dict[Settings.SHORTCUTS][key]
         else:
-            self._settings_dict["shortcuts"] = copy.deepcopy(SettingsManager._DEFAULT_SETTINGS["shortcuts"])
-        self._settings_dict["shortcuts"][shortcut] = action
+            self._settings_dict[Settings.SHORTCUTS] = copy.deepcopy(SettingsManager._DEFAULT_SETTINGS[Settings.SHORTCUTS])
+        self._settings_dict[Settings.SHORTCUTS][shortcut] = action
         self._save_settings_async()
 
     def add_recent_project(self, project_file):
         project_file = project_file.replace("\\", "/")  # Just to keep things consistent
         with self.update_lock:
-            if self._settings_dict["recentProjects"] and self._settings_dict["recentProjects"][0] == project_file:
+            if self._settings_dict[Settings.RECENT_PROJECTS] and self._settings_dict[Settings.RECENT_PROJECTS][0] == project_file:
                 return
-            if project_file in self._settings_dict["recentProjects"]:
-                self._settings_dict["recentProjects"].remove(project_file)
-            self._settings_dict["recentProjects"].insert(0, project_file)
+            if project_file in self._settings_dict[Settings.RECENT_PROJECTS]:
+                self._settings_dict[Settings.RECENT_PROJECTS].remove(project_file)
+            self._settings_dict[Settings.RECENT_PROJECTS].insert(0, project_file)
         self._save_settings_async()
 
