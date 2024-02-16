@@ -1,7 +1,10 @@
+import subprocess
+import os
 import dearpygui.dearpygui as dpg
 from viewmodels.data_files_viewmodel import DataFileViewModel
 from models.data_file_manager import File, Directory, GaussianLog, FileType
 from utility.icons import Icons
+import utility.custom_dpg as cdpg
 
 
 class FileExplorer:
@@ -13,9 +16,7 @@ class FileExplorer:
         self.item_padding = 3
         self._resizing_column = None  # column number currently being resized
         self._dragging_button = None  # tag of resizer button being dragged
-        # [Label, start/current width, min width, default show value]
-        # New columns: Just add here, then fill in display_file.
-        # self._table_columns = [["Icons", 16, 16, True], ["File", 372, 200, True], ["Status", 60, 50, True]]
+        # New columns: Just add in settings manager, then fill in display_file.
         self._table_columns = self.viewmodel.table_columns
         self._file_rows = []
         self._file_tables = []
@@ -49,22 +50,30 @@ class FileExplorer:
             dpg.add_mouse_release_handler(dpg.mvMouseButton_Left, callback=self._on_mouse_left_release)
 
         with dpg.child_window(tag="action bar", width=-1, height=32):
-            with dpg.group(horizontal=True):
-                self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_folder), Icons.folder_plus, size=16, tooltip="Import data folder")
-                self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_files), Icons.file_plus, size=16, tooltip="Import data files")
-                dpg.bind_item_theme(dpg.add_image_button("pixel", width=1, height=24), self.invisible_button_theme)
-                self.icons.insert(dpg.add_button(height=32, width=32, tag="collapse all", callback=self._collapse_all, user_data=False), Icons.angle_double_up, size=16, tooltip="Collapse all folders")
-                self.icons.insert(dpg.add_button(height=32, width=32, tag="expand all", callback=self._collapse_all, user_data=True), Icons.angle_double_down, size=16, tooltip="Expand all folders")
-                dpg.bind_item_theme(dpg.add_image_button("pixel", width=1, height=24), self.invisible_button_theme)
-                b = dpg.add_button(height=32, width=32)  # Todo: moving this to the right would be better window placement. Maybe put a search bar in the middle?
-                self.icons.insert(b, Icons.filter, size=16, tooltip="Filter file types")
-                self._setup_filter_popup(b)
-                self.icons.insert(dpg.add_button(height=32, width=32, tag="file filter button"), Icons.eye, size=16, tooltip="Select visible columns")
-                with dpg.popup("file filter button", tag="column selector popup", mousebutton=dpg.mvMouseButton_Left):
-                    for i, column in enumerate(self._table_columns):
-                        if i > 1:
-                            dpg.add_checkbox(label=column[0], default_value=column[3], tag=f"file column {i}",
-                                             callback=self._select_columns, user_data=i)
+            with dpg.table(header_row=False):
+                dpg.add_table_column(width_stretch=True)
+                dpg.add_table_column(width_fixed=True, init_width_or_weight=220)
+                with dpg.table_row():
+                    dpg.add_spacer()
+                    with dpg.group(horizontal=True):
+                        self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_folder), Icons.folder_plus, size=16, tooltip="Import data folder")
+                        self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_files), Icons.file_plus, size=16, tooltip="Import data files")
+                        dpg.add_spacer(width=3)
+                        dpg.bind_item_theme(dpg.add_image_button("pixel", width=1, height=32), self.invisible_button_theme)
+                        dpg.add_spacer(width=3)
+                        self.icons.insert(dpg.add_button(height=32, width=32, tag="collapse all", callback=self._collapse_all, user_data=False), Icons.angle_double_up, size=16, tooltip="Collapse all folders")
+                        self.icons.insert(dpg.add_button(height=32, width=32, tag="expand all", callback=self._collapse_all, user_data=True), Icons.angle_double_down, size=16, tooltip="Expand all folders")
+                        dpg.add_spacer(width=3)
+                        dpg.bind_item_theme(dpg.add_image_button("pixel", width=1, height=32), self.invisible_button_theme)
+                        dpg.add_spacer(width=3)
+                        b = dpg.add_button(height=32, width=32)
+                        self.icons.insert(b, Icons.filter, size=16, tooltip="Filter file types")
+                        self._setup_filter_popup(b)
+                        self.icons.insert(dpg.add_button(height=32, width=32, tag="file filter button"), Icons.eye, size=16, tooltip="Select visible columns")
+                        with dpg.popup("file filter button", tag="column selector popup", mousebutton=dpg.mvMouseButton_Left):
+                            for i, column in enumerate(self._table_columns):
+                                if i > 1:
+                                    dpg.add_checkbox(label=column[0], default_value=column[3], tag=f"file column {i}", callback=self._select_columns, user_data=i)
 
         with dpg.group(horizontal=True, tag="file table header"):
             for i in range(1, len(self._table_columns)):
@@ -103,6 +112,33 @@ class FileExplorer:
             dpg.add_checkbox(label="  Excitation", default_value=True, tag="check-excitation",
                              callback=self._update_filter)
             dpg.add_checkbox(label="  Emission", default_value=True, tag="check-emission", callback=self._update_filter)
+
+    def _collapse_folder(self, directory, expand):
+        dpg.set_value(directory.tag, expand)
+        self._toggle_directory_node_labels(directory.tag)
+        for subdir in directory.content_dirs.values():
+            self._collapse_folder(subdir, expand)
+
+    def _setup_folder_right_click_menu(self, directory):
+        with cdpg.custom_popup(directory.tag, handler_registry=self.node_handlers):
+            dpg.add_selectable(label="Collapse", user_data=(directory, False), callback=lambda s, a, u: self._collapse_folder(*u))
+            dpg.add_selectable(label="Expand", user_data=(directory, True), callback=lambda s, a, u: self._collapse_folder(*u))
+            dpg.add_spacer(height=2)
+            dpg.add_separator()
+            dpg.add_spacer(height=2)
+            dpg.add_selectable(label="Open in file explorer ", user_data=directory.path.replace("/", "\\"), callback=lambda s, a, u: subprocess.Popen(f'explorer "{u}"'))
+            if directory.parent_directory is None:
+                dpg.add_selectable(label="Remove")  # TODO
+
+
+
+    def _setup_file_right_click_menu(self, file):
+        with dpg.popup(f"{file.tag}-c1", min_size=(300, 40)):
+            dpg.add_selectable(label="Open containing directory ", user_data=file.path.replace("/", "\\"), callback=lambda s, a, u: print(f'explorer /select,"{u}"'))
+            dpg.add_menu(label="Add to project as...")  # TODO
+            if file.parent_directory is None:
+                dpg.add_selectable(label="Remove")  # TODO
+
 
     def _collapse_all(self, s, a, expand=False):
         print(expand)
@@ -173,6 +209,7 @@ class FileExplorer:
             self._tables_resize()
 
     def _on_mouse_left_release(self):
+        print("Mouse release")
         column = self._resizing_column
         if column:
             # arrow_cursor = ctypes.windll.user32.LoadCursorW(0, 32512)
@@ -186,10 +223,12 @@ class FileExplorer:
             self._toggling_item = None
 
     def _init_toggle_directory_node_labels(self, sender, app_data, handler_user_data):
+        print("init toggle")
         item_tag = dpg.get_item_user_data(app_data[1])
         self._toggling_item = item_tag
 
     def _toggle_directory_node_labels(self, item_tag):  # Currently simply makes sure the icon matches the target state.
+        print("do toggle")
         label = dpg.get_item_label(item_tag)
         is_open = dpg.get_value(item_tag)
         if is_open:
@@ -228,12 +267,13 @@ class FileExplorer:
             print(f"Open? {directory.name, is_open}")
             icon = u"\u00a4  " if is_open else u"\u00a3  "
             with dpg.tree_node(label=icon + directory.name, parent=parent, tag=directory.tag, default_open=is_open, user_data=directory.tag):
-                dpg.bind_item_handler_registry(directory.tag, self.node_handlers)
                 dpg.add_spacer(height=self.item_padding)
                 for dir_tag in directory.content_dirs.keys():
                     d = directory.content_dirs[dir_tag]
                     self._display_directory(d, parent=directory.tag)
                 self._display_files(directory.content_files, parent=directory.tag)
+                self._setup_folder_right_click_menu(directory)
+                dpg.bind_item_handler_registry(directory.tag, self.node_handlers)
             dpg.add_spacer(height=0 if is_open else self.item_padding, parent=parent, tag=f"after_{directory.tag}", show=not is_open)
             self._directory_nodes[directory.tag] = is_open
 
@@ -252,7 +292,7 @@ class FileExplorer:
         for file_tag in files.keys():
             self.update_file(files[file_tag], table=f"{parent}-files table")
 
-    def update_file(self, file: File, table=None):  # TODO: Could also make table rows horizontal groups starting with a selectable. Possible issues: Clicks (for combo boxes?),drag container feasability.
+    def update_file(self, file: File, table=None):  # TODO: Could also make table rows horizontal groups starting with a selectable. Possible issues: Clicks (for combo boxes?),drag container feasability. If so, make _setup_file_right_click_menu target the selectable.
         if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
             with dpg.table_row(tag=file.tag, parent=table):
                 for i, column in enumerate(self._table_columns):
@@ -263,6 +303,7 @@ class FileExplorer:
                     else:
                         dpg.add_button(width=width, tag=f"{file.tag}-c{i}", show=self._table_columns[i][3])
             self._file_rows.append(file)
+            self._setup_file_right_click_menu(file)
 
         # Gather file info # TODO: Decide on file icon: Chk, input, log-freq-ground/excited, log-FC-up/down
         file_icon = Icons.file

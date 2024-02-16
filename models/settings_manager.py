@@ -27,7 +27,7 @@ class SettingsManager:
             (16, 17, 83): "Save as",
 
         },  # 17: Ctrl, 16: Shift, 18: Alt
-        Settings.FILE_EXPLORER_COLUMNS: [["Icons", 16, 16, True], ["File", 372, 200, True], ["Status", 60, 50, True]]
+        Settings.FILE_EXPLORER_COLUMNS: [["Icons", 16, 16, True], ["File", 372, 200, True], ["Status", 60, 50, True]]  # [Label, start/current width, min width, default show value]
     }
 
     _instance = None
