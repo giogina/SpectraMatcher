@@ -50,11 +50,12 @@ class MainViewModel(ProjectObserver):
         return title
 
     def update(self, event_type="all", *args):
+        print(f"Main VM received event: {event_type, args}")
         if event_type == "all":
             self._title_callback(self._assemble_window_title())
         elif event_type == "project_unsaved":
-            if args and not args[0] == self._project_unsaved:  # If saved status changed, adjust window title.
-                self._project_unsaved = args[0]
+            if args and not args[0][0] == self._project_unsaved:  # If saved status changed, adjust window title.
+                self._project_unsaved = args[0][0]
                 self._title_callback(self._assemble_window_title())
         elif event_type == "Project file not found":
             pass

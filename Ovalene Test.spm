@@ -1,6 +1,14 @@
 {
     "name": "Ovalene Test",
     "open data folders": [
-        "C:/Users/Giogina/Documents/ovalene"
-    ]
+        "C:/Users/Giogina/Documents/ovalene",
+        "C:/Users/Giogina/Documents/My Games"
+    ],
+    "directory toggle states": {
+        "dir_C:/Users/Giogina/Documents/ovalene\\1st excited": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\1st excited\\FCHT": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\1st excited\\FCHT emission": false,
+        "dir_C:/Users/Giogina/Documents/ovalene": true
+    },
+    "open data files": []
 }

@@ -163,6 +163,8 @@ class Project(FileObserver):
                 if auto:
                     self._hide(self._autosave_file)
                 self._logger.info(f"Save successful.")
+                if not auto:
+                    self._project_unsaved(False)
             except (IOError, OSError) as e:
                 self._logger.error(f"Error saving project: {e}")
                 if temp_file_path:

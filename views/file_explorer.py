@@ -331,8 +331,6 @@ class FileExplorer:
         self.icons.insert(f"{file.tag}-c0", file_icon, 16, solid=False)
         self.icons.insert(f"{file.tag}-c2", icon=status_icon, size=16, color=color, tooltip=status_tooltip)
 
-        # TODO: Right-click menu on file.tag row: Open in os file explorer, open in [data analysis tab showing data read from file]
-
     def configure_theme(self):
         with dpg.theme() as file_explorer_theme:
             with dpg.theme_component(dpg.mvAll):
