@@ -4,13 +4,13 @@ import dearpygui.dearpygui as dpg
 from viewmodels.data_files_viewmodel import DataFileViewModel
 from models.data_file_manager import File, Directory, GaussianLog, FileType
 from utility.icons import Icons
-import utility.custom_dpg as cdpg
 
 
 class FileExplorer:
     def __init__(self, viewmodel: DataFileViewModel):
         self.viewmodel = viewmodel
         self.viewmodel.set_callback("populate file explorer", self.update_file_explorer)
+        self.viewmodel.set_callback("reset file explorer", self.reset_file_explorer)
         self.viewmodel.set_callback("update file", self.update_file)
         self.icons = Icons()
         self.item_padding = 3
@@ -22,7 +22,6 @@ class FileExplorer:
         self._file_tables = []
         self._directory_nodes = {}
         self._last_delta = 0
-        self._toggling_item = None
         self.filterable_extensions = [".log", ".gjf", ".com", ".chk", ".txt", ".*"]
 
         with dpg.theme() as self.invisible_button_theme:
@@ -42,8 +41,6 @@ class FileExplorer:
         with dpg.texture_registry(show=False):
             dpg.add_static_texture(width=1, height=24, default_value=sep, tag="pixel")
 
-        with dpg.item_handler_registry() as self.node_handlers:
-            dpg.add_item_clicked_handler(callback=self._init_toggle_directory_node_labels)
         with dpg.item_handler_registry() as self.table_handlers:
             dpg.add_item_clicked_handler(callback=self._start_table_mouse_drag)
         with dpg.handler_registry() as self.mouse_handlers:
@@ -119,8 +116,19 @@ class FileExplorer:
         for subdir in directory.content_dirs.values():
             self._collapse_folder(subdir, expand)
 
+    def _remove_directory(self, s, a, u):
+        self.viewmodel.remove_directory(u)
+
+    def _remove_file(self, s, a, u):
+        self.viewmodel.remove_file(u)
+        dpg.delete_item(u)
+        for file in self._file_rows:
+            if file.tag == u:
+                self._file_rows.remove(file)
+
     def _setup_folder_right_click_menu(self, directory):
-        with cdpg.custom_popup(directory.tag, handler_registry=self.node_handlers):
+        tag = directory.tag
+        with dpg.popup(tag):
             dpg.add_selectable(label="Collapse", user_data=(directory, False), callback=lambda s, a, u: self._collapse_folder(*u))
             dpg.add_selectable(label="Expand", user_data=(directory, True), callback=lambda s, a, u: self._collapse_folder(*u))
             dpg.add_spacer(height=2)
@@ -128,17 +136,14 @@ class FileExplorer:
             dpg.add_spacer(height=2)
             dpg.add_selectable(label="Open in file explorer ", user_data=directory.path.replace("/", "\\"), callback=lambda s, a, u: subprocess.Popen(f'explorer "{u}"'))
             if directory.parent_directory is None:
-                dpg.add_selectable(label="Remove")  # TODO
-
-
+                dpg.add_selectable(label="Remove", user_data=tag, callback=self._remove_directory)
 
     def _setup_file_right_click_menu(self, file):
         with dpg.popup(f"{file.tag}-c1", min_size=(300, 40)):
             dpg.add_selectable(label="Open containing directory ", user_data=file.path.replace("/", "\\"), callback=lambda s, a, u: print(f'explorer /select,"{u}"'))
             dpg.add_menu(label="Add to project as...")  # TODO
             if file.parent_directory is None:
-                dpg.add_selectable(label="Remove")  # TODO
-
+                dpg.add_selectable(label="Remove", user_data=file.tag, callback=self._remove_file)
 
     def _collapse_all(self, s, a, expand=False):
         print(expand)
@@ -209,7 +214,6 @@ class FileExplorer:
             self._tables_resize()
 
     def _on_mouse_left_release(self):
-        print("Mouse release")
         column = self._resizing_column
         if column:
             # arrow_cursor = ctypes.windll.user32.LoadCursorW(0, 32512)
@@ -217,18 +221,12 @@ class FileExplorer:
             self._table_columns[column][1] = dpg.get_item_width(f"table header {column}")
             self._resizing_column = None  # Reset
             self.viewmodel.update_column_settings()
-        item_tag = self._toggling_item
-        if item_tag:
-            self._toggle_directory_node_labels(item_tag)
-            self._toggling_item = None
 
-    def _init_toggle_directory_node_labels(self, sender, app_data, handler_user_data):
-        print("init toggle")
-        item_tag = dpg.get_item_user_data(app_data[1])
-        self._toggling_item = item_tag
+        for node, is_open in self._directory_nodes.items():
+            if is_open != dpg.get_value(node):
+                self._toggle_directory_node_labels(node)
 
     def _toggle_directory_node_labels(self, item_tag):  # Currently simply makes sure the icon matches the target state.
-        print("do toggle")
         label = dpg.get_item_label(item_tag)
         is_open = dpg.get_value(item_tag)
         if is_open:
@@ -255,8 +253,7 @@ class FileExplorer:
         self.update_file_explorer(directories, files)
 
     def update_file_explorer(self, directories, files):
-        for directory_tag in directories.keys():
-            directory = directories[directory_tag]
+        for directory_tag, directory in directories.items():
             self._display_directory(directory, parent="file explorer group")
         self._display_files(files, parent="file explorer group")
 
@@ -264,7 +261,6 @@ class FileExplorer:
         if directory.tag not in self._directory_nodes.keys():
             dpg.add_spacer(height=self.item_padding, parent=parent)
             is_open = self.viewmodel.get_dir_state(directory.tag)
-            print(f"Open? {directory.name, is_open}")
             icon = u"\u00a4  " if is_open else u"\u00a3  "
             with dpg.tree_node(label=icon + directory.name, parent=parent, tag=directory.tag, default_open=is_open, user_data=directory.tag):
                 dpg.add_spacer(height=self.item_padding)
@@ -273,7 +269,6 @@ class FileExplorer:
                     self._display_directory(d, parent=directory.tag)
                 self._display_files(directory.content_files, parent=directory.tag)
                 self._setup_folder_right_click_menu(directory)
-                dpg.bind_item_handler_registry(directory.tag, self.node_handlers)
             dpg.add_spacer(height=0 if is_open else self.item_padding, parent=parent, tag=f"after_{directory.tag}", show=not is_open)
             self._directory_nodes[directory.tag] = is_open
 

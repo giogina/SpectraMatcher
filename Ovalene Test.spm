@@ -2,30 +2,5 @@
     "name": "Ovalene Test",
     "open data folders": [
         "C:/Users/Giogina/Documents/ovalene"
-    ],
-    "open data files": [],
-    "directory toggle states": {
-        "dir_C:/Users/Giogina/Documents/ovalene": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\1st excited": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\1st excited\\FCHT": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\1st excited\\FCHT emission": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\2nd excited\\FCHT": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\2nd excited\\FCHT emission": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\2nd excited": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\3rd excited\\FCHT": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\3rd excited\\FCHT emission": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\3rd excited": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\4th excited\\FCHT": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\4th excited\\FCHT emission": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\4th excited": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\5th excited\\FCHT": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\5th excited\\FCHT emission": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\5th excited": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\6th excited\\FCHT": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\6th excited\\FCHT emission": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\6th excited": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\experiment": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\ground state": true,
-        "dir_C:/Users/Giogina/Documents/ovalene\\ignore": true
-    }
+    ]
 }

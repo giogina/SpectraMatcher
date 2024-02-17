@@ -10,6 +10,7 @@ def noop(*args, **kwargs):
 class DataFileViewModel(FileObserver):
     _callbacks = {
         "populate file explorer": noop,
+        "reset file explorer": noop,
         "update file": noop
     }
 
@@ -30,40 +31,41 @@ class DataFileViewModel(FileObserver):
             print(f"Warning: In DataFileViewModel: Attempted to set unknown callback key {key}")
 
     def update(self, event_type, *args):
-        print(f"DataFileViewModel observed event: {event_type}")
+        print(f"DataFileViewModel observed event: {event_type, *args}")
         if event_type == "directory structure changed":
-            self._populate_file_explorer(args)
+            self._populate_file_explorer(*args)
         if event_type == "file changed":
             self._callbacks.get("update file")(args[0][0])
 
+    def remove_directory(self, directory_tag):
+        self._data_file_manager.close_directory(directory_tag)
+
+    def remove_file(self, file_tag):
+        self._data_file_manager.close_file(file_tag)
+
     def toggle_directory(self, directory_tag, is_open):
-        print(f"Toggling: {directory_tag, is_open}, {self._data_file_manager.directory_toggle_states}")
         self._data_file_manager.directory_toggle_states[directory_tag] = is_open
 
     def get_dir_state(self, directory_tag):
         return self._data_file_manager.directory_toggle_states.get(directory_tag, True)
-    #
-    # def toggle_column_visibility(self, column_index: int, show: bool):
-    #     pass
-    #
-    # def toggle_column_visibility(self, column_index: int, show: bool):
-    #     pass
 
     def inquire_open_data_directory(self):
         path = data_dir_file_dialog(self._data_file_manager.last_path)
         if path:
-            print(f"Adding folder: {path}")
             self._data_file_manager.open_directories([path])
 
     def inquire_open_data_files(self):
         files = data_files_dialog(self._data_file_manager.last_path)
         if files and len(files):
-            print(f"Adding files: {files}")
             self._data_file_manager.open_directories(open_data_dirs=[], open_data_files=list(files))
 
-    def _populate_file_explorer(self, *args):
-        self._callbacks.get("populate file explorer", noop)(self._data_file_manager.top_level_directories,
-                                                            self._data_file_manager.top_level_files)
+    def _populate_file_explorer(self, reset=False):
+        if reset:
+            self._callbacks.get("reset file explorer", noop)(self._data_file_manager.top_level_directories,
+                                                             self._data_file_manager.top_level_files)
+        else:
+            self._callbacks.get("populate file explorer", noop)(self._data_file_manager.top_level_directories,
+                                                                self._data_file_manager.top_level_files)
 
     # TODO: Turn Files and Directories into dicts (independent deep-copies)
     #   pre-decide icons, colors etc

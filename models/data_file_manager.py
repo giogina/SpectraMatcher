@@ -12,7 +12,7 @@ class DataFileManager:
     file_queue = None
     num_workers = 5
     last_path = "/"  # Last added data path; for file dialog root dirs
-    directory_toggle_states = {}  # "directory label": bool - is dir toggled open?
+    directory_toggle_states = {}  # "directory tag": bool - is dir toggled open?
 
     def __init__(self):
         pass
@@ -21,17 +21,23 @@ class DataFileManager:
     def open_directories(self, open_data_dirs, open_data_files=None):
         asyncio.run(self._open_directories_async(open_data_dirs, open_data_files))
 
-    # def remove_data_files(self, files: tuple):  # TODO
-    #     for file_path in files:
-    #         if file in self.top_level_files:
-    #             self.top_level_files.remove(file)
-    #     self._update_open_data_files_callback(files=self.top_level_files)
+    def close_directory(self, directory_tag):
+        if directory_tag in self.top_level_directories.keys():
+            self._forget_toggle_states(self.top_level_directories[directory_tag])
+            del self.top_level_directories[directory_tag]
+            self.notify_observers("directory structure changed", True)
 
-    # def remove_data_files(self, files: tuple): # TODO
-    #     for file in files:
-    #         if file in self.top_level_files:
-    #             self.top_level_files.remove(file)
-    #     self._update_open_data_files_callback(files=self.top_level_files)
+    def close_file(self, file_tag):
+        if file_tag in self.top_level_files.keys():
+            del self.top_level_files[file_tag]
+            self.notify_observers("directory structure changed")
+
+    def _forget_toggle_states(self, directory):
+        if directory.tag in self.directory_toggle_states.keys():
+            del self.directory_toggle_states[directory.tag]
+        for i, d in directory.content_dirs.items():
+            self._forget_toggle_states(d)
+
 
     ############### Observers ###############
 
@@ -53,9 +59,12 @@ class DataFileManager:
 
     async def worker(self):
         while True:
-            file = await self.file_queue.get()
-            await file.what_am_i()
-            self.file_queue.task_done()
+            try:
+                file = await self.file_queue.get()
+                await file.what_am_i()
+                self.file_queue.task_done()
+            except Exception as e:
+                break
 
     async def _open_directories_async(self, open_data_dirs=None, open_data_files=None):
         self.file_queue = Queue()
