@@ -141,6 +141,7 @@ class FileType:
     FREQ_EXCITED = "Frequency excited state"
     FC_EXCITATION = "FC excitation"
     FC_EMISSION = "FC emission"
+    LOG_TYPES = (GAUSSIAN_LOG, GAUSSIAN_INPUT, GAUSSIAN_CHECKPOINT, FREQ_GROUND, FREQ_EXCITED, FC_EMISSION, FC_EXCITATION)
 
 
 class GaussianLog:

@@ -139,11 +139,20 @@ class FileExplorer:
                 dpg.add_selectable(label="Remove", user_data=tag, callback=self._remove_directory)
 
     def _setup_file_right_click_menu(self, file):
+        if file.tag not in [f.tag for f in self._file_rows]:
+            dpg.delete_item(f"{file.tag}-c1")
         with dpg.popup(f"{file.tag}-c1", min_size=(300, 40)):
             dpg.add_selectable(label="Open containing directory ", user_data=file.path.replace("/", "\\"), callback=lambda s, a, u: print(f'explorer /select,"{u}"'))
             dpg.add_menu(label="Add to project as...")  # TODO
             if file.parent_directory is None:
                 dpg.add_selectable(label="Remove", user_data=file.tag, callback=self._remove_file)
+            if file.type in FileType.LOG_TYPES:
+                dpg.add_spacer(height=2)
+                dpg.add_separator()
+                dpg.add_spacer(height=2)
+                dpg.add_selectable(label="Copy last geometry", user_data=file.path)
+            if file.properties.get(GaussianLog.STATUS, "") == GaussianLog.NEGATIVE_FREQUENCY:
+                dpg.add_selectable(label="Copy adjusted geometry for re-optimization", user_data=file.path)  # TODO (stretch)
 
     def _collapse_all(self, s, a, expand=False):
         print(expand)
@@ -298,7 +307,7 @@ class FileExplorer:
                     else:
                         dpg.add_button(width=width, tag=f"{file.tag}-c{i}", show=self._table_columns[i][3])
             self._file_rows.append(file)
-            self._setup_file_right_click_menu(file)
+        self._setup_file_right_click_menu(file)
 
         # Gather file info # TODO: Decide on file icon: Chk, input, log-freq-ground/excited, log-FC-up/down
         file_icon = Icons.file
