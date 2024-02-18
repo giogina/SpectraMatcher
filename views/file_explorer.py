@@ -1,9 +1,9 @@
 import subprocess
-import os
 import dearpygui.dearpygui as dpg
 from viewmodels.data_files_viewmodel import DataFileViewModel
 from models.data_file_manager import File, Directory, GaussianLog, FileType
 from utility.icons import Icons
+from utility.drop_receiver_window import DropReceiverWindow, initialize_dnd
 
 
 class FileExplorer:
@@ -23,6 +23,7 @@ class FileExplorer:
         self._directory_nodes = {}
         self._last_delta = 0
         self.filterable_extensions = [".log", ".gjf", ".com", ".chk", ".txt", ".*"]
+        initialize_dnd()
 
         with dpg.theme() as self.invisible_button_theme:
             with dpg.theme_component(dpg.mvImageButton):
@@ -33,6 +34,17 @@ class FileExplorer:
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [11, 11, 36, 0])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [11, 11, 36, 0])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [11, 11, 36, 0])
+
+        with dpg.theme() as hover_drag_theme:
+            with dpg.theme_component(dpg.mvAll):
+                dpg.add_theme_color(dpg.mvThemeCol_Border, (150, 150, 255), category=dpg.mvThemeCat_Core)
+                dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (25, 50, 75, 100), category=dpg.mvThemeCat_Core)
+
+        with dpg.theme() as non_hover_drag_theme:
+            with dpg.theme_component(dpg.mvAll):
+                dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (25, 50, 75, 0), category=dpg.mvThemeCat_Core)
+
+        self.file_explorer_theme = None
 
         sep = []
         for i in range(24):
@@ -79,13 +91,20 @@ class FileExplorer:
                 dpg.bind_item_handler_registry(dpg.add_image_button("pixel", width=1, height=24, user_data=i, tag=f"sep-button-{i}", show=self._table_columns[i][3]), self.table_handlers)
             dpg.add_button(label="", width=-1, height=24)
 
+        # with dpg.child_window(tag="file explorer panel"):
+
         with dpg.child_window(tag="file explorer panel"):
-            dpg.add_spacer(height=16)
-            with dpg.group(horizontal=True):
+            DropReceiverWindow(self.on_drop_files, hover_drag_theme, non_hover_drag_theme).create(tag="drop window")
+            dpg.add_spacer(height=16, parent="drop window")
+            with dpg.group(horizontal=True, parent="drop window"):
                 dpg.add_spacer(width=1)
                 dpg.add_group(horizontal=False, tag="file explorer group")
 
         self.configure_theme()
+
+    def on_drop_files(self, data):
+        if type(data) == list:
+            self.viewmodel.add_directory_or_file(data)
 
     def _setup_filter_popup(self, filter_button):
         with dpg.popup(filter_button, tag="file filter popup", mousebutton=dpg.mvMouseButton_Left, no_move=False):
@@ -303,6 +322,8 @@ class FileExplorer:
                     width = self._table_columns[i][1]
                     if i == 1:  # file name, adjust indent of following columns
                         width -= 52 + file.depth * 20
+                        if file.parent_directory is None:
+                            width -= 10  # Make up for extra spacing in front
                         dpg.add_selectable(label=file.name, width=width, span_columns=True, tag=f"{file.tag}-c1")
                     else:
                         dpg.add_button(width=width, tag=f"{file.tag}-c{i}", show=self._table_columns[i][3])
@@ -363,6 +384,7 @@ class FileExplorer:
                 dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 4, self.item_padding)
 
         dpg.bind_item_theme("file explorer panel", file_explorer_theme)
+        self.file_explorer_theme = file_explorer_theme
 
         with dpg.theme() as action_bar_theme:
             with dpg.theme_component(dpg.mvAll):
@@ -373,8 +395,6 @@ class FileExplorer:
                 dpg.add_theme_color(dpg.mvThemeCol_TextDisabled, [200, 200, 255, 50])
 
         dpg.bind_item_theme("action bar", action_bar_theme)
-
-        # "collapse all"
 
         with dpg.theme() as table_header_theme:
             with dpg.theme_component(dpg.mvButton):

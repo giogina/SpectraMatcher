@@ -2,13 +2,36 @@
     "name": "Ovalene Test",
     "open data folders": [
         "C:/Users/Giogina/Documents/ovalene",
-        "C:/Users/Giogina/Documents/My Games"
+        "C:/Users/Giogina/Documents/My Games",
+        "C:/Users/Giogina/Documents/ovalene/1st excited/FCHT",
+        "C:/Users/Giogina/Documents/ovalene/1st excited/FCHT emission"
     ],
     "directory toggle states": {
         "dir_C:/Users/Giogina/Documents/ovalene\\1st excited": false,
         "dir_C:/Users/Giogina/Documents/ovalene\\1st excited\\FCHT": false,
         "dir_C:/Users/Giogina/Documents/ovalene\\1st excited\\FCHT emission": false,
-        "dir_C:/Users/Giogina/Documents/ovalene": true
+        "dir_C:/Users/Giogina/Documents/ovalene": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\2nd excited": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\2nd excited\\FCHT": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\2nd excited\\FCHT emission": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\3rd excited": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\3rd excited\\FCHT": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\3rd excited\\FCHT emission": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\4th excited": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\4th excited\\FCHT": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\4th excited\\FCHT emission": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\5th excited": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\5th excited\\FCHT": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\5th excited\\FCHT emission": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\6th excited": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\6th excited\\FCHT": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\6th excited\\FCHT emission": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\experiment": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\ground state": false,
+        "dir_C:/Users/Giogina/Documents/ovalene\\ignore": false
     },
-    "open data files": []
+    "open data files": [
+        "C:/Users/Giogina/Documents/ovalene/1st excited/ovalene-excited-opt-freq-disp.gjf",
+        "C:/Users/Giogina/Documents/ovalene/1st excited/ovalene-excited-opt-freq-disp.log"
+    ]
 }

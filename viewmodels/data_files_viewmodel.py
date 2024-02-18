@@ -54,6 +54,9 @@ class DataFileViewModel(FileObserver):
         if path:
             self._data_file_manager.open_directories([path])
 
+    def add_directory_or_file(self, paths):
+        self._data_file_manager.open_directories_or_files(paths)
+
     def inquire_open_data_files(self):
         files = data_files_dialog(self._data_file_manager.last_path)
         if files and len(files):

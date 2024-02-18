@@ -21,6 +21,18 @@ class DataFileManager:
     def open_directories(self, open_data_dirs, open_data_files=None):
         asyncio.run(self._open_directories_async(open_data_dirs, open_data_files))
 
+    def open_directories_or_files(self, paths: list):
+        new_paths = []
+        new_files = []
+        for path in paths:
+            if type(path) == str:
+                if os.path.exists(path):
+                    if os.path.isdir(path):
+                        new_paths.append(path)
+                    elif os.path.isfile(path):
+                        new_files.append(path)
+        self.open_directories(new_paths, new_files)
+
     def close_directory(self, directory_tag):
         if directory_tag in self.top_level_directories.keys():
             self._forget_toggle_states(self.top_level_directories[directory_tag])
