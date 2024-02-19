@@ -3,6 +3,7 @@ from os.path import isfile, join
 import asyncio
 from asyncio import Queue
 import re
+from enum import Enum
 
 
 class DataFileManager:
@@ -76,6 +77,7 @@ class DataFileManager:
                 await file.what_am_i()
                 self.file_queue.task_done()
             except Exception as e:
+                print(f"Worker caught an exception: {e}")
                 break
 
     async def _open_directories_async(self, open_data_dirs=None, open_data_files=None):
@@ -119,7 +121,7 @@ class Directory:
     tag = ""  # Unique identifier
 
     def __init__(self, path, manager: DataFileManager, name=None, parent=None, depth=0):
-        self.path = path.replace('\\', '/')
+        self.path = path.replace("/", "\\")
         self.manager = manager
         self.tag = f"dir_{path}"
         self.depth = depth
@@ -146,6 +148,8 @@ class Directory:
 
 class FileType:
     OTHER = "Other"
+    EXPERIMENT_EMISSION = "experiment emission"
+    EXPERIMENT_EXCITATION = "experiment excitation"
     GAUSSIAN_LOG = "Gaussian log"
     GAUSSIAN_INPUT = "Gaussian input"
     GAUSSIAN_CHECKPOINT = "Gaussian chk"
@@ -156,7 +160,7 @@ class FileType:
     LOG_TYPES = (GAUSSIAN_LOG, GAUSSIAN_INPUT, GAUSSIAN_CHECKPOINT, FREQ_GROUND, FREQ_EXCITED, FC_EMISSION, FC_EXCITATION)
 
 
-class GaussianLog:
+class GaussianLog(Enum):
     STATUS = "status"
     HAS_HPMODES = "hpmodes"
     ANHARM = "anharm"
@@ -178,7 +182,7 @@ class File:
     type = None
 
     def __init__(self, path, manager: DataFileManager, name=None, parent=None, depth=0):
-        self.path = path.replace('\\', '/')
+        self.path = path.replace("/", "\\")
         self.manager = manager
         self.depth = depth
         self.tag = f"file_{path}"

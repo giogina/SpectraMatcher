@@ -1,10 +1,51 @@
-from models.data_file_manager import DataFileManager, FileObserver
+from models.data_file_manager import DataFileManager, FileObserver, File, Directory, GaussianLog, FileType
 from models.settings_manager import SettingsManager, Settings
 from utility.system_file_browser import data_dir_file_dialog, data_files_dialog
 
 
 def noop(*args, **kwargs):
     pass
+
+
+class FileViewModel:
+    name = ""
+    path = ""
+    tag = None
+    depth = 0
+    parent_directory = None
+    type = None
+    extension = ""
+    manager = None
+    properties = {}
+
+    def __init__(self, file: File):
+        for key, value in file.__dict__.items():
+            setattr(self, key, value)
+
+
+class DirectoryViewModel:
+    content_dirs = {}
+    content_files = {}
+    name = ""
+    path = ""
+    depth = 0
+    parent_directory = None
+    tag = ""  # Unique identifier
+
+    def __init__(self, directory: Directory):
+        for key, value in directory.__dict__.items():
+            if key == "content_dirs":
+                content_dir_vms = {}
+                for tag, d in directory.content_dirs.items():
+                    content_dir_vms[tag] = DirectoryViewModel(d)
+                self.content_dirs = content_dir_vms
+            elif key == "content_files":
+                content_file_vms = {}
+                for tag, file in directory.content_files.items():
+                    content_file_vms[tag] = FileViewModel(file)
+                self.content_files = content_file_vms
+            else:
+                setattr(self, key, value)
 
 
 class DataFileViewModel(FileObserver):
@@ -35,7 +76,8 @@ class DataFileViewModel(FileObserver):
         if event_type == "directory structure changed":
             self._populate_file_explorer(*args)
         if event_type == "file changed":
-            self._callbacks.get("update file")(args[0][0])
+            file_vm = FileViewModel(args[0][0])
+            self._callbacks.get("update file")(file_vm)
 
     def remove_directory(self, directory_tag):
         self._data_file_manager.close_directory(directory_tag)
@@ -63,15 +105,11 @@ class DataFileViewModel(FileObserver):
             self._data_file_manager.open_directories(open_data_dirs=[], open_data_files=list(files))
 
     def _populate_file_explorer(self, reset=False):
+        dir_vms = {t: DirectoryViewModel(d) for t, d in self._data_file_manager.top_level_directories.items()}
+        file_vms = {t: FileViewModel(file) for t, file in self._data_file_manager.top_level_files.items()}
         if reset:
-            self._callbacks.get("reset file explorer", noop)(self._data_file_manager.top_level_directories,
-                                                             self._data_file_manager.top_level_files)
+            self._callbacks.get("reset file explorer", noop)(dir_vms, file_vms)
         else:
-            self._callbacks.get("populate file explorer", noop)(self._data_file_manager.top_level_directories,
-                                                                self._data_file_manager.top_level_files)
-
-    # TODO: Turn Files and Directories into dicts (independent deep-copies)
-    #   pre-decide icons, colors etc
-    #
+            self._callbacks.get("populate file explorer", noop)(dir_vms, file_vms)
 
 

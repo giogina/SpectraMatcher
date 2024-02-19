@@ -1,9 +1,58 @@
 import subprocess
 import dearpygui.dearpygui as dpg
-from viewmodels.data_files_viewmodel import DataFileViewModel
-from models.data_file_manager import File, Directory, GaussianLog, FileType
+from viewmodels.data_files_viewmodel import DataFileViewModel, FileViewModel, GaussianLog, FileType, Directory
 from utility.icons import Icons
 from utility.drop_receiver_window import DropReceiverWindow, initialize_dnd
+
+_file_icons = {
+    FileType.GAUSSIAN_INPUT: Icons.file_code,
+    FileType.OTHER: Icons.file
+}
+
+
+_file_icon_textures = {
+    FileType.GAUSSIAN_CHECKPOINT: "resources/chk-file-16.png",
+    # FileType.EXPERIMENT_EMISSION: ["resources/Exp-1-24.png",
+    #                                "resources/Exp-1-32.png"],
+    # FileType.EXPERIMENT_EXCITATION: ["resources/Exp-1-24.png",
+    #                                  "resources/Exp-1-32.png"],
+    FileType.FC_EMISSION: "resources/FC-down-2-16.png",
+    FileType.FC_EXCITATION: "resources/FC-up-2-16.png",
+    FileType.FREQ_GROUND: "resources/freq-file-16.png",
+    FileType.FREQ_EXCITED: "resources/freq-file-16.png",
+}
+
+_file_icon_colors = {
+    FileType.GAUSSIAN_CHECKPOINT: [255, 255, 255, 180],
+    FileType.EXPERIMENT_EMISSION: [255, 180, 255, 255],
+    FileType.EXPERIMENT_EXCITATION: [180, 255, 255, 255],
+    FileType.FC_EMISSION: [255, 180, 255, 255],
+    FileType.FC_EXCITATION: [180, 255, 255, 255],
+    FileType.FREQ_GROUND: [180, 180, 255, 255],
+    FileType.FREQ_EXCITED: [180, 180, 255, 255]
+}
+
+
+def _get_icon_texture(tag):
+    if tag in _file_icon_textures.keys():
+        color = [c/255. for c in _file_icon_colors.get(tag, [255, 255, 255, 180])]
+        width, height, channels, data = dpg.load_image(_file_icon_textures.get(tag))
+        tex = []
+        for i in range(len(data)):
+            tex.append(data[i] * color[i % 4])
+        print(tex, len(tex))
+        return width, height, tex
+    else:
+        return 1, 1, [0, 0, 0, 0]
+
+
+_status_icons = {
+    GaussianLog.FINISHED: {"icon": Icons.check, "color": [0, 200, 0], "tooltip": "Calculation finished successfully."},
+    GaussianLog.ERROR: {"icon": Icons.x, "color": [200, 0, 0], "tooltip": "Calculation terminated with an error!"},
+    GaussianLog.NEGATIVE_FREQUENCY: {"icon": Icons.exclamation_triangle, "color": [200, 0, 0], "tooltip": "Negative frequencies detected!"},
+    GaussianLog.RUNNING: {"icon": Icons.hourglass_start, "color": None, "tooltip": "Calculation running..."},
+    "None": {"icon": "", "color": None, "tooltip": None},
+}
 
 
 class FileExplorer:
@@ -24,6 +73,11 @@ class FileExplorer:
         self._last_delta = 0
         self.filterable_extensions = [".log", ".gjf", ".com", ".chk", ".txt", ".*"]
         initialize_dnd()
+        with dpg.texture_registry(show=False):
+            for tag in _file_icon_textures.keys():
+                width, height, data = _get_icon_texture(tag)
+                dpg.add_static_texture(width=width, height=height, default_value=data, tag=f"{tag}-{width}")
+        self.file_type_color_theme = {}  # Themes for the texts coming after the icons; filetype: theme.
 
         with dpg.theme() as self.invisible_button_theme:
             with dpg.theme_component(dpg.mvImageButton):
@@ -91,8 +145,6 @@ class FileExplorer:
                 dpg.bind_item_handler_registry(dpg.add_image_button("pixel", width=1, height=24, user_data=i, tag=f"sep-button-{i}", show=self._table_columns[i][3]), self.table_handlers)
             dpg.add_button(label="", width=-1, height=24)
 
-        # with dpg.child_window(tag="file explorer panel"):
-
         with dpg.child_window(tag="file explorer panel"):
             DropReceiverWindow(self.on_drop_files, hover_drag_theme, non_hover_drag_theme).create(tag="drop window")
             dpg.add_spacer(height=16, parent="drop window")
@@ -157,7 +209,7 @@ class FileExplorer:
             if directory.parent_directory is None:
                 dpg.add_selectable(label="Remove", user_data=tag, callback=self._remove_directory)
 
-    def _setup_file_right_click_menu(self, file):
+    def _setup_file_right_click_menu(self, file: FileViewModel):
         if file.tag not in [f.tag for f in self._file_rows]:
             dpg.delete_item(f"{file.tag}-c1")
         with dpg.popup(f"{file.tag}-c1", min_size=(300, 40)):
@@ -224,6 +276,8 @@ class FileExplorer:
                     item = f"{file.tag}-c{column}"
                     if column == 1:
                         width = header_width - 52 - file.depth * 20
+                        if file.parent_directory is None:
+                            width -= 10  # Make up for extra spacing in front
                     else:
                         width = header_width
                     dpg.set_item_width(item, width)
@@ -315,12 +369,16 @@ class FileExplorer:
         for file_tag in files.keys():
             self.update_file(files[file_tag], table=f"{parent}-files table")
 
-    def update_file(self, file: File, table=None):  # TODO: Could also make table rows horizontal groups starting with a selectable. Possible issues: Clicks (for combo boxes?),drag container feasability. If so, make _setup_file_right_click_menu target the selectable.
+    def update_file(self, file: FileViewModel, table=None):  # TODO: Could also make table rows horizontal groups starting with a selectable. Possible issues: Clicks (for combo boxes?),drag container feasability. If so, make _setup_file_right_click_menu target the selectable.
         if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
             with dpg.table_row(tag=file.tag, parent=table):
                 for i, column in enumerate(self._table_columns):
                     width = self._table_columns[i][1]
-                    if i == 1:  # file name, adjust indent of following columns
+                    if i == 0:  # Icon, can be icon or image button
+                        with dpg.group(horizontal=True):
+                            dpg.add_button(width=width, tag=f"{file.tag}-c{i}")
+                            dpg.add_image_button("FC excitation-16", width=width, tag=f"{file.tag}-c{i}-img", show=False)
+                    elif i == 1:  # file name, adjust indent of following columns
                         width -= 52 + file.depth * 20
                         if file.parent_directory is None:
                             width -= 10  # Make up for extra spacing in front
@@ -330,36 +388,25 @@ class FileExplorer:
             self._file_rows.append(file)
         self._setup_file_right_click_menu(file)
 
-        # Gather file info # TODO: Decide on file icon: Chk, input, log-freq-ground/excited, log-FC-up/down
-        file_icon = Icons.file
-        if file.type == FileType.GAUSSIAN_INPUT:
-            file_icon = Icons.file_code
+        # Gather & insert file info
+        if file.type in _file_icon_textures.keys():
+            dpg.configure_item(f"{file.tag}-c0", width=0, show=False)
+            dpg.configure_item(f"{file.tag}-c0-img", width=self._table_columns[0][1], show=True)
+            file_icon_texture_tag = f"{file.type}-{16}"
+            dpg.configure_item(f"{file.tag}-c0-img", texture_tag=file_icon_texture_tag)
+            dpg.bind_item_theme(f"{file.tag}-c{1}", self.file_type_color_theme[file.type])
+            print(f"inserting tag: {file.type}-{16}")
+        else:
+            dpg.configure_item(f"{file.tag}-c0-img", width=0, show=False)
+            dpg.configure_item(f"{file.tag}-c0", width=self._table_columns[0][1], show=True)
+            file_icon = Icons.file
+            if file.type == FileType.GAUSSIAN_INPUT:
+                file_icon = Icons.file_code
+            self.icons.insert(f"{file.tag}-c0", file_icon, 16, solid=False)
 
-        status_icon = ""
-        color = None
-        status_tooltip = None
-        if file.extension == ".log":  # TODO: These decisions should be made in the viewmodel.
-            status = file.properties.get(GaussianLog.STATUS)
-            if status:
-                if file.properties[GaussianLog.STATUS] == GaussianLog.FINISHED:
-                    status_icon = Icons.check
-                    color = [0, 200, 0]
-                    status_tooltip = "Calculation finished successfully."
-                elif file.properties[GaussianLog.STATUS] == GaussianLog.NEGATIVE_FREQUENCY:
-                    status_icon = Icons.exclamation_triangle
-                    color = [200, 0, 0]
-                    status_tooltip = "Negative frequencies detected!"
-                elif file.properties[GaussianLog.STATUS] == GaussianLog.ERROR:
-                    status_icon = Icons.x
-                    color = [200, 0, 0]
-                    status_tooltip = "Calculation terminated with an error!"
-                else:
-                    status_icon = Icons.hourglass_start
-                    status_tooltip = "Calculation running..."
-
-        # Insert file info
-        self.icons.insert(f"{file.tag}-c0", file_icon, 16, solid=False)
-        self.icons.insert(f"{file.tag}-c2", icon=status_icon, size=16, color=color, tooltip=status_tooltip)
+        status_icon = _status_icons.get(file.properties.get(GaussianLog.STATUS, "None"))
+        self.icons.insert(f"{file.tag}-c2", icon=status_icon["icon"], size=16,
+                          color=status_icon["color"], tooltip=status_icon["tooltip"])
 
     def configure_theme(self):
         with dpg.theme() as file_explorer_theme:
@@ -374,9 +421,14 @@ class FileExplorer:
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [200, 200, 255, 30])
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 200])
             with dpg.theme_component(dpg.mvButton):
-                # dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 150])
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [0, 0, 0, 0])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [0, 0, 0, 0])
+                # dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [0, 0, 0, 0])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [0, 0, 0, 0])
+                dpg.add_theme_style(dpg.mvStyleVar_ButtonTextAlign, 0.5, 0.5)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
+            with dpg.theme_component(dpg.mvImageButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [0, 0, 0, 0])
+                # dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [0, 0, 0, 0])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [0, 0, 0, 0])
                 dpg.add_theme_style(dpg.mvStyleVar_ButtonTextAlign, 0.5, 0.5)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
@@ -412,3 +464,8 @@ class FileExplorer:
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 3, 0)
 
         dpg.bind_item_theme("file table header", table_header_theme)
+
+        for tag, color in _file_icon_colors.items():
+            with dpg.theme() as self.file_type_color_theme[tag]:
+                with dpg.theme_component(dpg.mvAll):
+                    dpg.add_theme_color(dpg.mvThemeCol_Text, color)

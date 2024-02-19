@@ -21,7 +21,7 @@ class MainWindow:
         dpg.configure_app(auto_device=True)
 
         self.fonts = {}
-        self.normal_font = 18
+        self.normal_font = 16
         with dpg.font_registry() as font_reg:
             # ! Open/Closed folder icons have been added to this font !
             # Don't change it, or you will get currency signs instead. (Or add folder icons as \u00a3 and \u00a4)
