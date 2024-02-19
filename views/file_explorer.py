@@ -12,22 +12,20 @@ _file_icons = {
 
 _file_icon_textures = {
     FileType.GAUSSIAN_CHECKPOINT: "resources/chk-file-16.png",
-    # FileType.EXPERIMENT_EMISSION: ["resources/Exp-1-24.png",
-    #                                "resources/Exp-1-32.png"],
-    # FileType.EXPERIMENT_EXCITATION: ["resources/Exp-1-24.png",
-    #                                  "resources/Exp-1-32.png"],
+    FileType.EXPERIMENT_EMISSION: "resources/laser-2-16.png",
+    FileType.EXPERIMENT_EXCITATION: "resources/laser-2-16.png",
     FileType.FC_EMISSION: "resources/FC-down-2-16.png",
     FileType.FC_EXCITATION: "resources/FC-up-2-16.png",
-    FileType.FREQ_GROUND: "resources/freq-file-16.png",
-    FileType.FREQ_EXCITED: "resources/freq-file-16.png",
+    FileType.FREQ_GROUND: "resources/file-freq-16.png",
+    FileType.FREQ_EXCITED: "resources/file-freq-16.png",
 }
 
 _file_icon_colors = {
     FileType.GAUSSIAN_CHECKPOINT: [255, 255, 255, 180],
-    FileType.EXPERIMENT_EMISSION: [255, 180, 255, 255],
-    FileType.EXPERIMENT_EXCITATION: [180, 255, 255, 255],
-    FileType.FC_EMISSION: [255, 180, 255, 255],
-    FileType.FC_EXCITATION: [180, 255, 255, 255],
+    FileType.EXPERIMENT_EMISSION: [255, 180, 180, 255],
+    FileType.EXPERIMENT_EXCITATION: [180, 255, 180, 255],
+    FileType.FC_EMISSION: [255, 180, 180, 255],
+    FileType.FC_EXCITATION: [180, 255, 180, 255],
     FileType.FREQ_GROUND: [180, 180, 255, 255],
     FileType.FREQ_EXCITED: [180, 180, 255, 255]
 }
@@ -412,23 +410,19 @@ class FileExplorer:
         with dpg.theme() as file_explorer_theme:
             with dpg.theme_component(dpg.mvAll):
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 8, 0)
-                # dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 12, 8)
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 0)
-                # dpg.add_theme_style(dpg.mvStyleVar_ItemInnerSpacing, 0)
-                # dpg.add_theme_style(dpg.mvStyleVar_WindowBorderSize, 0)
-                # dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0)
                 dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 0)
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [200, 200, 255, 30])
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 200])
             with dpg.theme_component(dpg.mvButton):
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [0, 0, 0, 0])
-                # dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [0, 0, 0, 0])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [0, 0, 0, 0])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [0, 0, 0, 0])
                 dpg.add_theme_style(dpg.mvStyleVar_ButtonTextAlign, 0.5, 0.5)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
             with dpg.theme_component(dpg.mvImageButton):
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [0, 0, 0, 0])
-                # dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [0, 0, 0, 0])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [0, 0, 0, 0])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [0, 0, 0, 0])
                 dpg.add_theme_style(dpg.mvStyleVar_ButtonTextAlign, 0.5, 0.5)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
