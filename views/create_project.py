@@ -1,11 +1,12 @@
 import dearpygui.dearpygui as dpg
 import logging
+import os
+from screeninfo import get_monitors
 from models.settings_manager import SettingsManager
 from models.project import Project
 from utility.system_file_browser import *
 from utility.icons import Icons
-from screeninfo import get_monitors
-import os
+from utility.drop_receiver_window import DropReceiverWindow, initialize_dnd
 
 
 class CreateProjectWindow:
@@ -27,7 +28,7 @@ class CreateProjectWindow:
                 self.fonts[i] = dpg.add_font("./fonts/Sansation_Regular.ttf", i)
             icons = Icons(font_reg)
         dpg.bind_font(self.fonts[18])
-        close_button_theme, selectables_theme, selectables_theme_2 = self.adjust_theme()
+        close_button_theme, selectables_theme = self.adjust_theme()  # selectables_theme_2
 
         with dpg.handler_registry() as self.keyReg:
             dpg.add_key_press_handler(dpg.mvKey_Escape, callback=self.on_escape)
@@ -43,9 +44,18 @@ class CreateProjectWindow:
         else:
             name = ""
 
+        with dpg.theme() as hover_drag_theme:
+            with dpg.theme_component(dpg.mvAll):
+                dpg.add_theme_color(dpg.mvThemeCol_Border, (150, 150, 255), category=dpg.mvThemeCat_Core)
+                dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (25, 50, 75, 100), category=dpg.mvThemeCat_Core)
+
+        # with dpg.theme() as non_hover_drag_theme:
+        #     with dpg.theme_component(dpg.mvAll):
+        #         dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (25, 50, 75, 0), category=dpg.mvThemeCat_Core)
+
         dpg.create_viewport(title='Create new project - SpectraMatcher', width=dash_width, height=dash_height,
                             x_pos=int(monitor.width/2-dash_width/2), y_pos=int(monitor.height/2-dash_height/2))
-
+        initialize_dnd()
         dpg.set_viewport_decorated(False)
         with dpg.window(label="Create New Project", width=dash_width, height=dash_height, tag="new project window"):
             icons.insert(dpg.add_button(pos=[dash_width - 36, 6], width=30, height=30, tag="close-button",
@@ -69,19 +79,15 @@ class CreateProjectWindow:
                     dpg.add_text("Import data:", color=[131, 131, 255])
 
                 with dpg.group(horizontal=True):
-                    # self.data_dir_list = dpg.add_listbox(self.import_from, tag="data", width=-53)
-                    with dpg.child_window(tag = "sel2", width=-53, height=94):
-                        with dpg.child_window(tag="selectables", pos=[10, 10], height=73) as self.selectables_list:
-                            self.selectables = []
-                            for path in self.import_from:
-                                s = dpg.add_selectable(label=path)
-                                self.selectables.append((path, s))
-                            dpg.bind_item_theme("selectables", selectables_theme)
-                            dpg.bind_item_theme("sel2", selectables_theme_2)
+                    DropReceiverWindow(self.on_drop_callback, hover_drag_theme, selectables_theme).create(tag="selectables", height=94, width=-53)
+                    self.selectables = []
+                    for path in self.import_from:
+                        s = dpg.add_selectable(label=path, parent="selectables")
+                        self.selectables.append((path, s))
+                    dpg.bind_item_theme("selectables", selectables_theme)
 
                     dpg.add_spacer(width=10)
                     with dpg.group(horizontal=False):
-                        # dpg.add_image_button("folder", width=18, height=18, tag="data_folder", callback=self.on_add_data)
                         icons.insert(dpg.add_button(width=42, height=42, callback=self.on_add_data), Icons.folder_plus, 16)
                         dpg.add_spacer(height=10)
                         icons.insert(dpg.add_button(width=42, height=42, callback=self.delete_items), Icons.trash, 16)
@@ -108,8 +114,16 @@ class CreateProjectWindow:
                     dpg.add_button(label="OK", width=100, callback=self.save_new_project)
                     dpg.add_spacer(width=50)
                     dpg.add_button(label="Cancel", width=100, callback=lambda: dpg.configure_item("modal_id", show=False))
-
+        # dpg.show_style_editor()
         dpg.set_primary_window("new project window", True)
+
+    def on_drop_callback(self, data):
+        if type(data) == list:
+            for path in data:
+                if os.path.exists(path):
+                    self.import_from.append(path)
+                    s = dpg.add_selectable(label=path, parent="selectables")
+                    self.selectables.append((path, s))
 
     def adjust_theme(self):
         with dpg.theme() as global_theme:
@@ -152,21 +166,18 @@ class CreateProjectWindow:
 
         with dpg.theme() as selectables_theme:
             with dpg.theme_component(dpg.mvAll):
-                dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [60, 60, 154, 0])
-                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 20, 20)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 12, 12)
+                dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 1)  # necessary to make window padding work
+                dpg.add_theme_color(dpg.mvThemeCol_Border, [60, 60, 154, 20])
                 dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, [60, 60, 154, 60])
                 dpg.add_theme_color(dpg.mvThemeCol_Header, [60, 60, 154])
                 dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, [60, 60, 154, 200])
                 dpg.add_theme_color(dpg.mvThemeCol_HeaderActive, [60, 60, 154, 160])
-                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 10, 10)
-
-        with dpg.theme() as selectables_theme_2:
-            with dpg.theme_component(dpg.mvAll):
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 10, 4)
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [60, 60, 154, 100])
                 dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 4)
 
-
-        return close_button_theme, selectables_theme, selectables_theme_2
+        return close_button_theme, selectables_theme
 
     def construct_savefile_name(self):
         if dpg.get_value('name input'):
@@ -201,13 +212,14 @@ class CreateProjectWindow:
 
     def on_add_data(self):
         file = data_dir_file_dialog(self.settings.get("projectsPath", "/"))  # todo: Implement "dataPath" keyword
-        self.import_from.append(file)
-        s = dpg.add_selectable(label=file, parent=self.selectables_list)
-        self.selectables.append((file, s))
+        if file and len(file):
+            self.import_from.append(file)
+            s = dpg.add_selectable(label=file, parent="selectables")
+            self.selectables.append((file, s))
 
     def on_save_as(self):
         file = save_as_file_dialog(self.settings.get("projectsPath", "/"))
-        if len(file):
+        if file and len(file):
             dpg.set_value("path input", file)
             self.path_changed = True
             self.path_from_file_dialog = True
@@ -233,7 +245,16 @@ class CreateProjectWindow:
         name = dpg.get_value("name input")
         if not len(name):
             name = "Untitled"
-        Project(path).new(name=name, import_data_dirs=self.import_from)
+        new_dirs = []
+        new_files = []
+        for data in self.import_from:
+            if type(data) == str:
+                if os.path.exists(data):
+                    if os.path.isdir(data):
+                        new_dirs.append(data)
+                    elif os.path.isfile(data):
+                        new_files.append(data)
+        Project(path).new(name=name, import_data_dirs=new_dirs, import_data_files=new_files)
         self.result = ('-open', path)
         dpg.stop_dearpygui()
 
