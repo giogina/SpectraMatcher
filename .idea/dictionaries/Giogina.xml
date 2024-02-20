@@ -4,9 +4,13 @@
       <w>anharm</w>
       <w>anharmonic</w>
       <w>autosave</w>
+      <w>btom</w>
       <w>condon</w>
+      <w>coords</w>
       <w>identifactor</w>
       <w>lorentzian</w>
+      <w>multiplicator</w>
+      <w>ortho</w>
       <w>precompute</w>
       <w>recents</w>
       <w>sansation</w>
@@ -14,6 +18,7 @@
       <w>shortcuttable</w>
       <w>uniquify</w>
       <w>viewmodel</w>
+      <w>wavenumber</w>
     </words>
   </dictionary>
 </component>

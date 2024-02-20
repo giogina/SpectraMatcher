@@ -49,12 +49,14 @@ class ProjectSetup:
                     self.icons.insert(dpg.add_button(height=32, width=32), Icons.plus, size=16, tooltip="Add file")
 
             # TODO> put large auto-import button on panel that disappears on manual action (or moves up to the action bar)
-            #  Implement in project: (maybe through extra classes) ground & excited states & experiment, with corresponding files for Freq, FC
             #  Here, for every state, make a tree node showing them; with drop receiver fields for the strings.
             #  On top, show main info of this project - just name for now (with edit button?)
             #  Plus button below files to add states
+            #  color choice buttons for each state
+            #  At the bottom: "Okay" button greyed out until all necessary files are filled in
 
-            # TODO: Allow for excitation/emission only. (Action bar buttons)
+            # TODO: Allow for excitation/emission only. (Action bar buttons). Grey out unnecessary files, change okay button activity conditions.
+
             # self.icons.insert(dpg.add_button(height=32, width=100), Icons.angle_double_right, size=16, tooltip="Auto-import all")
 
         self.configure_theme()

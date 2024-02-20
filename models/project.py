@@ -6,9 +6,11 @@ import logging
 import threading
 import time
 import ctypes
+import matplotlib.colors as mcolors
 from models.settings_manager import SettingsManager
 from models.data_file_manager import DataFileManager, FileObserver, FileType
 from models.gaussian_parser import GaussianParser
+from models.molecular_data import Geometry, VibrationalMode
 
 
 # Define an observer interface
@@ -22,7 +24,15 @@ class MyEncoder(json.JSONEncoder):
         if isinstance(obj, StateData):
             state_data_dict = copy.deepcopy(obj.__dict__)
             state_data_dict['__StateData__'] = True
+            for key in obj.EXCLUDE:
+                del state_data_dict[key]
+            del state_data_dict["EXCLUDE"]
             return state_data_dict
+        if isinstance(obj, ExperimentalSpectrum):
+            spec_dict = copy.deepcopy(obj.__dict__)
+            spec_dict['__ExperimentalSpectrum__'] = True
+            return spec_dict
+
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)
 
@@ -30,6 +40,8 @@ class MyEncoder(json.JSONEncoder):
 def my_decoder(dct):
     if '__StateData__' in dct:
         return StateData(**dct)
+    elif '__ExperimentalSpectrum__' in dct:
+        return ExperimentalSpectrum(**dct)
     return dct
 
 
@@ -41,6 +53,20 @@ class StateData:
     anharm_freq_file_path = None
     fc_emission_path = None
     fc_excitation_path = None
+
+    geometry = None
+    vibrational_modes = None
+    anharm_levels = None
+    emission_FC_spectrum = None
+    excitation_FC_spectrum = None
+
+    # Exclude data that can be read from files from being serialized into the project json.
+    EXCLUDE = ("geometry", "vibrational_modes", "anharm_levels", "emission_FC_spectrum", "excitation_FC_spectrum")
+
+    emission_spectrum_visible = True
+    excitation_spectrum_visible = True
+    colors = list(mcolors.TABLEAU_COLORS.keys())[1:-1]  # TODO: standard color settings: # colors = settings['plot settings'].get('FC colors', list(mcolors.TABLEAU_COLORS.keys())[1:-1])
+    color = colors[state % (len(colors))]
 
     def __init__(self, state, name=None, freq_path=None, anharm_path=None, fc_emission=None, fc_excitation=None, **kwargs):
         self.state = state  # TODO> Make sure that all instance variables are accepted & processed here.
@@ -57,7 +83,6 @@ class StateData:
         if fc_excitation:
             self.set_excitation_file(path=fc_excitation)
 
-
     def _construct_name(self):
         if self.state == 0:
             self.name = "Ground state"
@@ -71,20 +96,27 @@ class StateData:
             self.name = f"{self.state}th excited state"
 
     def set_freq_file(self, path):
-        self.freq_file_path = path  # TODO> Parse the file
+        self.freq_file_path = path  # todo: (on first freq file) set bonds
+        self.geometry = GaussianParser.get_last_geometry(path)
+        self.vibrational_modes = GaussianParser.get_vibrational_modes(path)  # TODO> Do this stuff async? Send notification when done.
+
 
     def set_anharm_freq_file(self, path):
-        self.freq_file_path = path  # TODO> Parse the file
+        self.freq_file_path = path
+        self.anharm_levels = GaussianParser.get_anharmonic_levels(path)
 
     def set_emission_file(self, path):
-        self.fc_emission_path = path  # TODO> Parse the file
+        self.fc_emission_path = path
+        self.emission_FC_spectrum = GaussianParser.get_FC_spectrum(path, is_emission=True)
 
     def set_excitation_file(self, path):
-        self.fc_excitation_path = path  # TODO> Parse the file
+        self.fc_excitation_path = path
+        self.emission_FC_spectrum = GaussianParser.get_FC_spectrum(path, is_emission=False)
 
 
 class ExperimentalSpectrum:
     """Experimental spectrum files & information thereof"""
+    path = ""
 
     def __init__(self, path):
         self.path = path
@@ -398,7 +430,7 @@ class Project(FileObserver):
             del self._data["states"][state]
             self._notify_observers("state data changed")
 
-    def set_experimental_file(self, path, file_type):
+    def set_experimental_file(self, path):
         self._data["experimental spectra"][path] = ExperimentalSpectrum(path)
         self._notify_observers("experimental data changed")
 
