@@ -369,7 +369,7 @@ class FileExplorer:
                         width -= 52 + file.depth * 20
                         if file.parent_directory is None:
                             width -= 10  # Make up for extra spacing in front
-                        dpg.add_selectable(label=file.name, width=width, span_columns=True, tag=f"{file.tag}-c1")
+                        dpg.add_selectable(label=file.name, width=width, span_columns=True, tag=f"{file.tag}-c1")  # todo , drag_callback=lambda *args: print(f"Dragging: {args}")
                     else:
                         dpg.add_button(width=width, tag=f"{file.tag}-c{i}", show=self._table_columns[i][3])
             self._file_rows.append(file)

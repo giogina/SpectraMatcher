@@ -77,7 +77,7 @@ class DataFileManager:
                 await file.what_am_i()
                 self.file_queue.task_done()
             except Exception as e:
-                print(f"Worker caught an exception: {e}")
+                # print(f"Worker caught an exception: {e}")
                 break
 
     async def _open_directories_async(self, open_data_dirs=None, open_data_files=None):

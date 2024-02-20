@@ -7,13 +7,59 @@ import threading
 import time
 import ctypes
 from models.settings_manager import SettingsManager
-from models.data_file_manager import DataFileManager, FileObserver
+from models.data_file_manager import DataFileManager, FileObserver, FileType
 
 
 # Define an observer interface
 class ProjectObserver:
     def update(self, event_type, *args):
         pass
+
+
+class StateData:
+    """Files & read information for a ground/excited state"""
+    state = 0  # 0: Ground, 1+: excited
+    name = None
+    freq_file_path = None
+    fc_emission_path = None
+    fc_excitation_path = None
+
+    def __init__(self, state_nr, name=None):
+        self.state = state_nr
+        if name is None:
+            self._construct_name()
+        else:
+            self.name = name
+
+    def _construct_name(self):
+        if self.state == 0:
+            self.name = "Ground state"
+        elif self.state == 1:
+            self.name = "1st excited state"
+        elif self.state == 2:
+            self.name = "2nd excited state"
+        elif self.state == 3:
+            self.name = "3rd excited state"
+        else:
+            self.name = f"{self.state}th excited state"
+
+    def set_freq_file(self, path):
+        self.freq_file_path = path  # TODO> Parse the file
+
+    def set_emission_file(self, path):
+        self.fc_emission_path = path  # TODO> Parse the file
+
+    def set_excitation_file(self, path):
+        self.fc_excitation_path = path  # TODO> Parse the file
+
+
+class ExperimentalData:
+    """Experimental spectrum files & information thereof"""
+
+    def __init__(self, path):
+        self.path = path
+
+        # TODO> Parse the file
 
 
 class Project(FileObserver):
@@ -49,6 +95,8 @@ class Project(FileObserver):
             "name": "Untitled",
             "open data folders": [],
             "open data files": [],
+            "states": {0: StateData(0), 1: StateData(1)},
+            "experimental spectra": {}
         }
 
         self.window_title = ""  # For bringing that window to the front in Windows
@@ -76,7 +124,8 @@ class Project(FileObserver):
                         print(f"Loaded project data: {self._data}")
                     self.window_title = self._assemble_window_title()
                     self._mark_project_as_open()
-                    self._notify_observers("imported project data changed")
+                    self._notify_observers("state data changed")
+                    self._notify_observers("experimental data changed")
                 elif os.path.exists(self._autosave_file):
                     self._logger.warning("Project file not found. Attempting to restore autosave file...")
                     self.load(auto=True)
@@ -284,3 +333,42 @@ class Project(FileObserver):
             self._data[key] = value
         self._project_unsaved()
 
+    def set_state_file(self, path, file_type, state: int):
+        if state not in self._data["states"].keys():
+            self._data["states"][state] = StateData(state_nr=state)
+            self._notify_observers("state data changed")
+        if file_type == FileType.FREQ_GROUND and state == 0:
+            self._data["states"][0].set_freq_file(path)
+        elif file_type == FileType.FREQ_EXCITED and state > 0:
+            self._data["states"][state].set_freq_file(path)
+        elif file_type == FileType.FC_EMISSION and state > 0:
+            self._data["states"][state].set_emission_file(path)
+        elif file_type == FileType.FC_EMISSION and state > 0:
+            self._data["states"][state].set_excitation_file(path)
+        self._notify_observers("state data changed", state)
+
+    def add_state(self):
+        next_state_nr = len(self._data["states"].keys())
+        self._data["states"][next_state_nr] = StateData(next_state_nr)
+        self._notify_observers("state data changed", next_state_nr)
+
+    def delete_state(self, state):
+        if state in self._data["states"].keys():
+            del self._data["states"][state]
+            self._notify_observers("state data changed")
+
+    def set_experimental_file(self, path, file_type):
+        self._data["experimental spectra"][path] = ExperimentalData(path)
+        self._notify_observers("experimental data changed")
+
+    def delete_experimental_file(self, path):
+        if path in self._data["experimental spectra"].keys():
+            del self._data["experimental spectra"][path]
+        self._notify_observers("experimental data changed")
+
+        # TODO: Change state names,
+        #  select exp file data columns,
+        #  reorder states,
+        #  display basic info: to/from for exp files, zero state energy for excited states,
+        #  check for equal zero state energies/freqs to warn about repeating files,
+        #  do all the parsing
