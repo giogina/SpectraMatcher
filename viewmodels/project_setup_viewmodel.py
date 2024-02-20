@@ -1,5 +1,5 @@
 from models.settings_manager import SettingsManager, Settings
-from models.project import Project, ProjectObserver, StateData, ExperimentalData
+from models.project import Project, ProjectObserver, StateData, ExperimentalSpectrum
 from models.data_file_manager import FileType
 from copy import deepcopy
 
@@ -22,7 +22,7 @@ class StateViewModel:
 class ExperimentalSpectrumViewModel:
     path = None
 
-    def __init__(self, exp: ExperimentalData):
+    def __init__(self, exp: ExperimentalSpectrum):
         for key, value in exp.__dict__.items():
             setattr(self, key, deepcopy(value))
 
@@ -48,7 +48,7 @@ class ProjectSetupViewModel(ProjectObserver):
 
     def update(self, event_type, *args):
         print(f"ProjectSetupViewModel observed event: {event_type, *args}")
-        if event_type == "state data changed":  # TODO> args might be state number, update only that one. No args - need to re-render everything.
+        if event_type == "state data changed":
             if len(args) and len(args[0]) and type(args[0][0]) == int:  # Update only one
                 state = self._project.get("states", {}).get(args[0][0])
                 if state is not None:

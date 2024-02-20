@@ -19,6 +19,8 @@ _file_icon_textures = {
     FileType.FC_EXCITATION: "resources/FC-up-2-16.png",
     FileType.FREQ_GROUND: "resources/file-freq-16.png",
     FileType.FREQ_EXCITED: "resources/file-freq-16.png",
+    FileType.FREQ_GROUND_ANHARM: "resources/file-freq-16.png",
+    FileType.FREQ_EXCITED_ANHARM: "resources/file-freq-16.png",
 }
 
 _file_icon_colors = {
@@ -28,7 +30,9 @@ _file_icon_colors = {
     FileType.FC_EMISSION: [255, 180, 180, 255],
     FileType.FC_EXCITATION: [180, 255, 180, 255],
     FileType.FREQ_GROUND: [180, 180, 255, 255],
-    FileType.FREQ_EXCITED: [180, 180, 255, 255]
+    FileType.FREQ_EXCITED: [180, 180, 255, 255],
+    FileType.FREQ_GROUND_ANHARM: [200, 160, 255, 255],
+    FileType.FREQ_EXCITED_ANHARM: [200, 160, 255, 255]
 }
 
 
@@ -237,12 +241,12 @@ class FileExplorer:
                             or (status in [GaussianLog.ERROR, GaussianLog.NEGATIVE_FREQUENCY]
                                 and not dpg.get_value("check-problem")):
                     dpg.configure_item(file.tag, show=False)
-                elif file.type in [FileType.FREQ_GROUND, FileType.FREQ_EXCITED] and not dpg.get_value("check-freq") \
+                elif file.type in [FileType.FREQ_GROUND, FileType.FREQ_EXCITED, FileType.FREQ_GROUND_ANHARM, FileType.FREQ_EXCITED_ANHARM] and not dpg.get_value("check-freq") \
                     or (file.type in [FileType.FC_EXCITATION, FileType.FC_EMISSION] and not dpg.get_value("check-fc")) \
                     or (file.type == FileType.GAUSSIAN_LOG and not dpg.get_value("check-other-log")):
                     dpg.configure_item(file.tag, show=False)
-                elif file.type in [FileType.FREQ_EXCITED, FileType.FC_EXCITATION] and not dpg.get_value("check-excitation") \
-                    or (file.type in [FileType.FREQ_GROUND, FileType.FC_EMISSION] and not dpg.get_value("check-emission")):
+                elif file.type in [FileType.FREQ_EXCITED, FileType.FC_EXCITATION, FileType.FREQ_EXCITED_ANHARM] and not dpg.get_value("check-excitation") \
+                    or (file.type in [FileType.FREQ_GROUND, FileType.FC_EMISSION, FileType.FREQ_GROUND_ANHARM] and not dpg.get_value("check-emission")):
                     dpg.configure_item(file.tag, show=False)
                 else:
                     dpg.configure_item(file.tag, show=True)

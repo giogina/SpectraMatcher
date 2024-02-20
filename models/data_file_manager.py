@@ -20,6 +20,7 @@ class DataFileManager:
         # self._update_open_data_files_callback = update_open_data_files_callback
 
     def open_directories(self, open_data_dirs, open_data_files=None):
+        print(f"Opening: {open_data_dirs, open_data_files}")
         asyncio.run(self._open_directories_async(open_data_dirs, open_data_files))
 
     def open_directories_or_files(self, paths: list):
@@ -88,6 +89,7 @@ class DataFileManager:
             for path in open_data_dirs:
                 directory = Directory(path, self)
                 self.top_level_directories[directory.tag] = directory  # queue gets filled in here
+                print(f"Added directory: {directory.tag}")
         if open_data_files:
             for path in open_data_files:
                 file = File(path, self)
@@ -123,7 +125,7 @@ class Directory:
     def __init__(self, path, manager: DataFileManager, name=None, parent=None, depth=0):
         self.path = path.replace("/", "\\")
         self.manager = manager
-        self.tag = f"dir_{path}"
+        self.tag = f"dir_{path}_{depth}"
         self.depth = depth
         if name:
             self.name = name
@@ -155,15 +157,17 @@ class FileType:
     GAUSSIAN_CHECKPOINT = "Gaussian chk"
     FREQ_GROUND = "Frequency ground state"
     FREQ_EXCITED = "Frequency excited state"
+    FREQ_GROUND_ANHARM = "Frequency ground state anharm"
+    FREQ_EXCITED_ANHARM = "Frequency excited state anharm"
     FC_EXCITATION = "FC excitation"
     FC_EMISSION = "FC emission"
-    LOG_TYPES = (GAUSSIAN_LOG, GAUSSIAN_INPUT, GAUSSIAN_CHECKPOINT, FREQ_GROUND, FREQ_EXCITED, FC_EMISSION, FC_EXCITATION)
+    LOG_TYPES = (GAUSSIAN_LOG, GAUSSIAN_INPUT, GAUSSIAN_CHECKPOINT, FC_EMISSION, FC_EXCITATION,
+                 FREQ_GROUND, FREQ_EXCITED, FREQ_GROUND_ANHARM, FREQ_EXCITED_ANHARM)
 
 
 class GaussianLog(Enum):
     STATUS = "status"
     HAS_HPMODES = "hpmodes"
-    ANHARM = "anharm"
     FINISHED = "finished"
     ERROR = "error"
     RUNNING = "running"
@@ -185,7 +189,7 @@ class File:
         self.path = path.replace("/", "\\")
         self.manager = manager
         self.depth = depth
-        self.tag = f"file_{path}"
+        self.tag = f"file_{path}_{depth}"
         if name:
             self.name = name
         else:
@@ -199,7 +203,7 @@ class File:
         properties = {}
         if self.extension == ".log":  # Gaussian log
             self.type = FileType.GAUSSIAN_LOG
-            properties[GaussianLog.ANHARM] = False
+            anharm = False
             properties[GaussianLog.HAS_HPMODES] = False
 
             nr_jobs = 1  # keep track of Gaussian starting new internal jobs
@@ -218,7 +222,7 @@ class File:
                             if re.search('Frequencies ---', line):
                                 properties[GaussianLog.HAS_HPMODES] = True  # TODO: Check for negative frequencies (set state to GaussianLog.NEGATIVE_FREQUENCY, update file; set state to ERROR or negfreq!)
                         if re.search('anharmonic', line):
-                            properties[GaussianLog.ANHARM] = True
+                            anharm = True
                         if re.search('Excited', line):
                             excited = True
                         if re.search('Final Spectrum', line):
@@ -238,9 +242,15 @@ class File:
                         self.type = FileType.FC_EXCITATION
                 elif has_freqs:
                     if excited:
-                        self.type = FileType.FREQ_EXCITED
+                        if anharm:
+                            self.type = FileType.FREQ_EXCITED_ANHARM
+                        else:
+                            self.type = FileType.FREQ_EXCITED
                     else:
-                        self.type = FileType.FREQ_GROUND
+                        if anharm:
+                            self.type = FileType.FREQ_GROUND_ANHARM
+                        else:
+                            self.type = FileType.FREQ_GROUND
                 if nr_jobs == nr_finished:
                     properties[GaussianLog.STATUS] = GaussianLog.FINISHED
                 elif error:

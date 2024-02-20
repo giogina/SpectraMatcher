@@ -8,6 +8,7 @@ import time
 import ctypes
 from models.settings_manager import SettingsManager
 from models.data_file_manager import DataFileManager, FileObserver, FileType
+from models.gaussian_parser import GaussianParser
 
 
 # Define an observer interface
@@ -16,20 +17,46 @@ class ProjectObserver:
         pass
 
 
+class MyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, StateData):
+            state_data_dict = copy.deepcopy(obj.__dict__)
+            state_data_dict['__StateData__'] = True
+            return state_data_dict
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
+
+
+def my_decoder(dct):
+    if '__StateData__' in dct:
+        return StateData(**dct)
+    return dct
+
+
 class StateData:
     """Files & read information for a ground/excited state"""
     state = 0  # 0: Ground, 1+: excited
     name = None
     freq_file_path = None
+    anharm_freq_file_path = None
     fc_emission_path = None
     fc_excitation_path = None
 
-    def __init__(self, state_nr, name=None):
-        self.state = state_nr
+    def __init__(self, state, name=None, freq_path=None, anharm_path=None, fc_emission=None, fc_excitation=None, **kwargs):
+        self.state = state  # TODO> Make sure that all instance variables are accepted & processed here.
         if name is None:
             self._construct_name()
         else:
             self.name = name
+        if freq_path:
+            self.set_freq_file(path=freq_path)
+        if anharm_path:
+            self.set_anharm_freq_file(path=anharm_path)
+        if fc_emission:
+            self.set_emission_file(path=fc_emission)
+        if fc_excitation:
+            self.set_excitation_file(path=fc_excitation)
+
 
     def _construct_name(self):
         if self.state == 0:
@@ -46,6 +73,9 @@ class StateData:
     def set_freq_file(self, path):
         self.freq_file_path = path  # TODO> Parse the file
 
+    def set_anharm_freq_file(self, path):
+        self.freq_file_path = path  # TODO> Parse the file
+
     def set_emission_file(self, path):
         self.fc_emission_path = path  # TODO> Parse the file
 
@@ -53,7 +83,7 @@ class StateData:
         self.fc_excitation_path = path  # TODO> Parse the file
 
 
-class ExperimentalData:
+class ExperimentalSpectrum:
     """Experimental spectrum files & information thereof"""
 
     def __init__(self, path):
@@ -120,7 +150,7 @@ class Project(FileObserver):
                     os.rename(self._autosave_file, self.project_file)
                 if os.path.exists(self.project_file):
                     with open(self.project_file, "r") as file:
-                        self._data = json.load(file)
+                        self._data = json.load(file, object_hook=my_decoder)
                         print(f"Loaded project data: {self._data}")
                     self.window_title = self._assemble_window_title()
                     self._mark_project_as_open()
@@ -144,12 +174,17 @@ class Project(FileObserver):
                     self.load(auto=True)
         self._autosave_thread.start()
 
+        # Initialize everything based on loaded data!
         if "directory toggle states" not in self._data.keys():
             self._data["directory toggle states"] = {}
         # Automatically keeps file manager dicts updated in self._data!
         self.data_file_manager.directory_toggle_states = self._data.get("directory toggle states", {})
         self.data_file_manager.open_directories(self._data.get("open data folders", []),
                                                 self._data.get("open data files", []))
+        if "states" not in self._data.keys():
+            self._data["states"] = copy.deepcopy(self._data_defaults["states"])
+        if "experimental spectra" not in self._data.keys():
+            self._data["experimental spectra"] = copy.deepcopy(self._data_defaults["experimental spectra"])
         return self
 
     def new(self, name, import_data_dirs=None, import_data_files=None):
@@ -200,7 +235,7 @@ class Project(FileObserver):
                 dir_name, file_name = os.path.split(target_file)
                 temp_fd, temp_file_path = tempfile.mkstemp(dir=dir_name)
                 with os.fdopen(temp_fd, 'w') as temp_file:
-                    json.dump(snapshot, temp_file, indent=4)
+                    json.dump(snapshot, temp_file, indent=4, cls=MyEncoder)
                 if os.path.exists(target_file):
                     backup_file = target_file + ".backup"
                     if os.path.exists(backup_file):
@@ -341,6 +376,12 @@ class Project(FileObserver):
             self._data["states"][0].set_freq_file(path)
         elif file_type == FileType.FREQ_EXCITED and state > 0:
             self._data["states"][state].set_freq_file(path)
+        if file_type == FileType.FREQ_GROUND_ANHARM and state == 0:
+            self._data["states"][0].set_anharm_freq_file(path)
+        elif file_type == FileType.FREQ_EXCITED and state > 0:
+            self._data["states"][state].set_freq_file(path)
+        elif file_type == FileType.FREQ_EXCITED_ANHARM and state > 0:
+            self._data["states"][state].set_anharm_freq_file(path)
         elif file_type == FileType.FC_EMISSION and state > 0:
             self._data["states"][state].set_emission_file(path)
         elif file_type == FileType.FC_EMISSION and state > 0:
@@ -358,7 +399,7 @@ class Project(FileObserver):
             self._notify_observers("state data changed")
 
     def set_experimental_file(self, path, file_type):
-        self._data["experimental spectra"][path] = ExperimentalData(path)
+        self._data["experimental spectra"][path] = ExperimentalSpectrum(path)
         self._notify_observers("experimental data changed")
 
     def delete_experimental_file(self, path):
