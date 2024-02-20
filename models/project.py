@@ -76,6 +76,7 @@ class Project(FileObserver):
                         print(f"Loaded project data: {self._data}")
                     self.window_title = self._assemble_window_title()
                     self._mark_project_as_open()
+                    self._notify_observers("imported project data changed")
                 elif os.path.exists(self._autosave_file):
                     self._logger.warning("Project file not found. Attempting to restore autosave file...")
                     self.load(auto=True)
@@ -266,10 +267,10 @@ class Project(FileObserver):
 
     def get(self, key, default=None):
         with self._data_lock:
-            if key in self._data:
+            if key in self._data.keys():
                 return self._data[key]
             else:
-                if key in self._data_defaults:
+                if key in self._data_defaults.keys():
                     self._logger.warning(f"Project data key {key} not found, using defaults.")
                     return self._data_defaults[key]
                 else:
@@ -282,3 +283,4 @@ class Project(FileObserver):
         with self._data_lock:
             self._data[key] = value
         self._project_unsaved()
+

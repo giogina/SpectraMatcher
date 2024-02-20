@@ -3,6 +3,7 @@ import dearpygui.dearpygui as dpg
 from viewmodels.data_files_viewmodel import DataFileViewModel, FileViewModel, GaussianLog, FileType, Directory
 from utility.icons import Icons
 from utility.drop_receiver_window import DropReceiverWindow, initialize_dnd
+from utility.custom_dpg_items import CustomDpgItems
 
 _file_icons = {
     FileType.GAUSSIAN_INPUT: Icons.file_code,
@@ -38,7 +39,6 @@ def _get_icon_texture(tag):
         tex = []
         for i in range(len(data)):
             tex.append(data[i] * color[i % 4])
-        print(tex, len(tex))
         return width, height, tex
     else:
         return 1, 1, [0, 0, 0, 0]
@@ -60,6 +60,7 @@ class FileExplorer:
         self.viewmodel.set_callback("reset file explorer", self.reset_file_explorer)
         self.viewmodel.set_callback("update file", self.update_file)
         self.icons = Icons()
+        self.cdi = CustomDpgItems()
         self.item_padding = 3
         self._resizing_column = None  # column number currently being resized
         self._dragging_button = None  # tag of resizer button being dragged
@@ -98,13 +99,6 @@ class FileExplorer:
 
         self.file_explorer_theme = None
 
-        sep = []
-        for i in range(24):
-            sep.extend([0.8, 0.8, 1, 0.4])
-
-        with dpg.texture_registry(show=False):
-            dpg.add_static_texture(width=1, height=24, default_value=sep, tag="pixel")
-
         with dpg.item_handler_registry() as self.table_handlers:
             dpg.add_item_clicked_handler(callback=self._start_table_mouse_drag)
         with dpg.handler_registry() as self.mouse_handlers:
@@ -119,14 +113,10 @@ class FileExplorer:
                     with dpg.group(horizontal=True):
                         self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_folder), Icons.folder_plus, size=16, tooltip="Import data folder")
                         self.icons.insert(dpg.add_button(height=32, width=32, callback=self._add_data_files), Icons.file_plus, size=16, tooltip="Import data files")
-                        dpg.add_spacer(width=3)
-                        dpg.bind_item_theme(dpg.add_image_button("pixel", width=1, height=32), self.invisible_button_theme)
-                        dpg.add_spacer(width=3)
+                        self.cdi.insert_separator_button(height=32)
                         self.icons.insert(dpg.add_button(height=32, width=32, tag="collapse all", callback=self._collapse_all, user_data=False), Icons.angle_double_up, size=16, tooltip="Collapse all folders")
                         self.icons.insert(dpg.add_button(height=32, width=32, tag="expand all", callback=self._collapse_all, user_data=True), Icons.angle_double_down, size=16, tooltip="Expand all folders")
-                        dpg.add_spacer(width=3)
-                        dpg.bind_item_theme(dpg.add_image_button("pixel", width=1, height=32), self.invisible_button_theme)
-                        dpg.add_spacer(width=3)
+                        self.cdi.insert_separator_button(height=32)
                         b = dpg.add_button(height=32, width=32)
                         self.icons.insert(b, Icons.filter, size=16, tooltip="Filter file types")
                         self._setup_filter_popup(b)
@@ -211,7 +201,7 @@ class FileExplorer:
         if file.tag not in [f.tag for f in self._file_rows]:
             dpg.delete_item(f"{file.tag}-c1")
         with dpg.popup(f"{file.tag}-c1", min_size=(300, 40)):
-            dpg.add_selectable(label="Open containing directory ", user_data=file.path.replace("/", "\\"), callback=lambda s, a, u: print(f'explorer /select,"{u}"'))
+            dpg.add_selectable(label="Open containing directory ", user_data=file.path.replace("/", "\\"), callback=lambda s, a, u: subprocess.Popen(f'explorer /select,"{u}"'))
             dpg.add_menu(label="Add to project as...")  # TODO
             if file.parent_directory is None:
                 dpg.add_selectable(label="Remove", user_data=file.tag, callback=self._remove_file)
@@ -224,7 +214,6 @@ class FileExplorer:
                 dpg.add_selectable(label="Copy adjusted geometry for re-optimization", user_data=file.path)  # TODO (stretch)
 
     def _collapse_all(self, s, a, expand=False):
-        print(expand)
         for directory in self._directory_nodes:
             dpg.set_value(directory, expand)
             self._toggle_directory_node_labels(directory)
@@ -393,7 +382,6 @@ class FileExplorer:
             file_icon_texture_tag = f"{file.type}-{16}"
             dpg.configure_item(f"{file.tag}-c0-img", texture_tag=file_icon_texture_tag)
             dpg.bind_item_theme(f"{file.tag}-c{1}", self.file_type_color_theme[file.type])
-            print(f"inserting tag: {file.type}-{16}")
         else:
             dpg.configure_item(f"{file.tag}-c0-img", width=0, show=False)
             dpg.configure_item(f"{file.tag}-c0", width=self._table_columns[0][1], show=True)

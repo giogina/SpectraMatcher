@@ -114,7 +114,6 @@ class SettingsManager:
         for file_path in temp_files:
             try:
                 os.remove(file_path)
-                print(f"Deleted {file_path}")
             except Exception as e:
                 print(f"Error deleting {file_path}: {e}")
 
@@ -168,9 +167,7 @@ class SettingsManager:
     def reset_shortcuts(self):
         del self._settings_dict[Settings.SHORTCUTS]
         self._save_settings_async()
-        print(f"Default: {SettingsManager._DEFAULT_SETTINGS[Settings.SHORTCUTS]}")
         self._settings_dict[Settings.SHORTCUTS] = copy.deepcopy(SettingsManager._DEFAULT_SETTINGS[Settings.SHORTCUTS])
-        print(f"Settings set: {self._settings_dict}")
 
     def set_shortcut(self, action: str, shortcut: tuple):
         if self._settings_dict.get(Settings.SHORTCUTS):

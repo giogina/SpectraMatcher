@@ -1,6 +1,4 @@
-
 import dearpygui.dearpygui as dpg
-# import DearPyGui_Markdown as markdown
 
 
 class Icons:
@@ -324,7 +322,6 @@ class Icons:
             self._is_initialized = True
 
     def set_font_registry(self, font_reg):
-        print(f"In icons: font registry assigned.")
         self._font_reg = font_reg
         return self
 

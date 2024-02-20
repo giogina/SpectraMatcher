@@ -4,6 +4,7 @@ from launcher import Launcher
 from viewmodels.main_viewmodel import MainViewModel
 from views.main_menu import MainMenu
 from views.file_explorer import FileExplorer
+from views.project_setup import ProjectSetup
 from utility.icons import Icons
 import dearpygui.dearpygui as dpg
 from screeninfo import get_monitors
@@ -44,7 +45,8 @@ class MainWindow:
                         with dpg.table_row():
                             with dpg.table_cell():
                                 self.file_manager_panel = FileExplorer(self.viewModel.get_file_manager_viewmodel())
-                            dpg.add_text("Hi.")
+                            with dpg.table_cell():
+                                self.project_setup_panel = ProjectSetup(self.viewModel.get_project_setup_viewmodel())
 
         self.configure_theme()
         dpg.set_primary_window("main window", True)

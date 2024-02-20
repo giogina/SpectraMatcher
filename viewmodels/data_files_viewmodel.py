@@ -72,7 +72,7 @@ class DataFileViewModel(FileObserver):
             print(f"Warning: In DataFileViewModel: Attempted to set unknown callback key {key}")
 
     def update(self, event_type, *args):
-        print(f"DataFileViewModel observed event: {event_type, *args}")
+        # print(f"DataFileViewModel observed event: {event_type, *args}")
         if event_type == "directory structure changed":
             self._populate_file_explorer(*args)
         if event_type == "file changed":

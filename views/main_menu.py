@@ -108,7 +108,6 @@ class MainMenu:
     def show_dialog(self, title, message, buttons=None):  # buttons: list of ("label", callback)
         if buttons is None:
             buttons = [("Ok", noop)]
-        print(f"show dialog called! {title, message, buttons}")
         dpg.show_item("the one modal window")
         self._show_modal_child("message and buttons")
         if len(buttons) == 1:
@@ -133,7 +132,6 @@ class MainMenu:
             self.button_callbacks[i] = buttons[i][1]
         dpg.set_item_label("button dialog message", message)
 
-        print("Should be shown now")
         dpg.configure_item("the one modal window", no_title_bar=False, label=title)
 
     def _on_modal_button_press(self, s, a, u):
@@ -284,7 +282,6 @@ class MainMenu:
         dpg.hide_item("the one modal window")
 
     def _restore_default_shortcuts(self):
-        print("restoring...")
         self.viewmodel.restore_default_shortcuts()
         self._repopulate_shortcuts_table()
 
@@ -322,15 +319,12 @@ class MainMenu:
         self.viewmodel.set_shortcut(action, shortcut)
 
     def _get_shortcut_string(self, shortcut: tuple):
-        print(f"{shortcut}, {type(shortcut), len(shortcut)}")
         return '+'.join([self._dpg_key_to_name(key) for key in shortcut]).replace("Shift+Ctrl", "Ctrl+Shift")
 
     def _on_key_down(self, s, a):
         if a not in self.currently_pressed:
             self.currently_pressed.append(a)
-            print(f"Pressed: {self.currently_pressed}")
             shortcuts = self.viewmodel.get_shortcuts()
-            print(f"Checking current shortcuts: {shortcuts}")
             action = shortcuts.get(tuple(sorted(self.currently_pressed)))
             if action:
                 action_dict = self.actions.get(action)

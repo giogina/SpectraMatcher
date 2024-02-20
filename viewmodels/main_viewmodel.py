@@ -2,6 +2,7 @@ from models.project import ProjectObserver
 from models.project import Project
 from models.settings_manager import SettingsManager
 from viewmodels.data_files_viewmodel import DataFileViewModel
+from viewmodels.project_setup_viewmodel import ProjectSetupViewModel
 from launcher import Launcher
 from utility.system_file_browser import inquire_close_unsaved
 
@@ -25,6 +26,9 @@ class MainViewModel(ProjectObserver):
     # Spawn child view models responsible for child windows.
     def get_file_manager_viewmodel(self):
         return DataFileViewModel(self._project.data_file_manager)
+
+    def get_project_setup_viewmodel(self):
+        return ProjectSetupViewModel(self._project)
 
     def load_project(self):
         if self._project.check_newer_autosave():
