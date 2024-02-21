@@ -1,10 +1,13 @@
 import os
 from os.path import isfile, join
 import asyncio
+import aiofiles
+import threading
 from asyncio import Queue
 import re
 from enum import Enum
 from utility.experimental_spectrum_parser import ExperimentParser
+from utility.read_write_lock import PathLockManager
 
 
 class FileType:
@@ -20,7 +23,7 @@ class FileType:
     FREQ_EXCITED_ANHARM = "Frequency excited state anharm"
     FC_EXCITATION = "FC excitation"
     FC_EMISSION = "FC emission"
-    LOG_TYPES = (GAUSSIAN_LOG, GAUSSIAN_INPUT, GAUSSIAN_CHECKPOINT, FC_EMISSION, FC_EXCITATION,
+    LOG_TYPES = (GAUSSIAN_LOG, FC_EMISSION, FC_EXCITATION,
                  FREQ_GROUND, FREQ_EXCITED, FREQ_GROUND_ANHARM, FREQ_EXCITED_ANHARM)
 
 
@@ -44,6 +47,8 @@ class DataFileManager:
     directory_toggle_states = {}  # "directory tag": bool - is dir toggled open?
     ignored_files_and_directories = []
     all_files = {}  # lookup files in a flat structure
+
+    lock_manager = PathLockManager()
 
     def __init__(self):
         pass
@@ -117,6 +122,37 @@ class DataFileManager:
     def get_file(self, tag):
         return self.all_files.get(tag)
 
+    # magic!
+    def make_readable(self, tag):
+        file = self.all_files.get(tag)
+        file.is_human_readable = True
+        self.notify_observers("file changed", file)
+        if file:
+            loop = asyncio.new_event_loop()
+            t = threading.Thread(target=self._start_file_rewrite_loop, args=(loop, file.path), daemon=True)
+            t.start()
+
+    def _start_file_rewrite_loop(self, loop, path):
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self._make_readable(path))
+        loop.close()
+
+    async def _make_readable(self, path):
+        if os.path.exists(path):
+            tmp_file_path = f"{path}.tmp"
+            self.lock_manager.acquire_write(path)
+            try:
+                async with aiofiles.open(path, 'r') as reader:
+                    async with aiofiles.open(tmp_file_path, 'w') as writer:
+                        async for line in reader:
+                            newline = line.rstrip('\n').rstrip('\r')
+                            if len(newline):
+                                await writer.write(newline + '\r\n')
+                os.replace(tmp_file_path, path)
+            finally:
+                self.lock_manager.release_write(path)
+
+
     ############### Observers ###############
 
     def add_observer(self, observer, event_type):
@@ -137,13 +173,14 @@ class DataFileManager:
 
     async def worker(self):
         while True:
+            file = await self.file_queue.get()
             try:
-                file = await self.file_queue.get()
-                await file.what_am_i()
-                self.file_queue.task_done()
+                await file.what_am_i_async_wrapper()  # Ensure this is an async operation
             except Exception as e:
                 print(f"Worker caught an exception: {e}")
                 break
+            finally:
+                self.file_queue.task_done()
 
     async def _open_directories_async(self, open_data_dirs=None, open_data_files=None):
         self.file_queue = Queue()
@@ -226,6 +263,7 @@ class File:
     depth = 0
     properties = {}
     extension = ""
+    is_human_readable = True  # \n instead of \r\n making it ugly in notepad
 
     type = None
 
@@ -247,7 +285,14 @@ class File:
 
         self.manager.file_queue.put_nowait(self)
 
-    async def what_am_i(self):
+    async def what_am_i_async_wrapper(self):
+        loop = asyncio.get_running_loop()
+        try:
+            await loop.run_in_executor(None, self.what_am_i)
+        except Exception as e:
+            print(f"An exception occurred: {e}")
+
+    def what_am_i(self):
         properties = {}
         is_table = False
         if self.extension == ".log":  # Gaussian log
@@ -262,28 +307,32 @@ class File:
             has_fc = False
             emission = False
             excited = False
+            self.manager.lock_manager.acquire_read(self.path)
             try:
+                with open(self.path, 'rb') as file:
+                    content = file.read(1024)
+                    self.is_human_readable = b'\r\n' in content
                 with open(self.path, 'r') as f:
                     lines = f.readlines()
-                    for line in lines:
-                        if re.search('Frequencies --', line):
-                            has_freqs = True
-                            if re.search('Frequencies ---', line):
-                                properties[GaussianLog.HAS_HPMODES] = True  # TODO: Check for negative frequencies (set state to GaussianLog.NEGATIVE_FREQUENCY, update file; set state to ERROR or negfreq!)
-                        if re.search('anharmonic', line):
-                            anharm = True
-                        if re.search('Excited', line):
-                            excited = True
-                        if re.search('Final Spectrum', line):
-                            has_fc = True
-                        if re.search('emission', line):
-                            emission = True
-                        if re.search('Proceeding to internal job step number', line):
-                            nr_jobs += 1
-                        if re.search('Normal termination', line):
-                            nr_finished += 1
-                        if re.search('Error termination', line):
-                            error = True
+                for line in lines:
+                    if re.search('Frequencies --', line):
+                        has_freqs = True
+                        if re.search('Frequencies ---', line):
+                            properties[GaussianLog.HAS_HPMODES] = True  # TODO: Check for negative frequencies (set state to GaussianLog.NEGATIVE_FREQUENCY, update file; set state to ERROR or negfreq!)
+                    if re.search('anharmonic', line):
+                        anharm = True
+                    if re.search('Excited', line):
+                        excited = True
+                    if re.search('Final Spectrum', line):
+                        has_fc = True
+                    if re.search('emission', line):
+                        emission = True
+                    if re.search('Proceeding to internal job step number', line):
+                        nr_jobs += 1
+                    if re.search('Normal termination', line):
+                        nr_finished += 1
+                    if re.search('Error termination', line):
+                        error = True
                 if has_fc:
                     if emission:
                         self.type = FileType.FC_EMISSION  # TODO: FC files always treat current state as ground state; and contain corresponding geom & freqs. Read from there (maybe just as backup).
@@ -309,6 +358,8 @@ class File:
 
             except Exception as e:
                 print(f"File {self.path} couldn't be read! {e}")
+            finally:
+                self.manager.lock_manager.release_read(self.path)
         elif self.extension in [".gjf", ".com"]:
             self.type = FileType.GAUSSIAN_INPUT
         elif self.extension == ".chk":

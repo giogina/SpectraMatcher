@@ -4,6 +4,7 @@ from viewmodels.data_files_viewmodel import DataFileViewModel, FileViewModel, Ga
 from utility.icons import Icons
 from utility.drop_receiver_window import DropReceiverWindow, initialize_dnd
 from utility.custom_dpg_items import CustomDpgItems
+from utility.gaussian_parser import GaussianParser
 
 _file_icons = {
     FileType.GAUSSIAN_INPUT: Icons.file_code,
@@ -218,7 +219,7 @@ class FileExplorer:
             dpg.add_spacer(height=2)
             dpg.add_separator()
             dpg.add_spacer(height=2)
-            dpg.add_selectable(label="Open in file explorer ", user_data=directory.path.replace("/", "\\"), callback=lambda s, a, u: subprocess.Popen(f'explorer "{u}"'))
+
             if directory.parent_directory is None:
                 dpg.add_selectable(label="Remove", user_data=tag, callback=self._remove_directory)
 
@@ -228,6 +229,11 @@ class FileExplorer:
                 dpg.hide_item(f"exclude-{tag}")
             else:
                 dpg.hide_item(f"include-{tag}")
+            dpg.add_spacer(height=2)
+            dpg.add_separator()
+            dpg.add_spacer(height=2)
+            dpg.add_selectable(label="Open in file explorer ", user_data=directory.path.replace("/", "\\"),
+                               callback=lambda s, a, u: subprocess.Popen(f'explorer "{u}"'))
 
     def _setup_file_right_click_menu(self, file: FileViewModel):
         if file.tag not in [f.tag for f in self._file_rows]:
@@ -249,8 +255,6 @@ class FileExplorer:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
                 dpg.add_spacer(height=2)
-            dpg.add_selectable(label="Open containing directory ", user_data=file.path.replace("/", "\\"),
-                               callback=lambda s, a, u: subprocess.Popen(f'explorer /select,"{u}"'))
             dpg.add_menu(label="Add to project as...")  # TODO
             if file.parent_directory is None:
                 dpg.add_spacer(height=2)
@@ -261,10 +265,17 @@ class FileExplorer:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
                 dpg.add_spacer(height=2)
-                dpg.add_selectable(label="Copy last geometry", user_data=file.path)  # TODO
+                dpg.add_selectable(label="Copy last geometry", user_data=file.path, callback=lambda s, a, u: GaussianParser.get_last_geometry(u, clipboard=True))
+                if not file.is_human_readable:
+                    dpg.add_selectable(label="Make readable", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.make_file_readable(u))
             if file.properties.get(GaussianLog.STATUS, "") == GaussianLog.NEGATIVE_FREQUENCY:
                 dpg.add_selectable(label="Copy adjusted geometry for re-optimization", user_data=file.path)  # TODO (stretch)
 
+            dpg.add_spacer(height=2)
+            dpg.add_separator()
+            dpg.add_spacer(height=2)
+            dpg.add_selectable(label="See in file explorer ", user_data=file.path.replace("/", "\\"),
+                               callback=lambda s, a, u: subprocess.Popen(f'explorer /select,"{u}"'))
 
     def _collapse_all(self, s, a, expand=False):
         for directory in self._directory_nodes:

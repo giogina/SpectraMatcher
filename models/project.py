@@ -9,8 +9,7 @@ import ctypes
 import matplotlib.colors as mcolors
 from models.settings_manager import SettingsManager
 from models.data_file_manager import DataFileManager, FileObserver, FileType
-from models.gaussian_parser import GaussianParser
-from models.molecular_data import Geometry, VibrationalMode
+from utility.gaussian_parser import GaussianParser
 
 
 # Define an observer interface

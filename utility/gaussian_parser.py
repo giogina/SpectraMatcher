@@ -1,4 +1,5 @@
 import re
+import pyperclip
 from models.molecular_data import Geometry, VibrationalMode, FCPeak, FCSpectrum
 
 
@@ -15,27 +16,33 @@ class GaussianParser:
                       '89': "Ac", '90': "Th", '91': "Pa", '92': "U", '93': "Np", '94': "Pu", '95': "Am", '96': "Cm", '97': "Bk", '98': "Cf",
                       '99': "Es", '100': "Fm"}
 
-    def __init__(self):
-        pass
+    @staticmethod
+    def get_element_from_number(n):
+        return GaussianParser._ELEMENT_NAMES.get(n, str(n))
 
     @staticmethod
-    def get_last_geometry(log_file):
+    def get_last_geometry(log_file, clipboard=False):
         """Parses log file, returns Geometry object (from last "standard orientation") or None"""
         last_geom_start = None
         with open(log_file, 'r') as f:
             lines = f.readlines()
-        for i in range(-1, -len(lines) - 1, -1):
-            if lines[i].strip() == "Standard orientation:":
+        for i in range(len(lines) - 1, 1, -1):
+            if lines[i].strip() == "Standard orientation:":  # TODO> Make work for gjf, fcht.log
                 last_geom_start = i
                 break
         if not isinstance(last_geom_start, int):
+            if clipboard:
+                pyperclip.copy("No standard orientation geometry found.")
             return None
 
         geometry = Geometry()
+        print(f"{last_geom_start, len(lines)}")
 
-        for i in range(last_geom_start, len(lines)):
+        for i in range(last_geom_start+1, len(lines)):
+            print(i, lines[i])
             line = lines[i]
             coord_match = re.findall(r'\s+([-\d.]+)', line)
+            print(coord_match)
             if len(coord_match) == 6:
                 geometry.atoms.append(GaussianParser._ELEMENT_NAMES.get(str(coord_match[1]), ""))
                 geometry.x.append(float(coord_match[3]))
@@ -45,6 +52,10 @@ class GaussianParser:
                 continue
             else:
                 break
+        print(f" Clipboard: {geometry.get_gaussian_geometry()}")
+
+        if clipboard:
+            pyperclip.copy(geometry.get_gaussian_geometry())
         return geometry
 
     @staticmethod
