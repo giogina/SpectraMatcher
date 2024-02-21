@@ -1,6 +1,6 @@
 import subprocess
 import dearpygui.dearpygui as dpg
-from viewmodels.data_files_viewmodel import DataFileViewModel, FileViewModel, GaussianLog, FileType, Directory
+from viewmodels.data_files_viewmodel import DataFileViewModel, FileViewModel, GaussianLog, FileType, DirectoryViewModel
 from utility.icons import Icons
 from utility.drop_receiver_window import DropReceiverWindow, initialize_dnd
 from utility.custom_dpg_items import CustomDpgItems
@@ -63,6 +63,7 @@ class FileExplorer:
         self.viewmodel.set_callback("populate file explorer", self.update_file_explorer)
         self.viewmodel.set_callback("reset file explorer", self.reset_file_explorer)
         self.viewmodel.set_callback("update file", self.update_file)
+        self.viewmodel.set_callback("update directory ignore status", self.update_dir_ignored_status)
         self.icons = Icons()
         self.cdi = CustomDpgItems()
         self.item_padding = 3
@@ -100,6 +101,26 @@ class FileExplorer:
         with dpg.theme() as non_hover_drag_theme:
             with dpg.theme_component(dpg.mvAll):
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (25, 50, 75, 0), category=dpg.mvThemeCat_Core)
+
+        with dpg.theme() as self.ignored_directory_theme:
+            with dpg.theme_component(dpg.mvTreeNode):
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 100])
+
+        with dpg.theme() as self.un_ignored_directory_theme:
+            with dpg.theme_component(dpg.mvTreeNode):
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 200])
+
+        with dpg.theme() as self.ignored_file_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 100])
+            with dpg.theme_component(dpg.mvSelectable):
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 100])
+
+        with dpg.theme() as self.un_ignored_file_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 200])
+            with dpg.theme_component(dpg.mvSelectable):
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 200])
 
         self.file_explorer_theme = None
 
@@ -188,7 +209,7 @@ class FileExplorer:
         for file in self._file_rows:
             if file.tag == u:
                 self._file_rows.remove(file)
-
+    # TODO> "Exclude from auto-import" option, automatically active for *old* and *ignore* paths
     def _setup_folder_right_click_menu(self, directory):
         tag = directory.tag
         with dpg.popup(tag):
@@ -201,13 +222,28 @@ class FileExplorer:
             if directory.parent_directory is None:
                 dpg.add_selectable(label="Remove", user_data=tag, callback=self._remove_directory)
 
+            dpg.add_selectable(label="Include in auto-import", tag=f"include-{tag}", user_data=directory, callback=lambda s, a, u: self.viewmodel.ignore_directory(u, False))
+            dpg.add_selectable(label="Exclude from auto-import", tag=f"exclude-{tag}", user_data=directory, callback=lambda s, a, u: self.viewmodel.ignore_directory(u, True))
+            if self.viewmodel.is_ignored(tag):
+                dpg.hide_item(f"exclude-{tag}")
+            else:
+                dpg.hide_item(f"include-{tag}")
+
     def _setup_file_right_click_menu(self, file: FileViewModel):
         if file.tag not in [f.tag for f in self._file_rows]:
             dpg.delete_item(f"{file.tag}-c1")
         with dpg.popup(f"{file.tag}-c1", min_size=(300, 40)):
             dpg.add_selectable(label="Open containing directory ", user_data=file.path.replace("/", "\\"), callback=lambda s, a, u: subprocess.Popen(f'explorer /select,"{u}"'))
             dpg.add_menu(label="Add to project as...")  # TODO
+            if file.type not in (FileType.OTHER, FileType.GAUSSIAN_CHECKPOINT, FileType.GAUSSIAN_INPUT):
+                if self.viewmodel.is_ignored(file.tag):
+                    dpg.add_selectable(label="Include in auto-import", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.ignore_tag(u, False))
+                else:
+                    dpg.add_selectable(label="Exclude from auto-import", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.ignore_tag(u, True))
             if file.parent_directory is None:
+                dpg.add_spacer(height=2)
+                dpg.add_separator()
+                dpg.add_spacer(height=2)
                 dpg.add_selectable(label="Remove", user_data=file.tag, callback=self._remove_file)
             if file.type in FileType.LOG_TYPES:
                 dpg.add_spacer(height=2)
@@ -330,7 +366,7 @@ class FileExplorer:
             self._display_directory(directory, parent="file explorer group")
         self._display_files(files, parent="file explorer group")
 
-    def _display_directory(self, directory: Directory, parent: str):
+    def _display_directory(self, directory: DirectoryViewModel, parent: str):
         if directory.tag not in self._directory_nodes.keys():
             dpg.add_spacer(height=self.item_padding, parent=parent)
             is_open = self.viewmodel.get_dir_state(directory.tag)
@@ -344,8 +380,10 @@ class FileExplorer:
                 self._setup_folder_right_click_menu(directory)
             dpg.add_spacer(height=0 if is_open else self.item_padding, parent=parent, tag=f"after_{directory.tag}", show=not is_open)
             self._directory_nodes[directory.tag] = is_open
+        self.update_dir_ignored_status(directory.tag)
 
     def _display_files(self, files: dict, parent: str):
+        print([file.type for file in files.values()])
         tag = f"{parent}-files table"
         if tag not in self._file_tables:
             self._file_tables.append(tag)
@@ -359,6 +397,17 @@ class FileExplorer:
                         dpg.add_table_column(label=column[0])
         for file_tag in files.keys():
             self.update_file(files[file_tag], table=f"{parent}-files table")
+
+    def update_dir_ignored_status(self, directory_tag):
+        if directory_tag in self._directory_nodes.keys():
+            if self.viewmodel.is_ignored(directory_tag):
+                dpg.show_item(f"include-{directory_tag}")
+                dpg.hide_item(f"exclude-{directory_tag}")
+                dpg.bind_item_theme(directory_tag, theme=self.ignored_directory_theme)
+            else:
+                dpg.hide_item(f"include-{directory_tag}")
+                dpg.show_item(f"exclude-{directory_tag}")
+                dpg.bind_item_theme(directory_tag, theme=self.un_ignored_directory_theme)
 
     def update_file(self, file: FileViewModel, table=None):  # TODO: Could also make table rows horizontal groups starting with a selectable. Possible issues: Clicks (for combo boxes?),drag container feasability. If so, make _setup_file_right_click_menu target the selectable.
         if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
@@ -380,7 +429,13 @@ class FileExplorer:
         self._setup_file_right_click_menu(file)
 
         # Gather & insert file info
-        if file.type in _file_icon_textures.keys():
+        if self.viewmodel.is_ignored(file.tag):
+            dpg.bind_item_theme(f"{file.tag}-c{0}", self.ignored_file_theme)
+            dpg.bind_item_theme(f"{file.tag}-c{1}", self.ignored_file_theme)
+        else:
+            dpg.bind_item_theme(f"{file.tag}-c{0}", self.un_ignored_file_theme)
+            dpg.bind_item_theme(f"{file.tag}-c{1}", self.un_ignored_file_theme)
+        if file.type in _file_icon_textures.keys() and not self.viewmodel.is_ignored(file.tag):
             dpg.configure_item(f"{file.tag}-c0", width=0, show=False)
             dpg.configure_item(f"{file.tag}-c0-img", width=self._table_columns[0][1], show=True)
             file_icon_texture_tag = f"{file.type}-{16}"

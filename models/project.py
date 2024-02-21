@@ -27,7 +27,7 @@ class MyEncoder(json.JSONEncoder):
             for key in obj.EXCLUDE:
                 if key in state_data_dict.keys():
                     del state_data_dict[key]
-            del state_data_dict["EXCLUDE"]
+            # del state_data_dict["EXCLUDE"]
             return state_data_dict
         if isinstance(obj, ExperimentalSpectrum):
             spec_dict = copy.deepcopy(obj.__dict__)
@@ -210,8 +210,11 @@ class Project(FileObserver):
         # Initialize everything based on loaded data!
         if "directory toggle states" not in self._data.keys():
             self._data["directory toggle states"] = {}
+        if "ignored" not in self._data.keys():
+            self._data["ignored"] = []
         # Automatically keeps file manager dicts updated in self._data!
-        self.data_file_manager.directory_toggle_states = self._data.get("directory toggle states", {})
+        self.data_file_manager.directory_toggle_states = self._data["directory toggle states"]
+        self.data_file_manager.ignored_files_and_directories = self._data["ignored"]
         self.data_file_manager.open_directories(self._data.get("open data folders", []),
                                                 self._data.get("open data files", []))
         if "states" not in self._data.keys():

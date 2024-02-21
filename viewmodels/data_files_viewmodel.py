@@ -22,6 +22,8 @@ class FileViewModel:
         for key, value in file.__dict__.items():
             setattr(self, key, value)
 
+        # print(file.name, file.type, self.type)
+
 
 class DirectoryViewModel:
     content_dirs = {}
@@ -31,6 +33,7 @@ class DirectoryViewModel:
     depth = 0
     parent_directory = None
     tag = ""  # Unique identifier
+    ignore = False
 
     def __init__(self, directory: Directory):
         for key, value in directory.__dict__.items():
@@ -52,15 +55,18 @@ class DataFileViewModel(FileObserver):
     _callbacks = {
         "populate file explorer": noop,
         "reset file explorer": noop,
-        "update file": noop
+        "update file": noop,
+        "update directory ignore status": noop,
     }
 
     def __init__(self, data_file_manager: DataFileManager):
         self._data_file_manager = data_file_manager
         self._data_file_manager.add_observer(self, "file changed")  # Only properties of one existing file need updating
+        self._data_file_manager.add_observer(self, "directory changed")  # Only properties of one existing dir need updating
         self._data_file_manager.add_observer(self, "directory structure changed")  # Need to re-populate the entire list
         self.settings = SettingsManager()
         self.table_columns = self.settings.get(Settings.FILE_EXPLORER_COLUMNS)
+        self._all_files = {}
 
     def update_column_settings(self):
         self.settings.update_settings({Settings.FILE_EXPLORER_COLUMNS: self.table_columns})
@@ -86,10 +92,30 @@ class DataFileViewModel(FileObserver):
         self._data_file_manager.close_file(file_tag)
 
     def toggle_directory(self, directory_tag, is_open):
-        self._data_file_manager.directory_toggle_states[directory_tag] = is_open
+        self._data_file_manager.toggle_directory(directory_tag, is_open)
 
     def get_dir_state(self, directory_tag):
-        return self._data_file_manager.directory_toggle_states.get(directory_tag, True)
+        return self._data_file_manager.is_directory_toggled_open(directory_tag)
+
+    def ignore_tag(self, tag, ignore=True):
+        self._data_file_manager.ignore(tag, ignore=ignore)
+        file = self._data_file_manager.get_file(tag)
+        if file:
+            self._callbacks.get("update file")(file)
+
+    def ignore_directory(self, d, ignore=True):  # Careful: This is an old version of directory from when the callback was created. Only use immuted properties like content_dirs.
+        self._data_file_manager.ignore(d.tag, ignore=ignore)
+        if isinstance(d, DirectoryViewModel):
+            self._callbacks.get("update directory ignore status")(d.tag)
+            for dd in d.content_dirs.values():
+                self.ignore_directory(dd, ignore=ignore)
+            for f in d.content_files.values():
+                self.ignore_tag(f.tag, ignore=ignore)
+
+
+
+    def is_ignored(self, tag):
+        return self._data_file_manager.is_ignored(tag)
 
     def inquire_open_data_directory(self):
         path = data_dir_file_dialog(self._data_file_manager.last_path)
@@ -107,9 +133,11 @@ class DataFileViewModel(FileObserver):
     def _populate_file_explorer(self, reset=False):
         dir_vms = {t: DirectoryViewModel(d) for t, d in self._data_file_manager.top_level_directories.items()}
         file_vms = {t: FileViewModel(file) for t, file in self._data_file_manager.top_level_files.items()}
+
         if reset:
             self._callbacks.get("reset file explorer", noop)(dir_vms, file_vms)
         else:
+            print(f"Calling update file explorer, {dir_vms, file_vms}")
             self._callbacks.get("populate file explorer", noop)(dir_vms, file_vms)
 
 

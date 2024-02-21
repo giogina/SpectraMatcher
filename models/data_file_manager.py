@@ -14,7 +14,10 @@ class DataFileManager:
     file_queue = None
     num_workers = 5
     last_path = "/"  # Last added data path; for file dialog root dirs
+    # Set from parent Project instance, directly coupled to its _data:
     directory_toggle_states = {}  # "directory tag": bool - is dir toggled open?
+    ignored_files_and_directories = []
+    all_files = {}  # lookup files in a flat structure
 
     def __init__(self):
         pass
@@ -38,7 +41,7 @@ class DataFileManager:
 
     def close_directory(self, directory_tag):
         if directory_tag in self.top_level_directories.keys():
-            self._forget_toggle_states(self.top_level_directories[directory_tag])
+            self._forget_directory_info(self.top_level_directories[directory_tag])
             del self.top_level_directories[directory_tag]
             self.notify_observers("directory structure changed", True)
 
@@ -47,12 +50,35 @@ class DataFileManager:
             del self.top_level_files[file_tag]
             self.notify_observers("directory structure changed")
 
-    def _forget_toggle_states(self, directory):
+    def toggle_directory(self, directory_tag, is_open):
+        self.directory_toggle_states[directory_tag] = is_open
+
+    def is_directory_toggled_open(self, directory_tag):
+        return self.directory_toggle_states.get(directory_tag, True)
+
+    def ignore(self, tag, ignore=True):
+        if ignore and (tag not in self.ignored_files_and_directories):
+            self.ignored_files_and_directories.append(tag)
+        if not ignore and (tag in self.ignored_files_and_directories):
+            self.ignored_files_and_directories.remove(tag)
+        self.notify_observers("directory structure changed")
+
+    def is_ignored(self, tag):
+        return tag in self.ignored_files_and_directories
+
+    def _forget_directory_info(self, directory):
         if directory.tag in self.directory_toggle_states.keys():
             del self.directory_toggle_states[directory.tag]
+        if directory.tag in self.ignored_files_and_directories:
+            self.ignored_files_and_directories.remove(directory.tag)
+        for f in directory.content_files.values():
+            if f.tag in self.ignored_files_and_directories:
+                self.ignored_files_and_directories.remove(f.tag)
         for i, d in directory.content_dirs.items():
-            self._forget_toggle_states(d)
+            self._forget_directory_info(d)
 
+    def get_file(self, tag):
+        return self.all_files.get(tag)
 
     ############### Observers ###############
 
@@ -197,6 +223,7 @@ class File:
             self.name = os.path.basename(path)
         self.parent_directory = parent
         name, self.extension = os.path.splitext(self.name)
+        self.manager.all_files[self.tag] = self
 
         self.manager.file_queue.put_nowait(self)
 
