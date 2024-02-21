@@ -109,9 +109,11 @@ class DataFileViewModel(FileObserver):
             for f in d.content_files.values():
                 self.ignore_tag(f.tag, ignore=ignore)
 
-
     def is_ignored(self, tag):
         return self._data_file_manager.is_ignored(tag)
+
+    def mark_file_as_excitation(self, tag, excitation):
+        self._data_file_manager.mark_file_as_excitation(tag, excitation)
 
     def inquire_open_data_directory(self):
         path = data_dir_file_dialog(self._data_file_manager.last_path)

@@ -7,6 +7,32 @@ from enum import Enum
 from utility.experimental_spectrum_parser import ExperimentParser
 
 
+class FileType:
+    OTHER = "Other"
+    EXPERIMENT_EMISSION = "experiment emission"
+    EXPERIMENT_EXCITATION = "experiment excitation"
+    GAUSSIAN_LOG = "Gaussian log"
+    GAUSSIAN_INPUT = "Gaussian input"
+    GAUSSIAN_CHECKPOINT = "Gaussian chk"
+    FREQ_GROUND = "Frequency ground state"
+    FREQ_EXCITED = "Frequency excited state"
+    FREQ_GROUND_ANHARM = "Frequency ground state anharm"
+    FREQ_EXCITED_ANHARM = "Frequency excited state anharm"
+    FC_EXCITATION = "FC excitation"
+    FC_EMISSION = "FC emission"
+    LOG_TYPES = (GAUSSIAN_LOG, GAUSSIAN_INPUT, GAUSSIAN_CHECKPOINT, FC_EMISSION, FC_EXCITATION,
+                 FREQ_GROUND, FREQ_EXCITED, FREQ_GROUND_ANHARM, FREQ_EXCITED_ANHARM)
+
+
+class GaussianLog(Enum):
+    STATUS = "status"
+    HAS_HPMODES = "hpmodes"
+    FINISHED = "finished"
+    ERROR = "error"
+    RUNNING = "running"
+    NEGATIVE_FREQUENCY = "negative frequency"
+
+
 class DataFileManager:
     top_level_directories = {}
     top_level_files = {}
@@ -66,6 +92,16 @@ class DataFileManager:
 
     def is_ignored(self, tag):
         return tag in self.ignored_files_and_directories
+
+    def mark_file_as_excitation(self, tag, excitation=True):
+        file = self.get_file(tag)
+        print(f"File {file} for tag {tag}")
+        if file:
+            if excitation and file.type == FileType.EXPERIMENT_EMISSION:
+                file.type = FileType.EXPERIMENT_EXCITATION
+            if not excitation and file.type == FileType.EXPERIMENT_EXCITATION:
+                file.type = FileType.EXPERIMENT_EMISSION
+            self.notify_observers("file changed", file)
 
     def _forget_directory_info(self, directory):
         if directory.tag in self.directory_toggle_states.keys():
@@ -180,32 +216,6 @@ class Directory:
                 dirs[directory.tag] = directory
         self.content_dirs = dirs
         self.content_files = files
-
-
-class FileType:
-    OTHER = "Other"
-    EXPERIMENT_EMISSION = "experiment emission"
-    EXPERIMENT_EXCITATION = "experiment excitation"
-    GAUSSIAN_LOG = "Gaussian log"
-    GAUSSIAN_INPUT = "Gaussian input"
-    GAUSSIAN_CHECKPOINT = "Gaussian chk"
-    FREQ_GROUND = "Frequency ground state"
-    FREQ_EXCITED = "Frequency excited state"
-    FREQ_GROUND_ANHARM = "Frequency ground state anharm"
-    FREQ_EXCITED_ANHARM = "Frequency excited state anharm"
-    FC_EXCITATION = "FC excitation"
-    FC_EMISSION = "FC emission"
-    LOG_TYPES = (GAUSSIAN_LOG, GAUSSIAN_INPUT, GAUSSIAN_CHECKPOINT, FC_EMISSION, FC_EXCITATION,
-                 FREQ_GROUND, FREQ_EXCITED, FREQ_GROUND_ANHARM, FREQ_EXCITED_ANHARM)
-
-
-class GaussianLog(Enum):
-    STATUS = "status"
-    HAS_HPMODES = "hpmodes"
-    FINISHED = "finished"
-    ERROR = "error"
-    RUNNING = "running"
-    NEGATIVE_FREQUENCY = "negative frequency"
 
 
 class File:

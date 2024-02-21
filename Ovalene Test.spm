@@ -8,7 +8,8 @@
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT": false,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene": false,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene_0": true,
-        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited_0": false
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited_0": false,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1": false
     },
     "open data files": [],
     "states": {
@@ -30,6 +31,8 @@
         "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_emission.yaml_2",
         "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_excitation (2).yaml_2",
         "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_excitation (3).yaml_2",
-        "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_excitation.yaml_2"
+        "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_excitation.yaml_2",
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1",
+        "file_C:\\Users\\Giogina\\Documents\\ovalene\\ovalene 2nd excited state excitation table.txt_1"
     ]
 }

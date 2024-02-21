@@ -209,7 +209,7 @@ class FileExplorer:
         for file in self._file_rows:
             if file.tag == u:
                 self._file_rows.remove(file)
-    # TODO> "Exclude from auto-import" option, automatically active for *old* and *ignore* paths
+
     def _setup_folder_right_click_menu(self, directory):
         tag = directory.tag
         with dpg.popup(tag):
@@ -233,13 +233,25 @@ class FileExplorer:
         if file.tag not in [f.tag for f in self._file_rows]:
             dpg.delete_item(f"{file.tag}-c1")
         with dpg.popup(f"{file.tag}-c1", min_size=(300, 40)):
-            dpg.add_selectable(label="Open containing directory ", user_data=file.path.replace("/", "\\"), callback=lambda s, a, u: subprocess.Popen(f'explorer /select,"{u}"'))
-            dpg.add_menu(label="Add to project as...")  # TODO
+
             if file.type not in (FileType.OTHER, FileType.GAUSSIAN_CHECKPOINT, FileType.GAUSSIAN_INPUT):
                 if self.viewmodel.is_ignored(file.tag):
                     dpg.add_selectable(label="Include in auto-import", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.ignore_tag(u, False))
                 else:
                     dpg.add_selectable(label="Exclude from auto-import", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.ignore_tag(u, True))
+            if file.type == FileType.EXPERIMENT_EMISSION:
+                dpg.add_selectable(label="Mark as Excitation spectrum", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.mark_file_as_excitation(u, True))
+                dpg.add_spacer(height=2)
+                dpg.add_separator()
+                dpg.add_spacer(height=2)
+            if file.type == FileType.EXPERIMENT_EXCITATION:
+                dpg.add_selectable(label="Mark as Emission spectrum", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.mark_file_as_excitation(u, False))
+                dpg.add_spacer(height=2)
+                dpg.add_separator()
+                dpg.add_spacer(height=2)
+            dpg.add_selectable(label="Open containing directory ", user_data=file.path.replace("/", "\\"),
+                               callback=lambda s, a, u: subprocess.Popen(f'explorer /select,"{u}"'))
+            dpg.add_menu(label="Add to project as...")  # TODO
             if file.parent_directory is None:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
@@ -249,9 +261,10 @@ class FileExplorer:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
                 dpg.add_spacer(height=2)
-                dpg.add_selectable(label="Copy last geometry", user_data=file.path)
+                dpg.add_selectable(label="Copy last geometry", user_data=file.path)  # TODO
             if file.properties.get(GaussianLog.STATUS, "") == GaussianLog.NEGATIVE_FREQUENCY:
                 dpg.add_selectable(label="Copy adjusted geometry for re-optimization", user_data=file.path)  # TODO (stretch)
+
 
     def _collapse_all(self, s, a, expand=False):
         for directory in self._directory_nodes:
