@@ -4,6 +4,7 @@ import asyncio
 from asyncio import Queue
 import re
 from enum import Enum
+from utility.experimental_spectrum_parser import ExperimentParser
 
 
 class DataFileManager:
@@ -78,7 +79,7 @@ class DataFileManager:
                 await file.what_am_i()
                 self.file_queue.task_done()
             except Exception as e:
-                # print(f"Worker caught an exception: {e}")
+                print(f"Worker caught an exception: {e}")
                 break
 
     async def _open_directories_async(self, open_data_dirs=None, open_data_files=None):
@@ -201,6 +202,7 @@ class File:
 
     async def what_am_i(self):
         properties = {}
+        is_table = False
         if self.extension == ".log":  # Gaussian log
             self.type = FileType.GAUSSIAN_LOG
             anharm = False
@@ -264,8 +266,22 @@ class File:
             self.type = FileType.GAUSSIAN_INPUT
         elif self.extension == ".chk":
             self.type = FileType.GAUSSIAN_CHECKPOINT
+        elif self.extension == ".txt":
+            try:
+                delim, is_table = ExperimentParser.guess_delimiter_and_check_table(self.path)
+                self.properties["delimiter"] = delim
+            except Exception as e:
+                print(f"File {self.path} couldn't be read! {e}")
+        elif self.extension in ['.csv', '.tsv', '.xlsx', '.xls', '.xlsm', '.xltx', '.xltm', '.ods']:  # TODO> Document available formats.
+            is_table = True
         else:
             self.type = FileType.OTHER
+
+        if is_table:
+            if re.search(r'DF_|fluor|emmi', self.name, re.IGNORECASE):
+                self.type = FileType.EXPERIMENT_EMISSION
+            else:
+                self.type = FileType.EXPERIMENT_EXCITATION
         self.properties = properties
         self.manager.notify_observers("file changed", self)
 

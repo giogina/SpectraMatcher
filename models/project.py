@@ -25,7 +25,8 @@ class MyEncoder(json.JSONEncoder):
             state_data_dict = copy.deepcopy(obj.__dict__)
             state_data_dict['__StateData__'] = True
             for key in obj.EXCLUDE:
-                del state_data_dict[key]
+                if key in state_data_dict.keys():
+                    del state_data_dict[key]
             del state_data_dict["EXCLUDE"]
             return state_data_dict
         if isinstance(obj, ExperimentalSpectrum):
@@ -255,6 +256,7 @@ class Project(FileObserver):
         return title
 
     def _save_project(self, snapshot, auto):
+        print(snapshot)
         if auto and not self._is_unsaved:
             return  # no use auto-saving if nothing has changed
         with self._project_file_lock:

@@ -57,7 +57,6 @@ class ProjectSetup:
 
             # TODO: Allow for excitation/emission only. (Action bar buttons). Grey out unnecessary files, change okay button activity conditions.
 
-            # self.icons.insert(dpg.add_button(height=32, width=100), Icons.angle_double_right, size=16, tooltip="Auto-import all")
 
         self.configure_theme()
 
