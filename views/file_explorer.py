@@ -383,7 +383,6 @@ class FileExplorer:
         self.update_dir_ignored_status(directory.tag)
 
     def _display_files(self, files: dict, parent: str):
-        print([file.type for file in files.values()])
         tag = f"{parent}-files table"
         if tag not in self._file_tables:
             self._file_tables.append(tag)

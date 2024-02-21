@@ -22,8 +22,6 @@ class FileViewModel:
         for key, value in file.__dict__.items():
             setattr(self, key, value)
 
-        # print(file.name, file.type, self.type)
-
 
 class DirectoryViewModel:
     content_dirs = {}
@@ -33,7 +31,6 @@ class DirectoryViewModel:
     depth = 0
     parent_directory = None
     tag = ""  # Unique identifier
-    ignore = False
 
     def __init__(self, directory: Directory):
         for key, value in directory.__dict__.items():
@@ -111,7 +108,6 @@ class DataFileViewModel(FileObserver):
                 self.ignore_directory(dd, ignore=ignore)
             for f in d.content_files.values():
                 self.ignore_tag(f.tag, ignore=ignore)
-
 
 
     def is_ignored(self, tag):

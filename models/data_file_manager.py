@@ -57,6 +57,7 @@ class DataFileManager:
         return self.directory_toggle_states.get(directory_tag, True)
 
     def ignore(self, tag, ignore=True):
+        print(f"Ignore: {tag, ignore, tag in self.ignored_files_and_directories}")
         if ignore and (tag not in self.ignored_files_and_directories):
             self.ignored_files_and_directories.append(tag)
         if not ignore and (tag in self.ignored_files_and_directories):
@@ -159,6 +160,12 @@ class Directory:
         else:
             self.name = os.path.basename(path)
         self.parent_directory = parent
+
+        if self.path.find("\\ignore") > -1 or self.path.find("\\old") > -1:
+            print(f"Ignoring directory by path>: {self.path}")
+            self.manager.ignore(self.tag)
+            self.manager.toggle_directory(directory_tag=self.tag, is_open=False)
+
         self.crawl_contents(path)
 
     def crawl_contents(self, path):
@@ -224,6 +231,9 @@ class File:
         self.parent_directory = parent
         name, self.extension = os.path.splitext(self.name)
         self.manager.all_files[self.tag] = self
+
+        if self.path.find("\\ignore") > -1 or self.path.find("\\old") > -1:
+            self.manager.ignore(self.tag)
 
         self.manager.file_queue.put_nowait(self)
 
