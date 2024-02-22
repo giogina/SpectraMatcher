@@ -1,6 +1,7 @@
 import numpy as np
 import logging
 
+
 class SpecPlotter:
     def __init__(self, half_width, x_min, x_max, x_step=1, type="Lorentzian"):
         self._type = type  # "Lorentzian" or "Gaussian"

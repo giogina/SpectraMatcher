@@ -11,11 +11,11 @@ def drag_over(keys):
 
 
 class DropReceiverWindow(dpg_dnd.DragAndDrop):
-    window: int = None
-    dpg_text: int
 
     def __init__(self, drop_callback, hover_drag_theme, normal_theme):
         super().__init__()
+        self.window: int = None
+        self.dpg_text: int
         self.drop_callback = drop_callback
         self.hover_drag_theme = hover_drag_theme
         self.normal_theme = normal_theme

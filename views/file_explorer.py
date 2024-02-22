@@ -265,7 +265,11 @@ class FileExplorer:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
                 dpg.add_spacer(height=2)
-                dpg.add_selectable(label="Copy last geometry", user_data=file.path, callback=lambda s, a, u: GaussianParser.get_last_geometry(u, clipboard=True))
+                if file.type in (FileType.FC_EMISSION, FileType.FC_EXCITATION):
+                    dpg.add_selectable(label="Copy initial geometry", user_data=file.path, callback=lambda s, a, u: GaussianParser.get_last_geometry(u, clipboard=True, ini=True))
+                    dpg.add_selectable(label="Copy final geometry", user_data=file.path, callback=lambda s, a, u: GaussianParser.get_last_geometry(u, clipboard=True, fin=True))
+                else:
+                    dpg.add_selectable(label="Copy last geometry", user_data=file.path, callback=lambda s, a, u: GaussianParser.get_last_geometry(u, clipboard=True))
                 if not file.is_human_readable:
                     dpg.add_selectable(label="Make readable", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.make_file_readable(u))
             if file.properties.get(GaussianLog.STATUS, "") == GaussianLog.NEGATIVE_FREQUENCY:

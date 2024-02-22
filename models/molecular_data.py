@@ -19,15 +19,17 @@ def format_float(f: float, target_len=10):
 
 
 class Geometry:
-    atoms = []
-    x = []
-    y = []
-    z = []
+    def __init__(self):
 
-    _H_bonds = None
-    _other_bonds = None
+        self.atoms = []
+        self.x = []
+        self.y = []
+        self.z = []
 
-    _ortho_dim = None
+        self._H_bonds = None
+        self._other_bonds = None
+
+        self._ortho_dim = None
 
     def atom_distance(self, a, b, mode=None):
         """Compute distance between atoms #a and #b in this geometry"""
@@ -92,19 +94,15 @@ class Geometry:
 
 
 class VibrationalMode:
-    index = None
-    name = None
-    gaussian_name = None
-    wavenumber = None
-    IR = None
-    vector_x = []
-    vector_y = []
-    vector_z = []
-
-    vibration_properties = None
-    vibration_type = None
-
     def __init__(self, index):
+        self.name = None
+        self.wavenumber = None
+        self.IR = None
+        self.vector_x = []
+        self.vector_y = []
+        self.vector_z = []
+        self.vibration_properties = None
+        self.vibration_type = None
         self.index = index
         self.gaussian_name = index+1
 
@@ -179,15 +177,17 @@ class VibrationalMode:
 
 
 class FCPeak:
-    wavenumber = None
-    transition = None
-    intensity = None
+    def __init__(self, wavenumber, transition, intensity):
+        self.wavenumber = wavenumber
+        self.transition = transition
+        self.intensity = intensity
 
 
 class FCSpectrum:
-    is_emission = True
-    peaks = []
-    zero_zero_transition_energy = 0
-    multiplicator = 1
+    def __init__(self, is_emission, peaks, zero_zero_transition_energy, multiplicator):
+        self.is_emission = is_emission
+        self.peaks = peaks
+        self.zero_zero_transition_energy = zero_zero_transition_energy
+        self.multiplicator = multiplicator
 
 
