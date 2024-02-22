@@ -60,8 +60,8 @@ class ProjectSetup:
 
             with dpg.group(horizontal=True, tag="state buttons"):
                 dpg.add_spacer(width=-42)
-                self.icons.insert(dpg.add_button(height=42, width=42, tag="add state button"), Icons.plus, size=16, callback=self.add_state)
-                self.icons.insert(dpg.add_button(height=42, width=42, tag="remove state button"), Icons.minus, size=16, callback=self.remove_state)
+                self.icons.insert(dpg.add_button(height=42, width=42, tag="add state button", callback=self.add_state), Icons.plus, size=16)
+                self.icons.insert(dpg.add_button(height=42, width=42, tag="remove state button", callback=self.remove_state), Icons.minus, size=16)
 
 
             # TODO> put large auto-import button on panel that disappears on manual action (or moves up to the action bar)
