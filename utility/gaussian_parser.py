@@ -21,41 +21,85 @@ class GaussianParser:
         return GaussianParser._ELEMENT_NAMES.get(n, str(n))
 
     @staticmethod
-    def get_last_geometry(log_file, clipboard=False):
-        """Parses log file, returns Geometry object (from last "standard orientation") or None"""
+    def get_last_geometry(log_file, clipboard=False, ini=False, fin=False):
+        """Parses log file, returns Geometry object (from last "standard orientation") or None
+        :arg clipboard: (bool) copy geometry to clipboard
+        :arg ini: (bool) ask for initial geometry in FC file
+        :arg fin: (bool) ask for final geometry in FC file
+        """
         last_geom_start = None
+        initial_geom_start = None
+        final_geom_start = None
+
         with open(log_file, 'r') as f:
             lines = f.readlines()
         for i in range(len(lines) - 1, 1, -1):
-            if lines[i].strip() == "Standard orientation:":  # TODO> Make work for gjf, fcht.log
+            if not (ini or fin) and lines[i].strip() == "Standard orientation:":  # TODO> Make work for gjf, fcht.log
                 last_geom_start = i
                 break
-        if not isinstance(last_geom_start, int):
-            if clipboard:
-                pyperclip.copy("No standard orientation geometry found.")
-            return None
+            elif not (ini or fin) and lines[i].strip() == "Input orientation:":
+                last_geom_start = i
+                break
+            elif lines[i].strip() == "New orientation in initial state":  # Eckart orientation in FC files! Use this!
+                initial_geom_start = i
+            elif lines[i].strip() == "New orientation in final state":
+                final_geom_start = i
 
+        if not (ini or fin):
+            if not isinstance(last_geom_start, int):
+                if clipboard:
+                    pyperclip.copy("No geometry found.")
+                return None
+            else:
+                geometry = GaussianParser.extract_geometry(lines, last_geom_start, 3)
+                if clipboard:
+                    pyperclip.copy(geometry.get_gaussian_geometry())
+                return geometry
+
+        if ini:
+            if not isinstance(initial_geom_start, int):
+                if clipboard:
+                    pyperclip.copy("No initial state geometry found.")
+                return None
+            else:
+                initial_geometry = GaussianParser.extract_geometry(lines, initial_geom_start, 2)
+                if clipboard:
+                    pyperclip.copy(initial_geometry.get_gaussian_geometry())
+
+        if fin:
+            if not isinstance(final_geom_start, int):
+                if clipboard:
+                    pyperclip.copy("No final state geometry found.")
+                return None
+            else:
+                final_geometry = GaussianParser.extract_geometry(lines, final_geom_start, 2)
+                if clipboard:
+                    pyperclip.copy(final_geometry.get_gaussian_geometry())
+
+        if ini and fin:  # read the second geometry too
+            return initial_geometry, final_geometry
+        elif ini:
+            return initial_geometry
+        else:
+            return final_geometry
+
+    @ staticmethod
+    def extract_geometry(lines, start_index, x_column=3):
         geometry = Geometry()
-        print(f"{last_geom_start, len(lines)}")
-
-        for i in range(last_geom_start+1, len(lines)):
-            print(i, lines[i])
-            line = lines[i]
+        print(start_index, len(lines))
+        for i in range(start_index + 1, len(lines)):
+            line = lines[i].strip('\n').strip('\r')
             coord_match = re.findall(r'\s+([-\d.]+)', line)
-            print(coord_match)
-            if len(coord_match) == 6:
+            print(i, line, coord_match)
+            if len(coord_match) == x_column + 3:
                 geometry.atoms.append(GaussianParser._ELEMENT_NAMES.get(str(coord_match[1]), ""))
-                geometry.x.append(float(coord_match[3]))
-                geometry.y.append(float(coord_match[4]))
-                geometry.z.append(float(coord_match[5]))
+                geometry.x.append(float(coord_match[x_column]))
+                geometry.y.append(float(coord_match[x_column + 1]))
+                geometry.z.append(float(coord_match[x_column + 2]))
             elif line.startswith(" Number") or line.startswith(" Center") or line.startswith(" ---"):
                 continue
             else:
                 break
-        print(f" Clipboard: {geometry.get_gaussian_geometry()}")
-
-        if clipboard:
-            pyperclip.copy(geometry.get_gaussian_geometry())
         return geometry
 
     @staticmethod

@@ -37,22 +37,19 @@ class GaussianLog(Enum):
 
 
 class DataFileManager:
-    top_level_directories = {}
-    top_level_files = {}
-    _observers = {}
-    file_queue = None
-    num_workers = 5
-    last_path = "/"  # Last added data path; for file dialog root dirs
-    # Set from parent Project instance, directly coupled to its _data:
-    directory_toggle_states = {}  # "directory tag": bool - is dir toggled open?
-    ignored_files_and_directories = []
-    all_files = {}  # lookup files in a flat structure
-
-    lock_manager = PathLockManager()
-
     def __init__(self):
-        pass
-        # self._update_open_data_files_callback = update_open_data_files_callback
+        self.top_level_directories = {}
+        self.top_level_files = {}
+        self._observers = {}
+        self.file_queue = None
+        self.num_workers = 5
+        self.last_path = "/"  # Last added data path; for file dialog root dirs
+        # Set from parent Project instance, directly coupled to its _data:
+        self.directory_toggle_states = {}  # "directory tag": bool - is dir toggled open?
+        self.ignored_files_and_directories = []
+        self.all_files = {}  # lookup files in a flat structure
+
+        self.lock_manager = PathLockManager()
 
     def open_directories(self, open_data_dirs, open_data_files=None):
         print(f"Opening: {open_data_dirs, open_data_files}")
@@ -215,15 +212,9 @@ class FileObserver:
 
 
 class Directory:
-    content_dirs = {}
-    content_files = {}
-    name = ""
-    path = ""
-    depth = 0
-    parent_directory = None
-    tag = ""  # Unique identifier
-
     def __init__(self, path, manager: DataFileManager, name=None, parent=None, depth=0):
+        self.content_dirs = {}
+        self.content_files = {}
         self.path = path.replace("/", "\\")
         self.manager = manager
         self.tag = f"dir_{path}_{depth}"
@@ -256,18 +247,10 @@ class Directory:
 
 
 class File:
-    name = ""
-    path = ""
-    parent_directory = None
-    tag = ""  # Unique identifier
-    depth = 0
-    properties = {}
-    extension = ""
-    is_human_readable = True  # \n instead of \r\n making it ugly in notepad
-
-    type = None
-
     def __init__(self, path, manager: DataFileManager, name=None, parent=None, depth=0):
+        self.properties = {}
+        self.is_human_readable = True  # \n instead of \r\n making it ugly in notepad
+        self.type = None
         self.path = path.replace("/", "\\")
         self.manager = manager
         self.depth = depth

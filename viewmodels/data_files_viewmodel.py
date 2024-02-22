@@ -8,30 +8,12 @@ def noop(*args, **kwargs):
 
 
 class FileViewModel:
-    name = ""
-    path = ""
-    tag = None
-    depth = 0
-    parent_directory = None
-    type = None
-    extension = ""
-    manager = None
-    properties = {}
-
     def __init__(self, file: File):
         for key, value in file.__dict__.items():
             setattr(self, key, value)
 
 
 class DirectoryViewModel:
-    content_dirs = {}
-    content_files = {}
-    name = ""
-    path = ""
-    depth = 0
-    parent_directory = None
-    tag = ""  # Unique identifier
-
     def __init__(self, directory: Directory):
         for key, value in directory.__dict__.items():
             if key == "content_dirs":
@@ -49,14 +31,13 @@ class DirectoryViewModel:
 
 
 class DataFileViewModel(FileObserver):
-    _callbacks = {
-        "populate file explorer": noop,
-        "reset file explorer": noop,
-        "update file": noop,
-        "update directory ignore status": noop,
-    }
-
     def __init__(self, data_file_manager: DataFileManager):
+        self._callbacks = {
+            "populate file explorer": noop,
+            "reset file explorer": noop,
+            "update file": noop,
+            "update directory ignore status": noop,
+        }
         self._data_file_manager = data_file_manager
         self._data_file_manager.add_observer(self, "file changed")  # Only properties of one existing file need updating
         self._data_file_manager.add_observer(self, "directory changed")  # Only properties of one existing dir need updating

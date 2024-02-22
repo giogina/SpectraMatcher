@@ -9,18 +9,17 @@ def noop(*args, **kwargs):
 
 
 class StateViewModel:
-    state = 0  # 0: Ground, 1+: excited
-    freq_file_path = None
-    fc_emission_path = None
-    fc_excitation_path = None
 
     def __init__(self, state: StateData):
+        self.state = 0  # 0: Ground, 1+: excited
+        self.freq_file_path = None
+        self.fc_emission_path = None
+        self.fc_excitation_path = None
         for key, value in state.__dict__.items():
             setattr(self, key, deepcopy(value))
 
 
 class ExperimentalSpectrumViewModel:
-    path = None
 
     def __init__(self, exp: ExperimentalSpectrum):
         for key, value in exp.__dict__.items():
@@ -28,13 +27,13 @@ class ExperimentalSpectrumViewModel:
 
 
 class ProjectSetupViewModel(ProjectObserver):
-    _callbacks = {
-        "update state data": noop,
-        "update states data": noop,
-        "update experimental data": noop
-    }
 
     def __init__(self, project: Project):
+        self._callbacks = {
+            "update state data": noop,
+            "update states data": noop,
+            "update experimental data": noop
+        }
         self._project = project
         self._project.add_observer(self, "state data changed")
         self._project.add_observer(self, "experimental data changed")

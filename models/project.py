@@ -47,29 +47,29 @@ def my_decoder(dct):
 
 class StateData:
     """Files & read information for a ground/excited state"""
-    state = 0  # 0: Ground, 1+: excited
-    name = None
-    freq_file_path = None
-    anharm_freq_file_path = None
-    fc_emission_path = None
-    fc_excitation_path = None
-
-    geometry = None
-    vibrational_modes = None
-    anharm_levels = None
-    emission_FC_spectrum = None
-    excitation_FC_spectrum = None
-
-    # Exclude data that can be read from files from being serialized into the project json.
-    EXCLUDE = ("geometry", "vibrational_modes", "anharm_levels", "emission_FC_spectrum", "excitation_FC_spectrum")
-
-    emission_spectrum_visible = True
-    excitation_spectrum_visible = True
-    colors = list(mcolors.TABLEAU_COLORS.keys())[1:-1]  # TODO: standard color settings: # colors = settings['plot settings'].get('FC colors', list(mcolors.TABLEAU_COLORS.keys())[1:-1])
-    color = colors[state % (len(colors))]
-
     def __init__(self, state, name=None, freq_path=None, anharm_path=None, fc_emission=None, fc_excitation=None, **kwargs):
-        self.state = state  # TODO> Make sure that all instance variables are accepted & processed here.
+
+        self.freq_file_path = None
+        self.anharm_freq_file_path = None
+        self.fc_emission_path = None
+        self.fc_excitation_path = None
+
+        self.geometry = None
+        self.vibrational_modes = None
+        self.anharm_levels = None
+        self.emission_FC_spectrum = None
+        self.excitation_FC_spectrum = None
+
+        # Exclude data that can be read from files from being serialized into the project json.
+        self.EXCLUDE = ("geometry", "vibrational_modes", "anharm_levels", "emission_FC_spectrum", "excitation_FC_spectrum")
+
+        self.emission_spectrum_visible = True
+        self.excitation_spectrum_visible = True
+        colors = list(mcolors.TABLEAU_COLORS.keys())[
+                 1:-1]  # TODO: standard color settings: # colors = settings['plot settings'].get('FC colors', list(mcolors.TABLEAU_COLORS.keys())[1:-1])
+        self.color = colors[state % (len(colors))]
+
+        self.state = state   # 0: Ground, 1+: excited  #  TODO> Make sure that all instance variables are accepted & processed here.
         if name is None:
             self._construct_name()
         else:
@@ -116,7 +116,6 @@ class StateData:
 
 class ExperimentalSpectrum:
     """Experimental spectrum files & information thereof"""
-    path = ""
 
     def __init__(self, path):
         self.path = path
