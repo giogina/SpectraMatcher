@@ -5,6 +5,7 @@ from viewmodels.data_files_viewmodel import DataFileViewModel
 from viewmodels.project_setup_viewmodel import ProjectSetupViewModel
 from launcher import Launcher
 from utility.system_file_browser import inquire_close_unsaved
+from utility.async_manager import AsyncManager
 
 
 def noop(*args, **kwargs):
@@ -84,6 +85,7 @@ class MainViewModel(ProjectObserver):
         Launcher.open(file)
 
     def on_close(self):
+        AsyncManager().shutdown()
         if self._project is None:
             return True
         if self._project_unsaved or self._project.check_newer_autosave():
