@@ -39,6 +39,9 @@ class ProjectSetupViewModel(ProjectObserver):
         self._project.add_observer(self, "experimental data changed")
         self.settings = SettingsManager()
 
+    def get_project_name(self):
+        return self._project.get("name", "")
+
     def set_callback(self, key, callback):
         if key in self._callbacks.keys():
             self._callbacks[key] = callback

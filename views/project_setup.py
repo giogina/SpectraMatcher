@@ -33,6 +33,9 @@ class ProjectSetup:
 
         with dpg.child_window(tag="project setup panel"):
             dpg.add_spacer(height=16)
+            dpg.add_text(tag="setup panel project name")
+            dpg.add_spacer(height=16)
+
             with dpg.collapsing_header(label="Experimental emission spectra", tag="emission spectra node"):
                 with dpg.table(header_row=False):
                     dpg.add_table_column(label="File")
@@ -42,8 +45,9 @@ class ProjectSetup:
                     dpg.add_table_column(label="xmax")
                 with dpg.group(horizontal=True, drop_callback=viewmodel.set_experimental_file):  # TODO> Make this the drop target for spectrum files
                     self.icons.insert(dpg.add_button(height=32, width=32), Icons.plus, size=16, tooltip="Add file")
+            dpg.add_spacer(height=24)
 # todo: make this a single list with an up/down button for emission/excitation; sorted by that.
-            with dpg.tree_node(label="Experimental excitation spectra", tag="excitation spectra node"):
+            with dpg.collapsing_header(label="Experimental excitation spectra", tag="excitation spectra node"):
                 with dpg.table(header_row=False):
                     dpg.add_table_column(label="File")
                     dpg.add_table_column(label="wavenumber")
@@ -52,6 +56,13 @@ class ProjectSetup:
                     dpg.add_table_column(label="xmax")
                 with dpg.group(horizontal=True):  # TODO> Make this the drop target for spectrum files
                     self.icons.insert(dpg.add_button(height=32, width=32), Icons.plus, size=16, tooltip="Add file")
+            dpg.add_spacer(height=24)
+
+            with dpg.group(horizontal=True, tag="state buttons"):
+                dpg.add_spacer(width=-42)
+                self.icons.insert(dpg.add_button(height=42, width=42, tag="add state button"), Icons.plus, size=16, callback=self.add_state)
+                self.icons.insert(dpg.add_button(height=42, width=42, tag="remove state button"), Icons.minus, size=16, callback=self.remove_state)
+
 
             # TODO> put large auto-import button on panel that disappears on manual action (or moves up to the action bar)
             #  Here, for every state, make a tree node showing them; with drop receiver fields for the strings.
@@ -65,7 +76,7 @@ class ProjectSetup:
         self.configure_theme()
 
     def add_state_tree_node(self, state):
-        with dpg.collapsing_header(label=state.name, tag=f"state-node-{state.state}", parent="project setup panel", default_open=True, drop_callback=lambda s, a: self.set_file(state.state, *a), payload_type="Ground file" if state.state==0 else "Excited file"):
+        with dpg.collapsing_header(label=state.name, parent="project setup panel", before="state buttons", tag=f"state-node-{state.state}", default_open=True, drop_callback=lambda s, a: self.set_file(state.state, *a), payload_type="Ground file" if state.state==0 else "Excited file"):
             with dpg.table(header_row=False):
                 dpg.add_table_column(label="text", width_fixed=True, init_width_or_weight=200)
                 dpg.add_table_column(label="file")
@@ -105,6 +116,7 @@ class ProjectSetup:
                             dpg.bind_item_theme(dpg.last_item(), FileExplorer.file_type_color_theme.get(FileType.FC_EMISSION))
                         dpg.add_input_text(tag=f"Emission FC file for state {state.state}",  drop_callback=lambda s, a: dpg.set_value(s, a), payload_type=FileType.FC_EMISSION, hint="Drag & drop file here, or click 'auto import'")
                         dpg.bind_item_theme(dpg.last_item(), self.empty_field_theme)
+        dpg.add_spacer(height=24, parent="project setup panel", before="state buttons")
 
     def set_file(self, state, *file_info):
         print(type(file_info))
@@ -123,8 +135,12 @@ class ProjectSetup:
             elif file_type == FileType.FC_EXCITATION and state > 0:
                 dpg.set_value(f"Excitation FC file for state {state}", path)
                 dpg.bind_item_theme(f"Excitation FC file for state {state}", self.full_field_theme)
-        else:
-            print(file_list)
+
+    def add_state(self):
+        self.viewmodel.add_state()
+
+    def remove_state(self):
+        self.viewmodel.delete_state()  # todo - this should all be more flexible, what if the user wants to delete the second state?
 
     def update_state_data(self, state):
         """Update a single state in-place"""
@@ -146,16 +162,27 @@ class ProjectSetup:
         print(f"Updating exp data: {experimental_spectra}")  # TODO> Display this stuff
 
     def configure_theme(self):
+        palette = [[11, 11, 36],  # 0
+                   [22, 22, 72],  # 1
+                   [50, 50, 120],  # 2
+                   [60, 60, 154],  # 3
+                   [70, 70, 255],  # 4
+                   [100, 100, 255],  # 5
+                   [131, 131, 255],  # 6
+                   [180, 180, 255],  # 7
+                   ]
+
         with dpg.theme() as project_setup_theme:
             with dpg.theme_component(dpg.mvAll):
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 8, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 6, 4)
                 dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 8, 4)
-                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 12)
-                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 12, 12)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 12, 12)
                 dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 1)
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [200, 200, 255, 30])
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 200])
                 dpg.add_theme_color(dpg.mvThemeCol_Header, [50, 50, 120])
+            with dpg.theme_component(dpg.mvChildWindow):
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 62, 42)
             with dpg.theme_component(dpg.mvCollapsingHeader):
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 10)
             with dpg.theme_component(dpg.mvInputText):
@@ -194,6 +221,16 @@ class ProjectSetup:
             with dpg.theme_component(dpg.mvInputText):
                 dpg.add_theme_color(dpg.mvThemeCol_FrameBg, [0, 40, 0, 100])
                 dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0)
+
+        with dpg.theme() as actual_button_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, palette[3])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, palette[6])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, palette[4])
+
+        dpg.bind_item_theme("add state button", actual_button_theme)
+        dpg.bind_item_theme("remove state button", actual_button_theme)
+
 
 
 
