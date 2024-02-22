@@ -255,7 +255,7 @@ class FileExplorer:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
                 dpg.add_spacer(height=2)
-            dpg.add_menu(label="Add to project as...")  # TODO
+            dpg.add_menu(label="Add to project as...")  # TODO: select state to add to
             if file.parent_directory is None:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
