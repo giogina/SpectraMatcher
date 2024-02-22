@@ -168,9 +168,7 @@ class MainMenu:
                                 action = self.actions.get(items[i])
                                 if action:
                                     with dpg.table_row():
-                                        if action.get("icon"):  # TODO: Replace with iconManager.get(action["icon"]), returning none if not found.
-                                            # dpg.add_image_button(action["icon"], width=16, height=16)
-                                            # dpg.add_button(, width=16, height=16)
+                                        if action.get("icon"):
                                             self.icons.insert(dpg.add_button(width=16, height=16), action["icon"], 14)
                                         else:
                                             dpg.add_spacer(width=icon_column_width)

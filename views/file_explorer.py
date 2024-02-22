@@ -5,6 +5,7 @@ from utility.icons import Icons
 from utility.drop_receiver_window import DropReceiverWindow, initialize_dnd
 from utility.custom_dpg_items import CustomDpgItems
 from utility.gaussian_parser import GaussianParser
+from utility.item_themes import ItemThemes
 
 _file_icons = {
     FileType.GAUSSIAN_INPUT: Icons.file_code,
@@ -59,6 +60,8 @@ _status_icons = {
 
 
 class FileExplorer:
+    file_type_color_theme = {}  # Themes for the texts coming after the icons; filetype: theme.
+
     def __init__(self, viewmodel: DataFileViewModel):
         self.viewmodel = viewmodel
         self.viewmodel.set_callback("populate file explorer", self.update_file_explorer)
@@ -82,17 +85,6 @@ class FileExplorer:
             for tag in _file_icon_textures.keys():
                 width, height, data = _get_icon_texture(tag)
                 dpg.add_static_texture(width=width, height=height, default_value=data, tag=f"{tag}-{width}")
-        self.file_type_color_theme = {}  # Themes for the texts coming after the icons; filetype: theme.
-
-        with dpg.theme() as self.invisible_button_theme:
-            with dpg.theme_component(dpg.mvImageButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [11, 11, 36, 0])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [11, 11, 36, 0])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [11, 11, 36, 0])
-            with dpg.theme_component(dpg.mvButton):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [11, 11, 36, 0])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [11, 11, 36, 0])
-                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [11, 11, 36, 0])
 
         with dpg.theme() as hover_drag_theme:
             with dpg.theme_component(dpg.mvAll):
@@ -175,7 +167,7 @@ class FileExplorer:
     def _setup_filter_popup(self, filter_button):
         with dpg.popup(filter_button, tag="file filter popup", mousebutton=dpg.mvMouseButton_Left, no_move=False):
             dpg.add_button(label="Filter file types", width=200)
-            dpg.bind_item_theme(dpg.last_item(), self.invisible_button_theme)
+            dpg.bind_item_theme(dpg.last_item(), ItemThemes.invisible_button_theme())
             dpg.add_separator()
             for extension in self.filterable_extensions:
                 dpg.add_checkbox(label=f"  *{extension}", default_value=True, tag=f"check {extension}",
@@ -406,6 +398,8 @@ class FileExplorer:
                     self._display_directory(d, parent=directory.tag)
                 self._display_files(directory.content_files, parent=directory.tag)
                 self._setup_folder_right_click_menu(directory)
+            # with dpg.drag_payload(parent=directory.tag, drag_data=directory):
+            #     dpg.add_text(directory.path)
             dpg.add_spacer(height=0 if is_open else self.item_padding, parent=parent, tag=f"after_{directory.tag}", show=not is_open)
             self._directory_nodes[directory.tag] = is_open
         self.update_dir_ignored_status(directory.tag)
@@ -436,7 +430,7 @@ class FileExplorer:
                 dpg.show_item(f"exclude-{directory_tag}")
                 dpg.bind_item_theme(directory_tag, theme=self.un_ignored_directory_theme)
 
-    def update_file(self, file: FileViewModel, table=None):  # TODO: Could also make table rows horizontal groups starting with a selectable. Possible issues: Clicks (for combo boxes?),drag container feasability. If so, make _setup_file_right_click_menu target the selectable.
+    def update_file(self, file: FileViewModel, table=None):
         if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
             with dpg.table_row(tag=file.tag, parent=table):
                 for i, column in enumerate(self._table_columns):
@@ -449,7 +443,7 @@ class FileExplorer:
                         width -= 52 + file.depth * 20
                         if file.parent_directory is None:
                             width -= 10  # Make up for extra spacing in front
-                        dpg.add_selectable(label=file.name, width=width, span_columns=True, tag=f"{file.tag}-c1")  # todo , drag_callback=lambda *args: print(f"Dragging: {args}")
+                        dpg.add_selectable(label=file.name, width=width, span_columns=True, tag=f"{file.tag}-c1")
                     else:
                         dpg.add_button(width=width, tag=f"{file.tag}-c{i}", show=self._table_columns[i][3])
             self._file_rows.append(file)
@@ -468,6 +462,10 @@ class FileExplorer:
             file_icon_texture_tag = f"{file.type}-{16}"
             dpg.configure_item(f"{file.tag}-c0-img", texture_tag=file_icon_texture_tag)
             dpg.bind_item_theme(f"{file.tag}-c{1}", self.file_type_color_theme[file.type])
+            if file.properties[GaussianLog.STATUS] == GaussianLog.FINISHED:
+                with dpg.drag_payload(parent=f"{file.tag}-c{1}", drag_data=(file.path, file.type), payload_type="Ground file" if file.type==FileType.FREQ_GROUND else "Excited file"):
+                    dpg.add_text(file.path)
+
         else:
             dpg.configure_item(f"{file.tag}-c0-img", width=0, show=False)
             dpg.configure_item(f"{file.tag}-c0", width=self._table_columns[0][1], show=True)
@@ -502,6 +500,8 @@ class FileExplorer:
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
             with dpg.theme_component(dpg.mvTable):
                 dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 4, self.item_padding)
+                dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, [0, 0, 0, 0])
+                dpg.add_theme_color(dpg.mvThemeCol_HeaderActive, [0, 0, 0, 0])
 
         dpg.bind_item_theme("file explorer panel", file_explorer_theme)
         self.file_explorer_theme = file_explorer_theme
@@ -537,3 +537,4 @@ class FileExplorer:
             with dpg.theme() as self.file_type_color_theme[tag]:
                 with dpg.theme_component(dpg.mvAll):
                     dpg.add_theme_color(dpg.mvThemeCol_Text, color)
+                    dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, [60, 60, 154, 200])

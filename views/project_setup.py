@@ -1,7 +1,10 @@
 import dearpygui.dearpygui as dpg
 from viewmodels.project_setup_viewmodel import ProjectSetupViewModel
+from models.data_file_manager import FileType
 from utility.icons import Icons
 from utility.custom_dpg_items import CustomDpgItems
+from views.file_explorer import _file_icon_colors, FileExplorer
+from utility.item_themes import ItemThemes
 
 
 class ProjectSetup:
@@ -12,8 +15,10 @@ class ProjectSetup:
         self.viewmodel.set_callback("update experimental data", self.update_experimental_data)
         self.icons = Icons()
         self.cdi = CustomDpgItems()
+        self.empty_field_theme = None
+        self.full_field_theme = None
 
-        self.nr_states_displayed = 0
+        self.nr_states_displayed = 2
 
         with dpg.child_window(tag="project setup action bar", width=-1, height=32):
             with dpg.table(header_row=False):
@@ -28,7 +33,7 @@ class ProjectSetup:
 
         with dpg.child_window(tag="project setup panel"):
             dpg.add_spacer(height=16)
-            with dpg.tree_node(label="Experimental emission spectra", tag="emission spectra node"):
+            with dpg.collapsing_header(label="Experimental emission spectra", tag="emission spectra node"):
                 with dpg.table(header_row=False):
                     dpg.add_table_column(label="File")
                     dpg.add_table_column(label="wavenumber")
@@ -57,12 +62,69 @@ class ProjectSetup:
 
             # TODO: Allow for excitation/emission only. (Action bar buttons). Grey out unnecessary files, change okay button activity conditions.
 
-
         self.configure_theme()
 
     def add_state_tree_node(self, state):
-        with dpg.tree_node(label=state.name, tag=f"state-node-{state.state}", parent="project setup panel"):
-            pass  # TODO
+        with dpg.collapsing_header(label=state.name, tag=f"state-node-{state.state}", parent="project setup panel", default_open=True, drop_callback=lambda s, a: self.set_file(state.state, *a), payload_type="Ground file" if state.state==0 else "Excited file"):
+            with dpg.table(header_row=False):
+                dpg.add_table_column(label="text", width_fixed=True, init_width_or_weight=200)
+                dpg.add_table_column(label="file")
+                if state.state == 0:
+                    with dpg.table_row():
+                        with dpg.group(horizontal=True):
+                            dpg.add_spacer(width=16)
+                            dpg.add_image_button("Frequency ground state-16", width=16)
+                            dpg.add_button(label="Frequency file:")
+                        dpg.bind_item_theme(dpg.last_item(), FileExplorer.file_type_color_theme.get(FileType.FREQ_GROUND))
+                        dpg.add_input_text(tag=f"frequency file for state {state.state}", hint="Drag & drop file here, or click 'auto import'")
+                        dpg.bind_item_theme(dpg.last_item(), self.empty_field_theme)
+                if state.state > 0:
+                    with dpg.table_row():
+                        with dpg.group(horizontal=True):
+                            dpg.add_spacer(width=16)
+                            dpg.add_image_button("Frequency excited state-16", width=16)
+                            dpg.add_button(label="Frequency file:")
+                        dpg.bind_item_theme(dpg.last_item(), FileExplorer.file_type_color_theme.get(FileType.FREQ_EXCITED))
+                        dpg.add_input_text(tag=f"frequency file for state {state.state}",  drop_callback=lambda s, a: dpg.set_value(s, a), payload_type=FileType.FREQ_EXCITED, hint="Drag & drop file here, or click 'auto import'")
+                        dpg.bind_item_theme(dpg.last_item(), self.empty_field_theme)
+                    with dpg.table_row():
+                        with dpg.group(horizontal=True):
+                            dpg.add_spacer(width=16)
+                            dpg.add_image_button("FC excitation-16", width=16)
+                            dpg.add_button(label="Excitation FC file:")
+                            dpg.bind_item_theme(dpg.last_item(),FileExplorer.file_type_color_theme.get(FileType.FC_EXCITATION))
+                        dpg.add_input_text(tag=f"Excitation FC file for state {state.state}",
+                                           drop_callback=lambda s, a: dpg.set_value(s, a),
+                                           payload_type=FileType.FC_EXCITATION, hint="Drag & drop file here, or click 'auto import'")
+                        dpg.bind_item_theme(dpg.last_item(), self.empty_field_theme)  # TODO> Allow drag&drop for folders to fill in all three
+                    with dpg.table_row():
+                        with dpg.group(horizontal=True):
+                            dpg.add_spacer(width=16)
+                            dpg.add_image_button("FC emission-16", width=16)
+                            dpg.add_button(label="Emission FC file:")
+                            dpg.bind_item_theme(dpg.last_item(), FileExplorer.file_type_color_theme.get(FileType.FC_EMISSION))
+                        dpg.add_input_text(tag=f"Emission FC file for state {state.state}",  drop_callback=lambda s, a: dpg.set_value(s, a), payload_type=FileType.FC_EMISSION, hint="Drag & drop file here, or click 'auto import'")
+                        dpg.bind_item_theme(dpg.last_item(), self.empty_field_theme)
+
+    def set_file(self, state, *file_info):
+        print(type(file_info))
+        if type(file_info) == tuple:
+            path, file_type = file_info
+            print(f"{state}, type: {file_type} at path {path}")
+            if file_type == FileType.FREQ_GROUND and state == 0:
+                dpg.set_value(f"frequency file for state {state}", path)
+                dpg.bind_item_theme(f"frequency file for state {state}", self.full_field_theme)
+            elif file_type == FileType.FREQ_EXCITED and state > 0:
+                dpg.set_value(f"frequency file for state {state}", path)
+                dpg.bind_item_theme(f"frequency file for state {state}", self.full_field_theme)
+            elif file_type == FileType.FC_EMISSION and state > 0:
+                dpg.set_value(f"Emission FC file for state {state}", path)
+                dpg.bind_item_theme(f"Emission FC file for state {state}", self.full_field_theme)
+            elif file_type == FileType.FC_EXCITATION and state > 0:
+                dpg.set_value(f"Excitation FC file for state {state}", path)
+                dpg.bind_item_theme(f"Excitation FC file for state {state}", self.full_field_theme)
+        else:
+            print(file_list)
 
     def update_state_data(self, state):
         """Update a single state in-place"""
@@ -84,28 +146,32 @@ class ProjectSetup:
         print(f"Updating exp data: {experimental_spectra}")  # TODO> Display this stuff
 
     def configure_theme(self):
-        with dpg.theme() as file_explorer_theme:
+        with dpg.theme() as project_setup_theme:
             with dpg.theme_component(dpg.mvAll):
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 8, 0)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 8, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 8, 4)
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 12)
-                dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 0)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 12, 12)
+                dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 1)
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [200, 200, 255, 30])
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 200])
                 dpg.add_theme_color(dpg.mvThemeCol_Header, [50, 50, 120])
-            # with dpg.theme_component(dpg.mvButton):
-            #     dpg.add_theme_color(dpg.mvThemeCol_Button, [0, 0, 0, 0])
-            #     dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [0, 0, 0, 0])
-            #     dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [0, 0, 0, 0])
-            #     dpg.add_theme_style(dpg.mvStyleVar_ButtonTextAlign, 0.5, 0.5)
-            #     dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
-            # with dpg.theme_component(dpg.mvImageButton):
-            #     dpg.add_theme_color(dpg.mvThemeCol_Button, [0, 0, 0, 0])
-            #     dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [0, 0, 0, 0])
-            #     dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [0, 0, 0, 0])
-            #     dpg.add_theme_style(dpg.mvStyleVar_ButtonTextAlign, 0.5, 0.5)
-            #     dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
+            with dpg.theme_component(dpg.mvCollapsingHeader):
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 10)
+            with dpg.theme_component(dpg.mvInputText):
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 6)
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [11, 11, 36, 0])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [11, 11, 36, 0])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [11, 11, 36, 0])
+            with dpg.theme_component(dpg.mvImageButton):
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 7)
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [11, 11, 36, 0])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [11, 11, 36, 0])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [11, 11, 36, 0])
 
-        dpg.bind_item_theme("project setup panel", file_explorer_theme)
+        dpg.bind_item_theme("project setup panel", project_setup_theme)
 
         with dpg.theme() as action_bar_theme:  # TODO> Set up some kind of centralized theme supply? All action bars should probably look the same...
             with dpg.theme_component(dpg.mvAll):
@@ -116,5 +182,18 @@ class ProjectSetup:
                 dpg.add_theme_color(dpg.mvThemeCol_TextDisabled, [200, 200, 255, 50])
 
         dpg.bind_item_theme("project setup action bar", action_bar_theme)
+
+        with dpg.theme() as self.empty_field_theme:
+            with dpg.theme_component(dpg.mvInputText):
+                dpg.add_theme_color(dpg.mvThemeCol_FrameBg, [160, 0, 0, 30])
+                dpg.add_theme_color(dpg.mvThemeCol_Border, [120, 0, 0, 255])
+                dpg.add_theme_color(dpg.mvThemeCol_BorderShadow, [160, 0, 0, 0])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 1)
+
+        with dpg.theme() as self.full_field_theme:
+            with dpg.theme_component(dpg.mvInputText):
+                dpg.add_theme_color(dpg.mvThemeCol_FrameBg, [0, 40, 0, 100])
+                dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0)
+
 
 

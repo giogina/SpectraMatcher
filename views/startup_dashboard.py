@@ -27,7 +27,7 @@ class Dashboard:
         self.normal_font = 18
         self.title_font = 33
         with dpg.font_registry():
-            for i in [self.small_font, self.normal_font, self.title_font]:  # todo: adjust font size with ctrl + scroll (compare async font loading in main window)
+            for i in [self.small_font, self.normal_font, self.title_font]:
                 self.fonts[i] = dpg.add_font("./fonts/Sansation_Regular.ttf", i)
         dpg.bind_font(self.fonts[self.normal_font])
 

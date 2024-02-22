@@ -273,7 +273,7 @@ class File:
         try:
             await loop.run_in_executor(None, self.what_am_i)
         except Exception as e:
-            print(f"An exception occurred: {e}")
+            print(f"An exception occurred in data_file_manager what_am_i_async_wrapper: {e}")
 
     def what_am_i(self):
         properties = {}
