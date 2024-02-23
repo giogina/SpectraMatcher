@@ -1,13 +1,10 @@
 import os
 from os.path import isfile, join
-import asyncio
-import aiofiles
-import threading
-from asyncio import Queue
 import re
 from enum import Enum
 from utility.experimental_spectrum_parser import ExperimentParser
 from utility.read_write_lock import PathLockManager
+from utility.async_manager import AsyncManager
 
 
 class FileType:
@@ -41,8 +38,6 @@ class DataFileManager:
         self.top_level_directories = {}
         self.top_level_files = {}
         self._observers = {}
-        self.file_queue = None
-        self.num_workers = 5
         self.last_path = "/"  # Last added data path; for file dialog root dirs
         # Set from parent Project instance, directly coupled to its _data:
         self.directory_toggle_states = {}  # "directory tag": bool - is dir toggled open?
@@ -50,10 +45,27 @@ class DataFileManager:
         self.all_files = {}  # lookup files in a flat structure
 
         self.lock_manager = PathLockManager()
+        self.async_manager = AsyncManager()
 
     def open_directories(self, open_data_dirs, open_data_files=None):
         print(f"Opening: {open_data_dirs, open_data_files}")
-        asyncio.run(self._open_directories_async(open_data_dirs, open_data_files))
+        path = None
+        if open_data_dirs:
+            for path in open_data_dirs:
+                directory = Directory(path, self)
+                self.top_level_directories[directory.tag] = directory  # queue gets filled in here
+                print(f"Added directory: {directory.tag}")
+        if open_data_files:
+            for path in open_data_files:
+                file = File(path, self)
+                self.top_level_files[file.tag] = file
+        self.last_path = os.path.dirname(path) if path else "/"
+
+        # notify file explorer viewmodel to re-populate the entire list, and parent project to update top level paths.
+        self.notify_observers("directory structure changed")
+
+        for file in self.all_files.values():
+            file.submit_what_am_i()  # Need to do this after directory structure notification, or it'll be too fast!
 
     def open_directories_or_files(self, paths: list):
         new_paths = []
@@ -125,30 +137,23 @@ class DataFileManager:
         file.is_human_readable = True
         self.notify_observers("file changed", file)
         if file:
-            loop = asyncio.new_event_loop()
-            t = threading.Thread(target=self._start_file_rewrite_loop, args=(loop, file.path), daemon=True)
-            t.start()
+            AsyncManager.submit_task(f"make {file.path} readable", self._make_readable, file.path)
 
-    def _start_file_rewrite_loop(self, loop, path):
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(self._make_readable(path))
-        loop.close()
-
-    async def _make_readable(self, path):
+    def _make_readable(self, path):
         if os.path.exists(path):
             tmp_file_path = f"{path}.tmp"
             self.lock_manager.acquire_write(path)
             try:
-                async with aiofiles.open(path, 'r') as reader:
-                    async with aiofiles.open(tmp_file_path, 'w') as writer:
-                        async for line in reader:
-                            newline = line.rstrip('\n').rstrip('\r')
-                            if len(newline):
-                                await writer.write(newline + '\r\n')
+                with open(path, 'r') as orig_log:
+                    lines = orig_log.readlines()
+                with open(tmp_file_path, 'w') as new_log:
+                    for line in lines:
+                        newline = line.rstrip('\n').rstrip('\r')
+                        if len(newline):
+                            new_log.write(newline + '\r\n')
                 os.replace(tmp_file_path, path)
             finally:
                 self.lock_manager.release_write(path)
-
 
     ############### Observers ###############
 
@@ -166,44 +171,12 @@ class DataFileManager:
             for observer in self._observers[event_type]:
                 observer.update(event_type, args)
 
-    ############### Async setup ###############
-
-    async def worker(self):
-        while True:
-            file = await self.file_queue.get()
-            try:
-                await file.what_am_i_async_wrapper()  # Ensure this is an async operation
-            except Exception as e:
-                print(f"Worker caught an exception: {e}")
-                break
-            finally:
-                self.file_queue.task_done()
-
-    async def _open_directories_async(self, open_data_dirs=None, open_data_files=None):
-        self.file_queue = Queue()
-
-        path = None
-        if open_data_dirs:
-            for path in open_data_dirs:
-                directory = Directory(path, self)
-                self.top_level_directories[directory.tag] = directory  # queue gets filled in here
-                print(f"Added directory: {directory.tag}")
-        if open_data_files:
-            for path in open_data_files:
-                file = File(path, self)
-                self.top_level_files[file.tag] = file
-        self.last_path = os.path.dirname(path) if path else "/"
-
-        # notify file explorer viewmodel to re-populate the entire list, and parent project to update top level paths.
-        self.notify_observers("directory structure changed")
-
-        workers = [asyncio.create_task(self.worker()) for _ in range(self.num_workers)]
-
-        await self.file_queue.join()  # wait for all items to be processed
-        for worker in workers:        # Cleanup
-            worker.cancel()
-        await asyncio.gather(*workers, return_exceptions=True)
-
+    def get_event_observers(self, event_type):
+        obs = []
+        if event_type in self._observers:
+            for observer in self._observers[event_type]:
+                obs.append(observer)
+        return obs
 
 # Observer interface
 class FileObserver:
@@ -266,14 +239,8 @@ class File:
         if self.path.find("\\ignore") > -1 or self.path.find("\\old") > -1:
             self.manager.ignore(self.tag)
 
-        self.manager.file_queue.put_nowait(self)
-
-    async def what_am_i_async_wrapper(self):
-        loop = asyncio.get_running_loop()
-        try:
-            await loop.run_in_executor(None, self.what_am_i)
-        except Exception as e:
-            print(f"An exception occurred in data_file_manager what_am_i_async_wrapper: {e}")
+    def submit_what_am_i(self):
+        self.manager.async_manager.submit_task(f"File {self.tag} what_am_I", self.what_am_i, observers=self.manager.get_event_observers("file changed"), notification="file changed")
 
     def what_am_i(self):
         properties = {}
@@ -364,6 +331,7 @@ class File:
             else:
                 self.type = FileType.EXPERIMENT_EXCITATION
         self.properties = properties
-        self.manager.notify_observers("file changed", self)
+
+        return self
 
 

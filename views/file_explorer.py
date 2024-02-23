@@ -431,7 +431,9 @@ class FileExplorer:
                 dpg.bind_item_theme(directory_tag, theme=self.un_ignored_directory_theme)
 
     def update_file(self, file: FileViewModel, table=None):
+        print(f"update file: {file.path}, {table}")
         if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
+            print(f"Constructing table row for {file.tag}")
             with dpg.table_row(tag=file.tag, parent=table):
                 for i, column in enumerate(self._table_columns):
                     width = self._table_columns[i][1]
@@ -462,7 +464,7 @@ class FileExplorer:
             file_icon_texture_tag = f"{file.type}-{16}"
             dpg.configure_item(f"{file.tag}-c0-img", texture_tag=file_icon_texture_tag)
             dpg.bind_item_theme(f"{file.tag}-c{1}", self.file_type_color_theme[file.type])
-            if file.properties[GaussianLog.STATUS] == GaussianLog.FINISHED:
+            if type(file.properties) == dict and file.properties.get(GaussianLog.STATUS) == GaussianLog.FINISHED:
                 with dpg.drag_payload(parent=f"{file.tag}-c{1}", drag_data=(file.path, file.type), payload_type="Ground file" if file.type==FileType.FREQ_GROUND else "Excited file"):
                     dpg.add_text(file.path)
 
