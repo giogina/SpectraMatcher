@@ -115,6 +115,68 @@ class GaussianParser:
         print(routing_info, charge, multiplicity, geometry.atoms)
         return routing_info, charge, multiplicity, geometry
 
+    @staticmethod
+    def scan_log_file(lines):
+
+        anharm = False
+        routing_info = None
+        nr_jobs = 1  # keep track of Gaussian starting new internal jobs
+        nr_finished = 0
+        error = None
+        start_lines = {}
+        has_fc = False
+        emission = False
+        excited = False
+        tracker = None
+        freqs_found = False
+        hp_freqs_found = False
+        charge = None
+        multiplicity = None
+        for i, line in enumerate(lines):
+            if line.strip().startswith("#") and routing_info is None:
+                tracker = ""
+            if type(tracker) == str:
+                if line.strip().startswith("---"):
+                    routing_info = GaussianParser.parse_gaussian_hash_line(tracker)
+                    tracker = None
+                else:
+                    tracker += line.strip('\n').strip('\r').strip(' ')
+            if charge is None:
+                chm_match = re.search(r"Charge\s*=\s*(\d+)\s*Multiplicity\s*=\s*(\d+)", line)
+                if chm_match:
+                    charge = int(chm_match.group(1))
+                    multiplicity = int(chm_match.group(2))
+            if not (freqs_found and hp_freqs_found) and line.strip().startswith('Frequencies --'):
+                if not hp_freqs_found and line.strip().startswith('Frequencies ---'):
+                    start_lines["hp freq"] = i
+                    hp_freqs_found = True
+                elif not freqs_found:
+                    start_lines["lp freq"] = i
+                    freqs_found = True
+            if line.strip() in ("Standard orientation:",  "Input orientation:"):
+                start_lines["last geom"] = i
+            elif line.strip() == "New orientation in initial state":  # Eckart orientation in FC files! Use this!
+                start_lines["initial state geom"] = i
+            elif line.strip() == "New orientation in final state":
+                start_lines["final state geom"] = i
+            # if not anharm and re.search('anharmonic', line):
+            #     anharm = True
+            # if not excited and re.search('Excited', line):
+            #     excited = True
+            # if not has_fc and re.search('Final Spectrum', line):
+            #     has_fc = True
+            # if not emission and re.search('emission', line):
+            #     emission = True
+            if re.search('Proceeding to internal job step number', line):
+                nr_jobs += 1
+            if re.search('Normal termination', line):
+                nr_finished += 1
+            if re.search('Error termination', line):
+                error = line
+
+        return nr_jobs == nr_finished, error, routing_info, charge, multiplicity, start_lines
+
+
     @ staticmethod
     def extract_geometry(lines, start_index, x_column=None, is_input_file=False):
         geometry = Geometry()
@@ -143,6 +205,25 @@ class GaussianParser:
         return geometry
 
     @staticmethod
+    def split_hash_line(hash_line):
+        res = []
+        current_piece = ""
+        nr_open_parentheses = 0
+        for c in hash_line:
+            if c == ' ' and len(current_piece) > 0 and nr_open_parentheses == 0:
+                res.append(current_piece)
+                current_piece = ""
+            else:
+                current_piece += c
+                if c == '(':
+                    nr_open_parentheses += 1
+                elif c == ')':
+                    nr_open_parentheses -= 1
+        if len(current_piece) > 0:
+            res.append(current_piece)
+        return res
+
+    @staticmethod
     def parse_gaussian_hash_line(hash_line: str):
         # Known job types for Gaussian
         job_types = [
@@ -150,9 +231,7 @@ class GaussianParser:
             "admp", "bomd", "eet", "force", "stable", "volume", "density=checkpoint", "guess=only"
         ]
 
-        hash_line = hash_line.lower()
-        # Split the line by spaces and commas, but not by slashes
-        parts = [part for part in re.split(r'[\s]+', hash_line) if part]
+        parts = GaussianParser.split_hash_line(hash_line.lower())  # Split string, but not between parentheses
 
         jobs = []
         td = None

@@ -231,6 +231,7 @@ class File:
         self.molecular_formula = ""
         self.manager = manager
         self.depth = depth
+        self.error = None  # Contains error string if present # TODO: Put as popup over error symbol
         self.tag = f"file_{path}_{depth}"
         if name:
             self.name = name
@@ -253,20 +254,7 @@ class File:
         is_table = False
         if self.extension == ".log":  # Gaussian log
             self.type = FileType.GAUSSIAN_LOG
-            anharm = False
-            properties[GaussianLog.HAS_HPMODES] = False
 
-            nr_jobs = 1  # keep track of Gaussian starting new internal jobs
-            nr_finished = 0
-            error = False
-            has_freqs = False
-            has_fc = False
-            emission = False
-            excited = False
-            tracker = None
-            last_geom_start = None
-            initial_geom_start = None
-            final_geom_start = None
             self.manager.lock_manager.acquire_read(self.path)
             try:
                 with open(self.path, 'rb') as file:
@@ -274,56 +262,30 @@ class File:
                     self.is_human_readable = b'\r\n' in content
                 with open(self.path, 'r') as f:
                     lines = f.readlines()
-                for line in lines:
-                    if line.strip().startswith("#") and self.routing_info is None:
-                        tracker = ""
-                    if type(tracker) == str:
-                        if line.strip().startswith("---"):
-                            self.routing_info = GaussianParser.parse_gaussian_hash_line(tracker)
-                            tracker = None
+                finished, error, routing_info, charge, multiplicity, start_lines = GaussianParser.scan_log_file(lines)
+                for job in routing_info.get("jobs", []):
+                    if job.startswith("freq"):
+                        if re.search(r"(?<![a-zA-Z])(fc|fcht|ht)", job):
+                            if job.find("emission") > -1:
+                                self.type = FileType.FC_EMISSION  # TODO: FC files always treat current state as ground state; and contain corresponding geom & freqs. Read from there (maybe just as backup).
+                            else:
+                                self.type = FileType.FC_EXCITATION
+                            break
+                        elif routing_info.get("td") is not None:
+                            if job.find("anharm") > -1:
+                                self.type = FileType.FREQ_EXCITED_ANHARM
+                            else:
+                                self.type = FileType.FREQ_EXCITED
                         else:
-                            tracker += line.strip('\n').strip('\r').strip(' ')
-                    chm_match = re.search(r"Charge\s*=\s*(\d+)\s*Multiplicity\s*=\s*(\d+)", line)
-                    if chm_match:
-                        self.charge = int(chm_match.group(1))
-                        self.multiplicity = int(chm_match.group(2))
-                    if re.search('Frequencies --', line):
-                        has_freqs = True
-                        if re.search('Frequencies ---', line):
-                            properties[GaussianLog.HAS_HPMODES] = True  # TODO: Check for negative frequencies (set state to GaussianLog.NEGATIVE_FREQUENCY, update file; set state to ERROR or negfreq!)
-                    if re.search('anharmonic', line):
-                        anharm = True
-                    if re.search('Excited', line):
-                        excited = True
-                    if re.search('Final Spectrum', line):
-                        has_fc = True
-                    if re.search('emission', line):
-                        emission = True
-                    if re.search('Proceeding to internal job step number', line):
-                        nr_jobs += 1
-                    if re.search('Normal termination', line):
-                        nr_finished += 1
-                    if re.search('Error termination', line):
-                        error = True
-                if has_fc:
-                    if emission:
-                        self.type = FileType.FC_EMISSION  # TODO: FC files always treat current state as ground state; and contain corresponding geom & freqs. Read from there (maybe just as backup).
-                    else:
-                        self.type = FileType.FC_EXCITATION
-                elif has_freqs:
-                    if excited:
-                        if anharm:
-                            self.type = FileType.FREQ_EXCITED_ANHARM
-                        else:
-                            self.type = FileType.FREQ_EXCITED
-                    else:
-                        if anharm:
-                            self.type = FileType.FREQ_GROUND_ANHARM
-                        else:
-                            self.type = FileType.FREQ_GROUND
-                if nr_jobs == nr_finished:
+                            if job.find("anharm") > -1:
+                                self.type = FileType.FREQ_GROUND_ANHARM
+                            else:
+                                self.type = FileType.FREQ_GROUND
+
+                if finished:
                     properties[GaussianLog.STATUS] = GaussianLog.FINISHED
-                elif error:
+                elif error is not None:
+                    self.error = error
                     properties[GaussianLog.STATUS] = GaussianLog.ERROR
                 else:
                     properties[GaussianLog.STATUS] = GaussianLog.RUNNING
