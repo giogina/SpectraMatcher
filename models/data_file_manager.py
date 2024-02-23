@@ -5,6 +5,7 @@ from enum import Enum
 from utility.experimental_spectrum_parser import ExperimentParser
 from utility.read_write_lock import PathLockManager
 from utility.async_manager import AsyncManager
+from utility.gaussian_parser import GaussianParser
 
 
 class FileType:
@@ -225,6 +226,9 @@ class File:
         self.is_human_readable = True  # \n instead of \r\n making it ugly in notepad
         self.type = None
         self.path = path.replace("/", "\\")
+        self.routing_info = None
+        self.geometry = None
+        self.molecular_formula = ""
         self.manager = manager
         self.depth = depth
         self.tag = f"file_{path}_{depth}"
@@ -235,6 +239,8 @@ class File:
         self.parent_directory = parent
         name, self.extension = os.path.splitext(self.name)
         self.manager.all_files[self.tag] = self
+        self.charge = 0
+        self.multiplicity = None
 
         if self.path.find("\\ignore") > -1 or self.path.find("\\old") > -1:
             self.manager.ignore(self.tag)
@@ -257,6 +263,10 @@ class File:
             has_fc = False
             emission = False
             excited = False
+            tracker = None
+            last_geom_start = None
+            initial_geom_start = None
+            final_geom_start = None
             self.manager.lock_manager.acquire_read(self.path)
             try:
                 with open(self.path, 'rb') as file:
@@ -265,6 +275,18 @@ class File:
                 with open(self.path, 'r') as f:
                     lines = f.readlines()
                 for line in lines:
+                    if line.strip().startswith("#") and self.routing_info is None:
+                        tracker = ""
+                    if type(tracker) == str:
+                        if line.strip().startswith("---"):
+                            self.routing_info = GaussianParser.parse_gaussian_hash_line(tracker)
+                            tracker = None
+                        else:
+                            tracker += line.strip('\n').strip('\r').strip(' ')
+                    chm_match = re.search(r"Charge\s*=\s*(\d+)\s*Multiplicity\s*=\s*(\d+)", line)
+                    if chm_match:
+                        self.charge = int(chm_match.group(1))
+                        self.multiplicity = int(chm_match.group(2))
                     if re.search('Frequencies --', line):
                         has_freqs = True
                         if re.search('Frequencies ---', line):
@@ -312,6 +334,18 @@ class File:
                 self.manager.lock_manager.release_read(self.path)
         elif self.extension in [".gjf", ".com"]:
             self.type = FileType.GAUSSIAN_INPUT
+            lines = []
+            self.manager.lock_manager.acquire_read(self.path)
+            try:
+                with open(self.path, 'r') as f:
+                    lines = f.readlines()
+            except Exception as e:
+                print(f"File {self.path} couldn't be read! {e}")
+            finally:
+                self.manager.lock_manager.release_read(self.path)
+            self.routing_info, self.charge, self.multiplicity, self.geometry = GaussianParser.parse_input(lines)
+            self.molecular_formula = self.geometry.get_molecular_formula(self.charge)
+            print(self.molecular_formula)
         elif self.extension == ".chk":
             self.type = FileType.GAUSSIAN_CHECKPOINT
         elif self.extension == ".txt":

@@ -84,23 +84,105 @@ class GaussianParser:
             return final_geometry
 
     @ staticmethod
-    def extract_geometry(lines, start_index, x_column=3):
+    def parse_input(lines):
+        tracker = None
+        routing_info = None
+        charge = None
+        multiplicity = None
+        geometry = None
+        for line in lines:
+            if len(line.strip('\n').strip('\r').strip(' ')) == 0:
+                if type(tracker) == str:
+                    routing_info = GaussianParser.parse_gaussian_hash_line(tracker)
+                    tracker = 1  # Turns into counter of blank lines after the routing line
+                elif type(tracker) == int:
+                    tracker -= 1  # count empty lines after routing line
+                elif type(tracker) == list:
+                    geometry = GaussianParser.extract_geometry(tracker, 0, is_input_file=True)
+                    tracker = None  # Signify end of geometry
+            else:
+                if tracker is None and line.strip().startswith("#"):
+                    tracker = ""
+                if type(tracker) == str:
+                    tracker += ' ' + line.strip('\n').strip('\r')
+                    tracker = tracker.replace('  ', ' ')
+                elif tracker == 0:
+                    match = re.fullmatch(r"(-?\d+)\s+(-?\d+)", line.strip())
+                    charge, multiplicity = (int(match.group(1)), int(match.group(2))) if match else (None, None)
+                    tracker = []  # turns into list of geom lines
+                elif type(tracker) == list:
+                    tracker.append(line)
+        print(routing_info, charge, multiplicity, geometry.atoms)
+        return routing_info, charge, multiplicity, geometry
+
+    @ staticmethod
+    def extract_geometry(lines, start_index, x_column=None, is_input_file=False):
         geometry = Geometry()
-        print(start_index, len(lines))
         for i in range(start_index + 1, len(lines)):
             line = lines[i].strip('\n').strip('\r')
+            if line.startswith(" Number") or line.startswith(" Center") or line.startswith(" ---"):
+                continue
             coord_match = re.findall(r'\s+([-\d.]+)', line)
-            print(i, line, coord_match)
+            if x_column is None:
+                x_column = len(coord_match) - 3  # assume last 3 columns are x, y, z
             if len(coord_match) == x_column + 3:
-                geometry.atoms.append(GaussianParser._ELEMENT_NAMES.get(str(coord_match[1]), ""))
+                if is_input_file:
+                    first = line.split()[0]
+                    element_symbol = ""
+                    for symbol in GaussianParser._ELEMENT_NAMES.values():
+                        if first.startswith(symbol) and len(symbol) > len(element_symbol):
+                            element_symbol = symbol
+                    geometry.atoms.append(element_symbol)
+                else:
+                    geometry.atoms.append(GaussianParser._ELEMENT_NAMES.get(str(coord_match[1]), ""))
                 geometry.x.append(float(coord_match[x_column]))
                 geometry.y.append(float(coord_match[x_column + 1]))
                 geometry.z.append(float(coord_match[x_column + 2]))
-            elif line.startswith(" Number") or line.startswith(" Center") or line.startswith(" ---"):
-                continue
             else:
                 break
         return geometry
+
+    @staticmethod
+    def parse_gaussian_hash_line(hash_line: str):
+        # Known job types for Gaussian
+        job_types = [
+            "sp", "opt", "freq", "irc", "ircmax", "scan", "polar",
+            "admp", "bomd", "eet", "force", "stable", "volume", "density=checkpoint", "guess=only"
+        ]
+
+        hash_line = hash_line.lower()
+        # Split the line by spaces and commas, but not by slashes
+        parts = [part for part in re.split(r'[\s]+', hash_line) if part]
+
+        jobs = []
+        td = None
+        loth = None
+        keywords = []
+
+        for part in parts:
+            if part.startswith('#'):
+                pass
+            elif any(part.startswith(job) for job in job_types):
+                jobs.append(part)
+            elif part.startswith('td='):
+                td = part
+            elif '/' in part and '=' not in part and loth is None:
+                loth = part
+            else:
+                keywords.append(part)
+
+        res = {"jobs": jobs, "loth": loth, "keywords": keywords}
+
+        if td is not None:
+            nstates_match = re.search(r'nstates=(\d+)', td)
+            root_match = re.search(r'root=(\d+)', td)
+
+            nstates = int(nstates_match.group(1)) if nstates_match else 3
+            root = int(root_match.group(1)) if root_match else 1
+
+            res["td"] = (root, nstates)
+
+        return res
 
     @staticmethod
     def get_vibrational_modes(log_file):

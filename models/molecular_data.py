@@ -1,4 +1,5 @@
 import math
+from collections import Counter
 
 _ELEMENT_NAMES = {'1': "H", '2': "He", '3': "Li", '4': "Be", '5': "B", '6': "C", '7': "N", '8': "O", '9': "F",
                       '10': "Ne", '11': "Na", '12': "Mg", '13': "Al", '14': "Si", '15': "P", '16': "S", '17': "Cl", '18': "Ar",
@@ -88,9 +89,31 @@ class Geometry:
             print("Molecule isn't in a plane! Not detecting bends and wobbles.")
 
         return ortho_dim
-# TODO> def print_geometry: Returns .gjf-usable string of geometry.
+
+    def get_molecular_formula(self, charge=0):
+        element_counts = Counter(self.atoms)
+        formula_parts = []
+        h_part = ""
+        for element, count in sorted(element_counts.items()):
+            if element == 'H':
+                h_part = f"{element}{count if count > 1 else ''}"
+            else:
+                formula_parts.append(f"{element}{count if count > 1 else ''}")
+        formula = ''.join(formula_parts) + h_part
+        formula = formula.replace('0', '₀').replace('1', '₁').replace('2', '₂').replace('3', '₃').replace('4', '₄')\
+            .replace('5', '₅').replace('6', '₆').replace('7', '₇').replace('8', '₈').replace('9', '₉')
+        if type(charge) == int and charge != 0:
+            if abs(charge) != 1:
+                formula += str(abs(charge)).replace('0', '⁰').replace('1', '¹').replace('2', '²').replace('3', '³').replace('4', '⁴')\
+                    .replace('5', '⁵').replace('6', '⁶').replace('7', '⁷').replace('8', '⁸').replace('9', '⁹')
+            if charge > 0:
+                formula += '⁺'
+            else:
+                formula += '⁻'
+        return formula
+
+# TODO>
 #  add_mode: adds mode (vs negfreq), returns copy of changed geometry
-#  Provide access to all those in right-click menu of file explorer
 
 
 class VibrationalMode:
