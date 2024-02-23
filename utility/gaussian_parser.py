@@ -1,5 +1,4 @@
 import re
-import pyperclip
 from models.molecular_data import Geometry, VibrationalMode, FCPeak, FCSpectrum
 
 
@@ -20,69 +19,6 @@ class GaussianParser:
     def get_element_from_number(n):
         return GaussianParser._ELEMENT_NAMES.get(n, str(n))
 
-    @staticmethod
-    def get_last_geometry(log_file, clipboard=False, ini=False, fin=False):
-        """Parses log file, returns Geometry object (from last "standard orientation") or None
-        :arg clipboard: (bool) copy geometry to clipboard
-        :arg ini: (bool) ask for initial geometry in FC file
-        :arg fin: (bool) ask for final geometry in FC file
-        """
-        last_geom_start = None
-        initial_geom_start = None
-        final_geom_start = None
-
-        with open(log_file, 'r') as f:
-            lines = f.readlines()
-        for i in range(len(lines) - 1, 1, -1):
-            if not (ini or fin) and lines[i].strip() == "Standard orientation:":  # TODO> Make work for gjf, fcht.log
-                last_geom_start = i
-                break
-            elif not (ini or fin) and lines[i].strip() == "Input orientation:":
-                last_geom_start = i
-                break
-            elif lines[i].strip() == "New orientation in initial state":  # Eckart orientation in FC files! Use this!
-                initial_geom_start = i
-            elif lines[i].strip() == "New orientation in final state":
-                final_geom_start = i
-
-        if not (ini or fin):
-            if not isinstance(last_geom_start, int):
-                if clipboard:
-                    pyperclip.copy("No geometry found.")
-                return None
-            else:
-                geometry = GaussianParser.extract_geometry(lines, last_geom_start, 3)
-                if clipboard:
-                    pyperclip.copy(geometry.get_gaussian_geometry())
-                return geometry
-
-        if ini:
-            if not isinstance(initial_geom_start, int):
-                if clipboard:
-                    pyperclip.copy("No initial state geometry found.")
-                return None
-            else:
-                initial_geometry = GaussianParser.extract_geometry(lines, initial_geom_start, 2)
-                if clipboard:
-                    pyperclip.copy(initial_geometry.get_gaussian_geometry())
-
-        if fin:
-            if not isinstance(final_geom_start, int):
-                if clipboard:
-                    pyperclip.copy("No final state geometry found.")
-                return None
-            else:
-                final_geometry = GaussianParser.extract_geometry(lines, final_geom_start, 2)
-                if clipboard:
-                    pyperclip.copy(final_geometry.get_gaussian_geometry())
-
-        if ini and fin:  # read the second geometry too
-            return initial_geometry, final_geometry
-        elif ini:
-            return initial_geometry
-        else:
-            return final_geometry
-
     @ staticmethod
     def parse_input(lines):
         tracker = None
@@ -98,7 +34,8 @@ class GaussianParser:
                 elif type(tracker) == int:
                     tracker -= 1  # count empty lines after routing line
                 elif type(tracker) == list:
-                    geometry = GaussianParser.extract_geometry(tracker, 0, is_input_file=True)
+                    if len(tracker) > 0:
+                        geometry = GaussianParser.extract_geometry(tracker, 0, is_input_file=True)
                     tracker = None  # Signify end of geometry
             else:
                 if tracker is None and line.strip().startswith("#"):
@@ -112,21 +49,15 @@ class GaussianParser:
                     tracker = []  # turns into list of geom lines
                 elif type(tracker) == list:
                     tracker.append(line)
-        print(routing_info, charge, multiplicity, geometry.atoms)
         return routing_info, charge, multiplicity, geometry
 
     @staticmethod
     def scan_log_file(lines):
-
-        anharm = False
         routing_info = None
         nr_jobs = 1  # keep track of Gaussian starting new internal jobs
         nr_finished = 0
         error = None
         start_lines = {}
-        has_fc = False
-        emission = False
-        excited = False
         tracker = None
         freqs_found = False
         hp_freqs_found = False
@@ -154,19 +85,11 @@ class GaussianParser:
                     start_lines["lp freq"] = i
                     freqs_found = True
             if line.strip() in ("Standard orientation:",  "Input orientation:"):
-                start_lines["last geom"] = i
+                start_lines["last geom"] = i+1
             elif line.strip() == "New orientation in initial state":  # Eckart orientation in FC files! Use this!
-                start_lines["initial state geom"] = i
+                start_lines["initial state geom"] = i+1
             elif line.strip() == "New orientation in final state":
-                start_lines["final state geom"] = i
-            # if not anharm and re.search('anharmonic', line):
-            #     anharm = True
-            # if not excited and re.search('Excited', line):
-            #     excited = True
-            # if not has_fc and re.search('Final Spectrum', line):
-            #     has_fc = True
-            # if not emission and re.search('emission', line):
-            #     emission = True
+                start_lines["final state geom"] = i+1
             if re.search('Proceeding to internal job step number', line):
                 nr_jobs += 1
             if re.search('Normal termination', line):
@@ -176,18 +99,17 @@ class GaussianParser:
 
         return nr_jobs == nr_finished, error, routing_info, charge, multiplicity, start_lines
 
-
     @ staticmethod
     def extract_geometry(lines, start_index, x_column=None, is_input_file=False):
         geometry = Geometry()
-        for i in range(start_index + 1, len(lines)):
+        for i in range(start_index, len(lines)):
             line = lines[i].strip('\n').strip('\r')
-            if line.startswith(" Number") or line.startswith(" Center") or line.startswith(" ---"):
+            if line.startswith(" Number") or line.startswith(" Center") or line.startswith(" ---") or len(line.strip())==0:
                 continue
             coord_match = re.findall(r'\s+([-\d.]+)', line)
             if x_column is None:
                 x_column = len(coord_match) - 3  # assume last 3 columns are x, y, z
-            if len(coord_match) == x_column + 3:
+            if len(coord_match) == x_column + 3 and x_column >= 0:
                 if is_input_file:
                     first = line.split()[0]
                     element_symbol = ""
@@ -264,8 +186,11 @@ class GaussianParser:
         return res
 
     @staticmethod
-    def get_vibrational_modes(log_file):
+    def get_vibrational_modes(log_file, geometry: Geometry):
         """Parses log file, returns list of VibrationalMode objects or None"""
+        if geometry is None:
+            print(f"No geometry found for {log_file}!")
+            return
         frequencies = []
         normal_mode_vectors = []
         new_normal_mode_vectors = []
@@ -273,8 +198,6 @@ class GaussianParser:
         syms = []
         hpmodes_start = None
         lpmodes_start = None
-
-        geometry = GaussianParser.get_last_geometry(log_file)
 
         with open(log_file, 'r') as f:
             lines = f.readlines()

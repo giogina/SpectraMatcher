@@ -97,8 +97,8 @@ class StateData:
 
     def set_freq_file(self, path):
         self.freq_file_path = path  # todo: (on first freq file) set bonds
-        self.geometry = GaussianParser.get_last_geometry(path)
-        self.vibrational_modes = GaussianParser.get_vibrational_modes(path)  # TODO> Do this stuff async? Send notification when done.
+        # self.geometry = GaussianParser.get_last_geometry(path)  # todo: read from file.geometry
+        self.vibrational_modes = GaussianParser.get_vibrational_modes(path, self.geometry)  # TODO> Do this stuff async? Send notification when done.
 
 
     def set_anharm_freq_file(self, path):

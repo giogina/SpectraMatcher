@@ -1,5 +1,6 @@
 import subprocess
 import dearpygui.dearpygui as dpg
+import pyperclip
 from viewmodels.data_files_viewmodel import DataFileViewModel, FileViewModel, GaussianLog, FileType, DirectoryViewModel
 from utility.icons import Icons
 from utility.drop_receiver_window import DropReceiverWindow, initialize_dnd
@@ -253,17 +254,22 @@ class FileExplorer:
                 dpg.add_separator()
                 dpg.add_spacer(height=2)
                 dpg.add_selectable(label="Remove", user_data=file.tag, callback=self._remove_file)
-            if file.type in FileType.LOG_TYPES:
+            if file.type in FileType.LOG_TYPES and (file.geometry is not None) or (file.initial_geom is not None) or (file.final_geom is not None):
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
                 dpg.add_spacer(height=2)
                 if file.type in (FileType.FC_EMISSION, FileType.FC_EXCITATION):
-                    dpg.add_selectable(label="Copy initial geometry to clipboard ", user_data=file.path, callback=lambda s, a, u: GaussianParser.get_last_geometry(u, clipboard=True, ini=True))
-                    dpg.add_selectable(label="Copy final geometry to clipboard ", user_data=file.path, callback=lambda s, a, u: GaussianParser.get_last_geometry(u, clipboard=True, fin=True))
+                    if file.initial_geom is not None:
+                        dpg.add_selectable(label="Copy initial geometry to clipboard ", user_data=file.initial_geom, callback=lambda s, a, u: pyperclip.copy(u.get_gaussian_geometry()))
+                    if file.final_geom is not None:
+                        dpg.add_selectable(label="Copy final geometry to clipboard ", user_data=file.final_geom, callback=lambda s, a, u: pyperclip.copy(u.get_gaussian_geometry()))
                 else:
-                    dpg.add_selectable(label="Copy last geometry to clipboard ", user_data=file.path, callback=lambda s, a, u: GaussianParser.get_last_geometry(u, clipboard=True))
+                    if file.geometry is not None:
+                        dpg.add_selectable(label="Copy last geometry to clipboard ", user_data=file.geometry, callback=lambda s, a, u: pyperclip.copy(u.get_gaussian_geometry()))
                 if not file.is_human_readable:
                     dpg.add_selectable(label="Make readable", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.make_file_readable(u))
+            if file.type == FileType.GAUSSIAN_INPUT and file.geometry is not None:
+                dpg.add_selectable(label="Copy geometry to clipboard ", user_data=file.geometry, callback=lambda s, a, u: pyperclip.copy(u.get_gaussian_geometry()))
             if file.properties.get(GaussianLog.STATUS, "") == GaussianLog.NEGATIVE_FREQUENCY:
                 dpg.add_selectable(label="Copy adjusted geometry for re-optimization", user_data=file.path)  # TODO (stretch)
 

@@ -227,12 +227,15 @@ class File:
         self.type = None
         self.path = path.replace("/", "\\")
         self.routing_info = None
-        self.geometry = None
+        self.geometry = None  # input or last opt / freq log geom
+        self.initial_geom = None  # FC initial state geometry
+        self.final_geom = None    # FC final state geometry
         self.molecular_formula = ""
         self.manager = manager
         self.depth = depth
         self.error = None  # Contains error string if present # TODO: Put as popup over error symbol
         self.tag = f"file_{path}_{depth}"
+        self.start_lines = {}
         if name:
             self.name = name
         else:
@@ -262,38 +265,50 @@ class File:
                     self.is_human_readable = b'\r\n' in content
                 with open(self.path, 'r') as f:
                     lines = f.readlines()
-                finished, error, routing_info, charge, multiplicity, start_lines = GaussianParser.scan_log_file(lines)
-                for job in routing_info.get("jobs", []):
-                    if job.startswith("freq"):
-                        if re.search(r"(?<![a-zA-Z])(fc|fcht|ht)", job):
-                            if job.find("emission") > -1:
-                                self.type = FileType.FC_EMISSION  # TODO: FC files always treat current state as ground state; and contain corresponding geom & freqs. Read from there (maybe just as backup).
-                            else:
-                                self.type = FileType.FC_EXCITATION
-                            break
-                        elif routing_info.get("td") is not None:
-                            if job.find("anharm") > -1:
-                                self.type = FileType.FREQ_EXCITED_ANHARM
-                            else:
-                                self.type = FileType.FREQ_EXCITED
-                        else:
-                            if job.find("anharm") > -1:
-                                self.type = FileType.FREQ_GROUND_ANHARM
-                            else:
-                                self.type = FileType.FREQ_GROUND
-
-                if finished:
-                    properties[GaussianLog.STATUS] = GaussianLog.FINISHED
-                elif error is not None:
-                    self.error = error
-                    properties[GaussianLog.STATUS] = GaussianLog.ERROR
-                else:
-                    properties[GaussianLog.STATUS] = GaussianLog.RUNNING
-
             except Exception as e:
                 print(f"File {self.path} couldn't be read! {e}")
             finally:
                 self.manager.lock_manager.release_read(self.path)
+
+            finished, error, self.routing_info, self.charge, self.multiplicity, self.start_lines = GaussianParser.scan_log_file(lines)
+            for job in self.routing_info.get("jobs", []):
+                if job.startswith("freq"):
+                    if re.search(r"(?<![a-zA-Z])(fc|fcht|ht)", job):  # todo: use all this info in later parsings
+                        if job.find("emission") > -1:
+                            self.type = FileType.FC_EMISSION  # TODO: FC files always treat current state as ground state; and contain corresponding geom & freqs. Read from there (maybe just as backup).
+                        else:
+                            self.type = FileType.FC_EXCITATION
+                    elif self.routing_info.get("td") is not None:
+                        if job.find("anharm") > -1:
+                            self.type = FileType.FREQ_EXCITED_ANHARM
+                        else:
+                            self.type = FileType.FREQ_EXCITED
+                    else:
+                        if job.find("anharm") > -1:
+                            self.type = FileType.FREQ_GROUND_ANHARM
+                        else:
+                            self.type = FileType.FREQ_GROUND
+            print(self.start_lines)
+            if "initial state geom" in self.start_lines.keys():
+                self.initial_geom = GaussianParser.extract_geometry(lines, self.start_lines["initial state geom"])
+                self.molecular_formula = self.initial_geom.get_molecular_formula(self.charge)
+            if "final state geom" in self.start_lines.keys():
+                self.final_geom = GaussianParser.extract_geometry(lines, self.start_lines["final state geom"])
+                if self.molecular_formula is None:
+                    self.molecular_formula = self.final_geom.get_molecular_formula(self.charge)
+            if "last geom" in self.start_lines.keys():
+                self.geometry = GaussianParser.extract_geometry(lines, self.start_lines["last geom"])
+                if self.molecular_formula is None:
+                    self.molecular_formula = self.geometry.get_molecular_formula(self.charge)
+
+            if finished:
+                properties[GaussianLog.STATUS] = GaussianLog.FINISHED
+            elif error is not None:
+                self.error = error
+                properties[GaussianLog.STATUS] = GaussianLog.ERROR
+            else:
+                properties[GaussianLog.STATUS] = GaussianLog.RUNNING
+
         elif self.extension in [".gjf", ".com"]:
             self.type = FileType.GAUSSIAN_INPUT
             lines = []
@@ -306,8 +321,8 @@ class File:
             finally:
                 self.manager.lock_manager.release_read(self.path)
             self.routing_info, self.charge, self.multiplicity, self.geometry = GaussianParser.parse_input(lines)
-            self.molecular_formula = self.geometry.get_molecular_formula(self.charge)
-            print(self.molecular_formula)
+            if self.geometry is not None:
+                self.molecular_formula = self.geometry.get_molecular_formula(self.charge)
         elif self.extension == ".chk":
             self.type = FileType.GAUSSIAN_CHECKPOINT
         elif self.extension == ".txt":
