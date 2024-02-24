@@ -26,7 +26,10 @@ class MainWindow:
         with dpg.font_registry() as font_reg:
             # ! Open/Closed folder icons have been added to this font !
             # Don't change it, or you will get currency signs instead. (Or add folder icons as \u00a3 and \u00a4)
-            self.fonts[self.normal_font] = dpg.add_font("./fonts/SansationRegular.ttf", self.normal_font)
+            # self.fonts[self.normal_font] = dpg.add_font("./fonts/SansationRegular.ttf", self.normal_font)
+            with dpg.font("./fonts/SansationRegular.ttf", self.normal_font) as self.fonts[self.normal_font]:
+                # dpg.add_font_range(0x00B0, 0x00BA)  # sub-and superscripts
+                dpg.add_font_range(0x2070, 0x2090, parent=self.fonts[self.normal_font])
             Icons().set_font_registry(font_reg)
         # self._load_fonts_async()  # todo: Still needed or throw out? Or dynamically load fonts using font_reg?
         dpg.bind_font(self.fonts[self.normal_font])

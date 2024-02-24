@@ -23,15 +23,51 @@
         ],
         [
             "File",
-            444,
+            372,
             200,
             true
         ],
         [
             "Status",
-            76,
+            60,
             50,
             true
+        ],
+        [
+            "State",
+            70,
+            50,
+            true
+        ],
+        [
+            "Job",
+            70,
+            50,
+            true
+        ],
+        [
+            "Method",
+            164,
+            50,
+            true
+        ],
+        [
+            "Keywords",
+            70,
+            50,
+            false
+        ],
+        [
+            "Molecule",
+            70,
+            50,
+            true
+        ],
+        [
+            "Multiplicity",
+            70,
+            30,
+            false
         ]
     ]
 }

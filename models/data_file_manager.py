@@ -226,11 +226,11 @@ class File:
         self.is_human_readable = True  # \n instead of \r\n making it ugly in notepad
         self.type = None
         self.path = path.replace("/", "\\")
-        self.routing_info = None
+        self.routing_info = {}
         self.geometry = None  # input or last opt / freq log geom
         self.initial_geom = None  # FC initial state geometry
         self.final_geom = None    # FC final state geometry
-        self.molecular_formula = ""
+        self.molecular_formula = None
         self.manager = manager
         self.depth = depth
         self.error = None  # Contains error string if present # TODO: Put as popup over error symbol
@@ -244,7 +244,7 @@ class File:
         name, self.extension = os.path.splitext(self.name)
         self.manager.all_files[self.tag] = self
         self.charge = 0
-        self.multiplicity = None
+        self.multiplicity = ""
 
         if self.path.find("\\ignore") > -1 or self.path.find("\\old") > -1:
             self.manager.ignore(self.tag)
@@ -270,7 +270,7 @@ class File:
             finally:
                 self.manager.lock_manager.release_read(self.path)
 
-            finished, error, self.routing_info, self.charge, self.multiplicity, self.start_lines = GaussianParser.scan_log_file(lines)
+            finished, self.error, self.routing_info, self.charge, self.multiplicity, self.start_lines = GaussianParser.scan_log_file(lines)
             for job in self.routing_info.get("jobs", []):
                 if job.startswith("freq"):
                     if re.search(r"(?<![a-zA-Z])(fc|fcht|ht)", job):  # todo: use all this info in later parsings
@@ -303,8 +303,8 @@ class File:
 
             if finished:
                 properties[GaussianLog.STATUS] = GaussianLog.FINISHED
-            elif error is not None:
-                self.error = error
+            elif self.error is not None:
+                self.error = self.error
                 properties[GaussianLog.STATUS] = GaussianLog.ERROR
             else:
                 properties[GaussianLog.STATUS] = GaussianLog.RUNNING

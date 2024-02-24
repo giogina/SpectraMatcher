@@ -1,3 +1,4 @@
+import re
 import subprocess
 import dearpygui.dearpygui as dpg
 import pyperclip
@@ -146,10 +147,15 @@ class FileExplorer:
                                     dpg.add_checkbox(label=column[0], default_value=column[3], tag=f"file column {i}", callback=self._select_columns, user_data=i)
 
         with dpg.group(horizontal=True, tag="file table header"):
+            nr_prev_invisible = 0
             for i in range(1, len(self._table_columns)):
                 column = self._table_columns[i]
-                dpg.add_button(label=column[0], width=column[1], height=24, tag=f"table header {i}", show=self._table_columns[i][3])
+                dpg.add_button(label=column[0], width=column[1]+nr_prev_invisible*7, height=24, tag=f"table header {i}", show=self._table_columns[i][3])
                 dpg.bind_item_handler_registry(dpg.add_image_button("pixel", width=1, height=24, user_data=i, tag=f"sep-button-{i}", show=self._table_columns[i][3]), self.table_handlers)
+                if column[3]:
+                    nr_prev_invisible = 0
+                else:
+                    nr_prev_invisible += 1
             dpg.add_button(label="", width=-1, height=24)
 
         with dpg.child_window(tag="file explorer panel"):
@@ -289,6 +295,9 @@ class FileExplorer:
         self.viewmodel.update_column_settings()
         dpg.configure_item(f"table header {i}", show=show)  # header
         dpg.configure_item(f"sep-button-{i}", show=show)
+        if not i == len(self._table_columns) - 1:
+            self._resizing_column = i+1
+        self._tables_resize()
         for file in self._file_rows:                        # file rows
             dpg.configure_item(f"{file.tag}-c{i}", show=show)
 
@@ -324,7 +333,13 @@ class FileExplorer:
             if delta != self._last_delta:  # Necessary to avoid bug where delta is last drag's delta when it should be 0
                 item = f"table header {column}"
                 header_width = max(self._table_columns[column][2], self._table_columns[column][1] + delta)
-                dpg.set_item_width(item, header_width)
+                nr_prev_invisible = 0
+                for c in range(column-1, 2, -1):
+                    if self._table_columns[c][3]:
+                        break
+                    else:
+                        nr_prev_invisible += 1
+                dpg.set_item_width(item, header_width + 7*nr_prev_invisible)
                 for file in self._file_rows:
                     item = f"{file.tag}-c{column}"
                     if column == 1:
@@ -333,7 +348,7 @@ class FileExplorer:
                             width -= 10  # Make up for extra spacing in front
                     else:
                         width = header_width
-                    dpg.set_item_width(item, width)
+                    dpg.set_item_width(item, width+7)
                 self._last_delta = delta
 
             with dpg.mutex():
@@ -442,11 +457,12 @@ class FileExplorer:
             print(f"Constructing table row for {file.tag}")
             with dpg.table_row(tag=file.tag, parent=table):
                 for i, column in enumerate(self._table_columns):
-                    width = self._table_columns[i][1]
+                    width = self._table_columns[i][1] + 7
                     if i == 0:  # Icon, can be icon or image button
                         with dpg.group(horizontal=True):
                             dpg.add_button(width=width, tag=f"{file.tag}-c{i}")
                             dpg.add_image_button("FC excitation-16", width=width, tag=f"{file.tag}-c{i}-img", show=False)
+                            dpg.add_spacer(width=6)
                     elif i == 1:  # file name, adjust indent of following columns
                         width -= 52 + file.depth * 20
                         if file.parent_directory is None:
@@ -469,11 +485,10 @@ class FileExplorer:
             dpg.configure_item(f"{file.tag}-c0-img", width=self._table_columns[0][1], show=True)
             file_icon_texture_tag = f"{file.type}-{16}"
             dpg.configure_item(f"{file.tag}-c0-img", texture_tag=file_icon_texture_tag)
-            dpg.bind_item_theme(f"{file.tag}-c{1}", self.file_type_color_theme[file.type])
+            dpg.bind_item_theme(f"{file.tag}-c1", self.file_type_color_theme[file.type])
             if type(file.properties) == dict and file.properties.get(GaussianLog.STATUS) == GaussianLog.FINISHED:
                 with dpg.drag_payload(parent=f"{file.tag}-c{1}", drag_data=(file.path, file.type), payload_type="Ground file" if file.type==FileType.FREQ_GROUND else "Excited file"):
                     dpg.add_text(file.path)
-
         else:
             dpg.configure_item(f"{file.tag}-c0-img", width=0, show=False)
             dpg.configure_item(f"{file.tag}-c0", width=self._table_columns[0][1], show=True)
@@ -482,9 +497,49 @@ class FileExplorer:
                 file_icon = Icons.file_code
             self.icons.insert(f"{file.tag}-c0", file_icon, 16, solid=False)
 
-        status_icon = _status_icons.get(file.properties.get(GaussianLog.STATUS, "None"))
+        status = file.properties.get(GaussianLog.STATUS, "None")
+        status_icon = _status_icons.get(status)
+        tooltip = status_icon["tooltip"]
+        if status == GaussianLog.ERROR and file.error is not None:
+            tooltip += file.error
         self.icons.insert(f"{file.tag}-c2", icon=status_icon["icon"], size=16,
-                          color=status_icon["color"], tooltip=status_icon["tooltip"])
+                          color=status_icon["color"], tooltip=tooltip)
+
+        td = file.routing_info.get('td')
+        if td is not None:
+            dpg.set_item_label(f"{file.tag}-c3", f"{td[0]}/{td[1]}")
+        elif file.type == FileType.FREQ_GROUND:
+            dpg.set_item_label(f"{file.tag}-c3", "ground")
+
+        if file.routing_info is not None:
+            jobs = ' '.join(file.routing_info.get('jobs', ''))
+            job_label = ' '.join([job.split('=')[0] for job in file.routing_info.get('jobs', [])])
+            if file.type in (FileType.FC_EXCITATION, FileType.FC_EMISSION, FileType.GAUSSIAN_INPUT):
+                if re.search(r"(?<![a-zA-Z])(fc)", jobs):
+                    if re.search(r"(?<![a-zA-Z])(fcht)", jobs):
+                        job_label = "FCHT"
+                    else:
+                        job_label = "FC"
+                elif re.search(r"(?<![a-zA-Z])(ht)", jobs):
+                    job_label = "HT"
+            dpg.set_item_label(f"{file.tag}-c4", job_label)
+            with dpg.tooltip(f"{file.tag}-c4", delay=0.3):
+                dpg.add_text(f" {jobs} ")
+
+        if file.routing_info.get('loth') is not None:
+            dpg.set_item_label(f"{file.tag}-c5", f"{file.routing_info.get('loth', '')}")
+
+            dpg.set_item_label(f"{file.tag}-c6", f"{' '.join(file.routing_info.get('keywords', ''))}")
+
+        dpg.set_item_label(f"{file.tag}-c7", file.molecular_formula)
+
+        if file.multiplicity is not None:
+            dpg.set_item_label(f"{file.tag}-c8", f"{file.multiplicity}")
+        else:
+            dpg.set_item_label(f"{file.tag}-c5", "")
+            dpg.set_item_label(f"{file.tag}-c6", "")
+            dpg.set_item_label(f"{file.tag}-c7", "")
+            dpg.set_item_label(f"{file.tag}-c8", "")
 
     def configure_theme(self):
         with dpg.theme() as file_explorer_theme:
@@ -507,7 +562,7 @@ class FileExplorer:
                 dpg.add_theme_style(dpg.mvStyleVar_ButtonTextAlign, 0.5, 0.5)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
             with dpg.theme_component(dpg.mvTable):
-                dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 4, self.item_padding)
+                dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 0, self.item_padding)
                 dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, [0, 0, 0, 0])
                 dpg.add_theme_color(dpg.mvThemeCol_HeaderActive, [0, 0, 0, 0])
 

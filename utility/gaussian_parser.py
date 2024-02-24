@@ -161,7 +161,7 @@ class GaussianParser:
         keywords = []
 
         for part in parts:
-            if part.startswith('#'):
+            if part.strip().startswith('#'):
                 pass
             elif any(part.startswith(job) for job in job_types):
                 jobs.append(part)

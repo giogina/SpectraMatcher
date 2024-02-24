@@ -27,7 +27,16 @@ class SettingsManager:
             (16, 17, 83): "Save as",
 
         },  # 17: Ctrl, 16: Shift, 18: Alt
-        Settings.FILE_EXPLORER_COLUMNS: [["Icons", 16, 16, True], ["File", 372, 200, True], ["Status", 60, 50, True]]  # [Label, start/current width, min width, default show value]
+        Settings.FILE_EXPLORER_COLUMNS: [["Icons", 16, 16, True],  # [Label, start/current width, min width, default show value]
+                                         ["File", 372, 200, True],
+                                         ["Status", 60, 50, True],
+                                         ["State", 70, 50, True],
+                                         ["Job", 70, 50, True],
+                                         ["Method", 164, 50, True],
+                                         ["Keywords", 70, 50, False],
+                                         ["Molecule", 70, 50, True],
+                                         ["Multiplicity", 70, 30, False],
+                                         ]
     }
 
     _instance = None
