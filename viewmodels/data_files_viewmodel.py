@@ -60,7 +60,10 @@ class DataFileViewModel(FileObserver):
         if event_type == "directory structure changed":
             self._populate_file_explorer(*args)
         if event_type == "file changed":
-            file_vm = FileViewModel(args[0])
+            if type(args[0]) == File:
+                file_vm = FileViewModel(args[0])
+            elif type(args[0][0]) == File:
+                file_vm = FileViewModel(args[0][0])
             self._callbacks.get("update file")(file_vm)
 
     def remove_directory(self, directory_tag):
