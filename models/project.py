@@ -47,7 +47,15 @@ def my_decoder(dct):
 
 class StateData:
     """Files & read information for a ground/excited state"""
+
+    _states = []  # Keep track of all state instances here!7
+
+    PERSIST = ("freq_file_path", "anharm_freq_file_path", "fc_emission_path", "fc_excitation_path")  # TODO: use this
+    molecular_formula = None
+
     def __init__(self, state, name=None, freq_path=None, anharm_path=None, fc_emission=None, fc_excitation=None, **kwargs):
+
+        self._states.append(self)
 
         self.freq_file_path = None
         self.anharm_freq_file_path = None

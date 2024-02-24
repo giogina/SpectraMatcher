@@ -2,30 +2,34 @@ import threading
 
 
 class PathLockManager:
-    def __init__(self):
-        self.locks = {}
-        self.locks_lock = threading.Lock()
+    locks = {}
+    locks_lock = threading.Lock()
 
-    def _get_lock(self, path):
-        with self.locks_lock:
-            if path not in self.locks:
-                self.locks[path] = ReadersWriterLock()
-            return self.locks[path]
+    @classmethod
+    def _get_lock(cls, path):
+        with cls.locks_lock:
+            if path not in cls.locks:
+                cls.locks[path] = ReadersWriterLock()
+            return cls.locks[path]
 
-    def acquire_read(self, path):
-        lock = self._get_lock(path)
+    @classmethod
+    def acquire_read(cls, path):
+        lock = cls._get_lock(path)
         lock.acquire_read()
 
-    def release_read(self, path):
-        lock = self._get_lock(path)
+    @classmethod
+    def release_read(cls, path):
+        lock = cls._get_lock(path)
         lock.release_read()
 
-    def acquire_write(self, path):
-        lock = self._get_lock(path)
+    @classmethod
+    def acquire_write(cls, path):
+        lock = cls._get_lock(path)
         lock.acquire_write()
 
-    def release_write(self, path):
-        lock = self._get_lock(path)
+    @classmethod
+    def release_write(cls, path):
+        lock = cls._get_lock(path)
         lock.release_write()
 
 

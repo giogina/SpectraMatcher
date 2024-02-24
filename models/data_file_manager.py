@@ -46,7 +46,6 @@ class DataFileManager:
         self.all_files = {}  # lookup files in a flat structure
 
         self.lock_manager = PathLockManager()
-        self.async_manager = AsyncManager()
 
     def open_directories(self, open_data_dirs, open_data_files=None):
         print(f"Opening: {open_data_dirs, open_data_files}")
@@ -66,7 +65,7 @@ class DataFileManager:
         self.notify_observers("directory structure changed")
 
         for file in self.all_files.values():
-            file.submit_what_am_i()  # Need to do this after directory structure notification, or it'll be too fast!
+            file.submit_what_am_i(observers=self.get_event_observers("file changed"), notification="file changed")  # Need to do this after directory structure notification, or it'll be too fast!
 
     def open_directories_or_files(self, paths: list):
         new_paths = []
@@ -179,6 +178,7 @@ class DataFileManager:
                 obs.append(observer)
         return obs
 
+
 # Observer interface
 class FileObserver:
     def update(self, event_type, *args):
@@ -199,20 +199,25 @@ class Directory:
             self.name = os.path.basename(path)
         self.parent_directory = parent
 
+        auto_ignore = False
         if self.path.find("\\ignore") > -1 or self.path.find("\\old") > -1:
             print(f"Ignoring directory by path>: {self.path}")
             self.manager.ignore(self.tag)
             self.manager.toggle_directory(directory_tag=self.tag, is_open=False)
+            auto_ignore = True
 
-        self.crawl_contents(path)
+        self.crawl_contents(path, auto_ignore)
 
-    def crawl_contents(self, path):
+    def crawl_contents(self, path, auto_ignore=False):
         dirs = {}
         files = {}
         for item in os.listdir(path):
             if isfile(join(path, item)):
-                file = File(join(path, item), self.manager, name=item, parent=self.tag, depth=self.depth+1)
+                file = File(join(path, item), name=item, parent=self.tag, depth=self.depth+1)
                 files[file.tag] = file
+                self.manager.all_files[file.tag] = file
+                if auto_ignore:
+                    self.manager.ignore(file.tag)
             else:
                 directory = Directory(join(path, item), self.manager, name=item, parent=self.tag, depth=self.depth+1)
                 dirs[directory.tag] = directory
@@ -221,7 +226,7 @@ class Directory:
 
 
 class File:
-    def __init__(self, path, manager: DataFileManager, name=None, parent=None, depth=0):
+    def __init__(self, path, name=None, parent=None, depth=0):
         self.properties = {}
         self.is_human_readable = True  # \n instead of \r\n making it ugly in notepad
         self.type = None
@@ -231,9 +236,8 @@ class File:
         self.initial_geom = None  # FC initial state geometry
         self.final_geom = None    # FC final state geometry
         self.molecular_formula = None
-        self.manager = manager
         self.depth = depth
-        self.error = None  # Contains error string if present # TODO: Put as popup over error symbol
+        self.error = None  # Contains error string if present
         self.tag = f"file_{path}_{depth}"
         self.start_lines = {}
         if name:
@@ -242,23 +246,20 @@ class File:
             self.name = os.path.basename(path)
         self.parent_directory = parent
         name, self.extension = os.path.splitext(self.name)
-        self.manager.all_files[self.tag] = self
         self.charge = 0
         self.multiplicity = ""
+        self.lines = None  # remember read lines (for project files)
 
-        if self.path.find("\\ignore") > -1 or self.path.find("\\old") > -1:
-            self.manager.ignore(self.tag)
+    def submit_what_am_i(self, observers, notification):
+        AsyncManager.submit_task(f"File {self.tag} what_am_I", self.what_am_i, observers=observers, notification=notification)
 
-    def submit_what_am_i(self):
-        self.manager.async_manager.submit_task(f"File {self.tag} what_am_I", self.what_am_i, observers=self.manager.get_event_observers("file changed"), notification="file changed")
-
-    def what_am_i(self):
+    def what_am_i(self, remember_lines=False):
         properties = {}
         is_table = False
         if self.extension == ".log":  # Gaussian log
             self.type = FileType.GAUSSIAN_LOG
 
-            self.manager.lock_manager.acquire_read(self.path)
+            PathLockManager.acquire_read(self.path)
             try:
                 with open(self.path, 'rb') as file:
                     content = file.read(1024)
@@ -268,7 +269,7 @@ class File:
             except Exception as e:
                 print(f"File {self.path} couldn't be read! {e}")
             finally:
-                self.manager.lock_manager.release_read(self.path)
+                PathLockManager.release_read(self.path)
 
             finished, self.error, self.routing_info, self.charge, self.multiplicity, self.start_lines = GaussianParser.scan_log_file(lines)
             for job in self.routing_info.get("jobs", []):
@@ -312,14 +313,14 @@ class File:
         elif self.extension in [".gjf", ".com"]:
             self.type = FileType.GAUSSIAN_INPUT
             lines = []
-            self.manager.lock_manager.acquire_read(self.path)
+            PathLockManager.acquire_read(self.path)
             try:
                 with open(self.path, 'r') as f:
                     lines = f.readlines()
             except Exception as e:
                 print(f"File {self.path} couldn't be read! {e}")
             finally:
-                self.manager.lock_manager.release_read(self.path)
+                PathLockManager.release_read(self.path)
             self.routing_info, self.charge, self.multiplicity, self.geometry = GaussianParser.parse_input(lines)
             if self.geometry is not None:
                 self.molecular_formula = self.geometry.get_molecular_formula(self.charge)
@@ -342,6 +343,9 @@ class File:
             else:
                 self.type = FileType.EXPERIMENT_EXCITATION
         self.properties = properties
+
+        if remember_lines:
+            self.lines = lines
 
         return self
 

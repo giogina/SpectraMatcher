@@ -18,6 +18,7 @@
             "anharm_freq_file_path": null,
             "fc_emission_path": null,
             "fc_excitation_path": null,
+            "molecular_formula": null,
             "EXCLUDE": [
                 "geometry",
                 "vibrational_modes",
@@ -37,6 +38,7 @@
             "anharm_freq_file_path": null,
             "fc_emission_path": null,
             "fc_excitation_path": null,
+            "molecular_formula": null,
             "EXCLUDE": [
                 "geometry",
                 "vibrational_modes",

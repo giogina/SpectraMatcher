@@ -53,15 +53,15 @@
         ],
         [
             "Keywords",
-            70,
+            378,
             50,
             false
         ],
         [
             "Molecule",
-            70,
+            106,
             50,
-            true
+            false
         ],
         [
             "Multiplicity",

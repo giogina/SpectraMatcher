@@ -20,6 +20,8 @@ class MainViewModel(ProjectObserver):
 
         self._settings = SettingsManager()
 
+        AsyncManager.start()
+
         self._title_callback = title_callback
         self._message_callback = noop
         # self._inquire_close_unsaved_project = inquire_close_unsaved_project_callback
@@ -85,7 +87,7 @@ class MainViewModel(ProjectObserver):
         Launcher.open(file)
 
     def on_close(self):
-        AsyncManager().shutdown()
+        AsyncManager.shutdown()
         if self._project is None:
             return True
         if self._project_unsaved or self._project.check_newer_autosave():

@@ -13,11 +13,12 @@ class AsyncManager:
     _stop = False
     _thread = None
 
-    def __init__(self):
-        if AsyncManager._loop is None:
+    @classmethod
+    def start(cls):
+        if cls._loop is None:
             print(f"Initiating async manager!")
-            self._thread = threading.Thread(target=self._start_loop_in_thread, daemon=True)
-            self._thread.start()
+            cls._thread = threading.Thread(target=cls._start_loop_in_thread, daemon=True)
+            cls._thread.start()
 
     @classmethod
     def _start_loop_in_thread(cls):
