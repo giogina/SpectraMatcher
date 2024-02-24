@@ -256,6 +256,18 @@ class File:
     def submit_get_vibrational_modes(self, observers, notification):
         AsyncManager.submit_task(f"File {self.tag} get_vib_modes", self._get_vibrational_modes, observers=observers, notification=notification)
 
+    def get_FC_spectrum(self, is_emission, observers, notification):
+        AsyncManager.submit_task(f"File {self.tag} get_fc_spec", self.get_FC_spectrum, observers=observers, notification=notification)
+
+    def _get_FC_spectrum(self):
+        if self.lines is None:
+            self._what_am_i(remember_lines=True)
+        if self.type not in (FileType.FC_EMISSION, FileType.FC_EXCITATION):
+            print(f"Warning: Tried calling get_FC_spectrum on non-FC file {self.path}")
+            return
+        is_emission = self.type == FileType.FC_EMISSION
+        GaussianParser.get_FC_spectrum(self.lines, is_emission, start_line=self.start_lines.get("FC transitions", 0))
+
     def _get_vibrational_modes(self):
         if self.lines is None:
             self._what_am_i(remember_lines=True)

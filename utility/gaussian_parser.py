@@ -84,17 +84,21 @@ class GaussianParser:
                 elif not freqs_found:
                     start_lines["lp freq"] = i
                     freqs_found = True
-            if line.strip() in ("Standard orientation:",  "Input orientation:"):
+            elif line.strip() in ("Standard orientation:",  "Input orientation:"):
                 start_lines["last geom"] = i+1
             elif line.strip() == "New orientation in initial state":  # Eckart orientation in FC files! Use this!
                 start_lines["initial state geom"] = i+1
             elif line.strip() == "New orientation in final state":
                 start_lines["final state geom"] = i+1
-            if re.search('Proceeding to internal job step number', line):
+            elif line.strip() == "Information on Transitions":
+                start_lines["FC transitions"] = i-1
+            elif line.strip() == "Duschinsky matrix":
+                start_lines["Duschinsky"] = i
+            elif re.search('Proceeding to internal job step number', line):
                 nr_jobs += 1
-            if re.search('Normal termination', line):
+            elif re.search('Normal termination', line):
                 nr_finished += 1
-            if re.search('Error termination', line):
+            elif re.search('Error termination', line):
                 error = line
 
         return nr_jobs == nr_finished, error, routing_info, charge, multiplicity, start_lines
@@ -362,11 +366,7 @@ class GaussianParser:
                                transitions[i].split('|')[2].strip('>\n').split(';')]
             peaks.append(peak)
         peaks.sort(key=lambda p: p.wavenumber)
-        spectrum = FCSpectrum()
-        spectrum.is_emission = is_emission
-        spectrum.peaks = peaks
-        spectrum.zero_zero_transition_energy = zero
-        spectrum.multiplicator = max_intensity
+        spectrum = FCSpectrum(is_emission, peaks, zero, max_intensity)
 
         return spectrum
 
