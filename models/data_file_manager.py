@@ -251,9 +251,17 @@ class File:
         self.lines = None  # remember read lines (for project files)
 
     def submit_what_am_i(self, observers, notification):
-        AsyncManager.submit_task(f"File {self.tag} what_am_I", self.what_am_i, observers=observers, notification=notification)
+        AsyncManager.submit_task(f"File {self.tag} what_am_I", self._what_am_i, observers=observers, notification=notification)
 
-    def what_am_i(self, remember_lines=False):
+    def submit_get_vibrational_modes(self, observers, notification):
+        AsyncManager.submit_task(f"File {self.tag} get_vib_modes", self._get_vibrational_modes, observers=observers, notification=notification)
+
+    def _get_vibrational_modes(self):
+        if self.lines is None:
+            self._what_am_i(remember_lines=True)
+        GaussianParser.get_vibrational_modes(self.lines, hpmodes_start=self.start_lines.get("hp freq"), lpmodes_start=self.start_lines.get("lp freq"), geometry=self.geometry)
+
+    def _what_am_i(self, remember_lines=False):
         properties = {}
         is_table = False
         if self.extension == ".log":  # Gaussian log

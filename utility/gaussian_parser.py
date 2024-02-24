@@ -298,46 +298,43 @@ class GaussianParser:
         return mode_list
 
     @staticmethod
-    def get_anharmonic_levels(log_file):
+    def get_anharmonic_levels(lines, start_line=0):
         read = ''
         anharmonic_levels = []
-        with open(log_file, 'r') as f:
-            lines = f.readlines()
-            for l, line in enumerate(lines):
-                if re.search(r'Fundamental Bands', line):
-                    read = 'fundamental'
-                    continue
-                match = re.search(r'Overtones', line)
-                if match:
-                    read = 'overtone'
-                    continue
-                if re.search(r'Combination Bands', line):
-                    read = 'combination'
-                    continue
-                if read and re.search(r'=======', line):
-                    return anharmonic_levels
-                if read:
-                    match = re.findall(r'\s+([-\d.(\d)]+)', line)
-                    if len(match) > 2:
-                        modes = [[int(s) for s in m[0:-1].split("(")] for m in match if m.endswith(")")]
-                        modes.reverse()
-                        anharmonic_levels.append({
-                            'modes': modes,
-                            'type': read,
-                            'harmonic': float(list(match)[len(modes)]),
-                            'anharmonic': float(list(match)[len(modes) + 1])
-                        })
+
+        for l, line in enumerate(lines):
+            if re.search(r'Fundamental Bands', line):
+                read = 'fundamental'
+                continue
+            match = re.search(r'Overtones', line)
+            if match:
+                read = 'overtone'
+                continue
+            if re.search(r'Combination Bands', line):
+                read = 'combination'
+                continue
+            if read and re.search(r'=======', line):
+                return anharmonic_levels
+            if read:
+                match = re.findall(r'\s+([-\d.(\d)]+)', line)
+                if len(match) > 2:
+                    modes = [[int(s) for s in m[0:-1].split("(")] for m in match if m.endswith(")")]
+                    modes.reverse()
+                    anharmonic_levels.append({
+                        'modes': modes,
+                        'type': read,
+                        'harmonic': float(list(match)[len(modes)]),
+                        'anharmonic': float(list(match)[len(modes) + 1])
+                    })
 
     @staticmethod
-    def get_FC_spectrum(log_file, is_emission: bool):
+    def get_FC_spectrum(lines, is_emission: bool = False, start_line=0):
         wavenumbers = []
         transitions = []
         intensities = []
         read_transs = False
         peaks = []
         zero = 0
-        with open(log_file, 'r') as f:
-            lines = f.readlines()
         for l, line in enumerate(lines):
             if re.search(r'\sInformation on Transitions\s', line):
                 read_transs = True

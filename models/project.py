@@ -116,7 +116,7 @@ class StateData:
         #         print("This file is for a different molecule!")  # todo: actually, check for project-level molecule
         #         return                                               # Todo: have project-level molecule list, dislpayed as dropdown on top of project, populated with all molecules found in imported files.
         # self.geometry = GaussianParser.get_last_geometry(path)  # todo: read from file.geometry
-        self.vibrational_modes = GaussianParser.get_vibrational_modes(path, self.geometry)  # TODO> Do this stuff async? Send notification when done.
+        # self.vibrational_modes = GaussianParser.get_vibrational_modes(path, self.geometry)  # TODO> Do this stuff async? Send notification when done.
 
 
     def set_anharm_freq_file(self, path):
