@@ -65,8 +65,8 @@ class ProjectSetupViewModel(ProjectObserver):
     def add_state(self):
         self._project.add_state()
 
-    def import_state_file(self, path, file_type, state: int):
-        self._project.set_state_file(path, file_type, state)
+    def import_state_file(self, file, state: int):
+        self._project.set_state_file(file.path, file.file_type, state)  # todo: figure out a scheme of how to load this properly.  Load project files before file explorer files.
 
     def delete_state(self, state: int):
         self._project.delete_state(state)

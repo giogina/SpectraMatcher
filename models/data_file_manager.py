@@ -273,7 +273,7 @@ class File:
             finished, self.error, self.routing_info, self.charge, self.multiplicity, self.start_lines = GaussianParser.scan_log_file(lines)
             for job in self.routing_info.get("jobs", []):
                 if job.startswith("freq"):
-                    if re.search(r"(?<![a-zA-Z])(fc|fcht|ht)", job):  # todo: use all this info in later parsings
+                    if re.search(r"(?<![a-zA-Z])(fc|fcht|ht)", job):
                         if job.find("emission") > -1:
                             self.type = FileType.FC_EMISSION  # TODO: FC files always treat current state as ground state; and contain corresponding geom & freqs. Read from there (maybe just as backup).
                         else:

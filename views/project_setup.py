@@ -76,7 +76,7 @@ class ProjectSetup:
         self.configure_theme()
 
     def add_state_tree_node(self, state):
-        with dpg.collapsing_header(label=state.name, parent="project setup panel", before="state buttons", tag=f"state-node-{state.state}", default_open=True, drop_callback=lambda s, a: self.set_file(state.state, *a), payload_type="Ground file" if state.state==0 else "Excited file"):
+        with dpg.collapsing_header(label=state.name, parent="project setup panel", before="state buttons", tag=f"state-node-{state.state}", default_open=True, drop_callback=lambda s, file: self.set_file(state.state, file), payload_type="Ground file" if state.state == 0 else "Excited file"):
             with dpg.table(header_row=False):
                 dpg.add_table_column(label="text", width_fixed=True, init_width_or_weight=200)
                 dpg.add_table_column(label="file")
@@ -96,7 +96,7 @@ class ProjectSetup:
                             dpg.add_image_button("Frequency excited state-16", width=16)
                             dpg.add_button(label="Frequency file:")
                         dpg.bind_item_theme(dpg.last_item(), FileExplorer.file_type_color_theme.get(FileType.FREQ_EXCITED))
-                        dpg.add_input_text(tag=f"frequency file for state {state.state}",  drop_callback=lambda s, a: dpg.set_value(s, a), payload_type=FileType.FREQ_EXCITED, hint="Drag & drop file here, or click 'auto import'")
+                        dpg.add_input_text(tag=f"frequency file for state {state.state}", hint="Drag & drop file here, or click 'auto import'")  # ,  drop_callback=lambda s, a: dpg.set_value(s, a), payload_type=FileType.FREQ_EXCITED,
                         dpg.bind_item_theme(dpg.last_item(), self.empty_field_theme)
                     with dpg.table_row():
                         with dpg.group(horizontal=True):
@@ -104,9 +104,7 @@ class ProjectSetup:
                             dpg.add_image_button("FC excitation-16", width=16)
                             dpg.add_button(label="Excitation FC file:")
                             dpg.bind_item_theme(dpg.last_item(),FileExplorer.file_type_color_theme.get(FileType.FC_EXCITATION))
-                        dpg.add_input_text(tag=f"Excitation FC file for state {state.state}",
-                                           drop_callback=lambda s, a: dpg.set_value(s, a),
-                                           payload_type=FileType.FC_EXCITATION, hint="Drag & drop file here, or click 'auto import'")
+                        dpg.add_input_text(tag=f"Excitation FC file for state {state.state}", hint="Drag & drop file here, or click 'auto import'")
                         dpg.bind_item_theme(dpg.last_item(), self.empty_field_theme)  # TODO> Allow drag&drop for folders to fill in all three
                     with dpg.table_row():
                         with dpg.group(horizontal=True):
@@ -114,27 +112,26 @@ class ProjectSetup:
                             dpg.add_image_button("FC emission-16", width=16)
                             dpg.add_button(label="Emission FC file:")
                             dpg.bind_item_theme(dpg.last_item(), FileExplorer.file_type_color_theme.get(FileType.FC_EMISSION))
-                        dpg.add_input_text(tag=f"Emission FC file for state {state.state}",  drop_callback=lambda s, a: dpg.set_value(s, a), payload_type=FileType.FC_EMISSION, hint="Drag & drop file here, or click 'auto import'")
+                        dpg.add_input_text(tag=f"Emission FC file for state {state.state}",  hint="Drag & drop file here, or click 'auto import'")
                         dpg.bind_item_theme(dpg.last_item(), self.empty_field_theme)
         dpg.add_spacer(height=24, parent="project setup panel", before="state buttons")
 
-    def set_file(self, state, *file_info):
-        print(type(file_info))
-        if type(file_info) == tuple:
-            path, file_type = file_info
-            print(f"{state}, type: {file_type} at path {path}")
-            if file_type == FileType.FREQ_GROUND and state == 0:
-                dpg.set_value(f"frequency file for state {state}", path)
-                dpg.bind_item_theme(f"frequency file for state {state}", self.full_field_theme)
-            elif file_type == FileType.FREQ_EXCITED and state > 0:
-                dpg.set_value(f"frequency file for state {state}", path)
-                dpg.bind_item_theme(f"frequency file for state {state}", self.full_field_theme)
-            elif file_type == FileType.FC_EMISSION and state > 0:
-                dpg.set_value(f"Emission FC file for state {state}", path)
-                dpg.bind_item_theme(f"Emission FC file for state {state}", self.full_field_theme)
-            elif file_type == FileType.FC_EXCITATION and state > 0:
-                dpg.set_value(f"Excitation FC file for state {state}", path)
-                dpg.bind_item_theme(f"Excitation FC file for state {state}", self.full_field_theme)
+    def set_file(self, state, file):
+        path = file.path
+        print(f"{state}, type: {file.type} at path {path}")
+        if file.type == FileType.FREQ_GROUND and state == 0:
+            dpg.set_value(f"frequency file for state {state}", path)
+            dpg.bind_item_theme(f"frequency file for state {state}", self.full_field_theme)
+            self.viewmodel.set
+        elif file.type == FileType.FREQ_EXCITED and state > 0:
+            dpg.set_value(f"frequency file for state {state}", path)
+            dpg.bind_item_theme(f"frequency file for state {state}", self.full_field_theme)
+        elif file.type == FileType.FC_EMISSION and state > 0:
+            dpg.set_value(f"Emission FC file for state {state}", path)
+            dpg.bind_item_theme(f"Emission FC file for state {state}", self.full_field_theme)
+        elif file.type == FileType.FC_EXCITATION and state > 0:
+            dpg.set_value(f"Excitation FC file for state {state}", path)
+            dpg.bind_item_theme(f"Excitation FC file for state {state}", self.full_field_theme)
 
     def add_state(self):
         self.viewmodel.add_state()

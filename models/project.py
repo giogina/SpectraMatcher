@@ -60,6 +60,8 @@ class StateData:
         self.emission_FC_spectrum = None
         self.excitation_FC_spectrum = None
 
+        self.molecular_formula = None
+
         # Exclude data that can be read from files from being serialized into the project json.
         self.EXCLUDE = ("geometry", "vibrational_modes", "anharm_levels", "emission_FC_spectrum", "excitation_FC_spectrum")
 
@@ -96,12 +98,21 @@ class StateData:
             self.name = f"{self.state}th excited state"
 
     def set_freq_file(self, path):
+        # todo: find file in filemanager that has the same path, use that.
         self.freq_file_path = path  # todo: (on first freq file) set bonds
+
+        # if self.molecular_formula is None:
+        #     self.molecular_formula = file.molecular_formula
+        # else:
+        #     if not self.molecular_formula == file.molecular_formula:
+        #         print("This file is for a different molecule!")  # todo: actually, check for project-level molecule
+        #         return                                               # Todo: have project-level molecule list, dislpayed as dropdown on top of project, populated with all molecules found in imported files.
         # self.geometry = GaussianParser.get_last_geometry(path)  # todo: read from file.geometry
         self.vibrational_modes = GaussianParser.get_vibrational_modes(path, self.geometry)  # TODO> Do this stuff async? Send notification when done.
 
 
     def set_anharm_freq_file(self, path):
+
         self.freq_file_path = path
         self.anharm_levels = GaussianParser.get_anharmonic_levels(path)
 

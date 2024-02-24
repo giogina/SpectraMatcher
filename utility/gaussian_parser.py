@@ -186,32 +186,17 @@ class GaussianParser:
         return res
 
     @staticmethod
-    def get_vibrational_modes(log_file, geometry: Geometry):
+    def get_vibrational_modes(lines, hpmodes_start=None, lpmodes_start=None, geometry: Geometry = None):
         """Parses log file, returns list of VibrationalMode objects or None"""
         if geometry is None:
-            print(f"No geometry found for {log_file}!")
+            print(f"No geometry found!")
             return
         frequencies = []
         normal_mode_vectors = []
         new_normal_mode_vectors = []
         read_atoms = False
         syms = []
-        hpmodes_start = None
-        lpmodes_start = None
 
-        with open(log_file, 'r') as f:
-            lines = f.readlines()
-
-        for l, line in enumerate(lines):
-            if line.strip().startswith('Frequencies --'):
-                if line.strip().startswith('Frequencies ---'):
-                    if hpmodes_start == None:
-                        hpmodes_start = l
-                        break
-                else:
-                    if lpmodes_start == None:
-                        lpmodes_start = l
-                        break
         if hpmodes_start is not None:   # Read high-precision modes
             for l in range(hpmodes_start, len(lines)):
                 line = lines[l]
@@ -280,7 +265,7 @@ class GaussianParser:
 
             return GaussianParser._name_modes_by_IR(mode_list)
         else:
-            print(f"No frequencies found in {log_file}!")
+            print(f"No frequencies found!")
             return None
 
     @staticmethod

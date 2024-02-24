@@ -419,8 +419,6 @@ class FileExplorer:
                     self._display_directory(d, parent=directory.tag)
                 self._display_files(directory.content_files, parent=directory.tag)
                 self._setup_folder_right_click_menu(directory)
-            # with dpg.drag_payload(parent=directory.tag, drag_data=directory):
-            #     dpg.add_text(directory.path)
             dpg.add_spacer(height=0 if is_open else self.item_padding, parent=parent, tag=f"after_{directory.tag}", show=not is_open)
             self._directory_nodes[directory.tag] = is_open
         self.update_dir_ignored_status(directory.tag)
@@ -487,7 +485,7 @@ class FileExplorer:
             dpg.configure_item(f"{file.tag}-c0-img", texture_tag=file_icon_texture_tag)
             dpg.bind_item_theme(f"{file.tag}-c1", self.file_type_color_theme[file.type])
             if type(file.properties) == dict and file.properties.get(GaussianLog.STATUS) == GaussianLog.FINISHED:
-                with dpg.drag_payload(parent=f"{file.tag}-c{1}", drag_data=(file.path, file.type), payload_type="Ground file" if file.type==FileType.FREQ_GROUND else "Excited file"):
+                with dpg.drag_payload(parent=f"{file.tag}-c{1}", drag_data=file, payload_type="Ground file" if file.type==FileType.FREQ_GROUND else "Excited file"):
                     dpg.add_text(file.path)
         else:
             dpg.configure_item(f"{file.tag}-c0-img", width=0, show=False)
@@ -549,6 +547,7 @@ class FileExplorer:
                 dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 0)
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [200, 200, 255, 30])
                 dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 200])
+                dpg.add_theme_color(dpg.mvThemeCol_HeaderActive, [0, 0, 0, 0])
             with dpg.theme_component(dpg.mvButton):
                 dpg.add_theme_color(dpg.mvThemeCol_Button, [0, 0, 0, 0])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [0, 0, 0, 0])
@@ -564,7 +563,6 @@ class FileExplorer:
             with dpg.theme_component(dpg.mvTable):
                 dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 0, self.item_padding)
                 dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, [0, 0, 0, 0])
-                dpg.add_theme_color(dpg.mvThemeCol_HeaderActive, [0, 0, 0, 0])
 
         dpg.bind_item_theme("file explorer panel", file_explorer_theme)
         self.file_explorer_theme = file_explorer_theme
