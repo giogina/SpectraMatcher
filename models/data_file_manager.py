@@ -57,15 +57,15 @@ class DataFileManager:
                 print(f"Added directory: {directory.tag}")
         if open_data_files:
             for path in open_data_files:
-                file = File(path, self)
+                file = File(path)
                 self.top_level_files[file.tag] = file
         self.last_path = os.path.dirname(path) if path else "/"
 
         # notify file explorer viewmodel to re-populate the entire list, and parent project to update top level paths.
         self.notify_observers("directory structure changed")
 
-        for file in self.all_files.values():
-            file.submit_what_am_i(observers=self.get_event_observers("file changed"), notification="file changed")  # Need to do this after directory structure notification, or it'll be too fast!
+        # for file in self.all_files.values():
+        #     file.submit_what_am_i(observers=self.get_event_observers("file changed"), notification="file changed")  # Need to do this after directory structure notification, or it'll be too fast!
 
     def open_directories_or_files(self, paths: list):
         new_paths = []
@@ -115,7 +115,7 @@ class DataFileManager:
                 file.type = FileType.EXPERIMENT_EXCITATION
             if not excitation and file.type == FileType.EXPERIMENT_EXCITATION:
                 file.type = FileType.EXPERIMENT_EMISSION
-            self.notify_observers("file changed", file)
+            file.notify_observers()
 
     def _forget_directory_info(self, directory):
         if directory.tag in self.directory_toggle_states.keys():
@@ -135,7 +135,7 @@ class DataFileManager:
     def make_readable(self, tag):
         file = self.all_files.get(tag)
         file.is_human_readable = True
-        self.notify_observers("file changed", file)
+        file.notify_observers()
         if file:
             AsyncManager.submit_task(f"make {file.path} readable", self._make_readable, file.path)
 
@@ -226,6 +226,10 @@ class Directory:
 
 
 class File:
+    _remember_lines = False
+    _observers = []
+    _notification = "file changed"
+
     def __init__(self, path, name=None, parent=None, depth=0):
         self.properties = {}
         self.is_human_readable = True  # \n instead of \r\n making it ugly in notepad
@@ -248,7 +252,22 @@ class File:
         name, self.extension = os.path.splitext(self.name)
         self.charge = 0
         self.multiplicity = ""
-        self.lines = None  # remember read lines (for project files)
+
+        self.submit_what_am_i(observers=self._observers, notification=self._notification)
+
+    ############### Observers ###############
+
+    @classmethod
+    def add_observer(cls, observer):
+        cls._observers.append(observer)
+
+    @classmethod
+    def remove_observer(cls, observer):
+        cls._observers.remove(observer)
+
+    def notify_observers(self):
+        for observer in self._observers:
+            observer.update(self._notification, self)
 
     def submit_what_am_i(self, observers, notification):
         AsyncManager.submit_task(f"File {self.tag} what_am_I", self._what_am_i, observers=observers, notification=notification)
@@ -368,5 +387,27 @@ class File:
             self.lines = lines
 
         return self
+
+# class ProjectFile(File):
+#     instances = []
+#
+#     def __init__(self, file: File):
+#         super().__init__(path)
+#         self.extra_data = extra_data
+#         ProjectFile.instances.append(self)
+#         self.lines = None  # remember read lines
+#         self.remember_lines = True  # Trigger remembering of lines when what_am_I is called
+#         # self.tag = f"file_{path}_{depth}"
+#
+#     @classmethod
+#     def from_file(cls, file_instance):
+#         """Factory method to create a ProjectFile from a File instance"""
+#         return cls(file_instance)
+#
+#     @classmethod
+#     def from_path(cls, file_path):
+#         """Factory method to create a ProjectFile directly from a file path"""
+#         return cls(file_path)
+
 
 

@@ -39,7 +39,7 @@ class DataFileViewModel(FileObserver):
             "update directory ignore status": noop,
         }
         self._data_file_manager = data_file_manager
-        self._data_file_manager.add_observer(self, "file changed")  # Only properties of one existing file need updating
+        File.add_observer(self)  # Only properties of one existing file need updating
         self._data_file_manager.add_observer(self, "directory changed")  # Only properties of one existing dir need updating
         self._data_file_manager.add_observer(self, "directory structure changed")  # Need to re-populate the entire list
         self.settings = SettingsManager()
@@ -62,7 +62,7 @@ class DataFileViewModel(FileObserver):
         if event_type == "file changed":
             if type(args[0]) == File:
                 file_vm = FileViewModel(args[0])
-            elif type(args[0][0]) == File:
+            else:
                 file_vm = FileViewModel(args[0][0])
             self._callbacks.get("update file")(file_vm)
 

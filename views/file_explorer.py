@@ -452,6 +452,8 @@ class FileExplorer:
     def update_file(self, file: FileViewModel, table=None):
         print(f"update file: {file.path}, {table}")
         if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
+            if table is None:
+                return  # Too early, the item to be updated hasn't been made yet.
             print(f"Constructing table row for {file.tag}")
             with dpg.table_row(tag=file.tag, parent=table):
                 for i, column in enumerate(self._table_columns):
