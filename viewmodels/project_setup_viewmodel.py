@@ -67,11 +67,11 @@ class ProjectSetupViewModel(ProjectObserver):
 
     def import_state_file(self, file, state: int):
         print(type(file), isinstance(file, File))
-        new_project_file = ProjectFile(file)
-        another_project_file = ProjectFile(file.path)
-        print(new_project_file.lines[0])
-        print(another_project_file.lines[0])
-        self._project.set_state_file(file.path, file.file_type, state)  # todo: figure out a scheme of how to load this properly.  Load project files before file explorer files.
+        new_project_file = ProjectFile.from_file(file)
+        another_project_file = ProjectFile.from_path(file.path)
+        print(new_project_file.lines)
+        print(another_project_file.lines)
+        # self._project.set_state_file(file.path, file.file_type, state)  # todo: figure out a scheme of how to load this properly.  Load project files before file explorer files.
 
     def delete_state(self, state: int):
         self._project.delete_state(state)

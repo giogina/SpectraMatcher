@@ -359,11 +359,11 @@ class GaussianParser:
                     intensities.append(intensity)
         max_intensity = max(intensities)
         for i, wavenumber in enumerate(wavenumbers):
-            peak = FCPeak()
-            peak.intensity = intensities[i] / max_intensity
-            peak.wavenumber = wavenumber
-            peak.transition = [[int(n) for n in t.split('^')] for t in
-                               transitions[i].split('|')[2].strip('>\n').split(';')]
+            peak = FCPeak(intensity=intensities[i] / max_intensity,
+                          wavenumber=wavenumber,
+                          transition=[[int(n) for n in t.split('^')] for t in
+                                      transitions[i].split('|')[2].strip('>\n').split(';')]
+                          )
             peaks.append(peak)
         peaks.sort(key=lambda p: p.wavenumber)
         spectrum = FCSpectrum(is_emission, peaks, zero, max_intensity)

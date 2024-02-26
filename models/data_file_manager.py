@@ -228,7 +228,6 @@ class Directory:
 class File:
     _observers = []
     _notification = "file changed"
-    _remember_lines = False
 
     def __init__(self, path, name=None, parent=None, depth=0):
         self.properties = {}
@@ -254,7 +253,8 @@ class File:
         self.multiplicity = ""
         self.lines = None
 
-        self.submit_what_am_i(observers=self._observers, notification=self._notification)
+        if isinstance(self, File):
+            self.submit_what_am_i(observers=self._observers, notification=self._notification)
 
     ############### Observers ###############
 
@@ -273,23 +273,29 @@ class File:
     def submit_what_am_i(self, observers, notification):
         AsyncManager.submit_task(f"File {self.tag} what_am_I", self._what_am_i, observers=observers, notification=notification)
 
-    def _what_am_i(self):
-        properties = {}
-        is_table = False
-        if self.extension == ".log":  # Gaussian log
-            self.type = FileType.GAUSSIAN_LOG
-
-            PathLockManager.acquire_read(self.path)
-            try:
+    def _read_file_lines(self):
+        PathLockManager.acquire_read(self.path)
+        try:
+            if isinstance(self, File):
                 with open(self.path, 'rb') as file:
                     content = file.read(1024)
                     self.is_human_readable = b'\r\n' in content
-                with open(self.path, 'r') as f:
-                    lines = f.readlines()
-            except Exception as e:
-                print(f"File {self.path} couldn't be read! {e}")
-            finally:
-                PathLockManager.release_read(self.path)
+            with open(self.path, 'r') as f:
+                lines = f.readlines()
+        except Exception as e:
+            print(f"File {self.path} couldn't be read! {e}")
+        finally:
+            PathLockManager.release_read(self.path)
+        return lines
+
+    def _what_am_i(self):
+        properties = {}
+        is_table = False
+        lines = None
+        if self.extension == ".log":  # Gaussian log
+            self.type = FileType.GAUSSIAN_LOG
+
+            lines = self._read_file_lines()
 
             finished, self.error, self.routing_info, self.charge, self.multiplicity, self.start_lines = GaussianParser.scan_log_file(lines)
             for job in self.routing_info.get("jobs", []):
@@ -364,28 +370,28 @@ class File:
                 self.type = FileType.EXPERIMENT_EXCITATION
         self.properties = properties
 
-        if self._remember_lines:
+        print(type(self))
+        if isinstance(self, ProjectFile):
+            print("assinging lines")
             self.lines = lines
+            print(self.lines)
 
         return self
 
 
 class ProjectFile(File):
     instances = []
-    remember_lines = True  # Trigger remembering of lines when what_am_I is called
     _notification = "Project file updated"
 
-    def __init__(self, file=None, **kwargs):
+    def __init__(self, file=None, path=None, **kwargs):
         ProjectFile.instances.append(self)
         if isinstance(file, File):
             print("init from File!")
-            self.__dict__.update(file.__dict__)
-            if self.lines is None:
-                self.submit_what_am_i(observers=self._observers, notification=self._notification)
-        else:
+            self.__dict__.update(file.__dict__)  # todo>: deepcopy?
+        elif path is not None:
             print("init from path!")
-            self.lines = None  # remember read lines
-            super().__init__(**kwargs)
+            super().__init__(path=path, **kwargs)
+        self.submit_analyse_data()
 
     @classmethod
     def from_file(cls, file_instance):
@@ -397,26 +403,18 @@ class ProjectFile(File):
         """Factory method to create a ProjectFile directly from a file path"""
         return cls(path=file_path)
 
-    def submit_get_vibrational_modes(self, observers, notification):
-        AsyncManager.submit_task(f"File {self.tag} get_vib_modes", self._get_vibrational_modes, observers=observers, notification=notification)
+    def submit_analyse_data(self):
+        AsyncManager.submit_task(f"Analyse project file {self.tag}", self._analyse_data(), observers=self._observers, notification=self._notification)
 
-    def get_FC_spectrum(self, is_emission, observers, notification):
-        AsyncManager.submit_task(f"File {self.tag} get_fc_spec", self.get_FC_spectrum, observers=observers, notification=notification)
-
-    def _get_FC_spectrum(self):
-        if self.lines is None:
+    def _analyse_data(self):
+        if self.start_lines is None:
             self._what_am_i()
-        if self.type not in (FileType.FC_EMISSION, FileType.FC_EXCITATION):
-            print(f"Warning: Tried calling get_FC_spectrum on non-FC file {self.path}")
-            return
-        is_emission = self.type == FileType.FC_EMISSION
-        GaussianParser.get_FC_spectrum(self.lines, is_emission, start_line=self.start_lines.get("FC transitions", 0))
-
-    def _get_vibrational_modes(self):
         if self.lines is None:
-            self._what_am_i()
-        GaussianParser.get_vibrational_modes(self.lines, hpmodes_start=self.start_lines.get("hp freq"), lpmodes_start=self.start_lines.get("lp freq"), geometry=self.geometry)
-
-
-
-
+            print("reading!~")
+            self.lines = self._read_file_lines()
+        if self.type in (FileType.FC_EMISSION, FileType.FC_EXCITATION):
+            is_emission = self.type == FileType.FC_EMISSION
+            GaussianParser.get_FC_spectrum(self.lines, is_emission, start_line=self.start_lines.get("FC transitions", 0))
+        elif self.type in (FileType.FREQ_GROUND, FileType.FREQ_EXCITED):
+            GaussianParser.get_vibrational_modes(self.lines, hpmodes_start=self.start_lines.get("hp freq"),
+                                                 lpmodes_start=self.start_lines.get("lp freq"), geometry=self.geometry)
