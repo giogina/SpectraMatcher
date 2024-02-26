@@ -118,11 +118,10 @@ class ProjectSetup:
 
     def set_file(self, state, file):
         path = file.path
-        print(f"{state}, type: {file.type} at path {path}")
+        print(f"{state}, type: {file.type} at path {path}")  # TODO> Do this as an reaction to a state file update notification; to include state file loading.
         if file.type == FileType.FREQ_GROUND and state == 0:
             dpg.set_value(f"frequency file for state {state}", path)
             dpg.bind_item_theme(f"frequency file for state {state}", self.full_field_theme)
-            self.viewmodel.set
         elif file.type == FileType.FREQ_EXCITED and state > 0:
             dpg.set_value(f"frequency file for state {state}", path)
             dpg.bind_item_theme(f"frequency file for state {state}", self.full_field_theme)
@@ -132,6 +131,8 @@ class ProjectSetup:
         elif file.type == FileType.FC_EXCITATION and state > 0:
             dpg.set_value(f"Excitation FC file for state {state}", path)
             dpg.bind_item_theme(f"Excitation FC file for state {state}", self.full_field_theme)
+
+        self.viewmodel.import_state_file(file, state)
 
     def add_state(self):
         self.viewmodel.add_state()

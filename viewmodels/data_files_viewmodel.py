@@ -1,33 +1,33 @@
-from models.data_file_manager import DataFileManager, FileObserver, File, Directory, GaussianLog, FileType
+from models.data_file_manager import DataFileManager, FileObserver, File, Directory
 from models.settings_manager import SettingsManager, Settings
 from utility.system_file_browser import data_dir_file_dialog, data_files_dialog
 
 
 def noop(*args, **kwargs):
     pass
-
-
-class FileViewModel:
-    def __init__(self, file: File):
-        for key, value in file.__dict__.items():
-            setattr(self, key, value)
-
-
-class DirectoryViewModel:
-    def __init__(self, directory: Directory):
-        for key, value in directory.__dict__.items():
-            if key == "content_dirs":
-                content_dir_vms = {}
-                for tag, d in directory.content_dirs.items():
-                    content_dir_vms[tag] = DirectoryViewModel(d)
-                self.content_dirs = content_dir_vms
-            elif key == "content_files":
-                content_file_vms = {}
-                for tag, file in directory.content_files.items():
-                    content_file_vms[tag] = FileViewModel(file)
-                self.content_files = content_file_vms
-            else:
-                setattr(self, key, value)
+#
+#
+# class FileViewModel:
+#     def __init__(self, file: File):
+#         for key, value in file.__dict__.items():
+#             setattr(self, key, value)
+#
+#
+# class DirectoryViewModel:
+#     def __init__(self, directory: Directory):
+#         for key, value in directory.__dict__.items():
+#             if key == "content_dirs":
+#                 content_dir_vms = {}
+#                 for tag, d in directory.content_dirs.items():
+#                     content_dir_vms[tag] = DirectoryViewModel(d)
+#                 self.content_dirs = content_dir_vms
+#             elif key == "content_files":
+#                 content_file_vms = {}
+#                 for tag, file in directory.content_files.items():
+#                     content_file_vms[tag] = FileViewModel(file)
+#                 self.content_files = content_file_vms
+#             else:
+#                 setattr(self, key, value)
 
 
 class DataFileViewModel(FileObserver):
@@ -61,10 +61,10 @@ class DataFileViewModel(FileObserver):
             self._populate_file_explorer(*args)
         if event_type == "file changed":
             if type(args[0]) == File:
-                file_vm = FileViewModel(args[0])
+                # file_vm = FileViewModel(args[0])
+                self._callbacks.get("update file")(args[0])
             else:
-                file_vm = FileViewModel(args[0][0])
-            self._callbacks.get("update file")(file_vm)
+                self._callbacks.get("update file")(args[0][0])
 
     def remove_directory(self, directory_tag):
         self._data_file_manager.close_directory(directory_tag)
@@ -86,7 +86,7 @@ class DataFileViewModel(FileObserver):
 
     def ignore_directory(self, d, ignore=True):  # Careful: This is an old version of directory from when the callback was created. Only use immuted properties like content_dirs.
         self._data_file_manager.ignore(d.tag, ignore=ignore)
-        if isinstance(d, DirectoryViewModel):
+        if isinstance(d, Directory):
             self._callbacks.get("update directory ignore status")(d.tag)
             for dd in d.content_dirs.values():
                 self.ignore_directory(dd, ignore=ignore)
@@ -116,13 +116,14 @@ class DataFileViewModel(FileObserver):
             self._data_file_manager.open_directories(open_data_dirs=[], open_data_files=list(files))
 
     def _populate_file_explorer(self, reset=False):
-        dir_vms = {t: DirectoryViewModel(d) for t, d in self._data_file_manager.top_level_directories.items()}
-        file_vms = {t: FileViewModel(file) for t, file in self._data_file_manager.top_level_files.items()}
+        # dir_vms = {t: DirectoryViewModel(d) for t, d in self._data_file_manager.top_level_directories.items()}
+        # file_vms = {t: FileViewModel(file) for t, file in self._data_file_manager.top_level_files.items()}
+        dirs = self._data_file_manager.top_level_directories
+        files = self._data_file_manager.top_level_files
 
         if reset:
-            self._callbacks.get("reset file explorer", noop)(dir_vms, file_vms)
+            self._callbacks.get("reset file explorer", noop)(dirs, files)
         else:
-            print(f"Calling update file explorer, {dir_vms, file_vms}")
-            self._callbacks.get("populate file explorer", noop)(dir_vms, file_vms)
+            self._callbacks.get("populate file explorer", noop)(dirs, files)
 
 

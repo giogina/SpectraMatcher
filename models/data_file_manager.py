@@ -213,7 +213,7 @@ class Directory:
         files = {}
         for item in os.listdir(path):
             if isfile(join(path, item)):
-                file = File(join(path, item), name=item, parent=self.tag, depth=self.depth+1)
+                file = File(path=join(path, item), name=item, parent=self.tag, depth=self.depth+1)
                 files[file.tag] = file
                 self.manager.all_files[file.tag] = file
                 if auto_ignore:
@@ -226,9 +226,9 @@ class Directory:
 
 
 class File:
-    _remember_lines = False
     _observers = []
     _notification = "file changed"
+    _remember_lines = False
 
     def __init__(self, path, name=None, parent=None, depth=0):
         self.properties = {}
@@ -252,6 +252,7 @@ class File:
         name, self.extension = os.path.splitext(self.name)
         self.charge = 0
         self.multiplicity = ""
+        self.lines = None
 
         self.submit_what_am_i(observers=self._observers, notification=self._notification)
 
@@ -272,27 +273,7 @@ class File:
     def submit_what_am_i(self, observers, notification):
         AsyncManager.submit_task(f"File {self.tag} what_am_I", self._what_am_i, observers=observers, notification=notification)
 
-    def submit_get_vibrational_modes(self, observers, notification):
-        AsyncManager.submit_task(f"File {self.tag} get_vib_modes", self._get_vibrational_modes, observers=observers, notification=notification)
-
-    def get_FC_spectrum(self, is_emission, observers, notification):
-        AsyncManager.submit_task(f"File {self.tag} get_fc_spec", self.get_FC_spectrum, observers=observers, notification=notification)
-
-    def _get_FC_spectrum(self):
-        if self.lines is None:
-            self._what_am_i(remember_lines=True)
-        if self.type not in (FileType.FC_EMISSION, FileType.FC_EXCITATION):
-            print(f"Warning: Tried calling get_FC_spectrum on non-FC file {self.path}")
-            return
-        is_emission = self.type == FileType.FC_EMISSION
-        GaussianParser.get_FC_spectrum(self.lines, is_emission, start_line=self.start_lines.get("FC transitions", 0))
-
-    def _get_vibrational_modes(self):
-        if self.lines is None:
-            self._what_am_i(remember_lines=True)
-        GaussianParser.get_vibrational_modes(self.lines, hpmodes_start=self.start_lines.get("hp freq"), lpmodes_start=self.start_lines.get("lp freq"), geometry=self.geometry)
-
-    def _what_am_i(self, remember_lines=False):
+    def _what_am_i(self):
         properties = {}
         is_table = False
         if self.extension == ".log":  # Gaussian log
@@ -383,31 +364,59 @@ class File:
                 self.type = FileType.EXPERIMENT_EXCITATION
         self.properties = properties
 
-        if remember_lines:
+        if self._remember_lines:
             self.lines = lines
 
         return self
 
-# class ProjectFile(File):
-#     instances = []
-#
-#     def __init__(self, file: File):
-#         super().__init__(path)
-#         self.extra_data = extra_data
-#         ProjectFile.instances.append(self)
-#         self.lines = None  # remember read lines
-#         self.remember_lines = True  # Trigger remembering of lines when what_am_I is called
-#         # self.tag = f"file_{path}_{depth}"
-#
-#     @classmethod
-#     def from_file(cls, file_instance):
-#         """Factory method to create a ProjectFile from a File instance"""
-#         return cls(file_instance)
-#
-#     @classmethod
-#     def from_path(cls, file_path):
-#         """Factory method to create a ProjectFile directly from a file path"""
-#         return cls(file_path)
+
+class ProjectFile(File):
+    instances = []
+    remember_lines = True  # Trigger remembering of lines when what_am_I is called
+    _notification = "Project file updated"
+
+    def __init__(self, file=None, **kwargs):
+        ProjectFile.instances.append(self)
+        if isinstance(file, File):
+            print("init from File!")
+            self.__dict__.update(file.__dict__)
+            if self.lines is None:
+                self.submit_what_am_i(observers=self._observers, notification=self._notification)
+        else:
+            print("init from path!")
+            self.lines = None  # remember read lines
+            super().__init__(**kwargs)
+
+    @classmethod
+    def from_file(cls, file_instance):
+        """Factory method to create a ProjectFile from a File instance"""
+        return cls(file=file_instance)
+
+    @classmethod
+    def from_path(cls, file_path):
+        """Factory method to create a ProjectFile directly from a file path"""
+        return cls(path=file_path)
+
+    def submit_get_vibrational_modes(self, observers, notification):
+        AsyncManager.submit_task(f"File {self.tag} get_vib_modes", self._get_vibrational_modes, observers=observers, notification=notification)
+
+    def get_FC_spectrum(self, is_emission, observers, notification):
+        AsyncManager.submit_task(f"File {self.tag} get_fc_spec", self.get_FC_spectrum, observers=observers, notification=notification)
+
+    def _get_FC_spectrum(self):
+        if self.lines is None:
+            self._what_am_i()
+        if self.type not in (FileType.FC_EMISSION, FileType.FC_EXCITATION):
+            print(f"Warning: Tried calling get_FC_spectrum on non-FC file {self.path}")
+            return
+        is_emission = self.type == FileType.FC_EMISSION
+        GaussianParser.get_FC_spectrum(self.lines, is_emission, start_line=self.start_lines.get("FC transitions", 0))
+
+    def _get_vibrational_modes(self):
+        if self.lines is None:
+            self._what_am_i()
+        GaussianParser.get_vibrational_modes(self.lines, hpmodes_start=self.start_lines.get("hp freq"), lpmodes_start=self.start_lines.get("lp freq"), geometry=self.geometry)
+
 
 
 

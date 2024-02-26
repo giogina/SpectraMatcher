@@ -1,6 +1,6 @@
 from models.settings_manager import SettingsManager, Settings
 from models.project import Project, ProjectObserver, StateData, ExperimentalSpectrum
-from models.data_file_manager import FileType
+from models.data_file_manager import ProjectFile, File
 from copy import deepcopy
 
 
@@ -66,6 +66,11 @@ class ProjectSetupViewModel(ProjectObserver):
         self._project.add_state()
 
     def import_state_file(self, file, state: int):
+        print(type(file), isinstance(file, File))
+        new_project_file = ProjectFile(file)
+        another_project_file = ProjectFile(file.path)
+        print(new_project_file.lines[0])
+        print(another_project_file.lines[0])
         self._project.set_state_file(file.path, file.file_type, state)  # todo: figure out a scheme of how to load this properly.  Load project files before file explorer files.
 
     def delete_state(self, state: int):

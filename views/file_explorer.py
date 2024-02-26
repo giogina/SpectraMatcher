@@ -2,11 +2,11 @@ import re
 import subprocess
 import dearpygui.dearpygui as dpg
 import pyperclip
-from viewmodels.data_files_viewmodel import DataFileViewModel, FileViewModel, GaussianLog, FileType, DirectoryViewModel
+from viewmodels.data_files_viewmodel import DataFileViewModel
+from models.data_file_manager import GaussianLog, FileType, File, Directory
 from utility.icons import Icons
 from utility.drop_receiver_window import DropReceiverWindow, initialize_dnd
 from utility.custom_dpg_items import CustomDpgItems
-from utility.gaussian_parser import GaussianParser
 from utility.item_themes import ItemThemes
 
 _file_icons = {
@@ -234,7 +234,7 @@ class FileExplorer:
             dpg.add_selectable(label="Open in Explorer ", user_data=directory.path.replace("/", "\\"),
                                callback=lambda s, a, u: subprocess.Popen(f'explorer "{u}"'))
 
-    def _setup_file_right_click_menu(self, file: FileViewModel):
+    def _setup_file_right_click_menu(self, file: File):
         if file.tag not in [f.tag for f in self._file_rows]:
             dpg.delete_item(f"{file.tag}-c1")
         with dpg.popup(f"{file.tag}-c1", min_size=(300, 40)):
@@ -407,7 +407,7 @@ class FileExplorer:
             self._display_directory(directory, parent="file explorer group")
         self._display_files(files, parent="file explorer group")
 
-    def _display_directory(self, directory: DirectoryViewModel, parent: str):
+    def _display_directory(self, directory: Directory, parent: str):
         if directory.tag not in self._directory_nodes.keys():
             dpg.add_spacer(height=self.item_padding, parent=parent)
             is_open = self.viewmodel.get_dir_state(directory.tag)
@@ -449,7 +449,7 @@ class FileExplorer:
                 dpg.show_item(f"exclude-{directory_tag}")
                 dpg.bind_item_theme(directory_tag, theme=self.un_ignored_directory_theme)
 
-    def update_file(self, file: FileViewModel, table=None):
+    def update_file(self, file: File, table=None):
         print(f"update file: {file.path}, {table}")
         if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
             if table is None:
