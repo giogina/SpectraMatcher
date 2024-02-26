@@ -195,6 +195,7 @@ class GaussianParser:
         if geometry is None:
             print(f"No geometry found!")
             return
+        print("Get vibrational modes started!")
         frequencies = []
         normal_mode_vectors = []
         new_normal_mode_vectors = []
@@ -230,7 +231,7 @@ class GaussianParser:
             for l in range(hpmodes_start, len(lines)):
                 line = lines[l]
                 if line.strip().startswith('Frequencies --'):  # Next set of modes starts!
-                    syms.extend(re.findall(r'([a-zA-Z0-9]+)', lines[l - 1]))
+                    syms.extend(re.findall(r'([a-zA-Z0-9]+)', lines[l - 1]))  # Todo: e.g.for 3rd exc not working
                     new_freqs = [float(n) for n in re.findall(r'\s+([-\d.]+)', line.split("--")[1])]
                     frequencies.extend(new_freqs)
                     if new_normal_mode_vectors:
@@ -251,7 +252,8 @@ class GaussianParser:
                         read_atoms = False
                 if line.strip().startswith("------------"):
                     break
-
+        if len(normal_mode_vectors):
+            print(len(normal_mode_vectors), len(frequencies), len(syms))
             mode_list = []
             for i, vector in enumerate(normal_mode_vectors):
                 new_mode = VibrationalMode(len(mode_list))

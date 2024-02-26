@@ -227,7 +227,7 @@ class Directory:
 
 class File:
     _observers = []
-    _notification = "file changed"
+    notification = "file changed"
 
     def __init__(self, path, name=None, parent=None, depth=0):
         self.properties = {}
@@ -254,7 +254,7 @@ class File:
         self.lines = None
 
         if isinstance(self, File):
-            self.submit_what_am_i(observers=self._observers, notification=self._notification)
+            self.submit_what_am_i(observers=self._observers, notification=self.notification)
 
     ############### Observers ###############
 
@@ -268,7 +268,7 @@ class File:
 
     def notify_observers(self):
         for observer in self._observers:
-            observer.update(self._notification, self)
+            observer.update(self.notification, self)
 
     def submit_what_am_i(self, observers, notification):
         AsyncManager.submit_task(f"File {self.tag} what_am_I", self._what_am_i, observers=observers, notification=notification)
@@ -315,7 +315,6 @@ class File:
                             self.type = FileType.FREQ_GROUND_ANHARM
                         else:
                             self.type = FileType.FREQ_GROUND
-            print(self.start_lines)
             if "initial state geom" in self.start_lines.keys():
                 self.initial_geom = GaussianParser.extract_geometry(lines, self.start_lines["initial state geom"])
                 self.molecular_formula = self.initial_geom.get_molecular_formula(self.charge)
@@ -370,18 +369,15 @@ class File:
                 self.type = FileType.EXPERIMENT_EXCITATION
         self.properties = properties
 
-        print(type(self))
         if isinstance(self, ProjectFile):
-            print("assinging lines")
             self.lines = lines
-            print(self.lines)
 
         return self
 
 
 class ProjectFile(File):
     instances = []
-    _notification = "Project file updated"
+    notification = "Project file updated"
 
     def __init__(self, file=None, path=None, **kwargs):
         ProjectFile.instances.append(self)
@@ -391,7 +387,7 @@ class ProjectFile(File):
         elif path is not None:
             print("init from path!")
             super().__init__(path=path, **kwargs)
-        self.submit_analyse_data()
+        self._analyse_data()
 
     @classmethod
     def from_file(cls, file_instance):
@@ -404,17 +400,18 @@ class ProjectFile(File):
         return cls(path=file_path)
 
     def submit_analyse_data(self):
-        AsyncManager.submit_task(f"Analyse project file {self.tag}", self._analyse_data(), observers=self._observers, notification=self._notification)
+        AsyncManager.submit_task(f"Analyse project file {self.tag}", self._analyse_data, observers=self._observers, notification=self.notification)
 
     def _analyse_data(self):
         if self.start_lines is None:
             self._what_am_i()
         if self.lines is None:
-            print("reading!~")
             self.lines = self._read_file_lines()
         if self.type in (FileType.FC_EMISSION, FileType.FC_EXCITATION):
             is_emission = self.type == FileType.FC_EMISSION
-            GaussianParser.get_FC_spectrum(self.lines, is_emission, start_line=self.start_lines.get("FC transitions", 0))
+            self.spectrum = GaussianParser.get_FC_spectrum(self.lines, is_emission, start_line=self.start_lines.get("FC transitions", 0))
+            return self
         elif self.type in (FileType.FREQ_GROUND, FileType.FREQ_EXCITED):
-            GaussianParser.get_vibrational_modes(self.lines, hpmodes_start=self.start_lines.get("hp freq"),
-                                                 lpmodes_start=self.start_lines.get("lp freq"), geometry=self.geometry)
+            self.modes = GaussianParser.get_vibrational_modes(self.lines, hpmodes_start=self.start_lines.get("hp freq"),
+                                                              lpmodes_start=self.start_lines.get("lp freq"), geometry=self.geometry)
+            return self

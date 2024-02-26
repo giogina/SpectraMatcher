@@ -75,7 +75,7 @@ class Geometry:
 
     def get_ortho_dim(self):
         if self._ortho_dim is None:
-            self._detect_ortho_dim()
+            return self._detect_ortho_dim()
         else:
             return self._ortho_dim
 

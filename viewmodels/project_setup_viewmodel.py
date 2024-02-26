@@ -37,6 +37,7 @@ class ProjectSetupViewModel(ProjectObserver):
         self._project = project
         self._project.add_observer(self, "state data changed")
         self._project.add_observer(self, "experimental data changed")
+        ProjectFile.add_observer(self)
         self.settings = SettingsManager()
 
     def get_project_name(self):
@@ -61,6 +62,8 @@ class ProjectSetupViewModel(ProjectObserver):
         elif event_type == "experimental data changed":
             exp_data = {k: ExperimentalSpectrumViewModel(e) for k, e in self._project.get("experimental spectra").items()}
             self._callbacks.get("update experimental data")(exp_data)
+        elif event_type == ProjectFile.notification:
+            print(args[0].modes)
 
     def add_state(self):
         self._project.add_state()
@@ -68,9 +71,6 @@ class ProjectSetupViewModel(ProjectObserver):
     def import_state_file(self, file, state: int):
         print(type(file), isinstance(file, File))
         new_project_file = ProjectFile.from_file(file)
-        another_project_file = ProjectFile.from_path(file.path)
-        print(new_project_file.lines)
-        print(another_project_file.lines)
         # self._project.set_state_file(file.path, file.file_type, state)  # todo: figure out a scheme of how to load this properly.  Load project files before file explorer files.
 
     def delete_state(self, state: int):
