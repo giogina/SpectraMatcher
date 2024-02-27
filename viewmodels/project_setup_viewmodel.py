@@ -1,6 +1,6 @@
 from models.settings_manager import SettingsManager, Settings
 from models.project import Project, ProjectObserver, StateData, ExperimentalSpectrum
-from models.data_file_manager import ProjectFile, File
+from models.data_file_manager import File
 from copy import deepcopy
 
 
@@ -50,7 +50,7 @@ class ProjectSetupViewModel(ProjectObserver):
             print(f"Warning: In ProjectSetupViewModel: Attempted to set unknown callback key {key}")
 
     def update(self, event_type, *args):
-        print(f"ProjectSetupViewModel observed event: {event_type, *args}")
+        # print(f"ProjectSetupViewModel observed event: {event_type, *args}")
         if event_type == "state data changed":
             if len(args) and len(args[0]) and type(args[0][0]) == int:  # Update only one
                 state = self._project.get("states", {}).get(args[0][0])
@@ -62,16 +62,15 @@ class ProjectSetupViewModel(ProjectObserver):
         elif event_type == "experimental data changed":
             exp_data = {k: ExperimentalSpectrumViewModel(e) for k, e in self._project.get("experimental spectra").items()}
             self._callbacks.get("update experimental data")(exp_data)
-        elif event_type == ProjectFile.notification:
-            print(args[0].modes)
+
 
     def add_state(self):
         self._project.add_state()
 
     def import_state_file(self, file, state: int):
         print(type(file), isinstance(file, File))
-        new_project_file = ProjectFile.from_file(file)
-        # self._project.set_state_file(file.path, file.file_type, state)  # todo: figure out a scheme of how to load this properly.  Load project files before file explorer files.
+
+        self._project.set_state_file(file, state)  # todo: figure out a scheme of how to load this properly.  Load project files before file explorer files.
 
     def delete_state(self, state: int):
         self._project.delete_state(state)

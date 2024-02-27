@@ -450,11 +450,12 @@ class FileExplorer:
                 dpg.bind_item_theme(directory_tag, theme=self.un_ignored_directory_theme)
 
     def update_file(self, file: File, table=None):
-        print(f"update file: {file.path}, {table}")
+        # print(f"update file: {file.path}, {file.routing_info}")
         if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
             if table is None:
+                print(f"Delay displaying file: {file.path}")
                 return  # Too early, the item to be updated hasn't been made yet.
-            print(f"Constructing table row for {file.tag}")
+            # print(f"Constructing table row for {file.tag}")
             with dpg.table_row(tag=file.tag, parent=table):
                 for i, column in enumerate(self._table_columns):
                     width = self._table_columns[i][1] + 7

@@ -45,8 +45,6 @@ class DataFileManager:
         self.ignored_files_and_directories = []
         self.all_files = {}  # lookup files in a flat structure
 
-        self.lock_manager = PathLockManager()
-
     def open_directories(self, open_data_dirs, open_data_files=None):
         print(f"Opening: {open_data_dirs, open_data_files}")
         path = None
@@ -97,7 +95,6 @@ class DataFileManager:
         return self.directory_toggle_states.get(directory_tag, True)
 
     def ignore(self, tag, ignore=True):
-        print(f"Ignore: {tag, ignore, tag in self.ignored_files_and_directories}")
         if ignore and (tag not in self.ignored_files_and_directories):
             self.ignored_files_and_directories.append(tag)
         if not ignore and (tag in self.ignored_files_and_directories):
@@ -215,7 +212,12 @@ class File:
         self.is_human_readable = True  # \n instead of \r\n making it ugly in notepad
         self.type = None
         self.path = path.replace("/", "\\")
+        if name:
+            self.name = name
+        else:
+            self.name = os.path.basename(path)
         self.routing_info = {}
+        self._observers.append(self)  # get notified when what_am_I is done!
         self.geometry = None  # input or last opt / freq log geom
         self.initial_geom = None  # FC initial state geometry
         self.final_geom = None    # FC final state geometry
@@ -224,19 +226,21 @@ class File:
         self.error = None  # Contains error string if present
         self.tag = f"file_{path}_{depth}"
         self.start_lines = {}
-        if name:
-            self.name = name
-        else:
-            self.name = os.path.basename(path)
         self.parent_directory = parent
         name, self.extension = os.path.splitext(self.name)
         self.charge = 0
         self.multiplicity = ""
         self.lines = None
-        self._observers.append(self)  # get notified when what_am_I is done!
+        self.spectrum = None
+        self.modes = None
 
         if isinstance(self, File):
-            self.submit_what_am_i(observers=self._observers, notification=self.notification)
+            self.submit_what_am_i()
+
+    def update(self, event_type, *args):   # "file changed" notification received: start next step after what_am_I is done
+        if event_type == "what_am_i done":  # Only the submitting file receives this
+            self.notify_observers()         # Notify all observers of File of the update
+            self.submit_analyse_data()      # Start next step of parsing the data
 
     ############### Observers ###############
 
@@ -252,18 +256,24 @@ class File:
         for observer in self._observers:
             observer.update(self.notification, self)
 
-    def submit_what_am_i(self, observers, notification):
-        AsyncManager.submit_task(f"File {self.tag} what_am_I", self._what_am_i, observers=observers, notification=notification)
+    def submit_what_am_i(self):
+        AsyncManager.submit_task(f"File {self.tag} what_am_I", self._what_am_i, observers=[self], notification="what_am_i done")
+
+    def submit_analyse_data(self):
+        AsyncManager.submit_task(f"Analyse project file {self.tag}", self._analyse_data, observers=self._observers, notification=self.notification)
 
     def _read_file_lines(self):
         PathLockManager.acquire_read(self.path)
         try:
-            if isinstance(self, File):
-                with open(self.path, 'rb') as file:
-                    content = file.read(1024)
-                    self.is_human_readable = b'\r\n' in content
+            with open(self.path, 'rb') as file:
+                content = file.read(1024)
+                self.is_human_readable = b'\r\n' in content
             with open(self.path, 'r', encoding='utf-8') as f:
-                lines = [line.rstrip("\r\n") for line in f if line.strip()]
+                tmp_lines = [line.rstrip("\r\n") for line in f]
+                if self.type in FileType.LOG_TYPES:
+                    lines = [line for line in tmp_lines if line.rstrip("\r\n")]
+                else:
+                    lines = tmp_lines
         except Exception as e:
             print(f"File {self.path} couldn't be read! {e}")
         finally:
@@ -340,12 +350,11 @@ class File:
 
         elif self.extension in [".gjf", ".com"]:
             self.type = FileType.GAUSSIAN_INPUT
-            lines = []
-            PathLockManager.acquire_read(self.path)
             lines = self._read_file_lines()
             self.routing_info, self.charge, self.multiplicity, self.geometry = GaussianParser.parse_input(lines)
             if self.geometry is not None:
                 self.molecular_formula = self.geometry.get_molecular_formula(self.charge)
+
         elif self.extension == ".chk":
             self.type = FileType.GAUSSIAN_CHECKPOINT
         elif self.extension == ".txt":
@@ -366,52 +375,23 @@ class File:
                 self.type = FileType.EXPERIMENT_EXCITATION
         self.properties = properties
 
-        if isinstance(self, ProjectFile):
-            self.lines = lines
+        self.lines = lines
 
         return self
 
-
-class ProjectFile(File):
-    instances = []
-    notification = "Project file updated"
-
-    def __init__(self, file=None, path=None, **kwargs):
-        ProjectFile.instances.append(self)
-        if isinstance(file, File):
-            print("init from File!")
-            self.__dict__.update(file.__dict__)  # todo>: deepcopy?
-        elif path is not None:
-            print("init from path!")
-            super().__init__(path=path, **kwargs)
-        self._analyse_data()
-
-    @classmethod
-    def from_file(cls, file_instance):
-        """Factory method to create a ProjectFile from a File instance"""
-        return cls(file=file_instance)
-
-    @classmethod
-    def from_path(cls, file_path):
-        """Factory method to create a ProjectFile directly from a file path"""
-        return cls(path=file_path)
-
-    def submit_analyse_data(self):
-        AsyncManager.submit_task(f"Analyse project file {self.tag}", self._analyse_data, observers=self._observers, notification=self.notification)
-
     def _analyse_data(self):
-        if self.start_lines is None:
+        if self.start_lines == {}:
             self._what_am_i()
         if self.lines is None:
             self.lines = self._read_file_lines()
         if self.type in (FileType.FC_EMISSION, FileType.FC_EXCITATION):
             is_emission = self.type == FileType.FC_EMISSION
-            self.spectrum = GaussianParser.get_FC_spectrum(self.lines, is_emission, start_line=self.start_lines.get("FC transitions", 0))
-            return self
+            if self.spectrum is None:
+                self.spectrum = GaussianParser.get_FC_spectrum(self.lines, is_emission, start_line=self.start_lines.get("FC transitions", 0))
         elif self.type in (FileType.FREQ_GROUND, FileType.FREQ_EXCITED):
-            self.modes = GaussianParser.get_vibrational_modes(self.lines, hpmodes_start=self.start_lines.get("hp freq"),
-                                                              lpmodes_start=self.start_lines.get("lp freq"), geometry=self.geometry)
+            if self.modes is None:
+                self.modes = GaussianParser.get_vibrational_modes(self.lines, hpmodes_start=self.start_lines.get("hp freq"), lpmodes_start=self.start_lines.get("lp freq"), geometry=self.geometry)
             print([mode.wavenumber for mode in self.modes.mode_list])
-            return self  # todo: state should listen to project file updates of its own files; copy modes and spectra accordingly. Or just have it be the same variable?
-
+        self.lines = None  # Forget lines now that file has been parsed.
+        return self  # todo: state should listen to project file updates of its own files; copy modes and spectra accordingly. Or just have it be the same variable?
 

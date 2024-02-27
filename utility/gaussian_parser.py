@@ -309,13 +309,14 @@ class GaussianParser:
         read_transs = False
         peaks = []
         zero = 0
-        for l, line in enumerate(lines):
-            if re.search(r'\sInformation on Transitions\s', line):
+        for l in range(start_line, len(lines)):
+            line = lines[l]
+            if line.strip() == "Information on Transitions":
                 read_transs = True
                 continue
-            if re.search(r'Energy of the 0-0 transition', line):
+            if line.strip().startswith('Energy of the 0-0 transition'):
                 zero = float(line.split(":")[1].split("c")[0])
-            if re.search(r'\sFinal Spectrum\s', line):
+            if line.strip() == "Final Spectrum":
                 break
             if read_transs:
                 if re.search(r'Energy =', line):

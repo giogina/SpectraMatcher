@@ -15,6 +15,7 @@ class AsyncManager:
 
     @classmethod
     def start(cls):
+        print(f"Asyncmanager started!")
         if cls._loop is None:
             print(f"Initiating async manager!")
             cls._thread = threading.Thread(target=cls._start_loop_in_thread, daemon=True)
