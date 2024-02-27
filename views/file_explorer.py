@@ -536,11 +536,10 @@ class FileExplorer:
 
             if file.multiplicity is not None:
                 dpg.set_item_label(f"{file.tag}-c8", f"{file.multiplicity}")
-            else:
-                dpg.set_item_label(f"{file.tag}-c5", "")
-                dpg.set_item_label(f"{file.tag}-c6", "")
-                dpg.set_item_label(f"{file.tag}-c7", "")
-                dpg.set_item_label(f"{file.tag}-c8", "")
+
+        if file.modes is not None:
+            dpg.set_item_label(f"{file.tag}-c9", f"{str(file.modes.get_wavenumbers(10)).strip('[]')}, ...")
+
 
     def configure_theme(self):
         with dpg.theme() as file_explorer_theme:

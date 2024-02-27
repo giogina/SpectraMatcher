@@ -230,6 +230,11 @@ class ModeList:
         self.IR_order = order
         self.determine_mode_names()
 
+    def get_wavenumbers(self, nr=-1):
+        end = len(self.mode_list) if nr == -1 else nr + 1
+        return [mode.wavenumber for mode in self.mode_list[:end]]
+
+
 
 class FCPeak:
     def __init__(self, wavenumber, transition, intensity):

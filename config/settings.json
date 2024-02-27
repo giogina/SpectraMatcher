@@ -23,7 +23,7 @@
         ],
         [
             "File",
-            374,
+            372,
             200,
             true
         ],
@@ -53,21 +53,27 @@
         ],
         [
             "Keywords",
-            378,
+            70,
             50,
             false
         ],
         [
             "Molecule",
-            106,
+            70,
             50,
-            false
+            true
         ],
         [
             "Multiplicity",
             70,
             30,
             false
+        ],
+        [
+            "Data",
+            359,
+            60,
+            true
         ]
     ]
 }

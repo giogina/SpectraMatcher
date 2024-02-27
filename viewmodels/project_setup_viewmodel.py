@@ -37,7 +37,7 @@ class ProjectSetupViewModel(ProjectObserver):
         self._project = project
         self._project.add_observer(self, "state data changed")
         self._project.add_observer(self, "experimental data changed")
-        ProjectFile.add_observer(self)
+        File.add_observer(self)
         self.settings = SettingsManager()
 
     def get_project_name(self):
@@ -62,7 +62,6 @@ class ProjectSetupViewModel(ProjectObserver):
         elif event_type == "experimental data changed":
             exp_data = {k: ExperimentalSpectrumViewModel(e) for k, e in self._project.get("experimental spectra").items()}
             self._callbacks.get("update experimental data")(exp_data)
-
 
     def add_state(self):
         self._project.add_state()

@@ -120,7 +120,6 @@ class StateData:
 
 
     def set_anharm_freq_file(self, path):
-
         self.freq_file_path = path
         self.anharm_levels = GaussianParser.get_anharmonic_levels(path)
 
@@ -422,24 +421,24 @@ class Project(FileObserver):
             self._data[key] = value
         self._project_unsaved()
 
-    def set_state_file(self, path, file_type, state: int):
+    def set_state_file(self, file, state: int):
         if state not in self._data["states"].keys():
             self._data["states"][state] = StateData(state_nr=state)
             self._notify_observers("state data changed")
-        if file_type == FileType.FREQ_GROUND and state == 0:
-            self._data["states"][0].set_freq_file(path)
-        elif file_type == FileType.FREQ_EXCITED and state > 0:
-            self._data["states"][state].set_freq_file(path)
-        if file_type == FileType.FREQ_GROUND_ANHARM and state == 0:
-            self._data["states"][0].set_anharm_freq_file(path)
-        elif file_type == FileType.FREQ_EXCITED and state > 0:
-            self._data["states"][state].set_freq_file(path)
-        elif file_type == FileType.FREQ_EXCITED_ANHARM and state > 0:
-            self._data["states"][state].set_anharm_freq_file(path)
-        elif file_type == FileType.FC_EMISSION and state > 0:
-            self._data["states"][state].set_emission_file(path)
-        elif file_type == FileType.FC_EMISSION and state > 0:
-            self._data["states"][state].set_excitation_file(path)
+        if file.type == FileType.FREQ_GROUND and state == 0:
+            self._data["states"][0].set_freq_file(file.path)
+        elif file.type == FileType.FREQ_EXCITED and state > 0:
+            self._data["states"][state].set_freq_file(file.path)
+        if file.type == FileType.FREQ_GROUND_ANHARM and state == 0:
+            self._data["states"][0].set_anharm_freq_file(file.path)
+        elif file.type == FileType.FREQ_EXCITED and state > 0:
+            self._data["states"][state].set_freq_file(file.path)
+        elif file.type == FileType.FREQ_EXCITED_ANHARM and state > 0:
+            self._data["states"][state].set_anharm_freq_file(file.path)
+        elif file.type == FileType.FC_EMISSION and state > 0:
+            self._data["states"][state].set_emission_file(file.path)
+        elif file.type == FileType.FC_EMISSION and state > 0:
+            self._data["states"][state].set_excitation_file(file.path)
         self._notify_observers("state data changed", state)
 
     def add_state(self):

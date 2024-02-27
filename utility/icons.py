@@ -365,7 +365,9 @@ class Icons:
         else:
             dpg.bind_item_font(dpg_item, self._fa[size])
         if tooltip:
-            with dpg.tooltip(dpg_item, delay=0.3):
+            if dpg.does_item_exist(f"{dpg_item} tooltip"):
+                dpg.delete_item(f"{dpg_item} tooltip")
+            with dpg.tooltip(parent=dpg_item, tag=f"{dpg_item} tooltip", delay=0.3):
                 dpg.add_text(f" {tooltip} ")
         return dpg_item
 

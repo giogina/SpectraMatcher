@@ -391,7 +391,8 @@ class File:
         elif self.type in (FileType.FREQ_GROUND, FileType.FREQ_EXCITED):
             if self.modes is None:
                 self.modes = GaussianParser.get_vibrational_modes(self.lines, hpmodes_start=self.start_lines.get("hp freq"), lpmodes_start=self.start_lines.get("lp freq"), geometry=self.geometry)
-            print([mode.wavenumber for mode in self.modes.mode_list])
+            if self.modes.get_wavenumbers(1)[0] < 0:
+                self.properties[GaussianLog.STATUS] = GaussianLog.NEGATIVE_FREQUENCY
         self.lines = None  # Forget lines now that file has been parsed.
         return self  # todo: state should listen to project file updates of its own files; copy modes and spectra accordingly. Or just have it be the same variable?
 

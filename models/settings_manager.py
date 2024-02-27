@@ -36,6 +36,7 @@ class SettingsManager:
                                          ["Keywords", 70, 50, False],
                                          ["Molecule", 70, 50, True],
                                          ["Multiplicity", 70, 30, False],
+                                         ["Data", 100, 60, True],
                                          ]
     }
 
