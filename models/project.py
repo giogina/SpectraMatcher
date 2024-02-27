@@ -75,8 +75,7 @@ class StateData:
 
         self.emission_spectrum_visible = True
         self.excitation_spectrum_visible = True
-        colors = list(mcolors.TABLEAU_COLORS.keys())[
-                 1:-1]  # TODO: standard color settings: # colors = settings['plot settings'].get('FC colors', list(mcolors.TABLEAU_COLORS.keys())[1:-1])
+        colors = list(mcolors.TABLEAU_COLORS.keys())[1:-1]  # TODO: standard color settings: # colors = settings['plot settings'].get('FC colors', list(mcolors.TABLEAU_COLORS.keys())[1:-1])
         self.color = colors[state % (len(colors))]
 
         self.state = state   # 0: Ground, 1+: excited  #  TODO> Make sure that all instance variables are accepted & processed here.

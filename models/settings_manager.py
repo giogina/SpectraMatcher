@@ -36,7 +36,8 @@ class SettingsManager:
                                          ["Keywords", 70, 50, False],
                                          ["Molecule", 70, 50, True],
                                          ["Multiplicity", 70, 30, False],
-                                         ["Data", 100, 60, True],
+                                         ["0-0 Energy / cm⁻¹", 160, 80, True],
+                                         ["Wavenumbers / cm⁻¹", 265, 160, True],
                                          ]
     }
 
@@ -56,7 +57,7 @@ class SettingsManager:
             self.logger = logging.getLogger(__name__)
             self.settings_file = "./config/settings.json"
             self._settings_dict = self._load_settings()
-            self.logger.info(f"Settings loaded. {self._settings_dict}")
+            # self.logger.info(f"Settings loaded. {self._settings_dict}")
             self._is_initialized = True
 
     def _load_settings(self):

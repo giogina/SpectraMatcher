@@ -56,13 +56,13 @@
     },
     "experimental spectra": {},
     "ignored": [
+        "file_C:\\Users\\Giogina\\Documents\\ovalene\\ovalene 2nd excited state excitation table.txt_1",
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1",
         "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\ovalene_EX_exp_1400-3050 (2).txt_2",
         "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\ovalene_EX_exp_1400-3050.txt_2",
         "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_emission.yaml_2",
         "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_excitation (2).yaml_2",
         "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_excitation (3).yaml_2",
-        "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_excitation.yaml_2",
-        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1",
-        "file_C:\\Users\\Giogina\\Documents\\ovalene\\ovalene 2nd excited state excitation table.txt_1"
+        "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_excitation.yaml_2"
     ]
 }

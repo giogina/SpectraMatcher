@@ -235,7 +235,6 @@ class ModeList:
         return [mode.wavenumber for mode in self.mode_list[:end]]
 
 
-
 class FCPeak:
     def __init__(self, wavenumber, transition, intensity):
         self.wavenumber = wavenumber
@@ -249,5 +248,11 @@ class FCSpectrum:
         self.peaks = peaks
         self.zero_zero_transition_energy = zero_zero_transition_energy
         self.multiplicator = multiplicator
+
+    def get_wavenumbers(self, nr=-1):
+        end = len(self.peaks) if nr == -1 else nr + 1
+        return [peak.wavenumber for peak in self.peaks[:end]]
+
+
 
 

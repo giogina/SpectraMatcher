@@ -1,6 +1,7 @@
 from models.settings_manager import SettingsManager, Settings
 from models.project import Project, ProjectObserver, StateData, ExperimentalSpectrum
 from models.data_file_manager import File
+from models.state import State
 from copy import deepcopy
 
 
@@ -40,6 +41,9 @@ class ProjectSetupViewModel(ProjectObserver):
         File.add_observer(self)
         self.settings = SettingsManager()
 
+        # todo> temp
+        self.states = {0: State(), 1: State(), 2: State()}
+
     def get_project_name(self):
         return self._project.get("name", "")
 
@@ -66,10 +70,10 @@ class ProjectSetupViewModel(ProjectObserver):
     def add_state(self):
         self._project.add_state()
 
-    def import_state_file(self, file, state: int):
-        print(type(file), isinstance(file, File))
-
-        self._project.set_state_file(file, state)  # todo: figure out a scheme of how to load this properly.  Load project files before file explorer files.
+    def import_state_file(self, file, state_nr: int):
+        print(type(file))
+        self.states[state_nr].import_file(file)
+        # self._project.set_state_file(file, state_nr)  # todo: figure out a scheme of how to load this properly.  Load project files before file explorer files.
 
     def delete_state(self, state: int):
         self._project.delete_state(state)

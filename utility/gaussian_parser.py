@@ -63,6 +63,7 @@ class GaussianParser:
         hp_freqs_found = False
         charge = None
         multiplicity = None
+        energy = None  # Sum of electronic and zero-point Energies= ... (FC files will have ground state energy)
         for i, line in enumerate(lines):
             if line.strip().startswith("#") and routing_info is None:
                 tracker = ""
@@ -84,6 +85,10 @@ class GaussianParser:
                 elif not freqs_found:
                     start_lines["lp freq"] = i
                     freqs_found = True
+            elif energy is None and line.strip().startswith("Sum of electronic and zero-point Energies="):
+                match = re.search(r"[-+]?[0-9]*\.?[0-9]+", line)
+                if match:
+                    energy = float(match.group())
             elif line.strip() in ("Standard orientation:",  "Input orientation:"):
                 start_lines["last geom"] = i+1
             elif line.strip() == "New orientation in initial state":  # Eckart orientation in FC files! Use this!
@@ -101,7 +106,7 @@ class GaussianParser:
             elif re.search('Error termination', line):
                 error = line
 
-        return nr_jobs == nr_finished, error, routing_info, charge, multiplicity, start_lines
+        return nr_jobs == nr_finished, error, routing_info, charge, multiplicity, start_lines, energy
 
     @ staticmethod
     def extract_geometry(lines, start_index, x_column=None, is_input_file=False):

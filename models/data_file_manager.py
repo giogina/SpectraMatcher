@@ -217,7 +217,6 @@ class File:
         else:
             self.name = os.path.basename(path)
         self.routing_info = {}
-        self._observers.append(self)  # get notified when what_am_I is done!
         self.geometry = None  # input or last opt / freq log geom
         self.initial_geom = None  # FC initial state geometry
         self.final_geom = None    # FC final state geometry
@@ -230,17 +229,25 @@ class File:
         name, self.extension = os.path.splitext(self.name)
         self.charge = 0
         self.multiplicity = ""
+        self.energy = None
         self.lines = None
         self.spectrum = None
         self.modes = None
+        self.progress = "start"
+        self.state = None  # When imported into project, references state this file belongs to.
 
-        if isinstance(self, File):
-            self.submit_what_am_i()
+        self.submit_what_am_i()
 
     def update(self, event_type, *args):   # "file changed" notification received: start next step after what_am_I is done
         if event_type == "what_am_i done":  # Only the submitting file receives this
-            self.notify_observers()         # Notify all observers of File of the update
             self.submit_analyse_data()      # Start next step of parsing the data
+            self.notify_observers()
+            self.progress = event_type
+        elif event_type == "parsing done":
+            self.progress = event_type
+            if self.state is not None:
+                self.state.assimilate_file_data(self)
+            self.notify_observers()  # Notify all observers of File of the update
 
     ############### Observers ###############
 
@@ -260,7 +267,7 @@ class File:
         AsyncManager.submit_task(f"File {self.tag} what_am_I", self._what_am_i, observers=[self], notification="what_am_i done")
 
     def submit_analyse_data(self):
-        AsyncManager.submit_task(f"Analyse project file {self.tag}", self._analyse_data, observers=self._observers, notification=self.notification)
+        AsyncManager.submit_task(f"Analyse project file {self.tag}", self._analyse_data, observers=[self], notification="parsing done")
 
     def _read_file_lines(self):
         PathLockManager.acquire_read(self.path)
@@ -310,7 +317,7 @@ class File:
 
             lines = self._read_file_lines()
 
-            finished, self.error, self.routing_info, self.charge, self.multiplicity, self.start_lines = GaussianParser.scan_log_file(lines)
+            finished, self.error, self.routing_info, self.charge, self.multiplicity, self.start_lines, self.energy = GaussianParser.scan_log_file(lines)
             for job in self.routing_info.get("jobs", []):
                 if job.startswith("freq"):
                     if re.search(r"(?<![a-zA-Z])(fc|fcht|ht)", job):
@@ -374,9 +381,7 @@ class File:
             else:
                 self.type = FileType.EXPERIMENT_EXCITATION
         self.properties = properties
-
         self.lines = lines
-
         return self
 
     def _analyse_data(self):
@@ -394,5 +399,5 @@ class File:
             if self.modes.get_wavenumbers(1)[0] < 0:
                 self.properties[GaussianLog.STATUS] = GaussianLog.NEGATIVE_FREQUENCY
         self.lines = None  # Forget lines now that file has been parsed.
-        return self  # todo: state should listen to project file updates of its own files; copy modes and spectra accordingly. Or just have it be the same variable?
+        return self
 

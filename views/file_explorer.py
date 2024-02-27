@@ -222,8 +222,8 @@ class FileExplorer:
             if directory.parent_directory is None:
                 dpg.add_selectable(label="Remove", user_data=tag, callback=self._remove_directory)
 
-            dpg.add_selectable(label="Include in auto-import", tag=f"include-{tag}", user_data=directory, callback=lambda s, a, u: self.viewmodel.ignore_directory(u, False))
-            dpg.add_selectable(label="Exclude from auto-import", tag=f"exclude-{tag}", user_data=directory, callback=lambda s, a, u: self.viewmodel.ignore_directory(u, True))
+            dpg.add_selectable(label="Un-ignore", tag=f"include-{tag}", user_data=directory, callback=lambda s, a, u: self.viewmodel.ignore_directory(u, False))
+            dpg.add_selectable(label="Ignore", tag=f"exclude-{tag}", user_data=directory, callback=lambda s, a, u: self.viewmodel.ignore_directory(u, True))
             if self.viewmodel.is_ignored(tag):
                 dpg.hide_item(f"exclude-{tag}")
             else:
@@ -524,7 +524,9 @@ class FileExplorer:
                 elif re.search(r"(?<![a-zA-Z])(ht)", jobs):
                     job_label = "HT"
             dpg.set_item_label(f"{file.tag}-c4", job_label)
-            with dpg.tooltip(f"{file.tag}-c4", delay=0.3):
+            if dpg.does_item_exist(f"{file.tag}-c4 tooltip"):
+                dpg.delete_item(f"{file.tag}-c4 tooltip")
+            with dpg.tooltip(f"{file.tag}-c4", tag=f"{file.tag}-c4 tooltip", delay=0.3):
                 dpg.add_text(f" {jobs} ")
 
             if file.routing_info.get('loth') is not None:
@@ -538,8 +540,11 @@ class FileExplorer:
                 dpg.set_item_label(f"{file.tag}-c8", f"{file.multiplicity}")
 
         if file.modes is not None:
-            dpg.set_item_label(f"{file.tag}-c9", f"{str(file.modes.get_wavenumbers(10)).strip('[]')}, ...")
+            dpg.set_item_label(f"{file.tag}-c10", f"{str([int(wn) for wn in file.modes.get_wavenumbers(5)]).strip('[]').replace(' ', '  ')}, ...")
 
+        if file.spectrum is not None:
+            dpg.set_item_label(f"{file.tag}-c9", f"{int(file.spectrum.zero_zero_transition_energy)}")
+            dpg.set_item_label(f"{file.tag}-c10", f"{str([int(wn) for wn in file.spectrum.get_wavenumbers(5)]).strip('[]').replace(' ', '  ')}, ...")
 
     def configure_theme(self):
         with dpg.theme() as file_explorer_theme:

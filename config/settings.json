@@ -41,15 +41,15 @@
         ],
         [
             "Job",
-            70,
+            109,
             50,
-            true
+            false
         ],
         [
             "Method",
-            164,
+            1113,
             50,
-            true
+            false
         ],
         [
             "Keywords",
@@ -61,7 +61,7 @@
             "Molecule",
             70,
             50,
-            true
+            false
         ],
         [
             "Multiplicity",
@@ -70,9 +70,15 @@
             false
         ],
         [
-            "Data",
-            359,
-            60,
+            "0-0 Energy / cm\u207b\u00b9",
+            133,
+            80,
+            true
+        ],
+        [
+            "Wavenumbers / cm\u207b\u00b9",
+            274,
+            160,
             true
         ]
     ]
