@@ -1,5 +1,5 @@
 import re
-from models.molecular_data import Geometry, VibrationalMode, FCPeak, FCSpectrum
+from models.molecular_data import Geometry, VibrationalMode, FCPeak, FCSpectrum, ModeList
 
 
 class GaussianParser:
@@ -195,7 +195,6 @@ class GaussianParser:
         if geometry is None:
             print(f"No geometry found!")
             return
-        print("Get vibrational modes started!")
         frequencies = []
         normal_mode_vectors = []
         new_normal_mode_vectors = []
@@ -206,12 +205,12 @@ class GaussianParser:
             for l in range(hpmodes_start, len(lines)):
                 line = lines[l]
                 if line.strip().startswith('Frequencies ---'):  # Next set of modes starts!
-                    syms.extend(re.findall(r'([a-zA-Z0-9]+)', lines[l - 1]))
+                    syms.extend(re.findall(r'([a-zA-Z0-9?]+)', lines[l - 1]))
                     new_freqs = [float(n) for n in re.findall(r'\s+([-\d.]+)', line.split("---")[1])]
                     frequencies.extend(new_freqs)
                     if new_normal_mode_vectors:
                         normal_mode_vectors.extend(new_normal_mode_vectors)
-                    new_normal_mode_vectors = [[] for n in new_freqs]
+                    new_normal_mode_vectors = [[] for _ in new_freqs]
                     continue
                 if line.strip() == "Coord Atom Element:":
                     read_atoms = True
@@ -220,7 +219,7 @@ class GaussianParser:
                     atom_match = re.findall(r'\s+([-\d.]+)', line)
                     if len(atom_match) == len(new_normal_mode_vectors) + 3:
                         for i in range(0, len(new_normal_mode_vectors)):
-                            new_normal_mode_vectors[i].append(atom_match[i + 3])
+                            new_normal_mode_vectors[i].append(float(atom_match[i + 3]))
                     else:
                         read_atoms = False
                 if l == lpmodes_start:
@@ -231,7 +230,7 @@ class GaussianParser:
             for l in range(hpmodes_start, len(lines)):
                 line = lines[l]
                 if line.strip().startswith('Frequencies --'):  # Next set of modes starts!
-                    syms.extend(re.findall(r'([a-zA-Z0-9]+)', lines[l - 1]))  # Todo: e.g.for 3rd exc not working
+                    syms.extend(re.findall(r'([a-zA-Z0-9?]+)', lines[l - 1]))  # Todo: e.g.for 3rd exc not working
                     new_freqs = [float(n) for n in re.findall(r'\s+([-\d.]+)', line.split("--")[1])]
                     frequencies.extend(new_freqs)
                     if new_normal_mode_vectors:
@@ -253,55 +252,24 @@ class GaussianParser:
                 if line.strip().startswith("------------"):
                     break
         if len(normal_mode_vectors):
-            print(len(normal_mode_vectors), len(frequencies), len(syms))
-            mode_list = []
+            mode_list = ModeList()
             for i, vector in enumerate(normal_mode_vectors):
-                new_mode = VibrationalMode(len(mode_list))
-                new_mode.wavenumber = frequencies[i]
-                new_mode.IR = syms[i]
+                x_vector = []
+                y_vector = []
+                z_vector = []
                 for n, c in enumerate(vector):
                     if n % 3 == 0:
-                        new_mode.vector_x.append(c)
+                        x_vector.append(float(c))
                     elif n % 3 == 1:
-                        new_mode.vector_y.append(c)
+                        y_vector.append(float(c))
                     elif n % 3 == 2:
-                        new_mode.vector_z.append(c)
-                new_mode.classify(geometry)
-                mode_list.append(new_mode)
-
-            return GaussianParser._name_modes_by_IR(mode_list)
+                        z_vector.append(float(c))
+                mode_list.add_mode(frequencies[i], syms[i], x_vector, y_vector, z_vector, geometry)
+            mode_list.determine_mode_names()
+            return mode_list
         else:
             print(f"No frequencies found!")
             return None
-
-    @staticmethod
-    def _name_modes_by_IR(mode_list):
-        """Figure out mode names according to IR sorting"""  # TODO> Compare that email, clearly document
-
-        IRs = {'AG': [],
-               'B1G': [],
-               'B2G': [],
-               'B3G': [],
-               'AU': [],
-               'B1U': [],
-               'B2U': [],
-               'B3U': []
-               }
-        for mode in mode_list:
-            if mode.IR in IRs.keys():
-                IRs[mode.IR].append(mode.index)  # TODO> allow re-ordering afterwards for all IRs within the project
-            else:
-                IRs[mode.IR] = [mode.index]
-                print(f"Added extra IR: {mode.IR}")
-
-        names_inv = []  # modes in order of name
-        for ir in IRs.keys():
-            IRs[ir].reverse()
-            names_inv.extend(IRs[ir])
-        for n, m in enumerate(names_inv):
-            mode_list[m].name = n + 1
-
-        return mode_list
 
     @staticmethod
     def get_anharmonic_levels(lines, start_line=0):

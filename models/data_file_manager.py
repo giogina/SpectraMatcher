@@ -134,26 +134,7 @@ class DataFileManager:
     # magic!
     def make_readable(self, tag):
         file = self.all_files.get(tag)
-        file.is_human_readable = True
-        file.notify_observers()
-        if file:
-            AsyncManager.submit_task(f"make {file.path} readable", self._make_readable, file.path)
-
-    def _make_readable(self, path):
-        if os.path.exists(path):
-            tmp_file_path = f"{path}.tmp"
-            self.lock_manager.acquire_write(path)
-            try:
-                with open(path, 'r') as orig_log:
-                    lines = orig_log.readlines()
-                with open(tmp_file_path, 'w') as new_log:
-                    for line in lines:
-                        newline = line.rstrip('\n').rstrip('\r')
-                        if len(newline):
-                            new_log.write(newline + '\r\n')
-                os.replace(tmp_file_path, path)
-            finally:
-                self.lock_manager.release_write(path)
+        file.submit_make_readable()
 
     ############### Observers ###############
 
@@ -252,6 +233,7 @@ class File:
         self.charge = 0
         self.multiplicity = ""
         self.lines = None
+        self._observers.append(self)  # get notified when what_am_I is done!
 
         if isinstance(self, File):
             self.submit_what_am_i(observers=self._observers, notification=self.notification)
@@ -280,13 +262,34 @@ class File:
                 with open(self.path, 'rb') as file:
                     content = file.read(1024)
                     self.is_human_readable = b'\r\n' in content
-            with open(self.path, 'r') as f:
-                lines = f.readlines()
+            with open(self.path, 'r', encoding='utf-8') as f:
+                lines = [line.rstrip("\r\n") for line in f if line.strip()]
         except Exception as e:
             print(f"File {self.path} couldn't be read! {e}")
         finally:
             PathLockManager.release_read(self.path)
         return lines
+
+    def submit_make_readable(self):
+        self.is_human_readable = True
+        self.notify_observers()
+        AsyncManager.submit_task(f"make {self.path} readable", self._make_readable)
+
+    def _make_readable(self):
+        path = self.path
+        if os.path.exists(path):
+            tmp_file_path = f"{path}.tmp"
+            try:
+                lines = self._read_file_lines()
+                with open(tmp_file_path, 'w') as new_log:
+                    for line in lines:
+                        if len(line):
+                            new_log.write(line.rstrip('\r\n') + '\r\n')
+                os.rename(path, path+".backup")
+                os.rename(tmp_file_path, path)
+                os.remove(path+".backup")
+            except Exception as e:
+                print(f"Exception during _make_readable: {e}")
 
     def _what_am_i(self):
         properties = {}
@@ -339,13 +342,7 @@ class File:
             self.type = FileType.GAUSSIAN_INPUT
             lines = []
             PathLockManager.acquire_read(self.path)
-            try:
-                with open(self.path, 'r') as f:
-                    lines = f.readlines()
-            except Exception as e:
-                print(f"File {self.path} couldn't be read! {e}")
-            finally:
-                PathLockManager.release_read(self.path)
+            lines = self._read_file_lines()
             self.routing_info, self.charge, self.multiplicity, self.geometry = GaussianParser.parse_input(lines)
             if self.geometry is not None:
                 self.molecular_formula = self.geometry.get_molecular_formula(self.charge)
@@ -414,4 +411,7 @@ class ProjectFile(File):
         elif self.type in (FileType.FREQ_GROUND, FileType.FREQ_EXCITED):
             self.modes = GaussianParser.get_vibrational_modes(self.lines, hpmodes_start=self.start_lines.get("hp freq"),
                                                               lpmodes_start=self.start_lines.get("lp freq"), geometry=self.geometry)
-            return self
+            print([mode.wavenumber for mode in self.modes.mode_list])
+            return self  # todo: state should listen to project file updates of its own files; copy modes and spectra accordingly. Or just have it be the same variable?
+
+

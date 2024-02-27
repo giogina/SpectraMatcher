@@ -51,8 +51,6 @@ class Geometry:
             res += f" {_ELEMENT_NAMES.get(atom, str(atom))}        {format_float(self.x[i])}    {format_float(self.y[i])}    {format_float(self.z[i])}\r\n"
         return res
 
-
-
     def detect_bonds(self):
         self._H_bonds = []
         self._other_bonds = []
@@ -83,11 +81,11 @@ class Geometry:
     def _detect_ortho_dim(self):
         ortho_dim = -1
         for i, dim_coords in enumerate((self.x, self.y, self.z)):
-            if max(dim_coords) < 1:
+            if max([abs(c) for c in dim_coords]) < 1:
                 ortho_dim = i
-        if not ortho_dim:
+        if ortho_dim == -1:
             print("Molecule isn't in a plane! Not detecting bends and wobbles.")
-
+        self._ortho_dim = ortho_dim
         return ortho_dim
 
     def get_molecular_formula(self, charge=0):
@@ -117,17 +115,19 @@ class Geometry:
 
 
 class VibrationalMode:
-    def __init__(self, index):
+
+    def __init__(self, index, wavenumber, IR, x, y, z, geometry):
         self.name = None
-        self.wavenumber = None
-        self.IR = None
-        self.vector_x = []
-        self.vector_y = []
-        self.vector_z = []
+        self.wavenumber = wavenumber
+        self.IR = IR
+        self.vector_x = x
+        self.vector_y = y
+        self.vector_z = z
         self.vibration_properties = None
         self.vibration_type = None
         self.index = index
         self.gaussian_name = index+1
+        self.classify(geometry)
 
     def classify(self, geometry: Geometry):
         if self.wavenumber is None:
@@ -197,6 +197,38 @@ class VibrationalMode:
                    float(self.vector_z[a] - self.vector_z[b])]
 
         return wobble_vec[0] * bond_st[0] + wobble_vec[1] * bond_st[1] + wobble_vec[2] * bond_st[2]
+
+
+class ModeList:
+    IR_order = ['AG', 'B1G', 'B2G', 'B3G', 'AU', 'B1U', 'B2U', 'B3U']  # TODO> Persist this order in settings
+
+    def __init__(self):
+        self.IRs = {ir: [] for ir in self.IR_order}  # record of all vibrational modes by IR
+        self.mode_list = []
+
+    def add_mode(self, wavenumber, sym, x, y, z, geometry):
+        mode = VibrationalMode(len(self.mode_list), wavenumber, sym, x, y, z, geometry)
+        self.mode_list.append(mode)
+        if sym in self.IRs.keys():
+            self.IRs[sym] = [mode] + self.IRs[sym]  # TODO> allow re-ordering afterwards for all IRs within the project
+        else:
+            self.IRs[sym] = [mode]
+            self.IR_order.append(sym)
+            print(f"Added extra IR: {sym}")
+
+    def determine_mode_names(self):
+        for ml in self.IRs.values():
+            ml.sort(key=lambda x: x.wavenumber, reverse=True)
+        name = 1
+        for key in self.IR_order:
+            if key in self.IRs.keys():
+                for mode in self.IRs[key]:
+                    mode.name = name
+                    name += 1
+
+    def update_IR_order(self, order):
+        self.IR_order = order
+        self.determine_mode_names()
 
 
 class FCPeak:

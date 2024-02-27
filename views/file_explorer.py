@@ -471,7 +471,6 @@ class FileExplorer:
                     else:
                         dpg.add_button(width=width, tag=f"{file.tag}-c{i}", show=self._table_columns[i][3])
             self._file_rows.append(file)
-        self._setup_file_right_click_menu(file)
 
         # Gather & insert file info
         if self.viewmodel.is_ignored(file.tag):
@@ -505,13 +504,14 @@ class FileExplorer:
         self.icons.insert(f"{file.tag}-c2", icon=status_icon["icon"], size=16,
                           color=status_icon["color"], tooltip=tooltip)
 
-        td = file.routing_info.get('td')
-        if td is not None:
-            dpg.set_item_label(f"{file.tag}-c3", f"{td[0]}/{td[1]}")
-        elif file.type == FileType.FREQ_GROUND:
-            dpg.set_item_label(f"{file.tag}-c3", "ground")
-
         if file.routing_info is not None:
+            self._setup_file_right_click_menu(file)
+            td = file.routing_info.get('td')
+            if td is not None:
+                dpg.set_item_label(f"{file.tag}-c3", f"{td[0]}/{td[1]}")
+            elif file.type == FileType.FREQ_GROUND:
+                dpg.set_item_label(f"{file.tag}-c3", "ground")
+
             jobs = ' '.join(file.routing_info.get('jobs', ''))
             job_label = ' '.join([job.split('=')[0] for job in file.routing_info.get('jobs', [])])
             if file.type in (FileType.FC_EXCITATION, FileType.FC_EMISSION, FileType.GAUSSIAN_INPUT):
@@ -526,20 +526,20 @@ class FileExplorer:
             with dpg.tooltip(f"{file.tag}-c4", delay=0.3):
                 dpg.add_text(f" {jobs} ")
 
-        if file.routing_info.get('loth') is not None:
-            dpg.set_item_label(f"{file.tag}-c5", f"{file.routing_info.get('loth', '')}")
+            if file.routing_info.get('loth') is not None:
+                dpg.set_item_label(f"{file.tag}-c5", f"{file.routing_info.get('loth', '')}")
 
-            dpg.set_item_label(f"{file.tag}-c6", f"{' '.join(file.routing_info.get('keywords', ''))}")
+                dpg.set_item_label(f"{file.tag}-c6", f"{' '.join(file.routing_info.get('keywords', ''))}")
 
-        dpg.set_item_label(f"{file.tag}-c7", file.molecular_formula)
+            dpg.set_item_label(f"{file.tag}-c7", file.molecular_formula)
 
-        if file.multiplicity is not None:
-            dpg.set_item_label(f"{file.tag}-c8", f"{file.multiplicity}")
-        else:
-            dpg.set_item_label(f"{file.tag}-c5", "")
-            dpg.set_item_label(f"{file.tag}-c6", "")
-            dpg.set_item_label(f"{file.tag}-c7", "")
-            dpg.set_item_label(f"{file.tag}-c8", "")
+            if file.multiplicity is not None:
+                dpg.set_item_label(f"{file.tag}-c8", f"{file.multiplicity}")
+            else:
+                dpg.set_item_label(f"{file.tag}-c5", "")
+                dpg.set_item_label(f"{file.tag}-c6", "")
+                dpg.set_item_label(f"{file.tag}-c7", "")
+                dpg.set_item_label(f"{file.tag}-c8", "")
 
     def configure_theme(self):
         with dpg.theme() as file_explorer_theme:
