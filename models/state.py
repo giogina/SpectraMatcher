@@ -3,6 +3,7 @@ from models.data_file_manager import File, FileType
 
 class State:
     molecular_formula = None  # todo: sync with Project Setup formula display
+    state_list = []
 
     # Init with parsed files
     def __init__(self):
@@ -20,6 +21,8 @@ class State:
         self.ground_state_energy = None
         self.excited_state_energy = None
         self.delta_E = None
+        self.state_list.append(self)
+        self.name = None
 
     # todo: check energy from
 
@@ -35,22 +38,31 @@ class State:
         if file.progress == "parsing done":
             self.assimilate_file_data(file)  # if not, the file will call that function upon completion.
 
+    # todo: further checks:
+    #  * all states need the same ground state energy (select? Majority vote?)
+    #  * are subsequent states the same? (Correlate spectra)
+    #  * automatic scan & add (group by delta_E? Once I have general ground state energy, that'd be easy)
+
     def assimilate_file_data(self, file: File):
         if file.progress != "parsing done":
             print(f"Warning in molecular_data assimilate_file_data: File wasn't done parsing yet: {file.path}")
             return
         if file.type == FileType.FREQ_GROUND:
+            if self.name != "Ground State" and "Ground State" in [s.name for s in State.state_list]:
+                print("File rejected: Can't have two ground states.")
+                return
             self.is_ground = True
             self.ground_state_energy = file.energy
+            self.delta_E = 0  # just to keep it in the front
             self.vibrational_modes = file.modes
         elif file.type == FileType.FREQ_EXCITED:
-            delta_E = abs(file.energy - self.ground_state_energy) * 219474.63
-            print(delta_E, self.delta_E)
             if self.ground_state_energy is not None:  # ground state & 0-0 transition energy known from FC file
+                delta_E = abs(file.energy - self.ground_state_energy) * 219474.63
                 if abs(delta_E - self.delta_E) > 20:
                     print("File rejected: New freq file energy does not match previously added files.")
                     return
-            self.delta_E = delta_E
+                self.delta_E = delta_E
+                State.sort_states_by_energy()
             self.vibrational_modes = file.modes
             self.is_ground = False
         elif file.type == FileType.FC_EXCITATION:
@@ -60,6 +72,7 @@ class State:
                     print("File rejected: New file 0-0 transition energy doesn't match previously added files.")
                     return
             self.delta_E = file.spectrum.zero_zero_transition_energy  # just to get the accurate one
+            State.sort_states_by_energy()
             self.ground_state_energy = file.energy
             self.excitation_spectrum = file.spectrum
             self.excited_geometry = file.final_geom
@@ -71,10 +84,26 @@ class State:
                     print("File rejected: 0-0 transition energy doesn't match previously added files.")
                     return
             self.delta_E = file.spectrum.zero_zero_transition_energy
+            State.sort_states_by_energy()
             self.ground_state_energy = file.energy
             self.emission_spectrum = file.spectrum
             self.excited_geometry = file.initial_geom
             self.ground_geometry = file.final_geom
+
+    @classmethod
+    def sort_states_by_energy(cls):
+        cls.state_list.sort(key=lambda x: (x.delta_E is None, x.delta_E))
+        for i, state in enumerate(cls.state_list):
+            if i == 0:
+                state.name = "Ground state"
+            elif i == 1:
+                state.name = "1st excited state"
+            elif i == 2:
+                state.name = "2nd excited state"
+            elif i == 3:
+                state.name = "3rd excited state"
+            else:
+                state.name = f"{i}th excited state"
 
 
 
