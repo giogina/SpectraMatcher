@@ -150,9 +150,15 @@ class Project(FileObserver):
             self._data["directory toggle states"] = {}
         if "ignored" not in self._data.keys():
             self._data["ignored"] = []
+        if "files marked as emission" not in self._data.keys():
+            self._data["files marked as emission"] = []
+        if "files marked as excitation" not in self._data.keys():
+            self._data["files marked as excitation"] = []
         # Automatically keeps file manager dicts updated in self._data!
         self.data_file_manager.directory_toggle_states = self._data["directory toggle states"]
         self.data_file_manager.ignored_files_and_directories = self._data["ignored"]
+        self.data_file_manager.files_marked_as_emission = self._data["files marked as emission"]
+        self.data_file_manager.files_marked_as_excitation = self._data["files marked as excitation"]
         self.data_file_manager.open_directories(self._data.get("open data folders", []),
                                                 self._data.get("open data files", []))
         if "experimental spectra" not in self._data.keys():

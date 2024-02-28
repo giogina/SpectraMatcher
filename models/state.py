@@ -5,7 +5,7 @@ import time
 
 
 class State:
-    molecular_formula = None  # todo: sync with Project Setup formula display
+    molecular_formula = None
     ground_state_energy = None  # Used for identification of matching files. Set only by ground state file.
     state_list = []
     _observers = []
@@ -35,6 +35,7 @@ class State:
         self.state_list.append(self)
         self.name = None
         self.own_ground_state_energy = None
+        self.hidden = False
         State.sort_states_by_energy()
 
         # Load from paths, if supplied.
@@ -42,7 +43,7 @@ class State:
             if path is not None:
                 print(f"Reading File {path}, state {self.tag}")
                 if os.path.exists(path):
-                    File(path=path, parent="Project", state=self)  # will call assimilate_file_data when done parsing
+                    File(path=path, parent="Project", state=self, depth=-len(State.state_list)-1)  # will call assimilate_file_data when done parsing
                 else:
                     print(f"WARNING: File {path} not found. Ignoring.")
 
@@ -67,8 +68,6 @@ class State:
             self.assimilate_file_data(file)  # if not, the file will call that function upon completion.
 
     # todo: further checks:
-    #  * all states need the same ground state energy (select? Majority vote?)
-    #  * are subsequent states the same? (Correlate spectra)
     #  * automatic scan & add (group by delta_E? Once I have general ground state energy, that'd be easy)
 
     def assimilate_file_data(self, file: File):
@@ -148,6 +147,7 @@ class State:
             self._notify_observers(self.imported_files_changed_notification)
         else:
             self._notify_observers(self.imported_file_changed_notification)
+        file.state = None  # remove state from file to avoid future interferences
 
     @classmethod
     def sort_states_by_energy(cls):

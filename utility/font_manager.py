@@ -16,8 +16,10 @@ class FontManager:
             # self.fonts[self.normal_font] = dpg.add_font("./fonts/SansationRegular.ttf", self.normal_font)
             with dpg.font("./fonts/SansationRegular.ttf", cls.normal_font) as cls.fonts[cls.normal_font]:
                 dpg.add_font_range(0x2070, 0x2090, parent=cls.fonts[cls.normal_font])
+                dpg.add_font_chars([0x0394])
             with dpg.font("./fonts/SansationRegular.ttf", cls.big_font) as cls.fonts[cls.big_font]:
                 dpg.add_font_range(0x2070, 0x2090, parent=cls.fonts[cls.big_font])  # todo: Find larger symbols for these
+                dpg.add_font_chars([0x0394])
             Icons().set_font_registry(cls.font_registry)
 
         dpg.bind_font(cls.fonts[cls.normal_font])

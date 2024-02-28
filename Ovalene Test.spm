@@ -27,16 +27,20 @@
             "anharm": null
         },
         {
-            "freq": null,
-            "excitation": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
-            "emission": null,
-            "anharm": null
-        },
-        {
             "freq": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log",
             "excitation": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log",
             "emission": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
             "anharm": null
+        },
+        {
+            "freq": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\ovalene-excited-6-freq-disp.log",
+            "excitation": null,
+            "emission": null,
+            "anharm": null
         }
+    ],
+    "files marked as emission": [],
+    "files marked as excitation": [
+        "C:\\Users\\Giogina\\Documents\\ovalene\\ovalene 2nd excited state excitation table.txt"
     ]
 }

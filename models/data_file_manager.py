@@ -43,6 +43,8 @@ class DataFileManager:
         # Set from parent Project instance, directly coupled to its _data:
         self.directory_toggle_states = {}  # "directory tag": bool - is dir toggled open?
         self.ignored_files_and_directories = []
+        self.files_marked_as_excitation = []
+        self.files_marked_as_emission = []
         self.all_files = {}  # lookup files in a flat structure
 
     def open_directories(self, open_data_dirs, open_data_files=None):
@@ -112,7 +114,15 @@ class DataFileManager:
                 file.type = FileType.EXPERIMENT_EXCITATION
             if not excitation and file.type == FileType.EXPERIMENT_EXCITATION:
                 file.type = FileType.EXPERIMENT_EMISSION
-            file.notify_observers()  # todo: persist this selection
+            file.notify_observers()
+        if excitation:
+            if file.path in self.files_marked_as_emission:
+                self.files_marked_as_emission.remove(file.path)
+            self.files_marked_as_excitation.append(file.path)
+        else:
+            if file.path in self.files_marked_as_excitation:
+                self.files_marked_as_excitation.remove(file.path)
+            self.files_marked_as_emission.append(file.path)
 
     def _forget_directory_info(self, directory):
         if directory.tag in self.directory_toggle_states.keys():
@@ -122,6 +132,10 @@ class DataFileManager:
         for f in directory.content_files.values():
             if f.tag in self.ignored_files_and_directories:
                 self.ignored_files_and_directories.remove(f.tag)
+            if f.path in self.files_marked_as_emission:
+                self.files_marked_as_emission.remove(f.path)
+            if f.path in self.files_marked_as_excitation:
+                self.files_marked_as_excitation.remove(f.path)
         for i, d in directory.content_dirs.items():
             self._forget_directory_info(d)
 
@@ -198,7 +212,13 @@ class Directory:
         files = {}
         for item in os.listdir(path):
             if isfile(join(path, item)):
-                file = File(path=join(path, item), name=item, parent=self.tag, depth=self.depth+1)
+                file_path = join(path, item).replace("/", "\\")
+                marked = None
+                if file_path in self.manager.files_marked_as_excitation:
+                    marked = "excitation"
+                elif file_path in self.manager.files_marked_as_emission:
+                    marked = "emission"
+                file = File(path=file_path, name=item, parent=self.tag, depth=self.depth+1, mark_as_exp=marked)
                 files[file.tag] = file
                 self.manager.all_files[file.tag] = file
                 if auto_ignore:
@@ -215,7 +235,7 @@ class File:
     notification = "file changed"
     molecule_loth_options = []  # Keeps track of found tuples (molecular formula, level of theory, ground state energy)
 
-    def __init__(self, path, name=None, parent=None, depth=0, state=None):
+    def __init__(self, path, name=None, parent=None, depth=0, state=None, mark_as_exp=None):
         self.properties = {}
         self.is_human_readable = True  # \n instead of \r\n making it ugly in notepad
         self.type = None
@@ -224,6 +244,7 @@ class File:
             self.name = name
         else:
             self.name = os.path.basename(path)
+        self.marked_exp = mark_as_exp  # marker for user-denoted excitation and emission experimental files
         self.routing_info = {}
         self.geometry = None  # input or last opt / freq log geom
         self.initial_geom = None  # FC initial state geometry
@@ -330,7 +351,7 @@ class File:
                 if job.startswith("freq"):
                     if re.search(r"(?<![a-zA-Z])(fc|fcht|ht)", job):
                         if job.find("emission") > -1:
-                            self.type = FileType.FC_EMISSION  # TODO: FC files always treat current state as ground state; and contain corresponding geom & freqs. Read from there (maybe just as backup).
+                            self.type = FileType.FC_EMISSION
                         else:
                             self.type = FileType.FC_EXCITATION
                     elif self.routing_info.get("td") is not None:
@@ -384,10 +405,16 @@ class File:
             self.type = FileType.OTHER
 
         if is_table:
-            if re.search(r'DF_|fluor|emmi', self.name, re.IGNORECASE):
-                self.type = FileType.EXPERIMENT_EMISSION
+            if self.marked_exp is not None:
+                if self.marked_exp == "excitation":
+                    self.type = FileType.EXPERIMENT_EXCITATION
+                else:
+                    self.type = FileType.EXPERIMENT_EMISSION
             else:
-                self.type = FileType.EXPERIMENT_EXCITATION
+                if re.search(r'DF_|fluor|emmi', self.name, re.IGNORECASE):
+                    self.type = FileType.EXPERIMENT_EMISSION
+                else:
+                    self.type = FileType.EXPERIMENT_EXCITATION
         self.properties = properties
         self.lines = lines
         return self

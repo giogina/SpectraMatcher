@@ -57,8 +57,6 @@ class ProjectSetupViewModel(ProjectObserver):
         #     exp_data = {k: ExperimentalSpectrumViewModel(e) for k, e in self._project.get("experimental spectra").items()}
         #     self._callbacks.get("update experimental data")(exp_data)
 
-    # todo: "reset states" option (called when user changes molecule&loth selection, or on button press)
-
     def get_project_name(self):
         return self._project.get("name", "")
 
@@ -67,10 +65,6 @@ class ProjectSetupViewModel(ProjectObserver):
 
     def get_selected_mlo_path(self):
         return self._project.get_selected_ground_state_file()
-        # if selected_path is not None:
-        #     file = DataFileManager.get_file_by_path(selected_path)
-        # if file is not None:
-        #     return f"{file.molecular_formula}    {file.routing_info['loth']}     ---     {file.path}"
 
     def print_args(self, *args):
         print(f"project setup viewmodel got: {args}")
@@ -88,13 +82,16 @@ class ProjectSetupViewModel(ProjectObserver):
                 break
 
     def import_state_file(self, file, state: State):
-        print(f"Import: {file.path}")
         state.import_file(file)
         if state.is_ground:
             self._project.select_ground_state_file(file.path)
         else:
             self._project.copy_state_files()
         self._callbacks.get("update project")()
+
+    def hide_state(self, state: State, hide=True):
+        state.hidden = hide
+        self._callbacks.get("update state data")(state)
 
     def delete_state(self, state: State):
         if state in State.state_list:
