@@ -14,7 +14,9 @@ class State:
 
     # Init with parsed files
     # def __init__(self, freq_file=None, emission_file=None, excitation_file=None, anharm_file=None):
-    def __init__(self, settings):
+    def __init__(self, settings=None):
+        if settings is None:
+            settings = {}
         self.settings = settings  # all user-selected data that needs to be persisted
         self.freq_hint = "Drag & drop file here, or click 'auto import'"
         self.anharm_hint = "Drag & drop file here, or click 'auto import'"
