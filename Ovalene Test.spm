@@ -5,26 +5,6 @@
         "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited"
     ],
     "ground state path": "C:\\Users\\Giogina\\Documents\\ovalene\\ground state\\ovalene-ground-opt-freq-disp.log",
-    "imported state files": [
-        {
-            "freq": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log",
-            "excitation": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
-            "emission": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission\\FCHT.log",
-            "anharm": null
-        },
-        {
-            "freq": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log",
-            "excitation": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
-            "emission": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission\\FCHT.log",
-            "anharm": null
-        },
-        {
-            "freq": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log",
-            "excitation": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
-            "emission": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission\\FCHT.log",
-            "anharm": null
-        }
-    ],
     "directory toggle states": {
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1": false
     },

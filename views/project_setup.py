@@ -111,43 +111,45 @@ class ProjectSetup:
                 dpg.hide_item("mlo button")
 
     def add_state_tree_node(self, state: State):
-        print(f"Tree node for: {state.tag}, {self.displayed_state_tags}")
         self.displayed_state_tags.append(f"state-node-{state.tag}")
-        with dpg.collapsing_header(label=state.name, parent="project setup panel", before="state buttons", tag=f"state-node-{state.tag}", default_open=True, drop_callback=lambda s, file: self.viewmodel.import_state_file(file, state), payload_type="Ground file" if state.is_ground else "Excited file"):
-            with dpg.table(header_row=False):
-                dpg.add_table_column(label="text", width_fixed=True, init_width_or_weight=200)
-                dpg.add_table_column(label="file")
-                if state.is_ground:
-                    with dpg.table_row():
-                        with dpg.group(horizontal=True):
-                            dpg.add_spacer(width=16)
-                            dpg.add_image_button("Frequency ground state-16", width=16)
-                            dpg.add_button(label="Frequency file:")
-                        dpg.bind_item_theme(dpg.last_item(), FileExplorer.file_type_color_theme.get(FileType.FREQ_GROUND))
-                        dpg.add_input_text(tag=f"frequency file for {state.tag}")
-                else:
-                    with dpg.table_row():
-                        with dpg.group(horizontal=True):
-                            dpg.add_spacer(width=16)
-                            dpg.add_image_button("Frequency excited state-16", width=16)
-                            dpg.add_button(label="Frequency file:")
-                        dpg.bind_item_theme(dpg.last_item(), FileExplorer.file_type_color_theme.get(FileType.FREQ_EXCITED))
-                        dpg.add_input_text(tag=f"frequency file for {state.tag}")  # ,  drop_callback=lambda s, a: dpg.set_value(s, a), payload_type=FileType.FREQ_EXCITED,
-                    with dpg.table_row():
-                        with dpg.group(horizontal=True):
-                            dpg.add_spacer(width=16)
-                            dpg.add_image_button("FC excitation-16", width=16)
-                            dpg.add_button(label="Excitation FC file:")
-                            dpg.bind_item_theme(dpg.last_item(),FileExplorer.file_type_color_theme.get(FileType.FC_EXCITATION))
-                        dpg.add_input_text(tag=f"Excitation FC file for state {state.tag}")
-                    with dpg.table_row():
-                        with dpg.group(horizontal=True):
-                            dpg.add_spacer(width=16)
-                            dpg.add_image_button("FC emission-16", width=16)
-                            dpg.add_button(label="Emission FC file:")
-                            dpg.bind_item_theme(dpg.last_item(), FileExplorer.file_type_color_theme.get(FileType.FC_EMISSION))
-                        dpg.add_input_text(tag=f"Emission FC file for state {state.tag}")
-        dpg.add_spacer(height=24, parent="project setup panel", before="state buttons")
+        with dpg.collapsing_header(label=state.name, parent="project setup panel", before="state buttons", tag=f"state-node-{state.tag}", default_open=True):
+            print(dpg.get_item_configuration(dpg.last_item()))
+            with dpg.group(drop_callback=lambda s, file: self.viewmodel.import_state_file(file, state), payload_type="Ground file" if state.is_ground else "Excited file"):
+                with dpg.table(header_row=False):
+                    dpg.add_table_column(label="text", width_fixed=True, init_width_or_weight=200)
+                    dpg.add_table_column(label="file")
+                    if state.is_ground:
+                        with dpg.table_row():
+                            with dpg.group(horizontal=True):
+                                dpg.add_spacer(width=16)
+                                dpg.add_image_button("Frequency ground state-16", width=16)
+                                dpg.add_button(label="Frequency file:")
+                            dpg.bind_item_theme(dpg.last_item(), FileExplorer.file_type_color_theme.get(FileType.FREQ_GROUND))
+                            dpg.add_input_text(tag=f"frequency file for {state.tag}")
+                    else:
+                        with dpg.table_row():
+                            with dpg.group(horizontal=True):
+                                dpg.add_spacer(width=16)
+                                dpg.add_image_button("Frequency excited state-16", width=16)
+                                dpg.add_button(label="Frequency file:")
+                            dpg.bind_item_theme(dpg.last_item(), FileExplorer.file_type_color_theme.get(FileType.FREQ_EXCITED))
+                            dpg.add_input_text(tag=f"frequency file for {state.tag}")  # ,  drop_callback=lambda s, a: dpg.set_value(s, a), payload_type=FileType.FREQ_EXCITED,
+                        with dpg.table_row():
+                            with dpg.group(horizontal=True):
+                                dpg.add_spacer(width=16)
+                                dpg.add_image_button("FC excitation-16", width=16)
+                                dpg.add_button(label="Excitation FC file:")
+                                dpg.bind_item_theme(dpg.last_item(),FileExplorer.file_type_color_theme.get(FileType.FC_EXCITATION))
+                            dpg.add_input_text(tag=f"Excitation FC file for state {state.tag}")
+                        with dpg.table_row():
+                            with dpg.group(horizontal=True):
+                                dpg.add_spacer(width=16)
+                                dpg.add_image_button("FC emission-16", width=16)
+                                dpg.add_button(label="Emission FC file:")
+                                dpg.bind_item_theme(dpg.last_item(), FileExplorer.file_type_color_theme.get(FileType.FC_EMISSION))
+                            dpg.add_input_text(tag=f"Emission FC file for state {state.tag}")
+            dpg.add_spacer(height=24)
+        # dpg.add_spacer(height=4, parent="project setup panel", before="state buttons")
         self.update_state(state)
 
     def update_state(self, state):

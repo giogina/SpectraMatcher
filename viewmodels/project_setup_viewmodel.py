@@ -88,6 +88,7 @@ class ProjectSetupViewModel(ProjectObserver):
                 break
 
     def import_state_file(self, file, state: State):
+        print(f"Import: {file.path}")
         state.import_file(file)
         if state.is_ground:
             self._project.select_ground_state_file(file.path)

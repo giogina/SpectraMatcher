@@ -64,7 +64,6 @@ class State:
             o.update(message, self)
 
     def import_file(self, file):
-        print(f"Importing file: {file.name, file.type, file.progress}")
         file.state = self
         if file.progress == "parsing done":
             self.assimilate_file_data(file)  # if not, the file will call that function upon completion.
