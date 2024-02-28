@@ -6,6 +6,7 @@ from views.main_menu import MainMenu
 from views.file_explorer import FileExplorer
 from views.project_setup import ProjectSetup
 from utility.icons import Icons
+from utility.font_manager import FontManager
 import dearpygui.dearpygui as dpg
 from screeninfo import get_monitors
 import threading
@@ -13,6 +14,7 @@ import logging
 
 
 class MainWindow:
+
     def __init__(self, path):
         self.result = 0
         self.logger = logging.getLogger(__name__)
@@ -21,19 +23,7 @@ class MainWindow:
         dpg.create_context()
         dpg.configure_app(auto_device=True)
 
-        self.fonts = {}
-        self.normal_font = 18
-        with dpg.font_registry() as font_reg:
-            # ! Open/Closed folder icons have been added to this font !
-            # Don't change it, or you will get currency signs instead. (Or add folder icons as \u00a3 and \u00a4)
-            # self.fonts[self.normal_font] = dpg.add_font("./fonts/SansationRegular.ttf", self.normal_font)
-            with dpg.font("./fonts/SansationRegular.ttf", self.normal_font) as self.fonts[self.normal_font]:
-                # dpg.add_font_range(0x00B0, 0x00BA)  # sub-and superscripts
-                dpg.add_font_range(0x2070, 0x2090, parent=self.fonts[self.normal_font])
-            Icons().set_font_registry(font_reg)
-        # self._load_fonts_async()  # todo: Still needed or throw out? Or dynamically load fonts using font_reg?
-        dpg.bind_font(self.fonts[self.normal_font])
-
+        FontManager.load_fonts()
         monitor = get_monitors()[0]
         dpg.create_viewport(title='SpectraMatcher',
                             width=monitor.width, height=monitor.height-30, x_pos=0, y_pos=0)
@@ -123,17 +113,6 @@ class MainWindow:
         dpg.start_dearpygui()
         dpg.destroy_context()
         return self.result
-
-    # def _load_fonts_async(self):
-    #     fonts_thread = threading.Thread(target=self._load_fonts)
-    #     fonts_thread.daemon = True
-    #     fonts_thread.start()
-    #
-    # def _load_fonts(self):
-    #     with dpg.font_registry():
-    #         for i in range(5, 33):
-    #             if not i in self.fonts.keys():
-    #                 self.fonts[i] = dpg.add_font("./fonts/Sansation_Regular.ttf", i)
 
     def update_title(self, title):
         dpg.set_viewport_title(title)

@@ -12,49 +12,6 @@
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1": false
     },
     "open data files": [],
-    "states": {
-        "0": {
-            "freq_file_path": null,
-            "anharm_freq_file_path": null,
-            "fc_emission_path": null,
-            "fc_excitation_path": null,
-            "molecular_formula": null,
-            "EXCLUDE": [
-                "geometry",
-                "vibrational_modes",
-                "anharm_levels",
-                "emission_FC_spectrum",
-                "excitation_FC_spectrum"
-            ],
-            "emission_spectrum_visible": true,
-            "excitation_spectrum_visible": true,
-            "color": "tab:orange",
-            "state": 0,
-            "name": "Ground state",
-            "__StateData__": true
-        },
-        "1": {
-            "freq_file_path": null,
-            "anharm_freq_file_path": null,
-            "fc_emission_path": null,
-            "fc_excitation_path": null,
-            "molecular_formula": null,
-            "EXCLUDE": [
-                "geometry",
-                "vibrational_modes",
-                "anharm_levels",
-                "emission_FC_spectrum",
-                "excitation_FC_spectrum"
-            ],
-            "emission_spectrum_visible": true,
-            "excitation_spectrum_visible": true,
-            "color": "tab:green",
-            "state": 1,
-            "name": "1st excited state",
-            "__StateData__": true
-        }
-    },
-    "experimental spectra": {},
     "ignored": [
         "file_C:\\Users\\Giogina\\Documents\\ovalene\\ovalene 2nd excited state excitation table.txt_1",
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1",

@@ -112,7 +112,7 @@ class DataFileManager:
                 file.type = FileType.EXPERIMENT_EXCITATION
             if not excitation and file.type == FileType.EXPERIMENT_EXCITATION:
                 file.type = FileType.EXPERIMENT_EMISSION
-            file.notify_observers()
+            file.notify_observers()  # todo: persist this selection
 
     def _forget_directory_info(self, directory):
         if directory.tag in self.directory_toggle_states.keys():
@@ -127,6 +127,13 @@ class DataFileManager:
 
     def get_file(self, tag):
         return self.all_files.get(tag)
+
+    def get_file_by_path(self, path):
+        path = path.replace("/", "\\")
+        for file in self.all_files.values():
+            if file.path == path:
+                return file
+        return None
 
     # magic!
     def make_readable(self, tag):
@@ -206,8 +213,9 @@ class Directory:
 class File:
     _observers = []
     notification = "file changed"
+    molecule_loth_options = []  # Keeps track of found tuples (molecular formula, level of theory, ground state energy)
 
-    def __init__(self, path, name=None, parent=None, depth=0):
+    def __init__(self, path, name=None, parent=None, depth=0, state=None):
         self.properties = {}
         self.is_human_readable = True  # \n instead of \r\n making it ugly in notepad
         self.type = None
@@ -234,7 +242,7 @@ class File:
         self.spectrum = None
         self.modes = None
         self.progress = "start"
-        self.state = None  # When imported into project, references state this file belongs to.
+        self.state = state  # When imported into project, references state this file belongs to.
 
         self.submit_what_am_i()
 
@@ -399,5 +407,9 @@ class File:
             if self.modes.get_wavenumbers(1)[0] < 0:
                 self.properties[GaussianLog.STATUS] = GaussianLog.NEGATIVE_FREQUENCY
         self.lines = None  # Forget lines now that file has been parsed.
+        if self.type == FileType.FREQ_GROUND:
+            mlo = (self.molecular_formula, int(self.energy*10)/10., self)
+            if (mlo[0], mlo[1]) not in [(m[0], m[1]) for m in self.molecule_loth_options]:
+                self.molecule_loth_options.append(mlo)
         return self
 

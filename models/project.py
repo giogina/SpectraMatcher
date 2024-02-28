@@ -9,6 +9,7 @@ import ctypes
 import matplotlib.colors as mcolors
 from models.settings_manager import SettingsManager
 from models.data_file_manager import DataFileManager, FileObserver, FileType
+from models.state import State
 from utility.gaussian_parser import GaussianParser
 
 
@@ -174,7 +175,8 @@ class Project(FileObserver):
             "open data folders": [],
             "open data files": [],
             "states": {0: StateData(0), 1: StateData(1)},
-            "experimental spectra": {}
+            "experimental spectra": {},
+            "ground state path": None
         }
 
         self.window_title = ""  # For bringing that window to the front in Windows
@@ -202,6 +204,7 @@ class Project(FileObserver):
                         print(f"Loaded project data: {self._data}")
                     self.window_title = self._assemble_window_title()
                     self._mark_project_as_open()
+                    self._notify_observers("project data changed")
                     self._notify_observers("state data changed")
                     self._notify_observers("experimental data changed")
                 elif os.path.exists(self._autosave_file):
@@ -223,6 +226,13 @@ class Project(FileObserver):
         self._autosave_thread.start()
 
         # Initialize everything based on loaded data!
+        if "ground state path" not in self._data.keys():
+            self._data["ground state path"] = None
+        State(freq_file=self._data["ground state path"])
+        if "imported state files" not in self._data.keys():  # Excited states
+            self._data["imported state files"] = [{"freq": None, "excitation": None, "emission": None, "anharm": None}]
+        for fs in self._data["imported state files"]:
+            State(fs.get("freq"), excitation_file=fs.get("excitation"), emission_file=fs.get("emission"), anharm_file=fs.get("anharm"))
         if "directory toggle states" not in self._data.keys():
             self._data["directory toggle states"] = {}
         if "ignored" not in self._data.keys():
@@ -418,6 +428,22 @@ class Project(FileObserver):
             self._logger.info(f"Used an unknown project data key '{key}'. Added it anyway.")
         with self._data_lock:
             self._data[key] = value
+        self._project_unsaved()
+
+    def select_ground_state_file(self, path):
+        print(f"Setting ground state path in project: {path}")
+        self._data["ground state path"] = path
+        self._project_unsaved()
+
+    def get_selected_ground_state_file(self):
+        return self._data.get("ground state path")
+
+    def copy_state_files(self):
+        """Store paths of State instances into _data"""
+        self._data["imported state files"] = []
+        for state in State.state_list[1:]:
+            paths = {"freq": state.freq_file, "excitation": state.excitation_file, "emission": state.emission_file, "anharm": state.anharm_file}
+            self._data["imported state files"].append(paths)
         self._project_unsaved()
 
     def set_state_file(self, file, state: int):
