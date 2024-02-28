@@ -117,7 +117,7 @@ class MainWindow:
     def update_title(self, title):
         dpg.set_viewport_title(title)
 
-    def _on_viewport_close(self):  # TODO: "save project?" dialog
+    def _on_viewport_close(self):
         print("Viewport is closing. Exiting application.")
         self.viewModel.on_close()  # project lock cleanup
         dpg.stop_dearpygui()

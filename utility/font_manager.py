@@ -24,7 +24,7 @@ class FontManager:
 
         dpg.bind_font(cls.fonts[cls.normal_font])
 
-    # self._load_fonts_async()  # todo: Still needed or throw out? Or dynamically load fonts using font_reg?
+    # self._load_fonts_async()  # Still needed or throw out? Or dynamically load fonts using font_reg?
     # def _load_fonts_async(self):
     #     fonts_thread = threading.Thread(target=self._load_fonts)
     #     fonts_thread.daemon = True

@@ -45,8 +45,7 @@ class ProjectSetup:
                     dpg.add_button(tag="mlo button", label="No ground state frequency calculation found!", width=-48)
             dpg.add_spacer(height=16)
             dpg.bind_item_font("setup panel project name", FontManager.fonts[FontManager.big_font])
-# todo: file exlporer: chek if file energy matches ground state selected for project!
-#  also, persist selected mlo.
+
             with dpg.collapsing_header(label="Experimental emission spectra", tag="emission spectra node"):
                 with dpg.table(header_row=False):
                     dpg.add_table_column(label="File")
@@ -83,7 +82,6 @@ class ProjectSetup:
         self.update_states()
 
             # TODO> put large auto-import button on panel that disappears on manual action (or moves up to the action bar)
-            #  Plus button below files to add states
             #  color choice buttons for each state
             #  At the bottom: "Okay" button greyed out until all necessary files are filled in
 
@@ -103,8 +101,8 @@ class ProjectSetup:
                 dpg.configure_item("mlo combo", items=molecule_and_loth_options)
                 if selected_mlo is None:
                     dpg.set_value("mlo combo", "Multiple ground state files found! Select one to enable consistency checks.")
-                    dpg.bind_item_theme("mlo combo", self.empty_field_theme)  # todo> selecting a file here == selecting ground state file
-                else:    # todo: upon selection, filter files in explorer
+                    dpg.bind_item_theme("mlo combo", self.empty_field_theme)
+                else:
                     for i in molecule_and_loth_options:
                         if i.endswith(selected_mlo):
                             dpg.set_value("mlo combo", i)
@@ -160,7 +158,8 @@ class ProjectSetup:
                         with dpg.group():
                             self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state, tag=f"hide {state.tag}", callback=lambda s, a, u: self.viewmodel.hide_state(u, False)), icon=Icons.eye_slash, size=16)
                             self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state, tag=f"show {state.tag}", callback=lambda s, a, u: self.viewmodel.hide_state(u, True)), icon=Icons.eye, size=16)
-                            self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state, tag=f"trash {state.tag}", callback=lambda s, a, u: self.viewmodel.delete_state(u)), icon=Icons.trash, size=16, tooltip="Delete this state")
+                            if not state.is_ground:
+                                self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state, tag=f"trash {state.tag}", callback=lambda s, a, u: self.viewmodel.delete_state(u)), icon=Icons.trash, size=16, tooltip="Delete this state")
 
             dpg.add_spacer(height=24)
         self.update_state(state)
@@ -191,20 +190,16 @@ class ProjectSetup:
                 dpg.set_value(f"Emission FC file for state {state.tag}", "")
                 dpg.configure_item(f"Emission FC file for state {state.tag}", hint=state.emission_hint)
                 dpg.bind_item_theme(f"Emission FC file for state {state.tag}", self.empty_field_theme)
-        if dpg.does_item_exist(f"trash {state.tag}"):
-            print(f"Hidden? {state.hidden}")
+        if dpg.does_item_exist(f"hide {state.tag}"):
             if state.hidden:
                 dpg.show_item(f"hide {state.tag}")
                 dpg.hide_item(f"show {state.tag}")
             else:
                 dpg.show_item(f"show {state.tag}")
                 dpg.hide_item(f"hide {state.tag}")
-            if state.is_ground:
-                dpg.hide_item(f"trash {state.tag}")
-            else:
-                dpg.show_item(f"trash {state.tag}")
             dpg.bind_item_theme(f"show {state.tag}", self.actual_button_theme)
             dpg.bind_item_theme(f"hide {state.tag}", self.actual_button_theme)
+        if dpg.does_item_exist(f"trash {state.tag}"):
             dpg.bind_item_theme(f"trash {state.tag}", self.actual_button_theme)
             if state.delta_E is not None and not state.is_ground:
                 dpg.set_item_label(f"delta E {state.tag}", f"ΔE = {state.delta_E} cm⁻¹")

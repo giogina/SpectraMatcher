@@ -23,7 +23,7 @@ class StartupDashboard(wx.Frame):
         self.SetForegroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
         self.settings = SettingsManager()
         self.palette = self.settings.get("palette", {"C0": [0, 0, 121], "C1": [48, 10, 120], "C2": [187, 187, 255]})
-        self.SetBackgroundColour(self.getPaletteColour("C1"))  # TODO: Insert colors from settings
+        self.SetBackgroundColour(self.getPaletteColour("C1"))
         self.projectPath = ""
         self.status = "None"
         self.recent = self.settings.get("recentProjects")

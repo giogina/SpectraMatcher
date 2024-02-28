@@ -7,7 +7,7 @@ from screeninfo import get_monitors
 from launcher import Launcher
 
 
-def open_project_file_dialog(root_path="/"):  # TODO: Instead use https://github.com/hoffstadt/DearPyGui/wiki/Tools-and-Widgets file explorer (for multi selection, matching theme) (also in views/main_menu.py _open_file_dialog)
+def open_project_file_dialog(root_path="/"):
     root = tk.Tk()
     root.withdraw()  # Hides the tkinter root window
     file_path = filedialog.askopenfilename(

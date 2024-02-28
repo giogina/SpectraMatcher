@@ -57,6 +57,20 @@ class ProjectSetupViewModel(ProjectObserver):
         #     exp_data = {k: ExperimentalSpectrumViewModel(e) for k, e in self._project.get("experimental spectra").items()}
         #     self._callbacks.get("update experimental data")(exp_data)
 
+    def auto_import(self):
+        # check State.ground_state_energy; if only one ground file, use that; if none, majority-vote on energy and use an FC file as ground file.
+        all_files = self._project.data_file_manager.all_files  # todo: It's kind of weird to depend on the ground state file when that information is in every FC file...
+        ground_energy = None
+        if len(File.molecule_loth_options) == 1:
+            ground_file = File.molecule_loth_options[0][2]
+            ground_energy = ground_file.energy
+        elif State.ground_state_energy is not None:
+            pass
+        if ground_file is None:
+            print("Auto-import failure: Ground state freq file could not be identified.")
+            return
+
+
     def get_project_name(self):
         return self._project.get("name", "")
 
