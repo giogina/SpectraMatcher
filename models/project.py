@@ -21,14 +21,14 @@ class ProjectObserver:
 
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, StateData):
-            state_data_dict = copy.deepcopy(obj.__dict__)
-            state_data_dict['__StateData__'] = True
-            for key in obj.EXCLUDE:
-                if key in state_data_dict.keys():
-                    del state_data_dict[key]
-            # del state_data_dict["EXCLUDE"]
-            return state_data_dict
+        # if isinstance(obj, StateData):
+        #     state_data_dict = copy.deepcopy(obj.__dict__)
+        #     state_data_dict['__StateData__'] = True
+        #     for key in obj.EXCLUDE:
+        #         if key in state_data_dict.keys():
+        #             del state_data_dict[key]
+        #     # del state_data_dict["EXCLUDE"]
+        #     return state_data_dict
         if isinstance(obj, ExperimentalSpectrum):
             spec_dict = copy.deepcopy(obj.__dict__)
             spec_dict['__ExperimentalSpectrum__'] = True
@@ -39,97 +39,11 @@ class MyEncoder(json.JSONEncoder):
 
 
 def my_decoder(dct):
-    if '__StateData__' in dct:
-        return StateData(**dct)
-    elif '__ExperimentalSpectrum__' in dct:
+    # if '__StateData__' in dct:
+    #     return StateData(**dct)
+    if '__ExperimentalSpectrum__' in dct:
         return ExperimentalSpectrum(**dct)
     return dct
-
-
-class StateData:
-    """Files & read information for a ground/excited state"""
-
-    _states = []  # Keep track of all state instances here!7
-
-    PERSIST = ("freq_file_path", "anharm_freq_file_path", "fc_emission_path", "fc_excitation_path")  # TODO: use this
-    molecular_formula = None
-
-    def __init__(self, state, name=None, freq_path=None, anharm_path=None, fc_emission=None, fc_excitation=None, **kwargs):
-
-        self._states.append(self)
-
-        self.freq_file_path = None
-        self.anharm_freq_file_path = None
-        self.fc_emission_path = None
-        self.fc_excitation_path = None
-
-        self.geometry = None
-        self.vibrational_modes = None
-        self.anharm_levels = None
-        self.emission_FC_spectrum = None
-        self.excitation_FC_spectrum = None
-
-        self.molecular_formula = None
-
-        # Exclude data that can be read from files from being serialized into the project json.
-        self.EXCLUDE = ("geometry", "vibrational_modes", "anharm_levels", "emission_FC_spectrum", "excitation_FC_spectrum")
-
-        self.emission_spectrum_visible = True
-        self.excitation_spectrum_visible = True
-        colors = list(mcolors.TABLEAU_COLORS.keys())[1:-1]  # TODO: standard color settings: # colors = settings['plot settings'].get('FC colors', list(mcolors.TABLEAU_COLORS.keys())[1:-1])
-        self.color = colors[state % (len(colors))]
-
-        self.state = state   # 0: Ground, 1+: excited  #  TODO> Make sure that all instance variables are accepted & processed here.
-        if name is None:
-            self._construct_name()
-        else:
-            self.name = name
-        if freq_path:
-            self.set_freq_file(path=freq_path)
-        if anharm_path:
-            self.set_anharm_freq_file(path=anharm_path)
-        if fc_emission:
-            self.set_emission_file(path=fc_emission)
-        if fc_excitation:
-            self.set_excitation_file(path=fc_excitation)
-
-    def _construct_name(self):
-        if self.state == 0:
-            self.name = "Ground state"
-        elif self.state == 1:
-            self.name = "1st excited state"
-        elif self.state == 2:
-            self.name = "2nd excited state"
-        elif self.state == 3:
-            self.name = "3rd excited state"
-        else:
-            self.name = f"{self.state}th excited state"
-
-    def set_freq_file(self, path):
-        # todo: find file in filemanager that has the same path, use that.
-        self.freq_file_path = path  # todo: (on first freq file) set bonds
-
-        # if self.molecular_formula is None:
-        #     self.molecular_formula = file.molecular_formula
-        # else:
-        #     if not self.molecular_formula == file.molecular_formula:
-        #         print("This file is for a different molecule!")  # todo: actually, check for project-level molecule
-        #         return                                               # Todo: have project-level molecule list, dislpayed as dropdown on top of project, populated with all molecules found in imported files.
-        # self.geometry = GaussianParser.get_last_geometry(path)  # todo: read from file.geometry
-        # self.vibrational_modes = GaussianParser.get_vibrational_modes(path, self.geometry)  # TODO> Do this stuff async? Send notification when done.
-
-
-    def set_anharm_freq_file(self, path):
-        self.freq_file_path = path
-        self.anharm_levels = GaussianParser.get_anharmonic_levels(path)
-
-    def set_emission_file(self, path):
-        self.fc_emission_path = path
-        self.emission_FC_spectrum = GaussianParser.get_FC_spectrum(path, is_emission=True)
-
-    def set_excitation_file(self, path):
-        self.fc_excitation_path = path
-        self.emission_FC_spectrum = GaussianParser.get_FC_spectrum(path, is_emission=False)
 
 
 class ExperimentalSpectrum:
@@ -174,7 +88,6 @@ class Project(FileObserver):
             "name": "Untitled",
             "open data folders": [],
             "open data files": [],
-            "states": {0: StateData(0), 1: StateData(1)},
             "experimental spectra": {},
             "ground state path": None
         }
@@ -242,8 +155,6 @@ class Project(FileObserver):
         self.data_file_manager.ignored_files_and_directories = self._data["ignored"]
         self.data_file_manager.open_directories(self._data.get("open data folders", []),
                                                 self._data.get("open data files", []))
-        if "states" not in self._data.keys():
-            self._data["states"] = copy.deepcopy(self._data_defaults["states"])
         if "experimental spectra" not in self._data.keys():
             self._data["experimental spectra"] = copy.deepcopy(self._data_defaults["experimental spectra"])
         return self
@@ -446,36 +357,6 @@ class Project(FileObserver):
             self._data["imported state files"].append(paths)
         self._project_unsaved()
 
-    def set_state_file(self, file, state: int):
-        if state not in self._data["states"].keys():
-            self._data["states"][state] = StateData(state_nr=state)
-            self._notify_observers("state data changed")
-        if file.type == FileType.FREQ_GROUND and state == 0:
-            self._data["states"][0].set_freq_file(file.path)
-        elif file.type == FileType.FREQ_EXCITED and state > 0:
-            self._data["states"][state].set_freq_file(file.path)
-        if file.type == FileType.FREQ_GROUND_ANHARM and state == 0:
-            self._data["states"][0].set_anharm_freq_file(file.path)
-        elif file.type == FileType.FREQ_EXCITED and state > 0:
-            self._data["states"][state].set_freq_file(file.path)
-        elif file.type == FileType.FREQ_EXCITED_ANHARM and state > 0:
-            self._data["states"][state].set_anharm_freq_file(file.path)
-        elif file.type == FileType.FC_EMISSION and state > 0:
-            self._data["states"][state].set_emission_file(file.path)
-        elif file.type == FileType.FC_EMISSION and state > 0:
-            self._data["states"][state].set_excitation_file(file.path)
-        self._notify_observers("state data changed", state)
-
-    def add_state(self):
-        next_state_nr = len(self._data["states"].keys())
-        self._data["states"][next_state_nr] = StateData(next_state_nr)
-        self._notify_observers("state data changed", next_state_nr)
-
-    def delete_state(self, state):
-        if state in self._data["states"].keys():
-            del self._data["states"][state]
-            self._notify_observers("state data changed")
-
     def set_experimental_file(self, path):
         self._data["experimental spectra"][path] = ExperimentalSpectrum(path)
         self._notify_observers("experimental data changed")
@@ -485,9 +366,5 @@ class Project(FileObserver):
             del self._data["experimental spectra"][path]
         self._notify_observers("experimental data changed")
 
-        # TODO: Change state names,
-        #  select exp file data columns,
-        #  reorder states,
-        #  display basic info: to/from for exp files, zero state energy for excited states,
-        #  check for equal zero state energies/freqs to warn about repeating files,
-        #  do all the parsing
+        # TODO:
+        #  select exp file data columns

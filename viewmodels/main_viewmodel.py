@@ -28,7 +28,7 @@ class MainViewModel(ProjectObserver):
 
     # Spawn child view models responsible for child windows.
     def get_file_manager_viewmodel(self):
-        return DataFileViewModel(self._project.data_file_manager)
+        return DataFileViewModel(self._project.data_file_manager, self._project)
 
     def get_project_setup_viewmodel(self):
         return ProjectSetupViewModel(self._project)

@@ -1,37 +1,16 @@
 from models.data_file_manager import DataFileManager, FileObserver, File, Directory
+from models.project import Project
 from models.settings_manager import SettingsManager, Settings
+from models.state import State
 from utility.system_file_browser import data_dir_file_dialog, data_files_dialog
 
 
 def noop(*args, **kwargs):
     pass
-#
-#
-# class FileViewModel:
-#     def __init__(self, file: File):
-#         for key, value in file.__dict__.items():
-#             setattr(self, key, value)
-#
-#
-# class DirectoryViewModel:
-#     def __init__(self, directory: Directory):
-#         for key, value in directory.__dict__.items():
-#             if key == "content_dirs":
-#                 content_dir_vms = {}
-#                 for tag, d in directory.content_dirs.items():
-#                     content_dir_vms[tag] = DirectoryViewModel(d)
-#                 self.content_dirs = content_dir_vms
-#             elif key == "content_files":
-#                 content_file_vms = {}
-#                 for tag, file in directory.content_files.items():
-#                     content_file_vms[tag] = FileViewModel(file)
-#                 self.content_files = content_file_vms
-#             else:
-#                 setattr(self, key, value)
 
 
 class DataFileViewModel(FileObserver):
-    def __init__(self, data_file_manager: DataFileManager):
+    def __init__(self, data_file_manager: DataFileManager, project: Project):
         self._callbacks = {
             "populate file explorer": noop,
             "reset file explorer": noop,
@@ -39,9 +18,11 @@ class DataFileViewModel(FileObserver):
             "update directory ignore status": noop,
         }
         self._data_file_manager = data_file_manager
+        self._project = project
         File.add_observer(self)  # Only properties of one existing file need updating
         self._data_file_manager.add_observer(self, "directory changed")  # Only properties of one existing dir need updating
         self._data_file_manager.add_observer(self, "directory structure changed")  # Need to re-populate the entire list
+        State.add_observer(self)  # Need to re-populate the entire list
         self.settings = SettingsManager()
         self.table_columns = self.settings.get(Settings.FILE_EXPLORER_COLUMNS)
         self._all_files = {}
@@ -65,6 +46,9 @@ class DataFileViewModel(FileObserver):
                 self._callbacks.get("update file")(args[0])
             else:
                 self._callbacks.get("update file")(args[0][0])
+        elif event_type == "State files changed":
+            for file in self._data_file_manager.all_files.values():
+                self._callbacks.get("update file")(file)
 
     def remove_directory(self, directory_tag):
         self._data_file_manager.close_directory(directory_tag)
@@ -125,5 +109,12 @@ class DataFileViewModel(FileObserver):
             self._callbacks.get("reset file explorer", noop)(dirs, files)
         else:
             self._callbacks.get("populate file explorer", noop)(dirs, files)
+
+    def import_state_file(self, file, state: State):
+        state.import_file(file)
+        if state.is_ground:
+            self._project.select_ground_state_file(file.path)
+        else:
+            self._project.copy_state_files()
 
 

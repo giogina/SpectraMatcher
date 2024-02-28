@@ -1,31 +1,12 @@
-from models.settings_manager import SettingsManager, Settings
-from models.project import Project, ProjectObserver, StateData, ExperimentalSpectrum
-from models.data_file_manager import File, DataFileManager
+from models.settings_manager import SettingsManager
+from models.project import Project, ProjectObserver
+from models.data_file_manager import File
 from models.state import State
 from copy import deepcopy
 
 
 def noop(*args, **kwargs):
     pass
-
-
-class StateViewModel:
-
-    def __init__(self, state: StateData):
-        self.state = 0  # 0: Ground, 1+: excited
-        self.freq_file_path = None
-        self.fc_emission_path = None
-        self.fc_excitation_path = None
-        for key, value in state.__dict__.items():
-            setattr(self, key, deepcopy(value))
-
-
-class ExperimentalSpectrumViewModel:
-
-    def __init__(self, exp: ExperimentalSpectrum):
-        for key, value in exp.__dict__.items():
-            setattr(self, key, deepcopy(value))
-
 
 class ProjectSetupViewModel(ProjectObserver):
 
@@ -43,10 +24,6 @@ class ProjectSetupViewModel(ProjectObserver):
         State.add_observer(self)
         File.add_observer(self)
         self.settings = SettingsManager()
-
-        # # todo> temp
-        # self.states = {0: State(), 1: State(), 2: State()}
-        # self.states[0].is_ground = True
 
     def set_callback(self, key, callback):
         if key in self._callbacks.keys():
@@ -99,7 +76,8 @@ class ProjectSetupViewModel(ProjectObserver):
         print(f"project setup viewmodel got: {args}")
 
     def add_state(self):
-        self._project.add_state()
+        State()
+        self._callbacks.get("update states data")()
 
     def select_ground_state_file(self, list_str):
         """Ground state file selected in top-level dropdown"""
@@ -117,8 +95,11 @@ class ProjectSetupViewModel(ProjectObserver):
             self._project.copy_state_files()
         self._callbacks.get("update project")()
 
-    def delete_state(self, state: int):
-        self._project.delete_state(state)
+    def delete_state(self, state: State):
+        if state in State.state_list:
+            State.state_list.remove(state)
+        self._callbacks.get("update states data")()
+        self._project.copy_state_files()
 
     def set_experimental_file(self, file_path):
         print(file_path)

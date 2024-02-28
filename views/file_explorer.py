@@ -2,6 +2,8 @@ import re
 import subprocess
 import dearpygui.dearpygui as dpg
 import pyperclip
+
+from models.state import State
 from viewmodels.data_files_viewmodel import DataFileViewModel
 from models.data_file_manager import GaussianLog, FileType, File, Directory
 from utility.icons import Icons
@@ -212,7 +214,9 @@ class FileExplorer:
 
     def _setup_folder_right_click_menu(self, directory):
         tag = directory.tag
-        with dpg.popup(tag):
+        if dpg.does_item_exist(f"{tag}-rightclick-menu"):
+            dpg.delete_item(f"{tag}-rightclick-menu")
+        with dpg.popup(tag, tag=f"{tag}-rightclick-menu"):
             dpg.add_selectable(label="Collapse", user_data=(directory, False), callback=lambda s, a, u: self._collapse_folder(*u))
             dpg.add_selectable(label="Expand", user_data=(directory, True), callback=lambda s, a, u: self._collapse_folder(*u))
             dpg.add_spacer(height=2)
@@ -254,7 +258,12 @@ class FileExplorer:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
                 dpg.add_spacer(height=2)
-            dpg.add_menu(label="Add to project as...")  # TODO
+            with dpg.menu(label="Add to project..."):
+                if file.type == FileType.FREQ_GROUND:
+                    dpg.add_menu_item(label="ground state", user_data=State.state_list[0], callback=self.viewmodel.import_state_file(file, State.state_list[0]))
+                else:
+                    for state in State.state_list[1:]:
+                        dpg.add_menu_item(label=f"{state.name}", user_data=state, callback=self.viewmodel.import_state_file(file, state))
             if file.parent_directory is None:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
