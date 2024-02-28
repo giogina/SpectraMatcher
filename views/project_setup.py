@@ -151,9 +151,8 @@ class ProjectSetup:
         self.update_state(state)
 
     def update_state(self, state):
-        print(state.freq_file, state.excitation_file, state.emission_file)
+        # print("Project setup update_state: ", state.name, state.freq_file, state.excitation_file, state.emission_file)
         if dpg.does_item_exist(f"frequency file for {state.tag}"):
-            print("exists-freq")
             if state.freq_file is not None:
                 dpg.set_value(f"frequency file for {state.tag}", state.freq_file)
                 dpg.bind_item_theme(f"frequency file for {state.tag}", self.full_field_theme)
@@ -162,7 +161,6 @@ class ProjectSetup:
                 dpg.configure_item(f"frequency file for {state.tag}", hint=state.freq_hint)
                 dpg.bind_item_theme(f"frequency file for {state.tag}", self.empty_field_theme)
         if dpg.does_item_exist(f"Excitation FC file for state {state.tag}"):
-            print("exists-ex")
             if state.excitation_file is not None:
                 dpg.set_value(f"Excitation FC file for state {state.tag}", state.excitation_file)
                 dpg.bind_item_theme(f"Excitation FC file for state {state.tag}", self.full_field_theme)
@@ -171,9 +169,7 @@ class ProjectSetup:
                 dpg.configure_item(f"Excitation FC file for state {state.tag}", hint=state.excitation_hint)
                 dpg.bind_item_theme(f"Excitation FC file for state {state.tag}", self.empty_field_theme)
         if dpg.does_item_exist(f"Emission FC file for state {state.tag}"):
-            print("exists-em")
             if state.emission_file is not None:
-                print(f"Setting emission path {state.emission_file}")
                 dpg.set_value(f"Emission FC file for state {state.tag}", state.emission_file)
                 dpg.bind_item_theme(f"Emission FC file for state {state.tag}", self.full_field_theme)
             else:

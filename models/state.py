@@ -35,7 +35,9 @@ class State:
         self.state_list.append(self)
         self.name = None
         self.own_ground_state_energy = None
+        print(f"State initiated: {self.name}, {self.tag}, {self.state_list}")
         State.sort_states_by_energy()
+        print(f"After sort: {self.state_list}")
 
         # Load from paths, if supplied.
         for path in (freq_file, emission_file, excitation_file, anharm_file):

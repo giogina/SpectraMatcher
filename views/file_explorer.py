@@ -260,10 +260,10 @@ class FileExplorer:
                 dpg.add_spacer(height=2)
             with dpg.menu(label="Add to project..."):
                 if file.type == FileType.FREQ_GROUND:
-                    dpg.add_menu_item(label="ground state", user_data=State.state_list[0], callback=self.viewmodel.import_state_file(file, State.state_list[0]))
+                    dpg.add_menu_item(label="ground state", user_data=State.state_list[0], callback=lambda: self.viewmodel.import_state_file(file, State.state_list[0]))
                 else:
                     for state in State.state_list[1:]:
-                        dpg.add_menu_item(label=f"{state.name}", user_data=state, callback=self.viewmodel.import_state_file(file, state))
+                        dpg.add_menu_item(label=f"{state.name}", user_data=state, callback=lambda: self.viewmodel.import_state_file(file, state))
             if file.parent_directory is None:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
