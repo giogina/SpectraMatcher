@@ -428,7 +428,7 @@ class File:
             is_emission = self.type == FileType.FC_EMISSION
             if self.spectrum is None:
                 self.spectrum = GaussianParser.get_FC_spectrum(self.lines, is_emission, start_line=self.start_lines.get("FC transitions", 0))
-        elif self.type in (FileType.FREQ_GROUND, FileType.FREQ_EXCITED):
+        if self.type in (FileType.FREQ_GROUND, FileType.FREQ_EXCITED, FileType.FC_EMISSION, FileType.FC_EXCITATION):
             if self.modes is None:
                 self.modes = GaussianParser.get_vibrational_modes(self.lines, hpmodes_start=self.start_lines.get("hp freq"), lpmodes_start=self.start_lines.get("lp freq"), geometry=self.geometry)
             if self.modes.get_wavenumbers(1)[0] < 0:

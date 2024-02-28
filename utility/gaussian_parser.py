@@ -232,7 +232,7 @@ class GaussianParser:
             normal_mode_vectors.extend(new_normal_mode_vectors)
 
         elif lpmodes_start is not None:  # Read low-precision modes
-            for l in range(hpmodes_start, len(lines)):
+            for l in range(lpmodes_start, len(lines)):
                 line = lines[l]
                 if line.strip().startswith('Frequencies --'):  # Next set of modes starts!
                     syms.extend(re.findall(r'([a-zA-Z0-9?]+)', lines[l - 1]))
