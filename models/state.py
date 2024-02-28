@@ -35,9 +35,7 @@ class State:
         self.state_list.append(self)
         self.name = None
         self.own_ground_state_energy = None
-        print(f"State initiated: {self.name}, {self.tag}, {self.state_list}")
         State.sort_states_by_energy()
-        print(f"After sort: {self.state_list}")
 
         # Load from paths, if supplied.
         for path in (freq_file, emission_file, excitation_file, anharm_file):
@@ -77,6 +75,7 @@ class State:
         if file.progress != "parsing done":
             print(f"Warning in molecular_data assimilate_file_data: File wasn't done parsing yet: {file.path}")
             return
+        old_order = [x.delta_E for x in self.state_list]
         if file.type == FileType.FREQ_GROUND:
             if not self.is_ground:
                 print("File rejected: Can't have two ground states.")
@@ -139,11 +138,16 @@ class State:
             self.emission_file = file.path
             self.delta_E = file.spectrum.zero_zero_transition_energy
             self.own_ground_state_energy = file.energy
+
             State.sort_states_by_energy()
+
             self.emission_spectrum = file.spectrum
             self.excited_geometry = file.initial_geom
             self.ground_geometry = file.final_geom
-        self._notify_observers(self.imported_file_changed_notification)
+        if old_order != [x.delta_E for x in self.state_list]:
+            self._notify_observers(self.imported_files_changed_notification)
+        else:
+            self._notify_observers(self.imported_file_changed_notification)
 
     @classmethod
     def sort_states_by_energy(cls):
@@ -183,7 +187,3 @@ class State:
         self.name = None
         self.own_ground_state_energy = None
         self._notify_observers(self.imported_file_changed_notification)
-
-    # def load_from_paths(self, state_data: StateData):
-    #     pass  # todo
-    #

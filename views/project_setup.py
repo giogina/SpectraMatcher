@@ -149,7 +149,6 @@ class ProjectSetup:
                                 dpg.bind_item_theme(dpg.last_item(), FileExplorer.file_type_color_theme.get(FileType.FC_EMISSION))
                             dpg.add_input_text(tag=f"Emission FC file for state {state.tag}")
             dpg.add_spacer(height=24)
-        # dpg.add_spacer(height=4, parent="project setup panel", before="state buttons")
         self.update_state(state)
 
     def update_state(self, state):

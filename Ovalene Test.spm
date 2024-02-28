@@ -18,5 +18,25 @@
         "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_excitation.yaml_2"
     ],
     "experimental spectra": {},
-    "open data files": []
+    "open data files": [],
+    "imported state files": [
+        {
+            "freq": null,
+            "excitation": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
+            "emission": null,
+            "anharm": null
+        },
+        {
+            "freq": null,
+            "excitation": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
+            "emission": null,
+            "anharm": null
+        },
+        {
+            "freq": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log",
+            "excitation": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log",
+            "emission": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
+            "anharm": null
+        }
+    ]
 }
