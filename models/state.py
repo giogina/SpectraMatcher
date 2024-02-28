@@ -13,11 +13,9 @@ class State:
     imported_files_changed_notification = "State files changed"
 
     # Init with parsed files
-    def __init__(self, freq_file=None, emission_file=None, excitation_file=None, anharm_file=None):
-        self.freq_file = freq_file
-        self.anharm_file = anharm_file
-        self.emission_file = emission_file
-        self.excitation_file = excitation_file
+    # def __init__(self, freq_file=None, emission_file=None, excitation_file=None, anharm_file=None):
+    def __init__(self, settings):
+        self.settings = settings  # all user-selected data that needs to be persisted
         self.freq_hint = "Drag & drop file here, or click 'auto import'"
         self.anharm_hint = "Drag & drop file here, or click 'auto import'"
         self.emission_hint = "Drag & drop file here, or click 'auto import'"
@@ -35,11 +33,11 @@ class State:
         self.state_list.append(self)
         self.name = None
         self.own_ground_state_energy = None
-        self.hidden = False
         State.sort_states_by_energy()
-
+        # "freq file": None,: None,: None, : None
         # Load from paths, if supplied.
-        for path in (freq_file, emission_file, excitation_file, anharm_file):
+        for path_key in ("freq file", "emission file", "excitation file", "anharm file"):
+            path = self.settings.get(path_key)
             if path is not None:
                 print(f"Reading File {path}, state {self.tag}")
                 if os.path.exists(path):
@@ -80,7 +78,7 @@ class State:
                 print("File rejected: Can't have two ground states.")
                 self.freq_hint = "File rejected: Can't have two ground states."
                 return
-            self.freq_file = file.path
+            self.settings["freq file"] = file.path
             self.molecular_formula = file.molecular_formula
             self.ground_state_energy = file.energy
             self.own_ground_state_energy = file.energy
@@ -105,7 +103,7 @@ class State:
                 else:
                     self.delta_E = delta_E
                 State.sort_states_by_energy()
-            self.freq_file = file.path
+            self.settings["freq file"] = file.path
             self.vibrational_modes = file.modes
         elif file.type == FileType.FC_EXCITATION:
             if self.delta_E is not None:
@@ -117,7 +115,7 @@ class State:
                 self.excitation_hint = "File rejected: Ground state energy doesn't match selected ground state."
                 self._notify_observers(self.imported_file_changed_notification)
                 return
-            self.excitation_file = file.path
+            self.settings["excitation file"] = file.path
             self.delta_E = file.spectrum.zero_zero_transition_energy  # just to get the accurate one
             self.own_ground_state_energy = file.energy  # in case of being added before ground state file
             State.sort_states_by_energy()
@@ -134,7 +132,7 @@ class State:
                 self.emission_hint = "File rejected: Ground state energy doesn't match selected ground state."
                 self._notify_observers(self.imported_file_changed_notification)
                 return
-            self.emission_file = file.path
+            self.settings["emission file"] = file.path
             self.delta_E = file.spectrum.zero_zero_transition_energy
             self.own_ground_state_energy = file.energy
 
@@ -168,10 +166,7 @@ class State:
 
     def wipe(self):
         """Restore a clean slate"""
-        self.freq_file = None
-        self.anharm_file = None
-        self.emission_file = None
-        self.excitation_file = None
+        self.settings = {}
         self.freq_hint = "Drag & drop file here, or click 'auto import'"
         self.anharm_hint = "Drag & drop file here, or click 'auto import'"
         self.emission_hint = "Drag & drop file here, or click 'auto import'"

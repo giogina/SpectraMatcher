@@ -115,6 +115,6 @@ class DataFileViewModel(FileObserver):
         if state.is_ground:
             self._project.select_ground_state_file(file.path)
         else:
-            self._project.copy_state_files()
+            self._project.copy_state_settings()
 
 

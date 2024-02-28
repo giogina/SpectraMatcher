@@ -39,7 +39,6 @@ class ProjectSetupViewModel(ProjectObserver):
         elif event_type == "file changed":
             self._callbacks.get("update project")()
         elif event_type == State.imported_file_changed_notification:
-            print(args[0].freq_file, args[0].excitation_file, args[0].emission_file)
             self._callbacks.get("update project")()
             self._callbacks.get("update state data")(args[0])
         elif event_type == State.imported_files_changed_notification:
@@ -86,6 +85,7 @@ class ProjectSetupViewModel(ProjectObserver):
     def add_state(self):
         State()
         self._callbacks.get("update states data")()
+        self._project.copy_state_settings()
 
     def select_ground_state_file(self, list_str):
         """Ground state file selected in top-level dropdown"""
@@ -100,18 +100,18 @@ class ProjectSetupViewModel(ProjectObserver):
         if state.is_ground:
             self._project.select_ground_state_file(file.path)
         else:
-            self._project.copy_state_files()
+            self._project.copy_state_settings()
         self._callbacks.get("update project")()
 
     def hide_state(self, state: State, hide=True):
-        state.hidden = hide
+        state.settings["hidden"] = hide
         self._callbacks.get("update state data")(state)
 
     def delete_state(self, state: State):
         if state in State.state_list:
             State.state_list.remove(state)
         self._callbacks.get("update states data")()
-        self._project.copy_state_files()
+        self._project.copy_state_settings()
 
     def set_experimental_file(self, file_path):
         print(file_path)

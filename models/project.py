@@ -141,11 +141,11 @@ class Project(FileObserver):
         # Initialize everything based on loaded data!
         if "ground state path" not in self._data.keys():
             self._data["ground state path"] = None
-        State(freq_file=self._data["ground state path"])
-        if "imported state files" not in self._data.keys():  # Excited states
-            self._data["imported state files"] = [{"freq": None, "excitation": None, "emission": None, "anharm": None}]
-        for fs in self._data["imported state files"]:
-            State(fs.get("freq"), excitation_file=fs.get("excitation"), emission_file=fs.get("emission"), anharm_file=fs.get("anharm"))
+        State({"freq file": self._data["ground state path"]})
+        if "state settings" not in self._data.keys():  # Excited states
+            self._data["state settings"] = [{}]
+        for s in self._data["state settings"]:
+            State(s)
         if "directory toggle states" not in self._data.keys():
             self._data["directory toggle states"] = {}
         if "ignored" not in self._data.keys():
@@ -355,12 +355,12 @@ class Project(FileObserver):
     def get_selected_ground_state_file(self):
         return self._data.get("ground state path")
 
-    def copy_state_files(self):
+    def copy_state_settings(self):
         """Store paths of State instances into _data"""
-        self._data["imported state files"] = []
+        self._data["state settings"] = []
         for state in State.state_list[1:]:
-            paths = {"freq": state.freq_file, "excitation": state.excitation_file, "emission": state.emission_file, "anharm": state.anharm_file}
-            self._data["imported state files"].append(paths)
+            # paths = {"freq": state.freq_file, "excitation": state.excitation_file, "emission": state.emission_file, "anharm": state.anharm_file}
+            self._data["state settings"].append(state.settings)
         self._project_unsaved()
 
     def set_experimental_file(self, path):

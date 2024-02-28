@@ -42,5 +42,12 @@
     "files marked as emission": [],
     "files marked as excitation": [
         "C:\\Users\\Giogina\\Documents\\ovalene\\ovalene 2nd excited state excitation table.txt"
+    ],
+    "state settings": [
+        {
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\ovalene-excited-3-opt-freq-disp.log",
+            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT emission\\FCHT.log",
+            "hidden": false
+        }
     ]
 }

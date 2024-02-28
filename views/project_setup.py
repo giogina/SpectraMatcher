@@ -167,31 +167,31 @@ class ProjectSetup:
     def update_state(self, state):
         # print("Project setup update_state: ", state.name, state.freq_file, state.excitation_file, state.emission_file)
         if dpg.does_item_exist(f"frequency file for {state.tag}"):
-            if state.freq_file is not None:
-                dpg.set_value(f"frequency file for {state.tag}", state.freq_file)
+            if state.settings.get("freq file") is not None:
+                dpg.set_value(f"frequency file for {state.tag}", state.settings.get("freq file"))
                 dpg.bind_item_theme(f"frequency file for {state.tag}", self.full_field_theme)
             else:
                 dpg.set_value(f"frequency file for {state.tag}", "")
                 dpg.configure_item(f"frequency file for {state.tag}", hint=state.freq_hint)
                 dpg.bind_item_theme(f"frequency file for {state.tag}", self.empty_field_theme)
         if dpg.does_item_exist(f"Excitation FC file for state {state.tag}"):
-            if state.excitation_file is not None:
-                dpg.set_value(f"Excitation FC file for state {state.tag}", state.excitation_file)
+            if state.settings.get("excitation file") is not None:
+                dpg.set_value(f"Excitation FC file for state {state.tag}", state.settings.get("excitation file"))
                 dpg.bind_item_theme(f"Excitation FC file for state {state.tag}", self.full_field_theme)
             else:
                 dpg.set_value(f"Excitation FC file for state {state.tag}", "")
                 dpg.configure_item(f"Excitation FC file for state {state.tag}", hint=state.excitation_hint)
                 dpg.bind_item_theme(f"Excitation FC file for state {state.tag}", self.empty_field_theme)
         if dpg.does_item_exist(f"Emission FC file for state {state.tag}"):
-            if state.emission_file is not None:
-                dpg.set_value(f"Emission FC file for state {state.tag}", state.emission_file)
+            if state.settings.get("emission file") is not None:
+                dpg.set_value(f"Emission FC file for state {state.tag}", state.settings.get("emission file"))
                 dpg.bind_item_theme(f"Emission FC file for state {state.tag}", self.full_field_theme)
             else:
                 dpg.set_value(f"Emission FC file for state {state.tag}", "")
                 dpg.configure_item(f"Emission FC file for state {state.tag}", hint=state.emission_hint)
                 dpg.bind_item_theme(f"Emission FC file for state {state.tag}", self.empty_field_theme)
         if dpg.does_item_exist(f"hide {state.tag}"):
-            if state.hidden:
+            if state.settings.get("hidden", False):
                 dpg.show_item(f"hide {state.tag}")
                 dpg.hide_item(f"show {state.tag}")
             else:
