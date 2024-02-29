@@ -47,7 +47,8 @@ class DataFileViewModel(FileObserver):
             else:
                 self._callbacks.get("update file")(args[0][0])
         elif event_type == "State files changed":
-            for file in self._data_file_manager.all_files.values():
+            snapshot = self._data_file_manager.all_files.copy()
+            for file in snapshot.values():  # make sure dict doesn't change during iteration
                 self._callbacks.get("update file")(file)
 
     def remove_directory(self, directory_tag):

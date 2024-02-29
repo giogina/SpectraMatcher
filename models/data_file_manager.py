@@ -261,6 +261,7 @@ class File:
         name, self.extension = os.path.splitext(self.name)
         self.charge = 0
         self.multiplicity = ""
+        self.ground_state_energy = None  # Energy of associated ground state; == self.energy except for FREQ_EXCITED
         self.energy = None
         self.lines = None
         self.spectrum = None
@@ -424,6 +425,10 @@ class File:
         return self
 
     def _analyse_data(self):
+        if self.type in FileType.LOG_TYPES and \
+                (type(self.properties) != dict or self.properties.get(GaussianLog.STATUS) != GaussianLog.FINISHED):
+            print(f"Skipping analysis of incomplete file {self.path}")
+            return
         if self.start_lines == {}:
             self._what_am_i()
         if self.lines is None:
@@ -444,6 +449,7 @@ class File:
                 self.molecule_loth_options.append(mlo)
 
         if self.type in (FileType.FREQ_GROUND, FileType.FC_EMISSION, FileType.FC_EXCITATION):
+            self.ground_state_energy = self.energy
             if self.energy is not None and self.molecular_formula is not None:
                 molecule_energy_key = (self.molecular_formula, int(self.energy))
                 delta_E = 0 if self.type == FileType.FREQ_GROUND else int(self.spectrum.zero_zero_transition_energy)
@@ -468,13 +474,30 @@ class File:
                     ground_state_energy = key[1]
                     for delta_E, file_list in de.items():
                         if abs(abs(self.energy - ground_state_energy) - delta_E) < 10:
+                            self.ground_state_energy = file_list[0].ground_state_energy  # get accurate one
                             if self.path not in [f.path for f in self.molecule_energy_votes[key][delta_E]]:
                                 self.molecule_energy_votes[key][delta_E].append(self)
                             if self in self.freq_voters_waiting:
                                 self.freq_voters_waiting.remove(self)
                             break
-        # for gse, e in self.molecule_energy_votes.items():
-        #     for de, fs in e.items():
-        #         print(gse, de, [int(f.energy-gse[1]) for f in fs])
         return self
+    # todo: if auto-import: update states in case further files are found.
+
+    @classmethod
+    def get_molecule_energy_options(cls):  # todo: if one is selected by the user, persist that & put it in first place.
+        ml_options = []
+        for key, v in cls.molecule_energy_votes.items():
+            loth_file = None
+            nr_files = 0
+            for file_list in v.values():
+                nr_files += len(file_list)
+                for file in file_list:
+                    if file.type in (FileType.FREQ_GROUND, FileType.FREQ_EXCITED):  # knows level of theory & basis set
+                        loth_file = file
+                        break
+            ml_options.append((nr_files, key, f"{loth_file.molecular_formula}\t\t{loth_file.routing_info['loth']}\t\tE₀ = {int(loth_file.ground_state_energy/219474.63*100)/100.}"))
+        ml_options.sort(key=lambda m: m[0], reverse=True)
+        return {m[2]: m[1] for m in ml_options}  # display string: key
+
+
 

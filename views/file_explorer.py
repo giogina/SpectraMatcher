@@ -245,9 +245,9 @@ class FileExplorer:
 
             if file.type not in (FileType.OTHER, FileType.GAUSSIAN_CHECKPOINT, FileType.GAUSSIAN_INPUT):
                 if self.viewmodel.is_ignored(file.tag):
-                    dpg.add_selectable(label="Include in auto-import", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.ignore_tag(u, False))
+                    dpg.add_selectable(label="Un-ignore", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.ignore_tag(u, False))
                 else:
-                    dpg.add_selectable(label="Exclude from auto-import", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.ignore_tag(u, True))
+                    dpg.add_selectable(label="Ignore", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.ignore_tag(u, True))
             if file.type == FileType.EXPERIMENT_EMISSION:
                 dpg.add_selectable(label="Mark as Excitation spectrum", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.mark_file_as_excitation(u, True))
                 dpg.add_spacer(height=2)

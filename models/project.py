@@ -89,7 +89,8 @@ class Project(FileObserver):
             "open data folders": [],
             "open data files": [],
             "experimental spectra": {},
-            "ground state path": None
+            "ground state path": None,
+            "molecule energy key": None
         }
 
         self.window_title = ""  # For bringing that window to the front in Windows

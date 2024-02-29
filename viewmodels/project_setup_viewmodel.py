@@ -24,6 +24,7 @@ class ProjectSetupViewModel(ProjectObserver):
         State.add_observer(self)
         File.add_observer(self)
         self.settings = SettingsManager()
+        self.mlo_options = {}  # temporary storage of Energy / molecule / level of theory options: {display string: key}
 
     def set_callback(self, key, callback):
         if key in self._callbacks.keys():
@@ -69,15 +70,8 @@ class ProjectSetupViewModel(ProjectObserver):
             print("Auto-import failure: Ground state freq file could not be identified.")
             return
 
-
     def get_project_name(self):
         return self._project.get("name", "")
-
-    def get_mlo_list(self):
-        return [f"{mlo[0]}    {mlo[2].routing_info['loth']}     ---     {mlo[2].path}" for mlo in File.molecule_loth_options]
-
-    def get_selected_mlo_path(self):
-        return self._project.get_selected_ground_state_file()
 
     def print_args(self, *args):
         print(f"project setup viewmodel got: {args}")
@@ -87,13 +81,23 @@ class ProjectSetupViewModel(ProjectObserver):
         self._callbacks.get("update states data")()
         self._project.copy_state_settings()
 
-    def select_ground_state_file(self, list_str):
-        """Ground state file selected in top-level dropdown"""
-        path = list_str.split('   ---   ')[-1].strip()
-        for m in File.molecule_loth_options:
-            if m[2].path == path:
-                self.import_state_file(m[2], State.state_list[0])
-                break
+    def get_mlo_list(self):
+        self.mlo_options = File.get_molecule_energy_options()
+        dropdown_items = list(self.mlo_options.keys())
+        if len(dropdown_items) == 0:
+            return [], None
+        chosen_str = dropdown_items[0]
+        chosen_key = tuple(self._project.get("molecule energy key"))
+        if chosen_key in self.mlo_options.values():  # Previously selected entry
+            chosen_str = dropdown_items[list(self.mlo_options.values()).index(chosen_key)]
+        print(f"MLO chosen key: {chosen_key}, string: {chosen_str}")
+        return dropdown_items, chosen_str  #todo: in import: also treat as selected key. Doublecheck state sanity checks.
+
+    def select_mlo(self, list_str):
+        """Molecule & level of theory option selected in top-level dropdown"""
+        key = self.mlo_options.get(list_str)
+        if key is not None:
+            self._project.set("molecule energy key", key)
 
     def import_state_file(self, file, state: State):
         state.import_file(file)

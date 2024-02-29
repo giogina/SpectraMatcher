@@ -2,11 +2,42 @@
     "name": "Ovalene Test",
     "open data folders": [
         "C:\\Users\\Giogina\\Documents\\ovalene",
-        "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited"
+        "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited",
+        "C:\\Users\\Giogina\\Documents\\hbc"
     ],
     "ground state path": "C:\\Users\\Giogina\\Documents\\ovalene\\ground state\\ovalene-ground-opt-freq-disp.log",
     "directory toggle states": {
-        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1": false
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene_0": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited_0": true,
+        "dir_C:\\Users\\Giogina\\Documents\\hbc_0": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT_2": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission_2": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\1st excited_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT_2": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission_2": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT_2": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT emission_2": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT_2": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT emission_2": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\4th excited_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT_2": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT emission_2": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\5th excited_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT_2": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT emission_2": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\experiment_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ground state_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT emission_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\hbc\\1st excited_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\hbc\\2nd excited_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\hbc\\3rd excited_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\hbc\\experiment_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\hbc\\ground_1": true
     },
     "ignored": [
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1",
@@ -19,35 +50,13 @@
     ],
     "experimental spectra": {},
     "open data files": [],
-    "imported state files": [
-        {
-            "freq": null,
-            "excitation": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
-            "emission": null,
-            "anharm": null
-        },
-        {
-            "freq": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log",
-            "excitation": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log",
-            "emission": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
-            "anharm": null
-        },
-        {
-            "freq": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\ovalene-excited-6-freq-disp.log",
-            "excitation": null,
-            "emission": null,
-            "anharm": null
-        }
+    "state settings": [
+        {}
     ],
     "files marked as emission": [],
-    "files marked as excitation": [
-        "C:\\Users\\Giogina\\Documents\\ovalene\\ovalene 2nd excited state excitation table.txt"
-    ],
-    "state settings": [
-        {
-            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\ovalene-excited-3-opt-freq-disp.log",
-            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT emission\\FCHT.log",
-            "hidden": false
-        }
+    "files marked as excitation": [],
+    "molecule energy key": [
+        "C\u2084\u2082H\u2081\u2088",
+        -353663020
     ]
 }

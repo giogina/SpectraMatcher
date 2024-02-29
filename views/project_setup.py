@@ -41,8 +41,8 @@ class ProjectSetup:
 
                 with dpg.group(horizontal=True, tag="mlo group"):
                     dpg.add_spacer(width=24)
-                    dpg.add_combo(tag="mlo combo", show=False, callback=lambda s, a, u: self.viewmodel.select_ground_state_file(a), width=-48)
-                    dpg.add_button(tag="mlo button", label="No ground state frequency calculation found!", width=-48)
+                    dpg.add_combo(tag="mlo combo", show=False, callback=lambda s, a, u: self.viewmodel.select_mlo(a), width=-48)
+                    dpg.add_button(tag="mlo button", label="", width=-48)
             dpg.add_spacer(height=16)
             dpg.bind_item_font("setup panel project name", FontManager.fonts[FontManager.big_font])
 
@@ -90,23 +90,15 @@ class ProjectSetup:
     def update_project_data(self):  # User can choose name, molecule & ground state energy (which in turn depends on method)
         if self.viewmodel.get_project_name() is not None:
             dpg.set_item_label("setup panel project name", self.viewmodel.get_project_name())
-        molecule_and_loth_options = self.viewmodel.get_mlo_list()
-        selected_mlo = self.viewmodel.get_selected_mlo_path()
-        if molecule_and_loth_options is not None and len(molecule_and_loth_options) > 0:
+        molecule_and_loth_options, chosen_item = self.viewmodel.get_mlo_list()
+        if len(molecule_and_loth_options) > 0:
             if len(molecule_and_loth_options) == 1:
-                dpg.set_item_label("mlo button", label=molecule_and_loth_options[0].split('     ---     ')[0])
+                dpg.set_item_label("mlo button", label=molecule_and_loth_options[0])
                 dpg.show_item("mlo button")
                 dpg.hide_item("mlo combo")
             else:
                 dpg.configure_item("mlo combo", items=molecule_and_loth_options)
-                if selected_mlo is None:
-                    dpg.set_value("mlo combo", "Multiple ground state files found! Select one to enable consistency checks.")
-                    dpg.bind_item_theme("mlo combo", self.empty_field_theme)
-                else:
-                    for i in molecule_and_loth_options:
-                        if i.endswith(selected_mlo):
-                            dpg.set_value("mlo combo", i)
-                            dpg.bind_item_theme("mlo combo", None)
+                dpg.set_value("mlo combo", chosen_item)
                 dpg.show_item("mlo combo")
                 dpg.hide_item("mlo button")
 
