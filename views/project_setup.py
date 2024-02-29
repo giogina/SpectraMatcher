@@ -3,7 +3,7 @@ import dearpygui.dearpygui as dpg
 from models.state import State
 from utility.font_manager import FontManager
 from viewmodels.project_setup_viewmodel import ProjectSetupViewModel
-from models.data_file_manager import FileType
+from models.data_file_manager import FileType, File
 from utility.icons import Icons
 from utility.custom_dpg_items import CustomDpgItems
 from views.file_explorer import FileExplorer
@@ -17,6 +17,7 @@ class ProjectSetup:
         self.cdi = CustomDpgItems()
         self.empty_field_theme = None
         self.full_field_theme = None
+        self.big_button_theme = None
         self.actual_button_theme = None
         self.displayed_state_tags = []
         self.icons = Icons()
@@ -38,13 +39,16 @@ class ProjectSetup:
             with dpg.child_window(tag="project overview", height=140):
                 dpg.add_spacer(height=16)
                 dpg.add_button(label="Project name", tag="setup panel project name", width=-1)
+                dpg.bind_item_font("setup panel project name", FontManager.fonts[FontManager.big_font])
 
                 with dpg.group(horizontal=True, tag="mlo group"):
                     dpg.add_spacer(width=24)
                     dpg.add_combo(tag="mlo combo", show=False, callback=lambda s, a, u: self.viewmodel.select_mlo(a), width=-48)
                     dpg.add_button(tag="mlo button", label="", width=-48)
+
+            dpg.add_spacer(height=6)
+            dpg.add_button(label="Auto Import", tag="auto import", width=-1)
             dpg.add_spacer(height=16)
-            dpg.bind_item_font("setup panel project name", FontManager.fonts[FontManager.big_font])
 
             with dpg.collapsing_header(label="Experimental emission spectra", tag="emission spectra node"):
                 with dpg.table(header_row=False):
@@ -101,6 +105,9 @@ class ProjectSetup:
                 dpg.set_value("mlo combo", chosen_item)
                 dpg.show_item("mlo combo")
                 dpg.hide_item("mlo button")
+        if File.nr_unparsed_files == 0 and len(File.molecule_energy_votes.keys()) > 0:
+            dpg.bind_item_theme("auto import", self.big_button_theme)
+            dpg.configure_item("auto import", callback=self.viewmodel.auto_import)
 
     def add_state_tree_node(self, state: State):
         self.displayed_state_tags.append(f"state-node-{state.tag}")
@@ -148,9 +155,9 @@ class ProjectSetup:
                         with dpg.group(horizontal=True):
                             dpg.add_button(tag=f"delta E {state.tag}", height=32)
                         with dpg.group():
-                            self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state, tag=f"hide {state.tag}", callback=lambda s, a, u: self.viewmodel.hide_state(u, False)), icon=Icons.eye_slash, size=16)
-                            self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state, tag=f"show {state.tag}", callback=lambda s, a, u: self.viewmodel.hide_state(u, True)), icon=Icons.eye, size=16)
                             if not state.is_ground:
+                                self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state, tag=f"hide {state.tag}", callback=lambda s, a, u: self.viewmodel.hide_state(u, False)), icon=Icons.eye_slash, size=16)
+                                self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state, tag=f"show {state.tag}", callback=lambda s, a, u: self.viewmodel.hide_state(u, True)), icon=Icons.eye, size=16)
                                 self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state, tag=f"trash {state.tag}", callback=lambda s, a, u: self.viewmodel.delete_state(u)), icon=Icons.trash, size=16, tooltip="Delete this state")
 
             dpg.add_spacer(height=24)
@@ -193,8 +200,8 @@ class ProjectSetup:
             dpg.bind_item_theme(f"hide {state.tag}", self.actual_button_theme)
         if dpg.does_item_exist(f"trash {state.tag}"):
             dpg.bind_item_theme(f"trash {state.tag}", self.actual_button_theme)
-            if state.delta_E is not None and not state.is_ground:
-                dpg.set_item_label(f"delta E {state.tag}", f"ΔE = {state.delta_E} cm⁻¹")
+            if state.delta_E is not None:
+                dpg.set_item_label(f"delta E {state.tag}", f"ΔE = {int(state.delta_E*100)/100.} cm⁻¹")
 
     def add_state(self):
         self.viewmodel.add_state()
@@ -279,6 +286,24 @@ class ProjectSetup:
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, palette[6])
                 dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, palette[4])
         dpg.bind_item_theme("add state button", self.actual_button_theme)
+
+        with dpg.theme() as inactive_big_button_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [60, 20, 200, 50])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [60, 20, 200, 50])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [60, 20, 200, 50])
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 20)
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 120])
+        dpg.bind_item_theme("auto import", inactive_big_button_theme)
+
+        with dpg.theme() as self.big_button_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [60, 20, 200])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [40, 20, 200])
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, palette[4])
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 20)
+                dpg.add_theme_color(dpg.mvThemeCol_Text, [255, 255, 255, 200])
+        # dpg.bind_item_theme("auto import", big_button_theme)
 
         with dpg.theme() as project_overview_theme:
             with dpg.theme_component(dpg.mvAll):

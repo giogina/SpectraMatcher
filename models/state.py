@@ -5,8 +5,8 @@ import time
 
 
 class State:
-    molecular_formula = None
-    ground_state_energy = None  # Used for identification of matching files. Set only by ground state file.
+    # Used for identification of matching files. Set only by select_molecule_and_ground_state_energy, or from project.
+    molecule_and_method = {"molecule": None, "ground state energy": None}
     state_list = []
     _observers = []
     imported_file_changed_notification = "State file changed"
@@ -30,13 +30,14 @@ class State:
         self.excited_geometry = None
         self.is_ground = len(self.state_list) == 0
         self.excited_state_energy = None
-        self.delta_E = None
+        self.delta_E = 0 if self.is_ground else None
         self.tag = f"state {time.time()} {len(self.state_list)}"
         self.state_list.append(self)
         self.name = None
+        self.own_molecular_formula = None  # todo: assign these instead of class variables. Class variables are chosen by majority file vote / user selection, and then serve to check against instances.
         self.own_ground_state_energy = None
         State.sort_states_by_energy()
-        # "freq file": None,: None,: None, : None
+
         # Load from paths, if supplied.
         for path_key in ("freq file", "emission file", "excitation file", "anharm file"):
             path = self.settings.get(path_key)
@@ -67,6 +68,15 @@ class State:
         if file.progress == "parsing done":
             self.assimilate_file_data(file)  # if not, the file will call that function upon completion.
 
+    @classmethod
+    def select_molecule_and_ground_state_energy(cls, molecule, ground_state_energy):
+        cls.molecule_and_method["molecule"] = molecule
+        cls.molecule_and_method["ground state energy"] = ground_state_energy
+        cls.state_list = [s  # wipe states that won't fit.
+                          if (s.own_ground_state_energy is None or abs(s.own_ground_state_energy - ground_state_energy) < 1)
+                          and (s.own_molecular_formula is None or s.own_molecular_formula == molecule) else s.wipe()
+                          for s in cls.state_list]
+
     # todo: further checks:
     #  * automatic scan & add (group by delta_E? Once I have general ground state energy, that'd be easy)
 
@@ -74,27 +84,36 @@ class State:
         if file.progress != "parsing done":
             print(f"Warning in molecular_data assimilate_file_data: File wasn't done parsing yet: {file.path}")
             return
+        if State.molecule_and_method.get("molecule") is None:
+            if file.ground_state_energy is not None:  # allow file choice to select molecule
+                State.select_molecule_and_ground_state_energy(file.molecular_formula, file.ground_state_energy)
+        elif file.molecular_formula != State.molecule_and_method["molecule"]:
+            print("File rejected: Different molecule!")
+            self.freq_hint = "File rejected: Different molecule!"
+            self._notify_observers(self.imported_file_changed_notification)
+            return
+        elif file.ground_state_energy is not None and abs(file.ground_state_energy - State.molecule_and_method.get("ground state energy"))>1:
+            print("File rejected: Belongs to a different ground state energy!")
+            self.freq_hint = "File rejected: Belongs to a different ground state energy!"
+            self._notify_observers(self.imported_file_changed_notification)
+            return
         old_order = [x.delta_E for x in self.state_list]
+
         if file.type == FileType.FREQ_GROUND:
             if not self.is_ground:
                 print("File rejected: Can't have two ground states.")
                 self.freq_hint = "File rejected: Can't have two ground states."
+                self._notify_observers(self.imported_file_changed_notification)
                 return
+
             self.settings["freq file"] = file.path
-            self.molecular_formula = file.molecular_formula
-            self.ground_state_energy = file.energy
+            self.own_molecular_formula = file.molecular_formula
             self.own_ground_state_energy = file.energy
             self.delta_E = 0  # just to keep it in the front
             self.vibrational_modes = file.modes
 
-            for s in self.state_list:
-                if s.own_ground_state_energy is not None:
-                    if abs(s.own_ground_state_energy - self.ground_state_energy) > 1:
-                        print(f"Imported new ground state file with different energy! Wiping {s.name}.")
-                        s.wipe()
-
         elif file.type == FileType.FREQ_EXCITED:
-            gse = self.ground_state_energy if self.ground_state_energy is not None else self.own_ground_state_energy
+            gse = file.ground_state_energy if file.ground_state_energy is not None else self.own_ground_state_energy
             if gse is not None:
                 delta_E = abs(file.energy - gse)
                 if self.delta_E is not None:  # 0-0 transition energy known from FC file
@@ -113,7 +132,7 @@ class State:
                     self.excitation_hint = "File rejected: New file 0-0 transition energy doesn't match previously added files."
                     self._notify_observers(self.imported_file_changed_notification)
                     return
-            if self.ground_state_energy is not None and abs(self.ground_state_energy - file.energy) > 1:
+            if self.own_ground_state_energy is not None and abs(self.own_ground_state_energy - file.energy) > 1:
                 self.excitation_hint = "File rejected: Ground state energy doesn't match selected ground state."
                 self._notify_observers(self.imported_file_changed_notification)
                 return
@@ -130,7 +149,7 @@ class State:
                     self.emission_hint = "File rejected: 0-0 transition energy doesn't match previously added files."
                     self._notify_observers(self.imported_file_changed_notification)
                     return
-            if self.ground_state_energy is not None and abs(self.ground_state_energy - file.energy) > 1:
+            if self.own_ground_state_energy is not None and abs(self.own_ground_state_energy - file.energy) > 1:
                 self.emission_hint = "File rejected: Ground state energy doesn't match selected ground state."
                 self._notify_observers(self.imported_file_changed_notification)
                 return

@@ -89,8 +89,7 @@ class Project(FileObserver):
             "open data folders": [],
             "open data files": [],
             "experimental spectra": {},
-            "ground state path": None,
-            "molecule energy key": None
+            "ground state path": None
         }
 
         self.window_title = ""  # For bringing that window to the front in Windows
@@ -99,7 +98,7 @@ class Project(FileObserver):
     def update(self, event_type, *args):
         self._data["open data folders"] = [d.path for _, d in self.data_file_manager.top_level_directories.items()]
         self._data["open data files"] = [file.path for _, file in self.data_file_manager.top_level_files.items()]
-        self._project_unsaved(True)
+        self.project_unsaved(True)
 
     def load(self, auto=False):
         """Load project file"""
@@ -143,6 +142,9 @@ class Project(FileObserver):
         if "ground state path" not in self._data.keys():
             self._data["ground state path"] = None
         State({"freq file": self._data["ground state path"]})
+        if "State class info" not in self._data.keys():
+            self._data["State class info"] = {"molecule": None, "ground state energy": None}
+        State.molecule_and_method = self._data["State class info"]
         if "state settings" not in self._data.keys():  # Excited states
             self._data["state settings"] = [{}]
         for s in self._data["state settings"]:
@@ -229,7 +231,7 @@ class Project(FileObserver):
                     self._hide(self._autosave_file)
                 self._logger.info(f"Save successful.")
                 if not auto:
-                    self._project_unsaved(False)
+                    self.project_unsaved(False)
             except (IOError, OSError) as e:
                 self._logger.error(f"Error saving project: {e}")
                 if temp_file_path:
@@ -263,7 +265,7 @@ class Project(FileObserver):
             for observer in self._observers[event_type]:
                 observer.update(event_type, args)
 
-    def _project_unsaved(self, changed=True):
+    def project_unsaved(self, changed=True):
         self._is_unsaved = changed
         self._notify_observers("project_unsaved", changed)
 
@@ -299,7 +301,7 @@ class Project(FileObserver):
 
         self._settings.add_recent_project(self.project_file)
         self.window_title = self._assemble_window_title()
-        self._project_unsaved(False)
+        self.project_unsaved(False)
 
         # Rename autosave
         old_autosave = self._autosave_file
@@ -346,12 +348,12 @@ class Project(FileObserver):
             self._logger.info(f"Used an unknown project data key '{key}'. Added it anyway.")
         with self._data_lock:
             self._data[key] = value
-        self._project_unsaved()
+        self.project_unsaved()
 
     def select_ground_state_file(self, path):
         print(f"Setting ground state path in project: {path}")
         self._data["ground state path"] = path
-        self._project_unsaved()
+        self.project_unsaved()
 
     def get_selected_ground_state_file(self):
         return self._data.get("ground state path")
@@ -362,7 +364,7 @@ class Project(FileObserver):
         for state in State.state_list[1:]:
             # paths = {"freq": state.freq_file, "excitation": state.excitation_file, "emission": state.emission_file, "anharm": state.anharm_file}
             self._data["state settings"].append(state.settings)
-        self._project_unsaved()
+        self.project_unsaved()
 
     def set_experimental_file(self, path):
         self._data["experimental spectra"][path] = ExperimentalSpectrum(path)

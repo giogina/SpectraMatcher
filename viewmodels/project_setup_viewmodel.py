@@ -58,14 +58,13 @@ class ProjectSetupViewModel(ProjectObserver):
         #     self._callbacks.get("update experimental data")(exp_data)
 
     def auto_import(self):
-        # check State.ground_state_energy; if only one ground file, use that; if none, majority-vote on energy and use an FC file as ground file.
-        all_files = self._project.data_file_manager.all_files  # todo: It's kind of weird to depend on the ground state file when that information is in every FC file...
-        ground_energy = None
-        if len(File.molecule_loth_options) == 1:
+
+
+        if len(File.molecule_loth_options) == 1:  # todo: respect ignore (file.ignored)
             ground_file = File.molecule_loth_options[0][2]
             ground_energy = ground_file.energy
         elif State.ground_state_energy is not None:
-            pass
+            pass  # todo> read from selection as if clicked
         if ground_file is None:
             print("Auto-import failure: Ground state freq file could not be identified.")
             return
@@ -87,17 +86,17 @@ class ProjectSetupViewModel(ProjectObserver):
         if len(dropdown_items) == 0:
             return [], None
         chosen_str = dropdown_items[0]
-        chosen_key = tuple(self._project.get("molecule energy key"))
+        chosen_key = (State.molecule_and_method.get("molecule"), int(State.molecule_and_method.get("ground state energy", -1)))
         if chosen_key in self.mlo_options.values():  # Previously selected entry
             chosen_str = dropdown_items[list(self.mlo_options.values()).index(chosen_key)]
         print(f"MLO chosen key: {chosen_key}, string: {chosen_str}")
-        return dropdown_items, chosen_str  #todo: in import: also treat as selected key. Doublecheck state sanity checks.
+        return dropdown_items, chosen_str
 
-    def select_mlo(self, list_str):
+    def select_mlo(self, list_str):  #todo: auto import: also treat as selecteing a key. Doublecheck state sanity checks.
         """Molecule & level of theory option selected in top-level dropdown"""
         key = self.mlo_options.get(list_str)
-        if key is not None:
-            self._project.set("molecule energy key", key)
+        State.select_molecule_and_ground_state_energy(*key)
+        self._project.project_unsaved()
 
     def import_state_file(self, file, state: State):
         state.import_file(file)

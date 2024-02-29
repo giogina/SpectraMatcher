@@ -7,7 +7,7 @@
     ],
     "ground state path": "C:\\Users\\Giogina\\Documents\\ovalene\\ground state\\ovalene-ground-opt-freq-disp.log",
     "directory toggle states": {
-        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1": false,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene_0": true,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited_0": true,
         "dir_C:\\Users\\Giogina\\Documents\\hbc_0": true,
@@ -55,8 +55,8 @@
     ],
     "files marked as emission": [],
     "files marked as excitation": [],
-    "molecule energy key": [
-        "C\u2084\u2082H\u2081\u2088",
-        -353663020
-    ]
+    "State class info": {
+        "molecule": "C\u2083\u2082H\u2081\u2084",
+        "ground state energy": -269539068
+    }
 }
