@@ -58,16 +58,13 @@ class ProjectSetupViewModel(ProjectObserver):
         #     self._callbacks.get("update experimental data")(exp_data)
 
     def auto_import(self):
-
-
-        if len(File.molecule_loth_options) == 1:  # todo: respect ignore (file.ignored)
-            ground_file = File.molecule_loth_options[0][2]
-            ground_energy = ground_file.energy
-        elif State.ground_state_energy is not None:
-            pass  # todo> read from selection as if clicked
-        if ground_file is None:
-            print("Auto-import failure: Ground state freq file could not be identified.")
+        if len(self.mlo_options.keys()) == 0:
+            print("Auto-import failure: Ground state energy could not be identified.")
             return
+        if State.molecule_and_method.get("ground state energy") is None:  # Nothing selected, act as if first mlo was clicked
+            self.select_mlo(list(self.mlo_options.keys())[0])
+        State.auto_import()
+        self._project.copy_state_settings()
 
     def get_project_name(self):
         return self._project.get("name", "")

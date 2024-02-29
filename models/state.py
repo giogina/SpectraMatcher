@@ -203,3 +203,31 @@ class State:
         self.name = None
         self.own_ground_state_energy = None
         self._notify_observers(self.imported_file_changed_notification)
+
+    @classmethod
+    def auto_import(cls):
+        ground_state_energy = cls.molecule_and_method.get("ground state energy")
+        if ground_state_energy is not None:
+            chosen_key = (cls.molecule_and_method.get("molecule"), int(ground_state_energy))
+            file_structure = File.molecule_energy_votes.get(chosen_key)
+            if file_structure is not None:
+                for state in State.state_list:
+                    del state
+                State.state_list = []
+                delta_E_list = list(file_structure.keys())
+                if len(delta_E_list) > 0:
+                    delta_E_list.sort()
+                    if delta_E_list[0] == 0:  # there is a ground state file
+                        for file in file_structure[delta_E_list[0]]:
+                            if not file.ignored:
+                                s = State()
+                                s.is_ground = True
+                                s.assimilate_file_data(file)
+                                break
+                        delta_E_list = delta_E_list[1:]
+                    for delta_E in delta_E_list:
+                        s = State()
+                        s.is_ground = False
+                        for file in file_structure.get(delta_E, []):
+                            if not file.ignored:
+                                s.assimilate_file_data(file)
