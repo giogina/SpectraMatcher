@@ -234,6 +234,9 @@ class File:
     _observers = []
     notification = "file changed"
     molecule_loth_options = []  # Keeps track of found tuples (molecular formula, level of theory, ground state energy)
+    molecule_energy_votes = {}  # (molecular formula, int(ground state energy)):
+                                #                {delta_E: [freq, fc files], 0: [ground freq file]}
+    freq_voters_waiting = []  # can be attached to one of the above sub-dict entries once the delta_E's are known
 
     def __init__(self, path, name=None, parent=None, depth=0, state=None, mark_as_exp=None):
         self.properties = {}
@@ -417,6 +420,7 @@ class File:
                     self.type = FileType.EXPERIMENT_EXCITATION
         self.properties = properties
         self.lines = lines
+
         return self
 
     def _analyse_data(self):
@@ -438,5 +442,39 @@ class File:
             mlo = (self.molecular_formula, int(self.energy*10)/10., self)
             if (mlo[0], mlo[1]) not in [(m[0], m[1]) for m in self.molecule_loth_options]:
                 self.molecule_loth_options.append(mlo)
+
+        if self.type in (FileType.FREQ_GROUND, FileType.FC_EMISSION, FileType.FC_EXCITATION):
+            if self.energy is not None and self.molecular_formula is not None:
+                molecule_energy_key = (self.molecular_formula, int(self.energy))
+                delta_E = 0 if self.type == FileType.FREQ_GROUND else int(self.spectrum.zero_zero_transition_energy)
+                if molecule_energy_key in self.molecule_energy_votes:
+                    if delta_E in self.molecule_energy_votes[molecule_energy_key]:
+                        if self.path not in [f.path for f in self.molecule_energy_votes[molecule_energy_key][delta_E]]:
+                            self.molecule_energy_votes[molecule_energy_key][delta_E].append(self)
+                    else:
+                        self.molecule_energy_votes[molecule_energy_key][delta_E] = [self]
+                else:
+                    self.molecule_energy_votes[molecule_energy_key] = {delta_E: [self]}
+                for waiting_freq in self.freq_voters_waiting:
+                    if waiting_freq.molecular_formula == self.molecular_formula:
+                        if abs(abs(waiting_freq.energy - self.energy) - delta_E) < 10:
+                            self.molecule_energy_votes[molecule_energy_key][delta_E].append(waiting_freq)
+                            self.freq_voters_waiting.remove(waiting_freq)
+                            break
+        elif self.type == FileType.FREQ_EXCITED:
+            self.freq_voters_waiting.append(self)
+            for key, de in self.molecule_energy_votes.items():
+                if self.molecular_formula == key[0]:
+                    ground_state_energy = key[1]
+                    for delta_E, file_list in de.items():
+                        if abs(abs(self.energy - ground_state_energy) - delta_E) < 10:
+                            if self.path not in [f.path for f in self.molecule_energy_votes[key][delta_E]]:
+                                self.molecule_energy_votes[key][delta_E].append(self)
+                            if self in self.freq_voters_waiting:
+                                self.freq_voters_waiting.remove(self)
+                            break
+        # for gse, e in self.molecule_energy_votes.items():
+        #     for de, fs in e.items():
+        #         print(gse, de, [int(f.energy-gse[1]) for f in fs])
         return self
 

@@ -96,7 +96,7 @@ class State:
         elif file.type == FileType.FREQ_EXCITED:
             gse = self.ground_state_energy if self.ground_state_energy is not None else self.own_ground_state_energy
             if gse is not None:
-                delta_E = abs(file.energy - gse) * 219474.63
+                delta_E = abs(file.energy - gse)
                 if self.delta_E is not None:  # 0-0 transition energy known from FC file
                     if abs(delta_E - self.delta_E) > 20:
                         self.freq_hint = "File rejected: New freq file energy does not match previously added files."

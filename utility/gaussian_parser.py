@@ -88,7 +88,7 @@ class GaussianParser:
             elif energy is None and line.strip().startswith("Sum of electronic and zero-point Energies="):
                 match = re.search(r"[-+]?[0-9]*\.?[0-9]+", line)
                 if match:
-                    energy = float(match.group())
+                    energy = float(match.group()) * 219474.63  # convert to cm^(-1)
             elif line.strip() in ("Standard orientation:",  "Input orientation:"):
                 start_lines["last geom"] = i+1
             elif line.strip() == "New orientation in initial state":  # Eckart orientation in FC files! Use this!

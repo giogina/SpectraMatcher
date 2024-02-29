@@ -61,7 +61,7 @@
             "Molecule",
             70,
             50,
-            false
+            true
         ],
         [
             "Multiplicity",
