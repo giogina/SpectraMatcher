@@ -242,6 +242,7 @@ class File:
     molecule_energy_votes = {}  # (molecular formula, int(ground state energy)):
                                             # {delta_E: [freq, fc files], 0: [ground freq file]}
     freq_voters_waiting = []  # can be attached to one of the above sub-dict entries once the delta_E's are known
+    experiment_files = []
     nr_unparsed_files = 0
 
     def __init__(self, path, name=None, parent=None, depth=0, state=None, mark_as_exp=None):
@@ -428,6 +429,7 @@ class File:
                     self.type = FileType.EXPERIMENT_EMISSION
                 else:
                     self.type = FileType.EXPERIMENT_EXCITATION
+            File.experiment_files.append(self)
         self.properties = properties
         self.lines = lines
 
@@ -453,39 +455,38 @@ class File:
                 self.properties[GaussianLog.STATUS] = GaussianLog.NEGATIVE_FREQUENCY
         self.lines = None  # Forget lines now that file has been parsed.
 
-        if not self.ignored:
-            if self.type in (FileType.FREQ_GROUND, FileType.FC_EMISSION, FileType.FC_EXCITATION):
-                self.ground_state_energy = self.energy
-                if self.energy is not None and self.molecular_formula is not None:
-                    molecule_energy_key = (self.molecular_formula, int(self.energy))
-                    delta_E = 0 if self.type == FileType.FREQ_GROUND else int(self.spectrum.zero_zero_transition_energy)
-                    if molecule_energy_key in self.molecule_energy_votes:
-                        if delta_E in self.molecule_energy_votes[molecule_energy_key]:
-                            if self.path not in [f.path for f in self.molecule_energy_votes[molecule_energy_key][delta_E]]:
-                                self.molecule_energy_votes[molecule_energy_key][delta_E].append(self)
-                        else:
-                            self.molecule_energy_votes[molecule_energy_key][delta_E] = [self]
+        if self.type in (FileType.FREQ_GROUND, FileType.FC_EMISSION, FileType.FC_EXCITATION):
+            self.ground_state_energy = self.energy
+            if self.energy is not None and self.molecular_formula is not None:
+                molecule_energy_key = (self.molecular_formula, int(self.energy))
+                delta_E = 0 if self.type == FileType.FREQ_GROUND else int(self.spectrum.zero_zero_transition_energy)
+                if molecule_energy_key in self.molecule_energy_votes:
+                    if delta_E in self.molecule_energy_votes[molecule_energy_key]:
+                        if self.path not in [f.path for f in self.molecule_energy_votes[molecule_energy_key][delta_E]]:
+                            self.molecule_energy_votes[molecule_energy_key][delta_E].append(self)
                     else:
-                        self.molecule_energy_votes[molecule_energy_key] = {delta_E: [self]}
-                    for waiting_freq in self.freq_voters_waiting:
-                        if waiting_freq.molecular_formula == self.molecular_formula:
-                            if abs(abs(waiting_freq.energy - self.energy) - delta_E) < 10:
-                                self.molecule_energy_votes[molecule_energy_key][delta_E].append(waiting_freq)
-                                self.freq_voters_waiting.remove(waiting_freq)
-                                break
-            elif self.type == FileType.FREQ_EXCITED:
-                self.freq_voters_waiting.append(self)
-                for key, de in self.molecule_energy_votes.items():
-                    if self.molecular_formula == key[0]:
-                        ground_state_energy = key[1]
-                        for delta_E, file_list in de.items():
-                            if abs(abs(self.energy - ground_state_energy) - delta_E) < 10:
-                                self.ground_state_energy = file_list[0].ground_state_energy  # get accurate one
-                                if self.path not in [f.path for f in self.molecule_energy_votes[key][delta_E]]:
-                                    self.molecule_energy_votes[key][delta_E].append(self)
-                                if self in self.freq_voters_waiting:
-                                    self.freq_voters_waiting.remove(self)
-                                break
+                        self.molecule_energy_votes[molecule_energy_key][delta_E] = [self]
+                else:
+                    self.molecule_energy_votes[molecule_energy_key] = {delta_E: [self]}
+                for waiting_freq in self.freq_voters_waiting:
+                    if waiting_freq.molecular_formula == self.molecular_formula:
+                        if abs(abs(waiting_freq.energy - self.energy) - delta_E) < 10:
+                            self.molecule_energy_votes[molecule_energy_key][delta_E].append(waiting_freq)
+                            self.freq_voters_waiting.remove(waiting_freq)
+                            break
+        elif self.type == FileType.FREQ_EXCITED:
+            self.freq_voters_waiting.append(self)
+            for key, de in self.molecule_energy_votes.items():
+                if self.molecular_formula == key[0]:
+                    ground_state_energy = key[1]
+                    for delta_E, file_list in de.items():
+                        if abs(abs(self.energy - ground_state_energy) - delta_E) < 10:
+                            self.ground_state_energy = file_list[0].ground_state_energy  # get accurate one
+                            if self.path not in [f.path for f in self.molecule_energy_votes[key][delta_E]]:
+                                self.molecule_energy_votes[key][delta_E].append(self)
+                            if self in self.freq_voters_waiting:
+                                self.freq_voters_waiting.remove(self)
+                            break
         return self
 
     @classmethod

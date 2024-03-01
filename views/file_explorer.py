@@ -498,6 +498,9 @@ class FileExplorer:
             if type(file.properties) == dict and file.properties.get(GaussianLog.STATUS) == GaussianLog.FINISHED:
                 with dpg.drag_payload(parent=f"{file.tag}-c{1}", drag_data=file, payload_type="Ground file" if file.type==FileType.FREQ_GROUND else "Excited file"):
                     dpg.add_text(file.path)
+            if file.type in (FileType.EXPERIMENT_EMISSION, FileType.EXPERIMENT_EXCITATION):
+                with dpg.drag_payload(parent=f"{file.tag}-c{1}", drag_data=file, payload_type="Experiment file"):
+                    dpg.add_text(file.path)
         else:
             dpg.configure_item(f"{file.tag}-c0-img", width=0, show=False)
             dpg.configure_item(f"{file.tag}-c0", width=self._table_columns[0][1], show=True)

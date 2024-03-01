@@ -95,7 +95,8 @@ class ProjectSetupViewModel(ProjectObserver):
         State.select_molecule_and_ground_state_energy(*key)
         self._project.project_unsaved()
 
-    def import_state_file(self, file, state: State):
+    def import_state_file(self, file, state_index):
+        state = State.state_list[state_index]
         state.import_file(file)
         if state.is_ground:
             self._project.select_ground_state_file(file.path)
@@ -103,11 +104,13 @@ class ProjectSetupViewModel(ProjectObserver):
             self._project.copy_state_settings()
         self._callbacks.get("update project")()
 
-    def hide_state(self, state: State, hide=True):
+    def hide_state(self, state_index, hide=True):
+        state = State.state_list[state_index]
         state.settings["hidden"] = hide
         self._callbacks.get("update state data")(state)
 
-    def delete_state(self, state: State):
+    def delete_state(self, state_index):
+        state = State.state_list[state_index]
         if state in State.state_list:
             State.state_list.remove(state)
         self._callbacks.get("update states data")()
