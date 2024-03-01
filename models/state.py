@@ -6,7 +6,7 @@ import time
 
 class State:
     # Used for identification of matching files. Set only by select_molecule_and_ground_state_energy, or from project.
-    molecule_and_method = {"molecule": None, "ground state energy": None}
+    molecule_and_method = {"molecule": None, "ground state energy": None}  # coupled to project._data
     state_list = []
     _observers = []
     imported_file_changed_notification = "State file changed"
@@ -17,7 +17,7 @@ class State:
     def __init__(self, settings=None):
         if settings is None:
             settings = {}
-        self.settings = settings  # all user-selected data that needs to be persisted
+        self.settings = settings  # coupled to project._data
         self.freq_hint = "Drag & drop file here, or click 'auto import'"
         self.anharm_hint = "Drag & drop file here, or click 'auto import'"
         self.emission_hint = "Drag & drop file here, or click 'auto import'"
@@ -76,9 +76,6 @@ class State:
                           if (s.own_ground_state_energy is None or abs(s.own_ground_state_energy - ground_state_energy) < 1)
                           and (s.own_molecular_formula is None or s.own_molecular_formula == molecule) else s.wipe()
                           for s in cls.state_list]
-
-    # todo: further checks:
-    #  * automatic scan & add (group by delta_E? Once I have general ground state energy, that'd be easy)
 
     def assimilate_file_data(self, file: File):
         if file.progress != "parsing done":

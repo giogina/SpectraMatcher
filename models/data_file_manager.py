@@ -245,7 +245,7 @@ class File:
     experiment_files = []
     nr_unparsed_files = 0
 
-    def __init__(self, path, name=None, parent=None, depth=0, state=None, mark_as_exp=None):
+    def __init__(self, path, name=None, parent=None, depth=0, state=None, experiment=None, mark_as_exp=None):
         File.nr_unparsed_files += 1
         self.properties = {}
         self.is_human_readable = True  # \n instead of \r\n making it ugly in notepad
@@ -277,6 +277,8 @@ class File:
         self.modes = None
         self.progress = "start"
         self.state = state  # When imported into project, references state this file belongs to.
+        self.experiment = experiment  # When imported into project, references state this file belongs to.
+        self.columns = None  # For experimental file
 
         self.submit_what_am_i()
 
@@ -289,6 +291,8 @@ class File:
             self.progress = event_type
             if self.state is not None:
                 self.state.assimilate_file_data(self)
+            if self.experiment is not None:
+                self.experiment.assimilate_file_data(self)
             File.nr_unparsed_files -= 1
             self.notify_observers()  # Notify all observers of File of the update
 
@@ -409,8 +413,9 @@ class File:
             self.type = FileType.GAUSSIAN_CHECKPOINT
         elif self.extension == ".txt":
             try:
-                delim, is_table = ExperimentParser.guess_delimiter_and_check_table(self.path)
-                self.properties["delimiter"] = delim
+                lines = self._read_file_lines()
+                delim, is_table = ExperimentParser.guess_delimiter_and_check_table(lines)
+                properties["delimiter"] = delim
             except Exception as e:
                 print(f"File {self.path} couldn't be read! {e}")
         elif self.extension in ['.csv', '.tsv', '.xlsx', '.xls', '.xlsm', '.xltx', '.xltm', '.ods']:  # TODO> Document available formats.
@@ -454,6 +459,13 @@ class File:
             if self.modes.get_wavenumbers(1)[0] < 0:
                 self.properties[GaussianLog.STATUS] = GaussianLog.NEGATIVE_FREQUENCY
         self.lines = None  # Forget lines now that file has been parsed.
+        if self.type in (FileType.EXPERIMENT_EXCITATION, FileType.EXPERIMENT_EMISSION):
+            print(f"Parsing exp file: {self.path}")
+            columns = ExperimentParser.read_file_as_arrays(self.path, self.extension, self.properties.get("delimiter"))
+            if columns is None:  # ran into a parsing error
+                self.type = FileType.OTHER
+            else:
+                self.columns = columns
 
         if self.type in (FileType.FREQ_GROUND, FileType.FC_EMISSION, FileType.FC_EXCITATION):
             self.ground_state_energy = self.energy
@@ -487,6 +499,7 @@ class File:
                             if self in self.freq_voters_waiting:
                                 self.freq_voters_waiting.remove(self)
                             break
+
         return self
 
     @classmethod

@@ -1,6 +1,7 @@
 import dearpygui.dearpygui as dpg
 
 from models.state import State
+from models.experimental_spectrum import ExperimentalSpectrum
 from utility.font_manager import FontManager
 from viewmodels.project_setup_viewmodel import ProjectSetupViewModel
 from models.data_file_manager import FileType, File
@@ -51,13 +52,14 @@ class ProjectSetup:
             dpg.add_spacer(height=16)
 
             with dpg.collapsing_header(label="Experimental spectra", tag="experimental spectra node", leaf=True):
-                with dpg.group(width=-1, horizontal=True, drop_callback=viewmodel.set_experimental_file, payload_type="Experiment file"):
+                with dpg.group(width=-1, horizontal=True, drop_callback=lambda s, file: self.viewmodel.import_experimental_file(file), payload_type="Experiment file"):
                     with dpg.table(header_row=True):
                         dpg.add_table_column(label="File")
                         dpg.add_table_column(label="wavenumber")
-                        dpg.add_table_column(label="intensity")
                         dpg.add_table_column(label="xmin")
                         dpg.add_table_column(label="xmax")
+                        dpg.add_table_column(label="intensities")
+                    dpg.add_spacer(height=4)
                 dpg.add_spacer(height=24)
 #
             with dpg.group(horizontal=True, tag="state buttons"):
@@ -72,8 +74,6 @@ class ProjectSetup:
         self.update_states()
 
             #  color choice buttons for each state
-
-            # TODO: Allow for excitation/emission only. (Action bar buttons). Grey out unnecessary files, change okay button activity conditions.
 
     def update_project_data(self):  # User can choose name, molecule & ground state energy (which in turn depends on method)
         if self.viewmodel.get_project_name() is not None:
@@ -95,7 +95,7 @@ class ProjectSetup:
 
     def add_state_tree_node(self):
         state_index = self.nr_state_nodes
-        with dpg.collapsing_header(leaf=True, label=State.state_list[0].name, parent="project setup panel", before="state buttons", tag=f"state-node-{state_index}", default_open=True):
+        with dpg.collapsing_header(leaf=True, label=State.state_list[state_index].name, parent="project setup panel", before="state buttons", tag=f"state-node-{state_index}", default_open=True):
             self.nr_state_nodes += 1
             with dpg.group(width=-1, horizontal=True, drop_callback=lambda s, file: self.viewmodel.import_state_file(file, state_index), payload_type="Ground file" if state_index == 0 else "Excited file"):
                 with dpg.table(header_row=False):
@@ -206,9 +206,9 @@ class ProjectSetup:
             for i in range(nr_displayed_states, len(State.state_list)):
                 self.add_state_tree_node()
 
-    def update_experimental_data(self, experimental_spectra):
+    def update_experimental_data(self):
         """Display all the experimental data (from scratch, in table)"""
-        print(f"Updating exp data: {experimental_spectra}")  # TODO> Display this stuff
+        print(f"Updating exp data: {[e.settings for e in ExperimentalSpectrum.spectra_list]}")  # TODO> Display this stuff
 
     def configure_theme(self):
         palette = [[11, 11, 36],  # 0

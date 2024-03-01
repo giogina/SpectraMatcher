@@ -1,3 +1,4 @@
+from models.experimental_spectrum import ExperimentalSpectrum
 from models.settings_manager import SettingsManager
 from models.project import Project, ProjectObserver
 from models.data_file_manager import File
@@ -86,7 +87,6 @@ class ProjectSetupViewModel(ProjectObserver):
         chosen_key = (State.molecule_and_method.get("molecule"), int(State.molecule_and_method.get("ground state energy", -1)))
         if chosen_key in self.mlo_options.values():  # Previously selected entry
             chosen_str = dropdown_items[list(self.mlo_options.values()).index(chosen_key)]
-        print(f"MLO chosen key: {chosen_key}, string: {chosen_str}")
         return dropdown_items, chosen_str
 
     def select_mlo(self, list_str):  #todo: auto import: also treat as selecteing a key. Doublecheck state sanity checks.
@@ -116,10 +116,15 @@ class ProjectSetupViewModel(ProjectObserver):
         self._callbacks.get("update states data")()
         self._project.copy_state_settings()
 
-    def set_experimental_file(self, file_path):
-        print(file_path)
-        self._project.set_experimental_file(file_path)
+    def import_experimental_file(self, file: File):
+        print(file)
+        ExperimentalSpectrum(file)
+        self._callbacks.get("update experimental data")()
+        self._project.copy_experiment_settings()
 
-    def delete_experimental_file(self, file_path):
-        self._project.delete_experimental_file(file_path)
+    def delete_experimental_file(self, exp: ExperimentalSpectrum):
+        if exp in ExperimentalSpectrum.spectra_list:
+            ExperimentalSpectrum.spectra_list.remove(exp)
+        self._callbacks.get("update experimental data")()
+        self._project.copy_experiment_settings()
 

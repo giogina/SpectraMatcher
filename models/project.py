@@ -7,8 +7,10 @@ import threading
 import time
 import ctypes
 import matplotlib.colors as mcolors
+
+from models.experimental_spectrum import ExperimentalSpectrum
 from models.settings_manager import SettingsManager
-from models.data_file_manager import DataFileManager, FileObserver, FileType
+from models.data_file_manager import DataFileManager, FileObserver, FileType, File
 from models.state import State
 from utility.gaussian_parser import GaussianParser
 
@@ -29,10 +31,10 @@ class MyEncoder(json.JSONEncoder):
         #             del state_data_dict[key]
         #     # del state_data_dict["EXCLUDE"]
         #     return state_data_dict
-        if isinstance(obj, ExperimentalSpectrum):
-            spec_dict = copy.deepcopy(obj.__dict__)
-            spec_dict['__ExperimentalSpectrum__'] = True
-            return spec_dict
+        # if isinstance(obj, ExperimentalSpectrum):
+        #     spec_dict = copy.deepcopy(obj.__dict__)
+        #     spec_dict['__ExperimentalSpectrum__'] = True
+        #     return spec_dict
 
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)
@@ -41,18 +43,9 @@ class MyEncoder(json.JSONEncoder):
 def my_decoder(dct):
     # if '__StateData__' in dct:
     #     return StateData(**dct)
-    if '__ExperimentalSpectrum__' in dct:
-        return ExperimentalSpectrum(**dct)
+    # if '__ExperimentalSpectrum__' in dct:
+    #     return ExperimentalSpectrum(**dct)
     return dct
-
-
-class ExperimentalSpectrum:
-    """Experimental spectrum files & information thereof"""
-
-    def __init__(self, path):
-        self.path = path
-
-        # TODO> Parse the file
 
 
 class Project(FileObserver):
@@ -139,6 +132,12 @@ class Project(FileObserver):
         self._autosave_thread.start()
 
         # Initialize everything based on loaded data!
+        if "ignored" not in self._data.keys():
+            self._data["ignored"] = []
+        if "files marked as emission" not in self._data.keys():
+            self._data["files marked as emission"] = []
+        if "files marked as excitation" not in self._data.keys():
+            self._data["files marked as excitation"] = []
         if "ground state path" not in self._data.keys():
             self._data["ground state path"] = None
         State({"freq file": self._data["ground state path"]})
@@ -149,14 +148,22 @@ class Project(FileObserver):
             self._data["state settings"] = [{}]
         for s in self._data["state settings"]:
             State(s)
+        if "experiment settings" not in self._data.keys():  # Excited states
+            self._data["experiment settings"] = []
+        for s in self._data["experiment settings"]:
+            path = s.get("path")
+            marked = None
+            if path in self._data["files marked as excitation"]:
+                marked = "excitation"
+            elif path in self._data["files marked as emission"]:
+                marked = "emission"
+            if path is not None and os.path.exists(path):
+                file = File(path=path, parent="Project", depth=-1, mark_as_exp=marked)  # will call exp.assimilate_file_data when done parsing
+                ExperimentalSpectrum(file, s)
+            else:
+                print(f"WARNING: Experimental file {path} not found. Ignoring.")
         if "directory toggle states" not in self._data.keys():
             self._data["directory toggle states"] = {}
-        if "ignored" not in self._data.keys():
-            self._data["ignored"] = []
-        if "files marked as emission" not in self._data.keys():
-            self._data["files marked as emission"] = []
-        if "files marked as excitation" not in self._data.keys():
-            self._data["files marked as excitation"] = []
         # Automatically keeps file manager dicts updated in self._data!
         self.data_file_manager.directory_toggle_states = self._data["directory toggle states"]
         self.data_file_manager.ignored_files_and_directories = self._data["ignored"]
@@ -204,7 +211,6 @@ class Project(FileObserver):
         return title
 
     def _save_project(self, snapshot, auto):
-        print(snapshot)
         if auto and not self._is_unsaved:
             return  # no use auto-saving if nothing has changed
         with self._project_file_lock:
@@ -229,7 +235,7 @@ class Project(FileObserver):
                     os.rename(temp_file_path, target_file)
                 if auto:
                     self._hide(self._autosave_file)
-                self._logger.info(f"Save successful.")
+                # self._logger.info(f"Save successful.")
                 if not auto:
                     self.project_unsaved(False)
             except (IOError, OSError) as e:
@@ -359,21 +365,27 @@ class Project(FileObserver):
         return self._data.get("ground state path")
 
     def copy_state_settings(self):
-        """Store paths of State instances into _data"""
+        """Store paths etc of State instances into _data (necessary when new set of states is created)"""
         self._data["state settings"] = []
         for state in State.state_list[1:]:
-            # paths = {"freq": state.freq_file, "excitation": state.excitation_file, "emission": state.emission_file, "anharm": state.anharm_file}
             self._data["state settings"].append(state.settings)
         self.project_unsaved()
 
-    def set_experimental_file(self, path):
-        self._data["experimental spectra"][path] = ExperimentalSpectrum(path)
-        self._notify_observers("experimental data changed")
-
-    def delete_experimental_file(self, path):
-        if path in self._data["experimental spectra"].keys():
-            del self._data["experimental spectra"][path]
-        self._notify_observers("experimental data changed")
+    def copy_experiment_settings(self):
+        """Store paths etc of ExperimentalSpectrum instances into _data"""
+        self._data["experiment settings"] = []
+        for exp in ExperimentalSpectrum.spectra_list:
+            self._data["experiment settings"].append(exp.settings)
+        self.project_unsaved()
+    #
+    # def set_experimental_file(self, path):
+    #     self._data["experimental spectra"][path] = ExperimentalSpectrum(path)
+    #     self._notify_observers("experimental data changed")
+    #
+    # def delete_experimental_file(self, path):
+    #     if path in self._data["experimental spectra"].keys():
+    #         del self._data["experimental spectra"][path]
+    #     self._notify_observers("experimental data changed")
 
         # TODO:
         #  select exp file data columns

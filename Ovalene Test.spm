@@ -58,5 +58,13 @@
     "State class info": {
         "molecule": "C\u2083\u2082H\u2081\u2084",
         "ground state energy": -269539068
-    }
+    },
+    "experiment settings": [
+        {
+            "path": "C:\\Users\\Giogina\\Documents\\hbc\\experiment\\HBC_EX_exp.txt",
+            "intensity column": 3,
+            "relative wavenumber column": 0,
+            "absolute wavenumber column": 1
+        }
+    ]
 }
