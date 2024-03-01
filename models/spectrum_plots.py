@@ -30,7 +30,7 @@ class SpecPlotter:
             res += self._shifted_peak(position_index)*peak[1]
         return res
 
-    def _shifted_peak(self, position_index):  #TODO: Make this work for producing a single-peak array.
+    def _shifted_peak(self, position_index):
         """Shifts and truncates self._base_peak to be correctly positioned in self._x_data."""
         # logging.info(f"position_index: {position_index}")
         start_index = self._base_peak_middle_index - position_index

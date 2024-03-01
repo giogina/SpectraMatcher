@@ -1,4 +1,5 @@
 from models.data_file_manager import DataFileManager, FileObserver, File, Directory
+from models.experimental_spectrum import ExperimentalSpectrum
 from models.project import Project
 from models.settings_manager import SettingsManager, Settings
 from models.state import State
@@ -51,10 +52,12 @@ class DataFileViewModel(FileObserver):
             for file in snapshot.values():  # make sure dict doesn't change during iteration
                 self._callbacks.get("update file")(file)
 
-    def remove_directory(self, directory_tag):
-        self._data_file_manager.close_directory(directory_tag)
+    def remove_directory(self, directory):
+        self.ignore_directory(directory)
+        self._data_file_manager.close_directory(directory.tag)
 
     def remove_file(self, file_tag):
+        self.ignore_tag(file_tag)
         self._data_file_manager.close_file(file_tag)
 
     def toggle_directory(self, directory_tag, is_open):
@@ -117,5 +120,9 @@ class DataFileViewModel(FileObserver):
             self._project.select_ground_state_file(file.path)
         else:
             self._project.copy_state_settings()
+
+    def import_experimental_file(self, file):
+        ExperimentalSpectrum(file)
+        self._project.copy_experiment_settings()
 
 

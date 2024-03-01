@@ -434,7 +434,8 @@ class File:
                     self.type = FileType.EXPERIMENT_EMISSION
                 else:
                     self.type = FileType.EXPERIMENT_EXCITATION
-            File.experiment_files.append(self)
+            if self.path not in [f.path for f in File.experiment_files]:
+                File.experiment_files.append(self)
         self.properties = properties
         self.lines = lines
 
@@ -503,7 +504,7 @@ class File:
         return self
 
     @classmethod
-    def get_molecule_energy_options(cls):  # todo: if one is selected by the user, persist that & put it in first place.
+    def get_molecule_energy_options(cls):
         ml_options = []
         for key, v in cls.molecule_energy_votes.items():
             loth_file = None

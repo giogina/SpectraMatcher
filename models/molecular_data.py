@@ -110,9 +110,6 @@ class Geometry:
                 formula += '⁻'
         return formula
 
-# TODO>
-#  add_mode: adds mode (vs negfreq), returns copy of changed geometry
-
 
 class VibrationalMode:
 

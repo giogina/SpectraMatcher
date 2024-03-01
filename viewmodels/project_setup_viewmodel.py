@@ -1,13 +1,14 @@
 from models.experimental_spectrum import ExperimentalSpectrum
 from models.settings_manager import SettingsManager
 from models.project import Project, ProjectObserver
-from models.data_file_manager import File
+from models.data_file_manager import File, FileType
 from models.state import State
 from copy import deepcopy
 
 
 def noop(*args, **kwargs):
     pass
+
 
 class ProjectSetupViewModel(ProjectObserver):
 
@@ -24,6 +25,7 @@ class ProjectSetupViewModel(ProjectObserver):
         self._project.add_observer(self, "experimental data changed")
         State.add_observer(self)
         File.add_observer(self)
+        ExperimentalSpectrum.add_observer(self)
         self.settings = SettingsManager()
         self.mlo_options = {}  # temporary storage of Energy / molecule / level of theory options: {display string: key}
 
@@ -46,17 +48,8 @@ class ProjectSetupViewModel(ProjectObserver):
         elif event_type == State.imported_files_changed_notification:
             self._callbacks.get("update project")()
             self._callbacks.get("update states data")()
-        # elif event_type == "state data changed":
-        #     if len(args) and len(args[0]) and type(args[0][0]) == int:  # Update only one
-        #         state = self._project.get("states", {}).get(args[0][0])
-        #         if state is not None:
-        #             self._callbacks.get("update state data")(StateViewModel(state))
-        #     else:  # update all of them
-        #         states_data = {k: StateViewModel(s) for k, s in self._project.get("states").items()}
-        #         self._callbacks.get("update states data")(states_data)
-        # elif event_type == "experimental data changed":
-        #     exp_data = {k: ExperimentalSpectrumViewModel(e) for k, e in self._project.get("experimental spectra").items()}
-        #     self._callbacks.get("update experimental data")(exp_data)
+        elif event_type == ExperimentalSpectrum.new_spectrum_notification:
+            self._callbacks.get("update experimental data")()
 
     def auto_import(self):
         if len(self.mlo_options.keys()) == 0:
@@ -66,6 +59,10 @@ class ProjectSetupViewModel(ProjectObserver):
             self.select_mlo(list(self.mlo_options.keys())[0])
         State.auto_import()
         self._project.copy_state_settings()
+        for file in File.experiment_files:
+            if not file.ignored and file.type in (FileType.EXPERIMENT_EMISSION, FileType.EXPERIMENT_EXCITATION):
+                ExperimentalSpectrum(file)
+        self._project.copy_experiment_settings()
 
     def get_project_name(self):
         return self._project.get("name", "")
@@ -89,7 +86,7 @@ class ProjectSetupViewModel(ProjectObserver):
             chosen_str = dropdown_items[list(self.mlo_options.values()).index(chosen_key)]
         return dropdown_items, chosen_str
 
-    def select_mlo(self, list_str):  #todo: auto import: also treat as selecteing a key. Doublecheck state sanity checks.
+    def select_mlo(self, list_str):
         """Molecule & level of theory option selected in top-level dropdown"""
         key = self.mlo_options.get(list_str)
         State.select_molecule_and_ground_state_energy(*key)
@@ -117,9 +114,7 @@ class ProjectSetupViewModel(ProjectObserver):
         self._project.copy_state_settings()
 
     def import_experimental_file(self, file: File):
-        print(file)
         ExperimentalSpectrum(file)
-        self._callbacks.get("update experimental data")()
         self._project.copy_experiment_settings()
 
     def delete_experimental_file(self, exp: ExperimentalSpectrum):
@@ -128,3 +123,6 @@ class ProjectSetupViewModel(ProjectObserver):
         self._callbacks.get("update experimental data")()
         self._project.copy_experiment_settings()
 
+    def import_done(self):
+        pass
+    # TODO: Check integrity of all data; trigger next analysis steps.

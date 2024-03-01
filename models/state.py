@@ -34,7 +34,7 @@ class State:
         self.tag = f"state {time.time()} {len(self.state_list)}"
         self.state_list.append(self)
         self.name = None
-        self.own_molecular_formula = None  # todo: assign these instead of class variables. Class variables are chosen by majority file vote / user selection, and then serve to check against instances.
+        self.own_molecular_formula = None
         self.own_ground_state_energy = None
         State.sort_states_by_energy()
 

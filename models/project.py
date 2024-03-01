@@ -377,15 +377,3 @@ class Project(FileObserver):
         for exp in ExperimentalSpectrum.spectra_list:
             self._data["experiment settings"].append(exp.settings)
         self.project_unsaved()
-    #
-    # def set_experimental_file(self, path):
-    #     self._data["experimental spectra"][path] = ExperimentalSpectrum(path)
-    #     self._notify_observers("experimental data changed")
-    #
-    # def delete_experimental_file(self, path):
-    #     if path in self._data["experimental spectra"].keys():
-    #         del self._data["experimental spectra"][path]
-    #     self._notify_observers("experimental data changed")
-
-        # TODO:
-        #  select exp file data columns

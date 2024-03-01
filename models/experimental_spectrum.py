@@ -4,6 +4,8 @@ import os
 
 class ExperimentalSpectrum:
     spectra_list = []
+    _observers = []
+    new_spectrum_notification = "New experimental spectrum"
 
     def __init__(self, file: File, settings=None):
         # settings = {"path": str,
@@ -22,6 +24,19 @@ class ExperimentalSpectrum:
         file.experiment = self
         if file.progress == "parsing done":
             self.assimilate_file_data(file)  # if not, the file will call that function upon completion.
+
+    @classmethod
+    def add_observer(cls, observer):
+        cls._observers.append(observer)
+
+    @classmethod
+    def remove_observer(cls, observer):
+        cls._observers.remove(observer)
+
+    def _notify_observers(self, message):
+        for o in self._observers:
+            print(f"Updating state observers: {message}")
+            o.update(message, self)
 
     def assimilate_file_data(self, file: File):
         if file.progress != "parsing done":
@@ -97,8 +112,22 @@ class ExperimentalSpectrum:
         if not int_found:                                                               # 4.) Blind guess
             self.settings["intensity column"] = available_column_indices[-1]
         if not rel_found:
-            self.settings["relative wavenumber column"] = 0
-            self.settings["absolute wavenumber column"] = 1
+            self.settings["relative wavenumber column"] = available_column_indices[0]
+        if not abs_found:
+            self.settings["absolute wavenumber column"] = available_column_indices[1]
 
         file.experiment = None
-        print(self.settings)
+        self._notify_observers(self.new_spectrum_notification)
+
+    def set_column_usage(self, key, usage):
+        column_keys = list(self.columns)
+        if key in column_keys:
+            index = column_keys.index(key)
+            if usage == "abs":
+                self.settings["absolute wavenumber column"] = index
+            elif usage == "rel":
+                self.settings["relative wavenumber column"] = index
+            elif usage == "int":
+                self.settings["intensity column"] = index
+        self._notify_observers(self.new_spectrum_notification)
+

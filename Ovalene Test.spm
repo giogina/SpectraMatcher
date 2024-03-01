@@ -2,15 +2,13 @@
     "name": "Ovalene Test",
     "open data folders": [
         "C:\\Users\\Giogina\\Documents\\ovalene",
-        "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited",
-        "C:\\Users\\Giogina\\Documents\\hbc"
+        "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited"
     ],
     "ground state path": "C:\\Users\\Giogina\\Documents\\ovalene\\ground state\\ovalene-ground-opt-freq-disp.log",
     "directory toggle states": {
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1": false,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene_0": true,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited_0": true,
-        "dir_C:\\Users\\Giogina\\Documents\\hbc_0": true,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT_2": true,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission_2": true,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\1st excited_1": true,
@@ -32,12 +30,7 @@
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\experiment_1": true,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ground state_1": true,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT_1": true,
-        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT emission_1": true,
-        "dir_C:\\Users\\Giogina\\Documents\\hbc\\1st excited_1": true,
-        "dir_C:\\Users\\Giogina\\Documents\\hbc\\2nd excited_1": true,
-        "dir_C:\\Users\\Giogina\\Documents\\hbc\\3rd excited_1": true,
-        "dir_C:\\Users\\Giogina\\Documents\\hbc\\experiment_1": true,
-        "dir_C:\\Users\\Giogina\\Documents\\hbc\\ground_1": true
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT emission_1": true
     },
     "ignored": [
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1",
@@ -59,12 +52,5 @@
         "molecule": "C\u2083\u2082H\u2081\u2084",
         "ground state energy": -269539068
     },
-    "experiment settings": [
-        {
-            "path": "C:\\Users\\Giogina\\Documents\\hbc\\experiment\\HBC_EX_exp.txt",
-            "intensity column": 3,
-            "relative wavenumber column": 0,
-            "absolute wavenumber column": 1
-        }
-    ]
+    "experiment settings": []
 }

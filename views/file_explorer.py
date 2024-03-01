@@ -160,7 +160,7 @@ class FileExplorer:
                     nr_prev_invisible += 1
             dpg.add_button(label="", width=-1, height=24)
 
-        with dpg.child_window(tag="file explorer panel"):
+        with dpg.child_window(tag="file explorer panel", horizontal_scrollbar=True):
             DropReceiverWindow(self.on_drop_files, hover_drag_theme, non_hover_drag_theme).create(tag="drop window")
             dpg.add_spacer(height=16, parent="drop window")
             with dpg.group(horizontal=True, parent="drop window"):
@@ -202,9 +202,6 @@ class FileExplorer:
         for subdir in directory.content_dirs.values():
             self._collapse_folder(subdir, expand)
 
-    def _remove_directory(self, s, a, u):
-        self.viewmodel.remove_directory(u)
-
     def _remove_file(self, s, a, u):
         self.viewmodel.remove_file(u)
         dpg.delete_item(u)
@@ -224,7 +221,7 @@ class FileExplorer:
             dpg.add_spacer(height=2)
 
             if directory.parent_directory is None:
-                dpg.add_selectable(label="Remove", user_data=tag, callback=self._remove_directory)
+                dpg.add_selectable(label="Remove", user_data=directory, callback=lambda s, a, u: self.viewmodel.remove_directory(u))
 
             dpg.add_selectable(label="Un-ignore", tag=f"include-{tag}", user_data=directory, callback=lambda s, a, u: self.viewmodel.ignore_directory(u, False))
             dpg.add_selectable(label="Ignore", tag=f"exclude-{tag}", user_data=directory, callback=lambda s, a, u: self.viewmodel.ignore_directory(u, True))
@@ -260,10 +257,12 @@ class FileExplorer:
                 dpg.add_spacer(height=2)
             with dpg.menu(label="Add to project..."):
                 if file.type == FileType.FREQ_GROUND:
-                    dpg.add_menu_item(label="ground state", user_data=State.state_list[0], callback=lambda: self.viewmodel.import_state_file(file, State.state_list[0]))
-                else:
+                    dpg.add_menu_item(label="   ground state", user_data=State.state_list[0], callback=lambda: self.viewmodel.import_state_file(file, State.state_list[0]))
+                elif file.type in FileType.LOG_TYPES:
                     for state in State.state_list[1:]:
-                        dpg.add_menu_item(label=f"{state.name}", user_data=state, callback=lambda: self.viewmodel.import_state_file(file, state))
+                        dpg.add_menu_item(label=f"   {state.name}", user_data=state, callback=lambda: self.viewmodel.import_state_file(file, state))
+                elif file.type in (FileType.EXPERIMENT_EXCITATION, FileType.EXPERIMENT_EMISSION):
+                    dpg.add_menu_item(label="   experimental spectra", callback=lambda: self.viewmodel.import_experimental_file(file))
             if file.parent_directory is None:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
@@ -285,8 +284,8 @@ class FileExplorer:
                     dpg.add_selectable(label="Make readable", user_data=file.tag, callback=lambda s, a, u: self.viewmodel.make_file_readable(u))
             if file.type == FileType.GAUSSIAN_INPUT and file.geometry is not None:
                 dpg.add_selectable(label="Copy geometry to clipboard ", user_data=file.geometry, callback=lambda s, a, u: pyperclip.copy(u.get_gaussian_geometry()))
-            if file.properties.get(GaussianLog.STATUS, "") == GaussianLog.NEGATIVE_FREQUENCY:
-                dpg.add_selectable(label="Copy adjusted geometry for re-optimization", user_data=file.path)  # TODO (stretch)
+            # if file.properties.get(GaussianLog.STATUS, "") == GaussianLog.NEGATIVE_FREQUENCY:
+            #     dpg.add_selectable(label="Copy adjusted geometry for re-optimization", user_data=file.path)  # TODO (stretch)
 
             dpg.add_spacer(height=2)
             dpg.add_separator()
