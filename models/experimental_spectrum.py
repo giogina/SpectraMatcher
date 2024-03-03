@@ -25,6 +25,7 @@ class ExperimentalSpectrum:
 
         self.is_emission = False
         self.columns = None
+        self.name = None
 
         self.peak_width = None
         self.zero_zero_transition = None
@@ -126,6 +127,9 @@ class ExperimentalSpectrum:
             self.settings["absolute wavenumber column"] = available_column_indices[1]
 
         file.experiment = None
+        rel_col = self.columns[column_keys[self.settings['relative wavenumber column']]]
+        self.name = ("Emission " if self.is_emission else "Excitation ") + f"{rel_col[0]} .. {rel_col[-1]} cm⁻¹"
+        print(self.name)
         self._notify_observers(self.new_spectrum_notification)
         self.determine_peaks()
 
@@ -141,8 +145,7 @@ class ExperimentalSpectrum:
                 self.settings["intensity column"] = index
         self._notify_observers(self.new_spectrum_notification)
 
-    def determine_peaks(self):
-
+    def determine_peaks(self):  # TODO: Background-compute
         if self.columns is None:
             print(f"Error determining peaks for {self.settings.get('path')}: No data columns found")
             return

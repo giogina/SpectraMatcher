@@ -41,6 +41,16 @@ class MainWindow:
                             with dpg.table_cell():
                                 self.project_setup_panel = ProjectSetup(self.viewModel.get_project_setup_viewmodel())
 
+                with dpg.tab(label=" Emission Spectra "):  # todo: "OK" button switches to better-populated of these two
+                    with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1):
+                        dpg.add_table_column(label="project settings")  # TODO> List like project setup: Name, color buttons, show/hide buttons
+                        dpg.add_table_column(label="plots")  # todo - compute arrays in background, update with all currently requested, done spectra
+
+                with dpg.tab(label=" Excitation Spectra "):
+                    with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1):
+                        dpg.add_table_column(label="project settings")  # TODO> List like project setup: Name, color buttons, show/hide buttons
+                        dpg.add_table_column(label="plots")
+
         self.configure_theme()
         dpg.set_primary_window("main window", True)
 
