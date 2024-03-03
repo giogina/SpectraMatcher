@@ -1,5 +1,7 @@
+import numpy as np
+
 from models.data_file_manager import File, FileType
-import os
+from scipy import signal
 
 
 class ExperimentalSpectrum:
@@ -12,7 +14,10 @@ class ExperimentalSpectrum:
         # "used columns": {"relative wavenumber": int, "absolute wavenumber": int, "intensity": int}}
         # "relative wavenumber column": int,
         # "absolute wavenumber column": int,
-        # "intensity column": int}}
+        # "intensity column": int,
+        # "chosen peaks": [peak indices]
+        # "removed peaks": [peak indices]
+        # }}
         if settings is None:
             settings = {"path": file.path}
         self.settings = settings  # coupled to project._data
@@ -20,6 +25,10 @@ class ExperimentalSpectrum:
 
         self.is_emission = False
         self.columns = None
+
+        self.peak_width = None
+        self.zero_zero_transition = None
+        self.peaks = []
 
         file.experiment = self
         if file.progress == "parsing done":
@@ -118,6 +127,7 @@ class ExperimentalSpectrum:
 
         file.experiment = None
         self._notify_observers(self.new_spectrum_notification)
+        self.determine_peaks()
 
     def set_column_usage(self, key, usage):
         column_keys = list(self.columns)
@@ -130,4 +140,74 @@ class ExperimentalSpectrum:
             elif usage == "int":
                 self.settings["intensity column"] = index
         self._notify_observers(self.new_spectrum_notification)
+
+    def determine_peaks(self):
+
+        if self.columns is None:
+            print(f"Error determining peaks for {self.settings.get('path')}: No data columns found")
+            return
+        int_index = self.settings.get("intensity column")
+        if int_index not in range(0, len(list(self.columns))):
+            print(f"Error determining peaks for {self.settings.get('path')}: Intensity column not known")
+            return
+        rel_index = self.settings.get("relative wavenumber column")
+        if rel_index not in range(0, len(list(self.columns))):
+            print(f"Error determining peaks for {self.settings.get('path')}: Relative wavenumber column not known")
+            return
+        abs_index = self.settings.get("absolute wavenumber column")
+        if abs_index not in range(0, len(list(self.columns))):
+            print(f"Error determining peaks for {self.settings.get('path')}: Absolute wavenumber column not known")
+            return
+
+        xdata = self.columns.get(list(self.columns)[rel_index])
+        wndata = self.columns.get(list(self.columns)[abs_index])
+        ydata = self.columns.get(list(self.columns)[int_index])
+
+        smooth_ydata = []
+        for iy, y in enumerate(ydata):  # Take running average to make peak detection easier
+            interval = ydata[max(0, iy - 3):min(len(ydata), iy + 4)]
+            smooth_ydata.append(sum(interval) / len(interval))
+
+        if int(xdata[0] - wndata[0]) == int(xdata[-1] - wndata[-1]):
+            self.zero_zero_transition = int(xdata[0] - wndata[0])
+        elif int(xdata[0] + wndata[0]) == int(xdata[-1] + wndata[-1]):
+            self.zero_zero_transition = int(xdata[0] + wndata[0])
+        else:
+            print(f"Error determining peaks for {self.settings.get('path')}: Absolute and relative wavenumber columns don't match")
+
+        # determine width from high / most prominent peaks
+        high_peaks = []
+        pr = 1
+        while not len(high_peaks):
+            high_peaks, _ = signal.find_peaks(smooth_ydata, prominence=pr)
+            pr = pr / 2
+        pws = signal.peak_widths(smooth_ydata, high_peaks)
+
+        widths = [xdata[round(w[0])] - xdata[round(w[1])] for w in zip(pws[2], pws[3])]
+        width = int(abs(sum(widths) / len(widths)) * 8) / 10
+        self.peak_width = width / ((max(xdata) - min(xdata)) / len(xdata))
+
+        # TODO: allow for adjustment of prominence / width here?
+        peaks, _ = signal.find_peaks(smooth_ydata, prominence=0.005,
+                                     width=10 / (abs(xdata[-1] - xdata[0]) / len(xdata)))
+        peaks = list(peaks) + self.settings.get("chosen peaks", [])
+        self.peaks = []
+        for p in peaks:
+            if p not in self.settings.get("removed peaks", []):
+                self.peaks.append(ExpPeak(index=p, wavenumber=xdata[p], intensity=ydata[p]))
+        prominences = signal.peak_prominences(smooth_ydata, [p.index for p in self.peaks])
+
+        for p, peak in enumerate(self.peaks):
+            peak.prominence = prominences[0][p]
+        # for peak in self.peaks:
+        #     print(peak.wavenumber, peak.intensity, peak.prominence)
+
+
+class ExpPeak:
+    def __init__(self, wavenumber, intensity, index, prominence=0):
+        self.wavenumber = wavenumber
+        self.intensity = intensity
+        self.index = index
+        self.prominence = prominence
+
 

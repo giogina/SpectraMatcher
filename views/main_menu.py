@@ -104,7 +104,6 @@ class MainMenu:
                         dpg.add_button(label="Button 1", width=-1, tag="Button 1/1", callback=self._on_modal_button_press, user_data=0)
         self.setup_menu_theme()
 
-
     def show_dialog(self, title, message, buttons=None):  # buttons: list of ("label", callback)
         if buttons is None:
             buttons = [("Ok", noop)]

@@ -8,7 +8,7 @@ import time
 import ctypes
 import matplotlib.colors as mcolors
 
-from models.experimental_spectrum import ExperimentalSpectrum
+from models.experimental_spectrum import ExperimentalSpectrum, ExpPeak
 from models.settings_manager import SettingsManager
 from models.data_file_manager import DataFileManager, FileObserver, FileType, File
 from models.state import State
@@ -31,10 +31,9 @@ class MyEncoder(json.JSONEncoder):
         #             del state_data_dict[key]
         #     # del state_data_dict["EXCLUDE"]
         #     return state_data_dict
-        # if isinstance(obj, ExperimentalSpectrum):
-        #     spec_dict = copy.deepcopy(obj.__dict__)
-        #     spec_dict['__ExperimentalSpectrum__'] = True
-        #     return spec_dict
+        # if isinstance(obj, ExpPeak):
+        #     exp_pair = (obj.wavenumber, obj.intensity, obj.index, obj.prominence)
+        #     return exp_pair
 
         # Let the base class default method raise the TypeError
         return json.JSONEncoder.default(self, obj)
@@ -152,6 +151,7 @@ class Project(FileObserver):
             self._data["experiment settings"] = []
         for s in self._data["experiment settings"]:
             path = s.get("path")
+            # s["chosen peaks"] = [ExpPeak(wavenumber=p[0], intensity=p[1], index=p[2], prominence=p[3]) for p in s.get("chosen peaks", [])]
             marked = None
             if path in self._data["files marked as excitation"]:
                 marked = "excitation"
