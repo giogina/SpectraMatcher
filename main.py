@@ -40,4 +40,5 @@ if __name__ == "__main__":
     #   To make dearpygui work on win7: Make sure # https://learn.microsoft.com/en-GB/cpp/windows/latest-supported-vc-redist?view=msvc-170
     #   is installed, and include IEShims.dll and d3dcompiler_47.dll (currently present in C:\Users\Giogina\SpectraMatcher\venv_win\Lib\site-packages\dearpygui).
     #   pyinstaller --add-binary='path/to/dll;.' main.py
+    #   For taskbar / shortcut icon: M made out of peaks
     #   Adapt os.system(f'python {sys.argv[0]} {flags}') to only os.system(f'{sys.argv[0]} {flags}'), make sure it works with the right executable.
