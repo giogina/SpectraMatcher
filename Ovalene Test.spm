@@ -44,7 +44,36 @@
     "experimental spectra": {},
     "open data files": [],
     "state settings": [
-        {}
+        {
+            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission\\FCHT.log",
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log",
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log"
+        },
+        {
+            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log",
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log"
+        },
+        {
+            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT emission\\FCHT.log",
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\ovalene-excited-3-opt-freq-disp.log",
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT\\FCHT.log"
+        },
+        {
+            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT emission\\FCHT.log",
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\ovalene-excited-4-opt-freq-disp.log",
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT\\FCHT.log"
+        },
+        {
+            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT emission\\FCHT.log",
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\ovalene-excited-5-opt-freq-disp.log",
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT\\FCHT.log"
+        },
+        {
+            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT emission\\FCHT.log",
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\ovalene-excited-6-freq-disp.log",
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT\\FCHT.log"
+        }
     ],
     "files marked as emission": [],
     "files marked as excitation": [],
@@ -52,5 +81,18 @@
         "molecule": "C\u2083\u2082H\u2081\u2084",
         "ground state energy": -269539068
     },
-    "experiment settings": []
+    "experiment settings": [
+        {
+            "path": "C:\\Users\\Giogina\\Documents\\ovalene\\experiment\\ovalene_DF_exp.txt",
+            "intensity column": 3,
+            "relative wavenumber column": 0,
+            "absolute wavenumber column": 1
+        },
+        {
+            "path": "C:\\Users\\Giogina\\Documents\\ovalene\\experiment\\ovalene_EX_exp.txt",
+            "intensity column": 2,
+            "relative wavenumber column": 0,
+            "absolute wavenumber column": 1
+        }
+    ]
 }

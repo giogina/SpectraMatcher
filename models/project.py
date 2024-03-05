@@ -81,7 +81,8 @@ class Project(FileObserver):
             "open data folders": [],
             "open data files": [],
             "experimental spectra": {},
-            "ground state path": None
+            "ground state path": None,
+            "progress": "start"
         }
 
         self.window_title = ""  # For bringing that window to the front in Windows
@@ -137,21 +138,10 @@ class Project(FileObserver):
             self._data["files marked as emission"] = []
         if "files marked as excitation" not in self._data.keys():
             self._data["files marked as excitation"] = []
-        if "ground state path" not in self._data.keys():
-            self._data["ground state path"] = None
-        State({"freq file": self._data["ground state path"]})
-        if "State class info" not in self._data.keys():
-            self._data["State class info"] = {"molecule": None, "ground state energy": None}
-        State.molecule_and_method = self._data["State class info"]
-        if "state settings" not in self._data.keys():  # Excited states
-            self._data["state settings"] = [{}]
-        for s in self._data["state settings"]:
-            State(s)
         if "experiment settings" not in self._data.keys():  # Excited states
             self._data["experiment settings"] = []
         for s in self._data["experiment settings"]:
             path = s.get("path")
-            # s["chosen peaks"] = [ExpPeak(wavenumber=p[0], intensity=p[1], index=p[2], prominence=p[3]) for p in s.get("chosen peaks", [])]
             marked = None
             if path in self._data["files marked as excitation"]:
                 marked = "excitation"
@@ -162,8 +152,20 @@ class Project(FileObserver):
                 ExperimentalSpectrum(file, s)
             else:
                 print(f"WARNING: Experimental file {path} not found. Ignoring.")
+        if "ground state path" not in self._data.keys():
+            self._data["ground state path"] = None
+        State({"freq file": self._data["ground state path"]})
+        if "State class info" not in self._data.keys():
+            self._data["State class info"] = {"molecule": None, "ground state energy": None}
+        State.molecule_and_method = self._data["State class info"]
+        if "state settings" not in self._data.keys():  # Excited states
+            self._data["state settings"] = [{}]
+        for s in self._data["state settings"]:
+            State(s)
         if "directory toggle states" not in self._data.keys():
             self._data["directory toggle states"] = {}
+        if "progress" not in self._data.keys():
+            self._data["progress"] = "start"
         # Automatically keeps file manager dicts updated in self._data!
         self.data_file_manager.directory_toggle_states = self._data["directory toggle states"]
         self.data_file_manager.ignored_files_and_directories = self._data["ignored"]
@@ -266,7 +268,7 @@ class Project(FileObserver):
         if event_type in self._observers:
             self._observers[event_type].remove(observer)
 
-    def _notify_observers(self, event_type, *args):
+    def  _notify_observers(self, event_type, *args):
         if event_type in self._observers:
             for observer in self._observers[event_type]:
                 observer.update(event_type, args)
@@ -377,3 +379,7 @@ class Project(FileObserver):
         for exp in ExperimentalSpectrum.spectra_list:
             self._data["experiment settings"].append(exp.settings)
         self.project_unsaved()
+
+    def update_progress(self, progress):
+        self._data["progress"] = progress
+        self._notify_observers("progress updated")

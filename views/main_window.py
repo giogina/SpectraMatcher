@@ -5,6 +5,7 @@ from viewmodels.main_viewmodel import MainViewModel
 from views.main_menu import MainMenu
 from views.file_explorer import FileExplorer
 from views.project_setup import ProjectSetup
+from views.plots_overview import PlotsOverview
 from utility.icons import Icons
 from utility.font_manager import FontManager
 import dearpygui.dearpygui as dpg
@@ -30,8 +31,8 @@ class MainWindow:
 
         with dpg.window(tag="main window", label="SpectraMatcher", no_scrollbar=True):
             self.menu = MainMenu(self.viewModel)
-            with dpg.tab_bar():
-                with dpg.tab(label=" Import Data "):
+            with dpg.tab_bar(tag="main tab bar"):
+                with dpg.tab(label=" Import Data ", tag="import tab"):
                     with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1):
                         dpg.add_table_column(label="file explorer")
                         dpg.add_table_column(label="project setup")
@@ -41,15 +42,25 @@ class MainWindow:
                             with dpg.table_cell():
                                 self.project_setup_panel = ProjectSetup(self.viewModel.get_project_setup_viewmodel())
 
-                with dpg.tab(label=" Emission Spectra "):  # todo: "OK" button switches to better-populated of these two
+                with dpg.tab(label=" Emission Spectra ", tag="emission tab"):  # todo: "OK" button switches to better-populated of these two
                     with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1):
                         dpg.add_table_column(label="project settings")  # TODO> List like project setup: Name, color buttons, show/hide buttons
                         dpg.add_table_column(label="plots")  # todo - compute arrays in background, update with all currently requested, done spectra
+                        with dpg.table_row():
+                            with dpg.table_cell():
+                                self.project_settings_panel = None  # TODO
+                            with dpg.table_cell():
+                                self.emission_plots_overview_panel = PlotsOverview(self.viewModel.get_plots_overview_viewmodel(is_emission=True))
 
-                with dpg.tab(label=" Excitation Spectra "):
+                with dpg.tab(label=" Excitation Spectra ", tag="excitation tab"):
                     with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1):
                         dpg.add_table_column(label="project settings")  # TODO> List like project setup: Name, color buttons, show/hide buttons
                         dpg.add_table_column(label="plots")
+                        with dpg.table_row():
+                            with dpg.table_cell():
+                                self.project_settings_panel = None  # TODO
+                            with dpg.table_cell():
+                                self.emission_plots_overview_panel = PlotsOverview(self.viewModel.get_plots_overview_viewmodel(is_emission=False))
 
         self.configure_theme()
         dpg.set_primary_window("main window", True)
@@ -57,6 +68,17 @@ class MainWindow:
         # need to initialize view model here to be able to show messages about the project
         self.viewModel.set_title_callback(callback=self.update_title)
         self.viewModel.set_message_callback(callback=self.menu.show_dialog)
+        self.viewModel.set_switch_tab_callback(callback=self.switch_tab)
+
+    def switch_tab(self, progress):
+        print("Switch tab", dpg.get_item_configuration("main tab bar"))
+        print(dpg.get_value("main tab bar"))
+        if progress == "start":
+            dpg.set_value("main tab bar", "import tab")
+        elif progress == "import done":
+            dpg.set_value("main tab bar", "emission tab")
+
+
 
     def configure_theme(self):
         palette = [[11, 11, 36],  # 0

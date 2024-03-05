@@ -2,6 +2,7 @@ from models.project import ProjectObserver
 from models.project import Project
 from models.settings_manager import SettingsManager
 from viewmodels.data_files_viewmodel import DataFileViewModel
+from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel
 from viewmodels.project_setup_viewmodel import ProjectSetupViewModel
 from launcher import Launcher
 from utility.system_file_browser import inquire_close_unsaved
@@ -17,21 +18,27 @@ class MainViewModel(ProjectObserver):
         self.path = path
         self._project = Project(self.path)
         self._project_unsaved = False
-
+        self.project_setup_viewmodel = None
         self._settings = SettingsManager()
 
         AsyncManager.start()
 
         self._title_callback = title_callback
         self._message_callback = noop
-        # self._inquire_close_unsaved_project = inquire_close_unsaved_project_callback
+        self._switch_tab_callback = noop
 
     # Spawn child view models responsible for child windows.
     def get_file_manager_viewmodel(self):
         return DataFileViewModel(self._project.data_file_manager, self._project)
 
     def get_project_setup_viewmodel(self):
-        return ProjectSetupViewModel(self._project)
+        if self.project_setup_viewmodel is None:
+            self.project_setup_viewmodel = ProjectSetupViewModel(self._project)
+            self.project_setup_viewmodel.set_callback("dialog", self._message_callback)
+        return self.project_setup_viewmodel
+
+    def get_plots_overview_viewmodel(self, is_emission):
+        return PlotsOverviewViewmodel(self._project, is_emission)
 
     def load_project(self):
         if self._project.check_newer_autosave():
@@ -45,7 +52,9 @@ class MainViewModel(ProjectObserver):
     def _load(self, auto=False):
         self._project.load(auto)
         self._project.add_observer(self, "project_unsaved")
+        self._project.add_observer(self, "progress updated")
         self._title_callback(self._assemble_window_title())
+        self.update("progress updated")   # observers are not there yet during load, need to manually trigger
 
     def _restore_autosave(self):
         self._load(auto=True)
@@ -57,7 +66,7 @@ class MainViewModel(ProjectObserver):
         return title
 
     def update(self, event_type="all", *args):
-        # print(f"Main VM received event: {event_type, args}")
+        print(f"Main VM received event: {event_type, args}")
         if event_type == "all":
             self._title_callback(self._assemble_window_title())
         elif event_type == "project_unsaved":
@@ -67,12 +76,19 @@ class MainViewModel(ProjectObserver):
         elif event_type == "Project file not found":
             pass
             #TODO> Dialog, close project / open another
+        elif event_type == "progress updated":
+            self._switch_tab_callback(self._project.get("progress"))
 
     def set_title_callback(self, callback):
         self._title_callback = callback
 
     def set_message_callback(self, callback):
         self._message_callback = callback
+        if self.project_setup_viewmodel is not None:
+            self.project_setup_viewmodel.set_callback("dialog", callback)
+
+    def set_switch_tab_callback(self, callback):
+        self._switch_tab_callback = callback
 
     def on_save(self):
         self._project.save()

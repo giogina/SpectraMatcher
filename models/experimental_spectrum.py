@@ -8,6 +8,7 @@ class ExperimentalSpectrum:
     spectra_list = []
     _observers = []
     new_spectrum_notification = "New experimental spectrum"
+    spectrum_analyzed_notification = "Experimental spectrum analyzed"
 
     def __init__(self, file: File, settings=None):
         # settings = {"path": str,
@@ -31,6 +32,9 @@ class ExperimentalSpectrum:
         self.zero_zero_transition = None
         self.peaks = []
 
+        self.ok = False
+        self.errors = []
+
         file.experiment = self
         if file.progress == "parsing done":
             self.assimilate_file_data(file)  # if not, the file will call that function upon completion.
@@ -47,6 +51,12 @@ class ExperimentalSpectrum:
         for o in self._observers:
             print(f"Updating state observers: {message}")
             o.update(message, self)
+
+    def check(self):
+        """Confirm integrity of own data"""
+        if not self.peaks:
+            self.determine_peaks()  # errors detected during peak determination
+        return self.ok
 
     def assimilate_file_data(self, file: File):
         if file.progress != "parsing done":
@@ -133,6 +143,16 @@ class ExperimentalSpectrum:
         self._notify_observers(self.new_spectrum_notification)
         self.determine_peaks()
 
+    def get_x_data(self):
+        column_keys = list(self.columns)
+        key = column_keys[self.settings["relative wavenumber column"]]
+        return self.columns.get(key)
+
+    def get_y_data(self):
+        column_keys = list(self.columns)
+        key = column_keys[self.settings["intensity column"]]
+        return self.columns.get(key)
+
     def set_column_usage(self, key, usage):
         column_keys = list(self.columns)
         if key in column_keys:
@@ -144,22 +164,24 @@ class ExperimentalSpectrum:
             elif usage == "int":
                 self.settings["intensity column"] = index
         self._notify_observers(self.new_spectrum_notification)
+        self.determine_peaks()
 
-    def determine_peaks(self):  # TODO: Background-compute
+    def determine_peaks(self):
+        self.errors = []
         if self.columns is None:
-            print(f"Error determining peaks for {self.settings.get('path')}: No data columns found")
+            self.errors.append("No data columns found")
             return
         int_index = self.settings.get("intensity column")
         if int_index not in range(0, len(list(self.columns))):
-            print(f"Error determining peaks for {self.settings.get('path')}: Intensity column not known")
+            self.errors.append(f"Intensity column not known")
             return
         rel_index = self.settings.get("relative wavenumber column")
         if rel_index not in range(0, len(list(self.columns))):
-            print(f"Error determining peaks for {self.settings.get('path')}: Relative wavenumber column not known")
+            self.errors.append(f"Relative wavenumber column not known")
             return
         abs_index = self.settings.get("absolute wavenumber column")
         if abs_index not in range(0, len(list(self.columns))):
-            print(f"Error determining peaks for {self.settings.get('path')}: Absolute wavenumber column not known")
+            self.errors.append(f"Absolute wavenumber column not known")
             return
 
         xdata = self.columns.get(list(self.columns)[rel_index])
@@ -176,7 +198,7 @@ class ExperimentalSpectrum:
         elif int(xdata[0] + wndata[0]) == int(xdata[-1] + wndata[-1]):
             self.zero_zero_transition = int(xdata[0] + wndata[0])
         else:
-            print(f"Error determining peaks for {self.settings.get('path')}: Absolute and relative wavenumber columns don't match")
+            self.errors.append(f"Absolute and relative wavenumber columns don't match")
 
         # determine width from high / most prominent peaks
         high_peaks = []
@@ -190,7 +212,7 @@ class ExperimentalSpectrum:
         width = int(abs(sum(widths) / len(widths)) * 8) / 10
         self.peak_width = width / ((max(xdata) - min(xdata)) / len(xdata))
 
-        # TODO: allow for adjustment of prominence / width here?
+        # TODO: allow for adjustment of prominence / width here? Or allow more / filter later?
         peaks, _ = signal.find_peaks(smooth_ydata, prominence=0.005,
                                      width=10 / (abs(xdata[-1] - xdata[0]) / len(xdata)))
         peaks = list(peaks) + self.settings.get("chosen peaks", [])
@@ -202,6 +224,9 @@ class ExperimentalSpectrum:
 
         for p, peak in enumerate(self.peaks):
             peak.prominence = prominences[0][p]
+
+        self.ok = len(self.errors) == 0
+        self._notify_observers(self.spectrum_analyzed_notification)
         # for peak in self.peaks:
         #     print(peak.wavenumber, peak.intensity, peak.prominence)
 

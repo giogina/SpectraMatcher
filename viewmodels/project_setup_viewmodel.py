@@ -3,7 +3,6 @@ from models.settings_manager import SettingsManager
 from models.project import Project, ProjectObserver
 from models.data_file_manager import File, FileType
 from models.state import State
-from copy import deepcopy
 
 
 def noop(*args, **kwargs):
@@ -14,6 +13,7 @@ class ProjectSetupViewModel(ProjectObserver):
 
     def __init__(self, project: Project):
         self._callbacks = {
+            "dialog": noop,
             "update project": noop,
             "update state data": noop,
             "update states data": noop,
@@ -52,6 +52,13 @@ class ProjectSetupViewModel(ProjectObserver):
             self._callbacks.get("update experimental data")()
 
     def auto_import(self):
+
+        ExperimentalSpectrum.spectra_list = []
+        for file in File.experiment_files:
+            if not file.ignored and file.type in (FileType.EXPERIMENT_EMISSION, FileType.EXPERIMENT_EXCITATION):
+                ExperimentalSpectrum(file)
+        self._project.copy_experiment_settings()
+
         if len(self.mlo_options.keys()) == 0:
             print("Auto-import failure: Ground state energy could not be identified.")
             return
@@ -59,10 +66,6 @@ class ProjectSetupViewModel(ProjectObserver):
             self.select_mlo(list(self.mlo_options.keys())[0])
         State.auto_import()
         self._project.copy_state_settings()
-        for file in File.experiment_files:
-            if not file.ignored and file.type in (FileType.EXPERIMENT_EMISSION, FileType.EXPERIMENT_EXCITATION):
-                ExperimentalSpectrum(file)
-        self._project.copy_experiment_settings()
 
     def get_project_name(self):
         return self._project.get("name", "")
@@ -123,6 +126,13 @@ class ProjectSetupViewModel(ProjectObserver):
         self._callbacks.get("update experimental data")()
         self._project.copy_experiment_settings()
 
-    def import_done(self):
-        pass
-    # TODO: Check integrity of all data; trigger next analysis steps.
+    def import_done(self):  # TODO: Everything up to pressing this button should be done automatically if project progress is larger.
+        for state in State.state_list:
+            if not state.check():
+                self._callbacks.get("dialog")(title=f"Errors in data of {state.name}", message='\n'.join(state.errors))
+                return
+        for spec in ExperimentalSpectrum.spectra_list:
+            if not spec.check():
+                self._callbacks.get("dialog")(title=f"Errors in data of {spec.name}", message='\n'.join(spec.errors))
+                return
+        self._project.update_progress("import done")

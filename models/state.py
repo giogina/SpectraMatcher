@@ -1,3 +1,4 @@
+import math
 import os
 
 from models.data_file_manager import File, FileType
@@ -36,6 +37,8 @@ class State:
         self.name = None
         self.own_molecular_formula = None
         self.own_ground_state_energy = None
+        self.ok = False
+        self.errors = []
         State.sort_states_by_energy()
 
         # Load from paths, if supplied.
@@ -62,6 +65,25 @@ class State:
         for o in self._observers:
             print(f"Updating state observers: {message}")
             o.update(message, self)
+
+    def check(self):
+        """Confirm integrity of own data"""
+        self.errors = []
+        if self.molecule_and_method.get("ground state energy") is None:
+            self.errors.append("Ground state energy unknown")
+        if self.molecule_and_method.get("molecule") is None:
+            self.errors.append("Molecule unknown")
+        if not math.isclose(self.own_ground_state_energy, self.molecule_and_method.get("ground state energy"), abs_tol=10):
+            self.errors.append(f"Wrong ground state energy: {self.own_ground_state_energy} vs. global {self.molecule_and_method.get('ground state energy')}")
+        if not self.molecule_and_method.get("molecule") == self.own_molecular_formula:
+            self.errors.append(f"Wrong molecule: {self.own_molecular_formula} vs. global {self.molecule_and_method.get('molecule')}")
+
+        self.ok = len(self.errors) == 0
+        if not self.ok:
+            print(f"Error in self-check of {self.name}:")
+            for error in self.errors:
+                print(error)
+        return self.ok
 
     def import_file(self, file):
         file.state = self
@@ -122,6 +144,7 @@ class State:
                     self.delta_E = delta_E
                 State.sort_states_by_energy()
             self.settings["freq file"] = file.path
+            self.own_molecular_formula = file.molecular_formula
             self.vibrational_modes = file.modes
         elif file.type == FileType.FC_EXCITATION:
             if self.delta_E is not None:

@@ -513,9 +513,9 @@ class File:
                 for file in file_list:
                     if not file.ignored:
                         nr_files += 1
-                        if file.type in (FileType.FREQ_GROUND, FileType.FREQ_EXCITED):  # knows level of theory & basis set
+                        if file.type in (FileType.FREQ_GROUND, FileType.FREQ_EXCITED) and file.ground_state_energy is not None and file.progress in ("what_am_i done", "parsing done"):  # knows level of theory & basis set
                             loth_file = file
-            if not nr_files == 0:
+            if loth_file is not None and not nr_files == 0:
                 ml_options.append((nr_files, key, f"{loth_file.molecular_formula}\t\t{loth_file.routing_info['loth']}\t\tE₀ = {int(loth_file.ground_state_energy/219474.63*100)/100.}"))
         ml_options.sort(key=lambda m: m[0], reverse=True)
         return {m[2]: m[1] for m in ml_options}  # display string: key
