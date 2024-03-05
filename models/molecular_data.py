@@ -1,6 +1,8 @@
 import math
 from collections import Counter
 
+from utility.spectrum_plots import SpecPlotter
+
 _ELEMENT_NAMES = {'1': "H", '2': "He", '3': "Li", '4': "Be", '5': "B", '6': "C", '7': "N", '8': "O", '9': "F",
                       '10': "Ne", '11': "Na", '12': "Mg", '13': "Al", '14': "Si", '15': "P", '16': "S", '17': "Cl", '18': "Ar",
                       '19': "K", '20': "Ca", '21': "Sc", '22': "Ti", '23': "V", '24': "Cr", '25': "Mn", '26': "Fe", '27': "Ni", '28': "Co",
@@ -246,9 +248,23 @@ class FCSpectrum:
         self.zero_zero_transition_energy = zero_zero_transition_energy
         self.multiplicator = multiplicator
 
+        SpecPlotter.add_observer(self)
+        self.y_data = None
+        self.y_data_arrays = {}  # SpecPlotter key: array (save previously computed spectra)
+
     def get_wavenumbers(self, nr=-1):
         end = len(self.peaks) if nr == -1 else nr + 1
         return [peak.wavenumber for peak in self.peaks[:end]]
+
+    def update(self, event, *args):
+        """Automatically re-calculate y_data when active SpecPlotter instance changes."""
+        if event == SpecPlotter.active_plotter_changed_notification:
+            key = args[0]
+            if key in self.y_data_arrays:
+                self.y_data = self.y_data_arrays[key]
+            else:
+                self.y_data = SpecPlotter.get_spectrum_array(self.peaks)
+                self.y_data_arrays[key] = self.y_data
 
 
 

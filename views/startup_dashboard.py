@@ -2,7 +2,7 @@ import math
 
 import dearpygui.dearpygui as dpg
 from models.settings_manager import SettingsManager
-from models.spectrum_plots import SpecPlotter
+from utility.spectrum_plots import SpecPlotter
 from utility.system_file_browser import *
 from screeninfo import get_monitors
 import numpy as np
