@@ -44,8 +44,8 @@ class MainWindow:
 
                 with dpg.tab(label=" Emission Spectra ", tag="emission tab"):  # todo: "OK" button switches to better-populated of these two
                     with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1):
-                        dpg.add_table_column(label="project settings")  # TODO> List like project setup: Name, color buttons, show/hide buttons
-                        dpg.add_table_column(label="plots")  # todo - compute arrays in background, update with all currently requested, done spectra
+                        dpg.add_table_column(label="project settings", init_width_or_weight=1)  # TODO> List like project setup: Name, color buttons, show/hide buttons
+                        dpg.add_table_column(label="plots", init_width_or_weight=3)  # todo - compute arrays in background, update with all currently requested, done spectra
                         with dpg.table_row():
                             with dpg.table_cell():
                                 self.project_settings_panel = None  # TODO
@@ -54,8 +54,8 @@ class MainWindow:
 
                 with dpg.tab(label=" Excitation Spectra ", tag="excitation tab"):
                     with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1):
-                        dpg.add_table_column(label="project settings")  # TODO> List like project setup: Name, color buttons, show/hide buttons
-                        dpg.add_table_column(label="plots")
+                        dpg.add_table_column(label="project settings", init_width_or_weight=1)  # TODO> List like project setup: Name, color buttons, show/hide buttons
+                        dpg.add_table_column(label="plots", init_width_or_weight=3)
                         with dpg.table_row():
                             with dpg.table_cell():
                                 self.project_settings_panel = None  # TODO

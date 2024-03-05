@@ -36,4 +36,3 @@ class PlotsOverviewViewmodel:
     def set_callback(self, key, callback):
         self._callbacks[key] = callback
 
-
