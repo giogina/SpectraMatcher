@@ -16,6 +16,9 @@ from utility.gaussian_parser import GaussianParser
 
 
 # Define an observer interface
+from utility.spectrum_plots import SpecPlotter
+
+
 class ProjectObserver:
     def update(self, event_type, *args):
         pass
@@ -58,6 +61,7 @@ class Project(FileObserver):
         self._settings = SettingsManager()
         self.data_file_manager = DataFileManager()
         self.data_file_manager.add_observer(self, "directory structure changed")
+        SpecPlotter.add_observer(self)
         self.project_file = project_file
         self._autosave_file = self._get_autosave_file_path()
         self._lock_file_path = self.project_file + ".lock"
@@ -82,16 +86,25 @@ class Project(FileObserver):
             "open data files": [],
             "experimental spectra": {},
             "ground state path": None,
-            "progress": "start"
+            "progress": "start",
+            "active emission plotter": None,  # half_width, x_min, x_max, x_step=1
+            "active excitation plotter": None,  # half_width, x_min, x_max, x_step=1
         }
 
         self.window_title = ""  # For bringing that window to the front in Windows
 
-    # react to observations from my data file manager
+    # react to observations from my data file manager / SpecPlotter
     def update(self, event_type, *args):
-        self._data["open data folders"] = [d.path for _, d in self.data_file_manager.top_level_directories.items()]
-        self._data["open data files"] = [file.path for _, file in self.data_file_manager.top_level_files.items()]
-        self.project_unsaved(True)
+        if event_type == "directory structure changed":
+            self._data["open data folders"] = [d.path for _, d in self.data_file_manager.top_level_directories.items()]
+            self._data["open data files"] = [file.path for _, file in self.data_file_manager.top_level_files.items()]
+            self.project_unsaved(True)
+        elif event_type == SpecPlotter.active_plotter_changed_notification:
+            if args[1]:  # is_emission = True
+                self._data["active emission plotter"] = args[0]
+            else:
+                self._data["active excitation plotter"] = args[0]
+            self.project_unsaved(True)
 
     def load(self, auto=False):
         """Load project file"""
@@ -166,6 +179,10 @@ class Project(FileObserver):
             self._data["directory toggle states"] = {}
         if "progress" not in self._data.keys():
             self._data["progress"] = "start"
+        if self.get("active emission plotter") is not None:
+            SpecPlotter.set_active_plotter(*self.get("active emission plotter"))
+        if self.get("active excitation plotter") is not None:
+            SpecPlotter.set_active_plotter(*self.get("active excitation plotter"))
         # Automatically keeps file manager dicts updated in self._data!
         self.data_file_manager.directory_toggle_states = self._data["directory toggle states"]
         self.data_file_manager.ignored_files_and_directories = self._data["ignored"]

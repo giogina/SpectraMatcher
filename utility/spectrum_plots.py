@@ -3,8 +3,9 @@ import logging
 
 
 class SpecPlotter:
-    _active_plotter = None  # Key of SpecPlotter instance to be used currently
-    _plotters = {}  # dict of SpecPlotter instances (with different parameters, represented as tuple in keys)
+    _active_emission_plotter = None  # Key of SpecPlotter instance to be used currently
+    _active_excitation_plotter = None  # Key of SpecPlotter instance to be used currently
+    _plotters = {}  # coupled to project._data # dict of SpecPlotter instances (with different parameters in keys)
     _observers = []
     active_plotter_changed_notification = "Active plotter changed"
 
@@ -14,7 +15,6 @@ class SpecPlotter:
         return cls._plotters[(half_width, x_min, x_max, x_step)]
 
     def __init__(self, half_width, x_min, x_max, x_step=1):
-        self.set_active_plotter(half_width, x_min, x_max, x_step)
         self._half_width = half_width
         self._x_min = int(x_min/x_step)*x_step  # actual min and max x values, rounded to x_step
         self._x_max = int(x_max/x_step)*x_step
@@ -40,12 +40,16 @@ class SpecPlotter:
             o.update(message, self)
 
     @classmethod
-    def set_active_plotter(cls, half_width, x_min, x_max, x_step=1):
-        cls._active_plotter = (half_width, x_min, x_max, x_step)
-        if cls._active_plotter not in cls._plotters:
+    def set_active_plotter(cls, is_emission, half_width, x_min, x_max, x_step=1):
+        plotter_key = (half_width, x_min, x_max, x_step)
+        if is_emission:
+            cls._active_emission_plotter = plotter_key
+        else:
+            cls._active_excitation_plotter = plotter_key
+        if plotter_key not in cls._plotters:
             SpecPlotter(half_width, x_min, x_max, x_step=1)
         for o in cls._observers:
-            o.update(cls.active_plotter_changed_notification, cls._active_plotter)
+            o.update(cls.active_plotter_changed_notification, plotter_key, is_emission)
 
     def _base_lorentzian_array(self):
         """Compute 1D array of lorentzian peak values with top at (0,1) for x_data_length width scaled to 1"""
@@ -61,12 +65,16 @@ class SpecPlotter:
         return res
 
     @classmethod
-    def get_spectrum_array(cls, peaks):
+    def get_spectrum_array(cls, peaks, is_emission):
         """Get array using currently active plotter"""
-        if cls._active_plotter is not None:
-            return cls._plotters[cls._active_plotter].spectrum_array(peaks)
+        if is_emission:
+            plotter_key = cls._active_emission_plotter
         else:
-            return []
+            plotter_key = cls._active_excitation_plotter
+        if plotter_key is not None:
+            return plotter_key, cls._plotters[plotter_key].spectrum_array(peaks)
+        else:
+            return None, []
 
     def _shifted_peak(self, position_index):
         """Shifts and truncates self._base_peak to be correctly positioned in self._x_data."""
