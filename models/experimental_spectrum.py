@@ -233,7 +233,6 @@ class ExperimentalSpectrum:
         self._notify_observers(self.spectrum_analyzed_notification)
 
         ExperimentalSpectrum.adjust_spec_plotter_range(self.is_emission)
-        # SpecPlotter.widen_range(self.is_emission, width, min(xdata)-1000, 2*max(xdata)+1000)
         # for peak in self.peaks:
         #     print(peak.wavenumber, peak.intensity, peak.prominence)
 
@@ -253,7 +252,7 @@ class ExperimentalSpectrum:
         x_min = min([exp.x_min for exp in exp_list])
         x_max = max([exp.x_max for exp in exp_list])
         half_width = [exp.peak_width for exp in exp_list if exp.x_min == x_min][0]
-        SpecPlotter.set_active_plotter(is_emission, half_width, x_min, x_max)
+        SpecPlotter.set_active_plotter(is_emission, half_width, x_min-1000, 2*x_max+1000)
 
 
 class ExpPeak:
