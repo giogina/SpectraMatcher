@@ -54,11 +54,16 @@ class PlotsOverview:
 
         for s in self.viewmodel.state_plots:
             print("State plot:", s.xdata[:6], s.ydata[:6])
-            dpg.add_line_series(s.xdata, s.ydata, parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)
+            dpg.add_line_series(s.xdata, s.ydata, parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  #, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
             if not dpg.does_item_exist(f"drag-{s.tag}"):
                 dpg.add_drag_line(tag=f"drag-{s.tag}", vertical=False, default_value=s.yshift, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_y_drag(dpg.get_value(sender), u), parent=f"plot_{self.viewmodel.is_emission}")
             else:
                 dpg.set_value(f"drag-{s.tag}", s.yshift)
+
+                # TODO: Make drag lines appear on hover (maybe of a custom series, maybe the line series?)
+                #  adjust drag line colors
+                #  introduce x drag lines (maybe on highest peak? 0 (if only hovered one reacts)?
+                #  Maybe: on click on line series, create x drag line in that point; remove it again on release
 
     def update_plot(self, state_plot):
         dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])

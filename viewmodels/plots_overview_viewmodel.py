@@ -76,6 +76,9 @@ class PlotsOverviewViewmodel:
         state_plot.set_y_shift(value)
         self._callbacks.get("update plot")(state_plot)
 
+    def on_spectrum_click(self, *args):
+        print(args)
+
     def set_callback(self, key, callback):
         self._callbacks[key] = callback
 
