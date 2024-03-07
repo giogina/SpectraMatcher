@@ -247,8 +247,9 @@ class FCSpectrum:
         self.peaks = peaks
         self.zero_zero_transition_energy = zero_zero_transition_energy
         self.multiplicator = multiplicator
-        key, self.y_data = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
+        key, self.x_data, self.y_data = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
         SpecPlotter.add_observer(self)
+        self.x_data_arrays = {key: self.x_data}  # SpecPlotter key: array (save previously computed spectra)
         self.y_data_arrays = {key: self.y_data}  # SpecPlotter key: array (save previously computed spectra)
 
     def get_wavenumbers(self, nr=-1):
@@ -262,9 +263,11 @@ class FCSpectrum:
             is_emission = args[1]
             if is_emission == self.is_emission:
                 if key in self.y_data_arrays:
+                    self.x_data = self.x_data_arrays[key]
                     self.y_data = self.y_data_arrays[key]
                 else:
-                    _, self.y_data = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
+                    _, self.x_data, self.y_data = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
+                    self.x_data_arrays[key] = self.x_data
                     self.y_data_arrays[key] = self.y_data
 
 

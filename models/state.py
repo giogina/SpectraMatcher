@@ -2,6 +2,7 @@ import math
 import os
 
 from models.data_file_manager import File, FileType
+from utility.spectrum_plots import hsv_to_rgb
 import time
 
 
@@ -12,6 +13,7 @@ class State:
     _observers = []
     imported_file_changed_notification = "State file changed"
     imported_files_changed_notification = "State files changed"
+    state_ok_notification = "State ok"
 
     # Init with parsed files
     # def __init__(self, freq_file=None, emission_file=None, excitation_file=None, anharm_file=None):
@@ -39,6 +41,7 @@ class State:
         self.own_ground_state_energy = None
         self.ok = False
         self.errors = []
+        self.color = None
         State.sort_states_by_energy()
 
         # Load from paths, if supplied.
@@ -66,13 +69,35 @@ class State:
             print(f"Updating state observers: {message}")
             o.update(message, self)
 
+    def x_data(self, is_emission):
+        if is_emission and self.emission_spectrum is not None:
+            return self.emission_spectrum.x_data
+        elif not is_emission and self.excitation_spectrum is not None:
+            return self.excitation_spectrum.x_data
+        return []
+
+    def y_data(self, is_emission):
+        if is_emission and self.emission_spectrum is not None:
+            return self.emission_spectrum.y_data
+        elif not is_emission and self.excitation_spectrum is not None:
+            return self.excitation_spectrum.y_data
+        return []
+
     def check(self):
         """Confirm integrity of own data"""
         self.errors = []
         if self.molecule_and_method.get("ground state energy") is None:
             self.errors.append("Ground state energy unknown")
+            self.ok = False
+            return self.ok
         if self.molecule_and_method.get("molecule") is None:
             self.errors.append("Molecule unknown")
+            self.ok = False
+            return self.ok
+        if self.own_ground_state_energy is None:
+            self.errors.append("Own ground state energy unknown")
+            self.ok = False
+            return self.ok
         if not math.isclose(self.own_ground_state_energy, self.molecule_and_method.get("ground state energy"), abs_tol=10):
             self.errors.append(f"Wrong ground state energy: {self.own_ground_state_energy} vs. global {self.molecule_and_method.get('ground state energy')}")
         if not self.molecule_and_method.get("molecule") == self.own_molecular_formula:
@@ -83,6 +108,7 @@ class State:
             print(f"Error in self-check of {self.name}:")
             for error in self.errors:
                 print(error)
+        self._notify_observers(self.state_ok_notification)
         return self.ok
 
     def import_file(self, file):
@@ -187,11 +213,13 @@ class State:
         else:
             self._notify_observers(self.imported_file_changed_notification)
         file.state = None  # remove state from file to avoid future interferences
+        self.check()
 
     @classmethod
     def sort_states_by_energy(cls):
         cls.state_list.sort(key=lambda x: (x.delta_E is None, x.delta_E))
         for i, state in enumerate(cls.state_list):
+            state.color = 1/len(cls.state_list)
             if i == 0:
                 if not state.is_ground:
                     print("WARNING: 0th state somehow not ground state")
