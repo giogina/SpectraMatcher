@@ -10,6 +10,13 @@ from pathlib import Path
 import threading
 
 
+class Peak:
+    def __init__(self, wavenumber, transition, intensity):
+        self.wavenumber = wavenumber
+        self.transition = transition
+        self.intensity = intensity
+
+
 class Dashboard:
     def __init__(self):
         self.result = None
@@ -232,7 +239,8 @@ class Dashboard:
 
     def construct_spectrum_texture(self, color, peaks):
         texture_data = np.zeros((self.wavy_height, self.wavy_width, 4))
-        spec = self.spec_plotter.spectrum_array(peaks)*self.wavy_height  # np array with x: index, y: value (float)
+        fc_peaks = [Peak(peak[0], "", peak[1]) for peak in peaks]
+        spec = self.spec_plotter.spectrum_array(fc_peaks)*self.wavy_height  # np array with x: index, y: value (float)
         for x in range(1, self.wavy_width-1):
             texture_data = self.draw_slice(texture_data, x, self.wavy_height - spec[x],
                                            self.wavy_height - spec[x-1], self.wavy_height - spec[x+1], color)

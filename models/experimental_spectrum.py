@@ -1,7 +1,6 @@
-import numpy as np
-
 from models.data_file_manager import File, FileType
 from scipy import signal
+from utility.spectrum_plots import SpecPlotter
 
 
 class ExperimentalSpectrum:
@@ -31,6 +30,8 @@ class ExperimentalSpectrum:
         self.peak_width = None
         self.zero_zero_transition = None
         self.peaks = []
+        self.x_min = None
+        self.x_max = None
 
         self.ok = False
         self.errors = []
@@ -188,6 +189,9 @@ class ExperimentalSpectrum:
         wndata = self.columns.get(list(self.columns)[abs_index])
         ydata = self.columns.get(list(self.columns)[int_index])
 
+        self.x_min = min(xdata)
+        self.x_max = max(xdata)
+
         smooth_ydata = []
         for iy, y in enumerate(ydata):  # Take running average to make peak detection easier
             interval = ydata[max(0, iy - 3):min(len(ydata), iy + 4)]
@@ -227,8 +231,29 @@ class ExperimentalSpectrum:
 
         self.ok = len(self.errors) == 0
         self._notify_observers(self.spectrum_analyzed_notification)
+
+        ExperimentalSpectrum.adjust_spec_plotter_range(self.is_emission)
+        # SpecPlotter.widen_range(self.is_emission, width, min(xdata)-1000, 2*max(xdata)+1000)
         # for peak in self.peaks:
         #     print(peak.wavenumber, peak.intensity, peak.prominence)
+
+    @classmethod
+    def remove(cls, exp):
+        if exp in cls.spectra_list:
+            cls.spectra_list.remove(exp)
+        ExperimentalSpectrum.adjust_spec_plotter_range(exp.is_emission)
+        exp._notify_observers(cls.spectrum_analyzed_notification)
+
+    @classmethod
+    def adjust_spec_plotter_range(cls, is_emission):
+        """Set up SpecPlotter with sufficient range to fit all experimental spectra & matching half-width"""
+        exp_list = [exp for exp in cls.spectra_list if exp.is_emission == is_emission]
+        if not len(exp_list):
+            return None
+        x_min = min([exp.x_min for exp in exp_list])
+        x_max = max([exp.x_max for exp in exp_list])
+        half_width = [exp.peak_width for exp in exp_list if exp.x_min == x_min][0]
+        SpecPlotter.set_active_plotter(is_emission, half_width, x_min, x_max)
 
 
 class ExpPeak:

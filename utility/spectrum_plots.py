@@ -41,13 +41,14 @@ class SpecPlotter:
 
     @classmethod
     def set_active_plotter(cls, is_emission, half_width, x_min, x_max, x_step=1):
-        plotter_key = (half_width, x_min, x_max, x_step)
+        plotter_key = (int(half_width*10)/10, int(min(x_min, x_max)), int(max(x_min, x_max)), max(1, int(x_step)))
+        print(f"Setting active plotter: {plotter_key}")
         if is_emission:
             cls._active_emission_plotter = plotter_key
         else:
             cls._active_excitation_plotter = plotter_key
         if plotter_key not in cls._plotters:
-            SpecPlotter(half_width, x_min, x_max, x_step=1)
+            SpecPlotter(int(half_width*10)/10, int(x_min), int(x_max), x_step=max(1, int(x_step)))
         for o in cls._observers:
             o.update(cls.active_plotter_changed_notification, plotter_key, is_emission)
 
@@ -60,8 +61,8 @@ class SpecPlotter:
         """peaks: array of tuples (position, height)"""
         res = np.zeros(self._x_data.size)
         for peak in peaks:
-            position_index = int((peak[0]-self._x_min)/self._x_step)
-            res += self._shifted_peak(position_index)*peak[1]
+            position_index = int((peak.wavenumber-self._x_min)/self._x_step)
+            res += self._shifted_peak(position_index)*peak.intensity
         return res
 
     @classmethod

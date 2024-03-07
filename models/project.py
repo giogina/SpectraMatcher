@@ -8,11 +8,10 @@ import time
 import ctypes
 import matplotlib.colors as mcolors
 
-from models.experimental_spectrum import ExperimentalSpectrum, ExpPeak
 from models.settings_manager import SettingsManager
-from models.data_file_manager import DataFileManager, FileObserver, FileType, File
+from models.data_file_manager import DataFileManager, FileObserver, File
 from models.state import State
-from utility.gaussian_parser import GaussianParser
+from models.experimental_spectrum import ExperimentalSpectrum
 
 
 # Define an observer interface

@@ -122,7 +122,7 @@ class ProjectSetupViewModel(ProjectObserver):
 
     def delete_experimental_file(self, exp: ExperimentalSpectrum):
         if exp in ExperimentalSpectrum.spectra_list:
-            ExperimentalSpectrum.spectra_list.remove(exp)
+            ExperimentalSpectrum.remove(exp)
         self._callbacks.get("update experimental data")()
         self._project.copy_experiment_settings()
 
