@@ -9,6 +9,7 @@ def noop(*args, **kwargs):
 class StatePlot:
     def __init__(self, state: State, is_emission: bool, xshift=0, yshift=1):
         print(f"Making StatePlot for {state.name}")
+        self.tag = f"{state.name} - {is_emission} plot"
         self._base_xdata = state.x_data(is_emission)
         self._base_ydata = state.y_data(is_emission)
         self.xshift = xshift
@@ -24,6 +25,11 @@ class StatePlot:
     def _compute_y_data(self):
         return (self._base_ydata * self.yscale) + self.yshift
 
+    def set_y_shift(self, yshift):
+        self.yshift = yshift
+        print("new yshift: ", yshift)
+        self.ydata = self._compute_y_data()
+
 
 class PlotsOverviewViewmodel:
     def __init__(self, project, is_emission: bool):
@@ -34,7 +40,8 @@ class PlotsOverviewViewmodel:
         ExperimentalSpectrum.add_observer(self)
         State.add_observer(self)
         self._callbacks = {
-            "update plot": noop
+            "update plot": noop,
+            "redraw plot": noop
         }
 
         self.xydatas = []  # experimental x, y
@@ -45,10 +52,10 @@ class PlotsOverviewViewmodel:
         print(f"Plots overview viewmodel received event: {event}")
         if event == ExperimentalSpectrum.spectrum_analyzed_notification:
             self._extract_exp_x_y_data()
-            self._callbacks.get("update plot")()
+            self._callbacks.get("redraw plot")()
         elif event == State.state_ok_notification:
             self._extract_states()
-            self._callbacks.get("update plot")()
+            self._callbacks.get("redraw plot")()
 
     def _extract_exp_x_y_data(self):
         xydatas = []
@@ -63,6 +70,11 @@ class PlotsOverviewViewmodel:
         for state in State.state_list:
             if state.ok and (self.is_emission and state.emission_spectrum is not None) or ((not self.is_emission) and state.excitation_spectrum is not None):
                 self.state_plots.append(StatePlot(state, self.is_emission, yshift=len(self.state_plots)+1))
+
+    def on_y_drag(self, value, state_plot):
+        print(value, state_plot.tag)
+        state_plot.set_y_shift(value)
+        self._callbacks.get("update plot")(state_plot)
 
     def set_callback(self, key, callback):
         self._callbacks[key] = callback

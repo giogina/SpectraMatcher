@@ -6,6 +6,7 @@ from utility.spectrum_plots import hsv_to_rgb
 class PlotsOverview:
     def __init__(self, viewmodel: PlotsOverviewViewmodel):
         self.viewmodel = viewmodel
+        self.viewmodel.set_callback("redraw plot", self.redraw_plot)
         self.viewmodel.set_callback("update plot", self.update_plot)
 
         with dpg.table(header_row=False):
@@ -14,7 +15,7 @@ class PlotsOverview:
 
             with dpg.table_row():
                 with dpg.table_cell():
-                    with dpg.plot(label="Experimental spectra", height=-200, width=-1, anti_aliased=True):
+                    with dpg.plot(label="Experimental spectra", height=-200, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}"):
                         # optionally create legend
                         dpg.add_plot_legend()
 
@@ -40,8 +41,8 @@ class PlotsOverview:
                             dpg.add_slider_float(label=" ", default_value=1, vertical=True, max_value=1.0, height=160, format="")
                             dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {i}")
 
-    def update_plot(self):
-        print("Update plot...")
+    def redraw_plot(self):
+        print("Redraw plot...")
         dpg.delete_item(f"y_axis_{self.viewmodel.is_emission}", children_only=True)  # todo: change value rather than delete
 
         if len(self.viewmodel.xydatas):
@@ -53,4 +54,11 @@ class PlotsOverview:
 
         for s in self.viewmodel.state_plots:
             print("State plot:", s.xdata[:6], s.ydata[:6])
-            dpg.add_line_series(s.xdata, s.ydata, parent=f"y_axis_{self.viewmodel.is_emission}")
+            dpg.add_line_series(s.xdata, s.ydata, parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)
+            if not dpg.does_item_exist(f"drag-{s.tag}"):
+                dpg.add_drag_line(tag=f"drag-{s.tag}", vertical=False, default_value=s.yshift, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_y_drag(dpg.get_value(sender), u), parent=f"plot_{self.viewmodel.is_emission}")
+            else:
+                dpg.set_value(f"drag-{s.tag}", s.yshift)
+
+    def update_plot(self, state_plot):
+        dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
