@@ -461,7 +461,7 @@ class FileExplorer:
         # print(f"update file: {file.path}, {file.routing_info}")
         if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
             if table is None:
-                print(f"Delay displaying file: {file.path}")
+                # print(f"Delay displaying file: {file.path}")
                 return  # Too early, the item to be updated hasn't been made yet.
             # print(f"Constructing table row for {file.tag}")
             with dpg.table_row(tag=file.tag, parent=table):

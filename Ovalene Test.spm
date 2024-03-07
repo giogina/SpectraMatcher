@@ -6,7 +6,7 @@
     ],
     "ground state path": "C:\\Users\\Giogina\\Documents\\ovalene\\ground state\\ovalene-ground-opt-freq-disp.log",
     "directory toggle states": {
-        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1": true,
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1": false,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene_0": true,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited_0": true,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT_2": true,
@@ -32,7 +32,15 @@
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT_1": true,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT emission_1": true
     },
-    "ignored": [],
+    "ignored": [
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1",
+        "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\ovalene_EX_exp_1400-3050 (2).txt_2",
+        "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\ovalene_EX_exp_1400-3050.txt_2",
+        "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_emission.yaml_2",
+        "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_excitation (2).yaml_2",
+        "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_excitation (3).yaml_2",
+        "file_C:\\Users\\Giogina\\Documents\\ovalene\\ignore\\settings_excitation.yaml_2"
+    ],
     "experimental spectra": {},
     "open data files": [],
     "state settings": [
@@ -87,7 +95,7 @@
             "absolute wavenumber column": 1
         }
     ],
-    "progress": "start",
+    "progress": "import done",
     "active emission plotter": [
         31.2,
         -1404,

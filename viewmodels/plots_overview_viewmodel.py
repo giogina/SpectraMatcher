@@ -25,10 +25,8 @@ class PlotsOverviewViewmodel:
             self._callbacks.get("update plot")()
 
     def _extract_exp_x_y_data(self):
-        print("in get x y data: ", ExperimentalSpectrum.spectra_list)
         self.xydatas = []
         for exp in ExperimentalSpectrum.spectra_list:
-            print(exp.name, exp.is_emission, exp.ok)
             if exp.is_emission == self.is_emission and exp.ok:
                 self.xydatas.append((exp.get_x_data(), exp.get_y_data()))
 

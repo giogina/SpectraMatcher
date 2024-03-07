@@ -24,8 +24,10 @@ class PlotsOverview:
             dpg.add_plot_legend()
 
             # REQUIRED: create x and y axes
-            dpg.add_plot_axis(dpg.mvXAxis, label="x")
+            dpg.add_plot_axis(dpg.mvXAxis, label="x", tag=f"x_axis_{self.viewmodel.is_emission}")
+            dpg.set_axis_limits(dpg.last_item(), -300, 3000)
             dpg.add_plot_axis(dpg.mvYAxis, label="y", tag=f"y_axis_{self.viewmodel.is_emission}")
+            dpg.set_axis_limits(dpg.last_item(), 0, 1)  # TODO: only on spectrum add/remove, zoom accordingly
 
         with dpg.group(horizontal=True):
 
@@ -46,5 +48,7 @@ class PlotsOverview:
 
         if len(self.viewmodel.xydatas):
             for x_data, y_data in self.viewmodel.xydatas:
-                print(x_data[:3], y_data[:3])
+                print(x_data[:6], y_data[:6])
                 dpg.add_line_series(x_data, y_data, parent=f"y_axis_{self.viewmodel.is_emission}")
+            dpg.set_axis_limits_auto(f"x_axis_{self.viewmodel.is_emission}")
+            dpg.set_axis_limits_auto(f"y_axis_{self.viewmodel.is_emission}")

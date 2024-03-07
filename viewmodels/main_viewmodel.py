@@ -50,11 +50,10 @@ class MainViewModel(ProjectObserver):
             self._load()
 
     def _load(self, auto=False):
-        self._project.load(auto)
         self._project.add_observer(self, "project_unsaved")
         self._project.add_observer(self, "progress updated")
+        self._project.load(auto)
         self._title_callback(self._assemble_window_title())
-        self.update("progress updated")   # observers are not there yet during load, need to manually trigger
 
     def _restore_autosave(self):
         self._load(auto=True)

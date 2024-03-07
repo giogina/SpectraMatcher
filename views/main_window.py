@@ -78,8 +78,6 @@ class MainWindow:
         elif progress == "import done":
             dpg.set_value("main tab bar", "emission tab")
 
-
-
     def configure_theme(self):
         palette = [[11, 11, 36],  # 0
                    [22, 22, 72],  # 1

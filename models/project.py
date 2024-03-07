@@ -178,10 +178,11 @@ class Project(FileObserver):
             self._data["directory toggle states"] = {}
         if "progress" not in self._data.keys():
             self._data["progress"] = "start"
+        self._notify_observers("progress updated")
         if self.get("active emission plotter") is not None:
-            SpecPlotter.set_active_plotter(*self.get("active emission plotter"))
+            SpecPlotter.set_active_plotter(True, *self.get("active emission plotter"))
         if self.get("active excitation plotter") is not None:
-            SpecPlotter.set_active_plotter(*self.get("active excitation plotter"))
+            SpecPlotter.set_active_plotter(False, *self.get("active excitation plotter"))
         # Automatically keeps file manager dicts updated in self._data!
         self.data_file_manager.directory_toggle_states = self._data["directory toggle states"]
         self.data_file_manager.ignored_files_and_directories = self._data["ignored"]
