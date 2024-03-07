@@ -41,10 +41,10 @@ class PlotsOverview:
                 dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {i}")
 
     def update_plot(self):
-        print("Update plot...", self.viewmodel.xdata)
+        print("Update plot...")
         dpg.delete_item(f"y_axis_{self.viewmodel.is_emission}", children_only=True)  # todo: change value rather than delete
 
-        if len(self.viewmodel.xdata):
-            for y_data in self.viewmodel.ydatas:
-                print(self.viewmodel.xdata[:3], y_data[:3])
-                dpg.add_line_series(self.viewmodel.xdata, y_data, parent=f"y_axis_{self.viewmodel.is_emission}")
+        if len(self.viewmodel.xydatas):
+            for x_data, y_data in self.viewmodel.xydatas:
+                print(x_data[:3], y_data[:3])
+                dpg.add_line_series(x_data, y_data, parent=f"y_axis_{self.viewmodel.is_emission}")

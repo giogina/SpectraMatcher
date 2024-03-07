@@ -16,8 +16,7 @@ class PlotsOverviewViewmodel:
             "update plot": noop
         }
 
-        self.xdata = []  # TODO: determine "global" x data first...
-        self.ydatas = [[]]  # TODO: spec ydata to ydata fitting global xdata...
+        self.xydatas = []
 
     def update(self, event, *args):
         print(f"Plots overview viewmodel received event: {event}")
@@ -27,11 +26,11 @@ class PlotsOverviewViewmodel:
 
     def _extract_exp_x_y_data(self):
         print("in get x y data: ", ExperimentalSpectrum.spectra_list)
+        self.xydatas = []
         for exp in ExperimentalSpectrum.spectra_list:
-            print(exp.name, exp.is_emission, exp.ok, exp.columns)
+            print(exp.name, exp.is_emission, exp.ok)
             if exp.is_emission == self.is_emission and exp.ok:
-                self.xdata = exp.get_x_data()
-                self.ydatas = [exp.get_y_data()]  # todo> temp
+                self.xydatas.append((exp.get_x_data(), exp.get_y_data()))
 
     def set_callback(self, key, callback):
         self._callbacks[key] = callback
