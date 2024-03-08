@@ -8,6 +8,8 @@ class PlotsOverview:
         self.viewmodel = viewmodel
         self.viewmodel.set_callback("redraw plot", self.redraw_plot)
         self.viewmodel.set_callback("update plot", self.update_plot)
+        self.custom_series = None
+        self.spec_theme = {}
 
         with dpg.table(header_row=False):
             dpg.add_table_column(init_width_or_weight=4)
@@ -25,12 +27,6 @@ class PlotsOverview:
 
                         dpg.set_axis_limits_auto(f"x_axis_{self.viewmodel.is_emission}")
                         dpg.set_axis_limits_auto(f"y_axis_{self.viewmodel.is_emission}")
-
-                        with dpg.custom_series([0.0, 1.0, 2.0, 4.0, 5.0], [0.0, 1.0, 2.0, 4.0, 5.0], 2,
-                                               parent=f"y_axis_{self.viewmodel.is_emission}",
-                                               label="Custom Series", callback=self._custom_series_callback,
-                                               tag=f"demo_custom_series_{self.viewmodel.is_emission}"):
-                            dpg.add_text("Current Point: ")
 
                 with dpg.table_cell():
                     # with dpg.group():
@@ -51,7 +47,6 @@ class PlotsOverview:
 
     def _custom_series_callback(self, sender, app_data):
         try:
-            print(sender, app_data)
             _helper_data = app_data[0]
             transformed_x = app_data[1]
             transformed_y = app_data[2]
@@ -59,25 +54,50 @@ class PlotsOverview:
             mouse_y_plot_space = _helper_data["MouseY_PlotSpace"]
             mouse_x_pixel_space = _helper_data["MouseX_PixelSpace"]
             mouse_y_pixel_space = _helper_data["MouseY_PixelSpace"]
-            # dpg.delete_item(sender, children_only=True, slot=2)
-            # dpg.push_container_stack(sender)
-            # tag = f"demo_custom_series_{self.viewmodel.is_emission}"
-            # dpg.configure_item(tag, tooltip=False)
+            dpg.delete_item(sender, children_only=True, slot=2)
+            dpg.push_container_stack(sender)
+            # dpg.configure_item(sender, tooltip=False)
+            dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [[], []])
+            for s_tag, s in self.viewmodel.state_plots.items():
+                # print(sender, mouse_y_plot_space, s.yshift, s.yshift+s.yscale)
+                if abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) < 0.02:
+                    dpg.show_item(f"drag-{s_tag}")
+                elif abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) > 0.1:
+                    dpg.hide_item(f"drag-{s_tag}")
+                if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) > 50:
+                    dpg.hide_item(f"drag-x-{s_tag}")
+
+                if s.yshift <= mouse_y_plot_space <= s.yshift+s.yscale:
+                    if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) < 10:
+                        dpg.show_item(f"drag-x-{s_tag}")
+
+                    print(s.xshift)
+                    dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [s.xdata, s.ydata - s.yshift])
+                    dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
+
+                    # dpg.draw_circle((mouse_x_pixel_space, mouse_y_pixel_space), 30)
+                    dpg.configure_item(sender, tooltip=True)
+                    dpg.set_value(self.tooltiptext, f"Diff: {abs(dpg.get_value(f'drag-x-{s_tag}') - mouse_x_plot_space)}")
             # for i in range(0, len(transformed_x)):
             #     dpg.draw_text((transformed_x[i] + 15, transformed_y[i] - 15), str(i), size=20)
-            #     # dpg.draw_circle((transformed_x[i], transformed_y[i]), 15, fill=(50+i*5, 50+i*50, 0, 255))
+            #     dpg.draw_circle((transformed_x[i], transformed_y[i]), 15, fill=(50+i*5, 50+i*50, 0, 255))
             #     if mouse_x_pixel_space < transformed_x[i] + 15 and mouse_x_pixel_space > transformed_x[
             #         i] - 15 and mouse_y_pixel_space > transformed_y[i] - 15 and mouse_y_pixel_space < transformed_y[i] + 15:
             #         dpg.draw_circle((transformed_x[i], transformed_y[i]), 30)
-            #         dpg.configure_item(tag, tooltip=True)
-            #         dpg.set_value(tag, "Current Point: " + str(i))
-            # dpg.pop_container_stack()
+            #         dpg.configure_item(sender, tooltip=True)
+            #         dpg.set_value(self.tooltiptext, "Current Point: " + str(i))
+            dpg.pop_container_stack()
         except Exception as e:
             print(f"Exception in custom series callback: {e}")
 
     def redraw_plot(self):
         print("Redraw plot...")
-        dpg.delete_item(f"y_axis_{self.viewmodel.is_emission}", children_only=True)  # todo: change value rather than delete
+        dpg.delete_item(f"y_axis_{self.viewmodel.is_emission}", children_only=True)
+
+        with dpg.custom_series([0.0, 1.0, 2.0, 4.0, 5.0], [0.0, 1.0, 2.0, 4.0, 5.0], 2,
+                               parent=f"y_axis_{self.viewmodel.is_emission}",
+                               label="Custom Series", callback=self._custom_series_callback) as self.custom_series:
+            self.tooltiptext = dpg.add_text("Current Point: ")
 
         xmin, xmax, ymin, ymax = self.viewmodel.get_zoom_range()
 
@@ -87,26 +107,29 @@ class PlotsOverview:
             for x_data, y_data in self.viewmodel.xydatas:
                 print(x_data[:6], y_data[:6])
                 dpg.add_line_series(x_data, y_data, parent=f"y_axis_{self.viewmodel.is_emission}")
-        if not len(self.viewmodel.state_plots):
+        if self.viewmodel.state_plots == {}:
             dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
 
-        for s in self.viewmodel.state_plots:
+        dpg.add_line_series([], [], parent=f"y_axis_{self.viewmodel.is_emission}", tag=f"exp_overlay_{self.viewmodel.is_emission}")
+
+        for s in self.viewmodel.state_plots.values():
+            with dpg.theme() as self.spec_theme[s.tag]:
+                with dpg.theme_component(dpg.mvLineSeries):
+                    dpg.add_theme_color(dpg.mvPlotCol_Line, s.color, category=dpg.mvThemeCat_Plots)
             print("State plot:", s.xdata[:6], s.ydata[:6])
-            xdata, ydata = s.get_xydata(xmin, xmax)  # truncated versions
+            xdata, ydata, max_x = s.get_xydata(xmin, xmax)  # truncated versions
             dpg.add_line_series(xdata, ydata, parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  #, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
+            dpg.bind_item_theme(s.tag, self.spec_theme[s.tag])
             if not dpg.does_item_exist(f"drag-{s.tag}"):
-                dpg.add_drag_line(tag=f"drag-{s.tag}", vertical=False, default_value=s.yshift, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_y_drag(dpg.get_value(sender), u), parent=f"plot_{self.viewmodel.is_emission}")
+                dpg.add_drag_line(tag=f"drag-{s.tag}", vertical=False, default_value=s.yshift, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_y_drag(dpg.get_value(sender), u), parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.color)
+                print(f"line at max x: {max_x}")
+                dpg.add_drag_line(tag=f"drag-x-{s.tag}", vertical=True, default_value=max_x, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_x_drag(dpg.get_value(sender), u), parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.color)
             else:
                 dpg.set_value(f"drag-{s.tag}", s.yshift)
 
         dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
 
-
-                # TODO: Make drag lines appear on hover (maybe of a custom series, maybe the line series?)
-                #  adjust drag line colors
-                #  introduce x drag lines (maybe on highest peak? 0 (if only hovered one reacts)?
-                #  Maybe: on click on line series, create x drag line in that point; remove it again on release
-                #  While state is x-dragging, show a representation shadow on the experimental level
+                # TODO: Attach scroll event handler to drag lines: y line to scroll y scale; x line maybe for width?
 
     def update_plot(self, state_plot):
         dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
@@ -119,3 +142,5 @@ class PlotsOverview:
                 dpg.add_theme_color(dpg.mvPlotCol_MarkerFill, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
                 dpg.add_theme_style(dpg.mvPlotStyleVar_Marker, dpg.mvPlotMarker_Square, category=dpg.mvThemeCat_Plots)
                 dpg.add_theme_style(dpg.mvPlotStyleVar_MarkerSize, 1, category=dpg.mvThemeCat_Plots)
+            with dpg.theme_component(dpg.mvDragLine):
+                dpg.add_theme_color(dpg.mvPlotCol_Line, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)

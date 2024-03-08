@@ -1,5 +1,6 @@
 from models.experimental_spectrum import ExperimentalSpectrum
 from models.state import State
+import numpy as np
 
 
 def noop(*args, **kwargs):
@@ -19,12 +20,18 @@ class StatePlot:
         self.color = state.color
         self.xdata = self._compute_x_data()
         self.ydata = self._compute_y_data()
+        self.handle_x = 0
 
     def _compute_x_data(self):
         return self._base_xdata + self.xshift
 
     def _compute_y_data(self):
         return (self._base_ydata * self.yscale) + self.yshift
+
+    def set_x_shift(self, xshift):
+        self.xshift = xshift - self.handle_x
+        print("new xshift: ", self.xshift)
+        self.xdata = self._compute_x_data()
 
     def set_y_shift(self, yshift):
         self.yshift = yshift
@@ -42,8 +49,10 @@ class StatePlot:
             stop = max(int((xmax - self.xdata[-1]) / step), -len(self.xdata)+1)
         else:
             stop = len(self.xdata)
-        return self.xdata[start:stop], self.ydata[start:stop]
-
+        max_index = np.where(self.ydata[start:stop]==max(self.ydata[start:stop]))[0][0]
+        max_x = self.xdata[start:stop][max_index]
+        self.handle_x = max_x
+        return self.xdata[start:stop], self.ydata[start:stop], max_x
 
 
 class PlotsOverviewViewmodel:
@@ -60,7 +69,7 @@ class PlotsOverviewViewmodel:
         }
 
         self.xydatas = []  # experimental x, y
-        self.state_plots = []  # whole State instances, for x, y, color, etc.
+        self.state_plots = {}  # whole State instances, for x, y, color, etc.
         self._auto_zoom = True
 
     def update(self, event, *args):
@@ -81,15 +90,19 @@ class PlotsOverviewViewmodel:
 
     def _extract_states(self):
         print("Extract states called")
-        self.state_plots = []
+        self.state_plots = {}
         for state in State.state_list:
             if state.ok and (self.is_emission and state.emission_spectrum is not None) or ((not self.is_emission) and state.excitation_spectrum is not None):
-                self.state_plots.append(StatePlot(state, self.is_emission, yshift=len(self.state_plots)+1))
+                s = StatePlot(state, self.is_emission, yshift=len(list(self.state_plots.keys())) + 1)
+                self.state_plots[s.tag] = s
+
+    def on_x_drag(self, value, state_plot):
+        self.state_plots[state_plot.tag].set_x_shift(value)
+        self._callbacks.get("update plot")(self.state_plots[state_plot.tag])
 
     def on_y_drag(self, value, state_plot):
-        print(value, state_plot.tag)
-        state_plot.set_y_shift(value)
-        self._callbacks.get("update plot")(state_plot)
+        self.state_plots[state_plot.tag].set_y_shift(value)
+        self._callbacks.get("update plot")(self.state_plots[state_plot.tag])
 
     def on_spectrum_click(self, *args):
         print(args)
@@ -106,7 +119,7 @@ class PlotsOverviewViewmodel:
             exp_x_ranges = [(xy[0][0], xy[0][-1]) for xy in self.xydatas]
             xmin = min([min(xm) for xm in exp_x_ranges])
             xmax = max([max(xm) for xm in exp_x_ranges])
-        for p in self.state_plots:
+        for p in self.state_plots.values():
             if p.yshift < ymin + 0.1:
                 ymin = p.yshift - 0.1
             if p.yshift + 1 > ymax + 0.1:

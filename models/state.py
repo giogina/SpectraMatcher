@@ -212,7 +212,7 @@ class State:
     def sort_states_by_energy(cls):
         cls.state_list.sort(key=lambda x: (x.delta_E is None, x.delta_E))
         for i, state in enumerate(cls.state_list):
-            state.color = 1/len(cls.state_list)
+            state.color = hsv_to_rgb(i/len(cls.state_list), 0.9, 0.9)
             if i == 0:
                 if not state.is_ground:
                     print("WARNING: 0th state somehow not ground state")
