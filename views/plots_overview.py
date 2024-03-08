@@ -67,13 +67,13 @@ class PlotsOverview:
                 if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) > 50:
                     dpg.hide_item(f"drag-x-{s_tag}")
 
-                if s.yshift <= mouse_y_plot_space <= s.yshift+s.yscale:
+                if s.yshift - 0.02 <= mouse_y_plot_space <= s.yshift+s.yscale:
                     if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) < 10:
                         dpg.show_item(f"drag-x-{s_tag}")
 
-                    print(s.xshift)
-                    dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [s.xdata, s.ydata - s.yshift])
-                    dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
+                    if not -0.2 < s.yshift <= 0.9:
+                        dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [s.xdata, s.ydata - s.yshift])
+                        dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
 
                     # dpg.draw_circle((mouse_x_pixel_space, mouse_y_pixel_space), 30)
                     dpg.configure_item(sender, tooltip=True)
