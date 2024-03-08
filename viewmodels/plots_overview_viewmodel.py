@@ -31,6 +31,20 @@ class StatePlot:
         print("new yshift: ", yshift)
         self.ydata = self._compute_y_data()
 
+    def get_xydata(self, xmin, xmax):
+        if self.xdata[0] < xmin:
+            step = float(self.xdata[1] - self.xdata[0])
+            start = min(int((xmin - self.xdata[0]) / step), len(self.xdata)-1)
+        else:
+            start = 0
+        if self.xdata[-1] > xmax:
+            step = float(self.xdata[1] - self.xdata[0])
+            stop = max(int((xmax - self.xdata[-1]) / step), -len(self.xdata)+1)
+        else:
+            stop = len(self.xdata)
+        return self.xdata[start:stop], self.ydata[start:stop]
+
+
 
 class PlotsOverviewViewmodel:
     def __init__(self, project, is_emission: bool):

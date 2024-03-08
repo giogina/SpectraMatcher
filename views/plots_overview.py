@@ -22,11 +22,15 @@ class PlotsOverview:
                         # REQUIRED: create x and y axes
                         dpg.add_plot_axis(dpg.mvXAxis, label="x", tag=f"x_axis_{self.viewmodel.is_emission}")
                         dpg.add_plot_axis(dpg.mvYAxis, label="y", tag=f"y_axis_{self.viewmodel.is_emission}")
-                        # dpg.set_axis_limits(f"x_axis_{self.viewmodel.is_emission}", -300, 3000)
-                        # dpg.set_axis_limits(f"y_axis_{self.viewmodel.is_emission}", 0, 1)
 
                         dpg.set_axis_limits_auto(f"x_axis_{self.viewmodel.is_emission}")
                         dpg.set_axis_limits_auto(f"y_axis_{self.viewmodel.is_emission}")
+
+                        with dpg.custom_series([0.0, 1.0, 2.0, 4.0, 5.0], [0.0, 1.0, 2.0, 4.0, 5.0], 2,
+                                               parent=f"y_axis_{self.viewmodel.is_emission}",
+                                               label="Custom Series", callback=self._custom_series_callback,
+                                               tag=f"demo_custom_series_{self.viewmodel.is_emission}"):
+                            dpg.add_text("Current Point: ")
 
                 with dpg.table_cell():
                     # with dpg.group():
@@ -45,11 +49,39 @@ class PlotsOverview:
                             dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {i}")
                 self.configure_theme()
 
+    def _custom_series_callback(self, sender, app_data):
+        try:
+            print(sender, app_data)
+            _helper_data = app_data[0]
+            transformed_x = app_data[1]
+            transformed_y = app_data[2]
+            mouse_x_plot_space = _helper_data["MouseX_PlotSpace"]
+            mouse_y_plot_space = _helper_data["MouseY_PlotSpace"]
+            mouse_x_pixel_space = _helper_data["MouseX_PixelSpace"]
+            mouse_y_pixel_space = _helper_data["MouseY_PixelSpace"]
+            # dpg.delete_item(sender, children_only=True, slot=2)
+            # dpg.push_container_stack(sender)
+            # tag = f"demo_custom_series_{self.viewmodel.is_emission}"
+            # dpg.configure_item(tag, tooltip=False)
+            # for i in range(0, len(transformed_x)):
+            #     dpg.draw_text((transformed_x[i] + 15, transformed_y[i] - 15), str(i), size=20)
+            #     # dpg.draw_circle((transformed_x[i], transformed_y[i]), 15, fill=(50+i*5, 50+i*50, 0, 255))
+            #     if mouse_x_pixel_space < transformed_x[i] + 15 and mouse_x_pixel_space > transformed_x[
+            #         i] - 15 and mouse_y_pixel_space > transformed_y[i] - 15 and mouse_y_pixel_space < transformed_y[i] + 15:
+            #         dpg.draw_circle((transformed_x[i], transformed_y[i]), 30)
+            #         dpg.configure_item(tag, tooltip=True)
+            #         dpg.set_value(tag, "Current Point: " + str(i))
+            # dpg.pop_container_stack()
+        except Exception as e:
+            print(f"Exception in custom series callback: {e}")
+
     def redraw_plot(self):
         print("Redraw plot...")
         dpg.delete_item(f"y_axis_{self.viewmodel.is_emission}", children_only=True)  # todo: change value rather than delete
 
-        dpg.add_scatter_series([-100, 3000], [-0.1, len(self.viewmodel.state_plots) + 1.1], parent=f"y_axis_{self.viewmodel.is_emission}")
+        xmin, xmax, ymin, ymax = self.viewmodel.get_zoom_range()
+
+        dpg.add_scatter_series([xmin, xmax], [ymin, ymax], parent=f"y_axis_{self.viewmodel.is_emission}")
         dpg.bind_item_theme(dpg.last_item(), f"plot_theme_{self.viewmodel.is_emission}")
         if len(self.viewmodel.xydatas):
             for x_data, y_data in self.viewmodel.xydatas:
@@ -60,13 +92,12 @@ class PlotsOverview:
 
         for s in self.viewmodel.state_plots:
             print("State plot:", s.xdata[:6], s.ydata[:6])
-            dpg.add_line_series(s.xdata, s.ydata, parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  #, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
-            # dpg.add_custom_series(s.xdata, s.ydata, parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  #, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
+            xdata, ydata = s.get_xydata(xmin, xmax)  # truncated versions
+            dpg.add_line_series(xdata, ydata, parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  #, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
             if not dpg.does_item_exist(f"drag-{s.tag}"):
                 dpg.add_drag_line(tag=f"drag-{s.tag}", vertical=False, default_value=s.yshift, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_y_drag(dpg.get_value(sender), u), parent=f"plot_{self.viewmodel.is_emission}")
             else:
                 dpg.set_value(f"drag-{s.tag}", s.yshift)
-
 
         dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
 
@@ -76,7 +107,6 @@ class PlotsOverview:
                 #  introduce x drag lines (maybe on highest peak? 0 (if only hovered one reacts)?
                 #  Maybe: on click on line series, create x drag line in that point; remove it again on release
                 #  While state is x-dragging, show a representation shadow on the experimental level
-                #  Normalize FC spectra to 1
 
     def update_plot(self, state_plot):
         dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])

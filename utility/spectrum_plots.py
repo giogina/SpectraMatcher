@@ -76,6 +76,9 @@ class SpecPlotter:
         for peak in peaks:
             position_index = int((peak.wavenumber-self._x_min)/self._x_step)
             res += self._shifted_peak(position_index)*peak.intensity
+        top = max(res)
+        if top > 0:
+            res = res/top
         return res
 
     @classmethod
