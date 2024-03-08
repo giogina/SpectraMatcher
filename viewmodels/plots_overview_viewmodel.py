@@ -10,8 +10,9 @@ class StatePlot:
     def __init__(self, state: State, is_emission: bool, xshift=0, yshift=1):
         print(f"Making StatePlot for {state.name}")
         self.tag = f"{state.name} - {is_emission} plot"
-        self._base_xdata = state.x_data(is_emission)
-        self._base_ydata = state.y_data(is_emission)
+        self.spectrum = state.get_spectrum(is_emission)
+        self._base_xdata = self.spectrum.x_data
+        self._base_ydata = self.spectrum.y_data
         self.xshift = xshift
         self.yshift = yshift
         self.yscale = 1
@@ -82,17 +83,19 @@ class PlotsOverviewViewmodel:
     def set_callback(self, key, callback):
         self._callbacks[key] = callback
 
-    def on_toggle_autozoom(self, auto_zoom):
-        self._auto_zoom = auto_zoom
-        self.adjust_zoom()
-
-    def adjust_zoom(self):
+    def get_zoom_range(self):
         xmin = -1000
         xmax = 3000
-        ymin = -0.1  # todo: probably enough to trigger an auto-zoom of the plot itself...
-        ymax = 1.1  # todo: adjust according to states and their distances
+        ymin = -0.1
+        ymax = 1.1
         if len(self.xydatas):
             exp_x_ranges = [(xy[0][0], xy[0][-1]) for xy in self.xydatas]
             xmin = min([min(xm) for xm in exp_x_ranges])
             xmax = max([max(xm) for xm in exp_x_ranges])
+        for p in self.state_plots:
+            if p.yshift < ymin + 0.1:
+                ymin = p.yshift - 0.1
+            if p.yshift + 1 > ymax + 0.1:
+                ymax = p.yshift + 1.1
+        return xmin, xmax, ymin, ymax
 

@@ -69,19 +69,12 @@ class State:
             print(f"Updating state observers: {message}")
             o.update(message, self)
 
-    def x_data(self, is_emission):
+    def get_spectrum(self, is_emission):
         if is_emission and self.emission_spectrum is not None:
-            return self.emission_spectrum.x_data
+            return self.emission_spectrum
         elif not is_emission and self.excitation_spectrum is not None:
-            return self.excitation_spectrum.x_data
-        return []
-
-    def y_data(self, is_emission):
-        if is_emission and self.emission_spectrum is not None:
-            return self.emission_spectrum.y_data
-        elif not is_emission and self.excitation_spectrum is not None:
-            return self.excitation_spectrum.y_data
-        return []
+            return self.excitation_spectrum
+        return None
 
     def check(self):
         """Confirm integrity of own data"""
