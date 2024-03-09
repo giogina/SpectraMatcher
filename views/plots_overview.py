@@ -10,6 +10,11 @@ class PlotsOverview:
         self.viewmodel.set_callback("update plot", self.update_plot)
         self.custom_series = None
         self.spec_theme = {}
+        self.hovered_spectrum = None
+
+        with dpg.handler_registry() as self.mouse_handlers:
+            dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
+
 
         with dpg.table(header_row=False):
             dpg.add_table_column(init_width_or_weight=4)
@@ -58,10 +63,12 @@ class PlotsOverview:
             dpg.push_container_stack(sender)
             # dpg.configure_item(sender, tooltip=False)
             dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [[], []])
+            self.hovered_spectrum = None
             for s_tag, s in self.viewmodel.state_plots.items():
                 # print(sender, mouse_y_plot_space, s.yshift, s.yshift+s.yscale)
                 if abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) < 0.02:
                     dpg.show_item(f"drag-{s_tag}")
+                    self.hovered_spectrum = s_tag
                 elif abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) > 0.1:
                     dpg.hide_item(f"drag-{s_tag}")
                 if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) > 50:
@@ -144,3 +151,6 @@ class PlotsOverview:
                 dpg.add_theme_style(dpg.mvPlotStyleVar_MarkerSize, 1, category=dpg.mvThemeCat_Plots)
             with dpg.theme_component(dpg.mvDragLine):
                 dpg.add_theme_color(dpg.mvPlotCol_Line, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
+
+    def on_scroll(self, direction):
+        self.viewmodel.resize_spectrum(self.hovered_spectrum, direction)

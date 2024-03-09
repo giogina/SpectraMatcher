@@ -30,12 +30,15 @@ class StatePlot:
 
     def set_x_shift(self, xshift):
         self.xshift = xshift - self.handle_x
-        print("new xshift: ", self.xshift)
         self.xdata = self._compute_x_data()
 
     def set_y_shift(self, yshift):
         self.yshift = yshift
-        print("new yshift: ", yshift)
+        self.ydata = self._compute_y_data()
+
+    def resize_y_scale(self, direction):
+        self.yscale += direction * 0.1
+        self.yscale = max(0, self.yscale)
         self.ydata = self._compute_y_data()
 
     def get_xydata(self, xmin, xmax):
@@ -103,6 +106,12 @@ class PlotsOverviewViewmodel:
     def on_y_drag(self, value, state_plot):
         self.state_plots[state_plot.tag].set_y_shift(value)
         self._callbacks.get("update plot")(self.state_plots[state_plot.tag])
+
+    def resize_spectrum(self, spec_tag, direction):
+        if spec_tag is not None and spec_tag in self.state_plots.keys():
+            spec = self.state_plots[spec_tag]
+            spec.resize_y_scale(direction)
+            self._callbacks.get("update plot")(spec)
 
     def on_spectrum_click(self, *args):
         print(args)
