@@ -12,6 +12,7 @@ class StatePlot:
         print(f"Making StatePlot for {state.name}")
         self.tag = f"{state.name} - {is_emission} plot"
         self.spectrum = state.get_spectrum(is_emission)
+        self.name = state.name
         self._base_xdata = self.spectrum.x_data
         self._base_ydata = self.spectrum.y_data
         self.xshift = xshift

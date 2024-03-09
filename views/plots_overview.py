@@ -12,6 +12,7 @@ class PlotsOverview:
         self.spec_theme = {}
         self.hovered_spectrum = None
         self.show__all_drag_lines = False  # show all drag lines
+        self.line_series = []
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -34,6 +35,13 @@ class PlotsOverview:
 
                         dpg.set_axis_limits_auto(f"x_axis_{self.viewmodel.is_emission}")
                         dpg.set_axis_limits_auto(f"y_axis_{self.viewmodel.is_emission}")
+
+                        with dpg.custom_series([0.0, 1.0, 2.0, 4.0, 5.0], [0.0, 1.0, 2.0, 4.0, 5.0], 2,
+                                               parent=f"y_axis_{self.viewmodel.is_emission}",
+                                               callback=self._custom_series_callback) as self.custom_series:
+                            self.tooltiptext = dpg.add_text("Current Point: ")
+
+                        dpg.add_line_series([], [], parent=f"y_axis_{self.viewmodel.is_emission}", tag=f"exp_overlay_{self.viewmodel.is_emission}")
 
                 with dpg.table_cell():
                     # with dpg.group():
@@ -67,6 +75,8 @@ class PlotsOverview:
             dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [[], []])
             self.hovered_spectrum = None
             for s_tag, s in self.viewmodel.state_plots.items():
+                if not dpg.does_item_exist(f"drag-x-{s_tag}"):
+                    return  # drawing is currently underway
                 if not self.show__all_drag_lines:
                     if abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) < 0.02:
                         dpg.show_item(f"drag-{s_tag}")
@@ -99,40 +109,42 @@ class PlotsOverview:
         except Exception as e:
             print(f"Exception in custom series callback: {e}")
 
+    def sticks_callback(self, sender, app_data):
+        return
+
     def redraw_plot(self):
         print("Redraw plot...")
-        dpg.delete_item(f"y_axis_{self.viewmodel.is_emission}", children_only=True)
-
-        with dpg.custom_series([0.0, 1.0, 2.0, 4.0, 5.0], [0.0, 1.0, 2.0, 4.0, 5.0], 2,
-                               parent=f"y_axis_{self.viewmodel.is_emission}",
-                               label="Custom Series", callback=self._custom_series_callback) as self.custom_series:
-            self.tooltiptext = dpg.add_text("Current Point: ")
+        # dpg.delete_item(f"y_axis_{self.viewmodel.is_emission}", children_only=True)
+        for tag in self.line_series:
+            dpg.delete_item(tag)
+        self.line_series = []
 
         xmin, xmax, ymin, ymax = self.viewmodel.get_zoom_range()
-
         dpg.add_scatter_series([xmin, xmax], [ymin, ymax], parent=f"y_axis_{self.viewmodel.is_emission}")
+        self.line_series.append(dpg.last_item())
         dpg.bind_item_theme(dpg.last_item(), f"plot_theme_{self.viewmodel.is_emission}")
+
         if len(self.viewmodel.xydatas):
             for x_data, y_data in self.viewmodel.xydatas:
-                print(x_data[:6], y_data[:6])
                 dpg.add_line_series(x_data, y_data, parent=f"y_axis_{self.viewmodel.is_emission}")
+                self.line_series.append(dpg.last_item())
         if self.viewmodel.state_plots == {}:
             dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
-
-        dpg.add_line_series([], [], parent=f"y_axis_{self.viewmodel.is_emission}", tag=f"exp_overlay_{self.viewmodel.is_emission}")
 
         for s in self.viewmodel.state_plots.values():
             with dpg.theme() as self.spec_theme[s.tag]:
                 with dpg.theme_component(dpg.mvLineSeries):
                     dpg.add_theme_color(dpg.mvPlotCol_Line, s.color, category=dpg.mvThemeCat_Plots)
-            print("State plot:", s.xdata[:6], s.ydata[:6])
             xdata, ydata, max_x = s.get_xydata(xmin, xmax)  # truncated versions
-            dpg.add_line_series(xdata, ydata, parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  #, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
+            dpg.add_line_series(xdata, ydata, label=s.name, parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  #, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
+            self.line_series.append(s.tag)
             dpg.bind_item_theme(s.tag, self.spec_theme[s.tag])
+            if not dpg.does_item_exist(f"sticks-{s.tag}"):
+                print(f"Re-drawing custom series for {s.tag}...")
+                dpg.add_custom_series([0, 1], [2, 3], 2, parent=f"y_axis_{self.viewmodel.is_emission}", tag=f"sticks-{s.tag}", callback=self.sticks_callback)
             if not dpg.does_item_exist(f"drag-{s.tag}"):
-                dpg.add_drag_line(tag=f"drag-{s.tag}", vertical=False, default_value=s.yshift, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_y_drag(dpg.get_value(sender), u), parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.color)
-                print(f"line at max x: {max_x}")
-                dpg.add_drag_line(tag=f"drag-x-{s.tag}", vertical=True, default_value=max_x, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_x_drag(dpg.get_value(sender), u), parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.color)
+                dpg.add_drag_line(tag=f"drag-{s.tag}", vertical=False, show_label=False, default_value=s.yshift, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_y_drag(dpg.get_value(sender), u), parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.color)
+                dpg.add_drag_line(tag=f"drag-x-{s.tag}", vertical=True, show_label=False, default_value=max_x, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_x_drag(dpg.get_value(sender), u), parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.color)
             else:
                 dpg.set_value(f"drag-{s.tag}", s.yshift)
 
