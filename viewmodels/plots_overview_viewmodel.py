@@ -138,7 +138,7 @@ class PlotsOverviewViewmodel:
         if spec_tag is not None and spec_tag in self.state_plots.keys():
             spec = self.state_plots[spec_tag]
             spec.resize_y_scale(direction)
-            self._callbacks.get("update plot")(spec)
+            self._callbacks.get("update plot")(spec, redraw_sticks=True)
 
     def on_spectrum_click(self, *args):
         print(args)

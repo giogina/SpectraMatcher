@@ -167,9 +167,11 @@ class PlotsOverview:
             dpg.set_value(f"drag-{s.tag}", s.yshift)
         self.draw_sticks(s)
 
-    def update_plot(self, state_plot, mark_dragged_plot = None):
+    def update_plot(self, state_plot, mark_dragged_plot=None, redraw_sticks=False):
         self.dragged_plot = mark_dragged_plot
         dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
+        if redraw_sticks:
+            AsyncManager.submit_task(f"draw sticks {state_plot.tag}", self.draw_sticks, state_plot)
 
     def delete_sticks(self, spec_tag):
         self.dragged_plot = spec_tag
