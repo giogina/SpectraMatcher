@@ -76,9 +76,6 @@ class SpecPlotter:
         for peak in peaks:
             position_index = int((peak.wavenumber-self._x_min)/self._x_step)
             res += self._shifted_peak(position_index)*peak.intensity
-        top = max(res)
-        if top > 0:
-            res = res/top
         return res
 
     @classmethod
@@ -89,7 +86,9 @@ class SpecPlotter:
         else:
             plotter_key = cls._active_excitation_plotter
         if plotter_key is not None:
-            return plotter_key, cls._plotters[plotter_key].x_data, cls._plotters[plotter_key].spectrum_array(peaks)
+            ydata = cls._plotters[plotter_key].spectrum_array(peaks)
+            top = max(0.01, max(ydata))
+            return plotter_key, cls._plotters[plotter_key].x_data, ydata / top, top
         else:
             return None, None, []
 

@@ -1,4 +1,6 @@
 import dearpygui.dearpygui as dpg
+
+from utility.async_manager import AsyncManager
 from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel
 from utility.spectrum_plots import hsv_to_rgb
 
@@ -8,14 +10,20 @@ class PlotsOverview:
         self.viewmodel = viewmodel
         self.viewmodel.set_callback("redraw plot", self.redraw_plot)
         self.viewmodel.set_callback("update plot", self.update_plot)
+        self.viewmodel.set_callback("add spectrum", self.add_spectrum)
+        self.viewmodel.set_callback("delete sticks", self.delete_sticks)
         self.custom_series = None
         self.spec_theme = {}
         self.hovered_spectrum = None
         self.show__all_drag_lines = False  # show all drag lines
         self.line_series = []
+        self.show_sticks = True  # todo: checkbox
+        self.sticks = {}  # s.tag: [dpg.draw stick items]
+        self.dragged_plot = None
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
+            dpg.add_mouse_release_handler(dpg.mvMouseButton_Left, callback=self.on_drag_release)
             dpg.add_key_down_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=True)
             dpg.add_key_release_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=False)
 
@@ -89,7 +97,6 @@ class PlotsOverview:
                 if s.yshift - 0.02 <= mouse_y_plot_space <= s.yshift+s.yscale:
                     if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) < 10:
                         dpg.show_item(f"drag-x-{s_tag}")
-
                     if not -0.2 < s.yshift <= 0.9:
                         dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [s.xdata, s.ydata - s.yshift])
                         dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
@@ -131,30 +138,73 @@ class PlotsOverview:
         if self.viewmodel.state_plots == {}:
             dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
 
-        for s in self.viewmodel.state_plots.values():
+        for s in self.viewmodel.state_plots.keys():
+            self.add_spectrum(s)
+        dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
+
+    def add_spectrum(self, tag):
+        xmin, xmax, ymin, ymax = self.viewmodel.get_zoom_range()
+        s = self.viewmodel.state_plots[tag]
+        if not dpg.does_item_exist(tag):
             with dpg.theme() as self.spec_theme[s.tag]:
                 with dpg.theme_component(dpg.mvLineSeries):
                     dpg.add_theme_color(dpg.mvPlotCol_Line, s.color, category=dpg.mvThemeCat_Plots)
-            xdata, ydata, max_x = s.get_xydata(xmin, xmax)  # truncated versions
-            dpg.add_line_series(xdata, ydata, label=s.name, parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  #, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
+            xdata, ydata = s.get_xydata(xmin, xmax)  # truncated versions
+            dpg.add_line_series(xdata, ydata, label=s.name, parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  # , user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
             self.line_series.append(s.tag)
             dpg.bind_item_theme(s.tag, self.spec_theme[s.tag])
-            if not dpg.does_item_exist(f"sticks-{s.tag}"):
-                print(f"Re-drawing custom series for {s.tag}...")
-                dpg.add_custom_series([0, 1], [2, 3], 2, parent=f"y_axis_{self.viewmodel.is_emission}", tag=f"sticks-{s.tag}", callback=self.sticks_callback)
-            if not dpg.does_item_exist(f"drag-{s.tag}"):
-                dpg.add_drag_line(tag=f"drag-{s.tag}", vertical=False, show_label=False, default_value=s.yshift, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_y_drag(dpg.get_value(sender), u), parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.color)
-                dpg.add_drag_line(tag=f"drag-x-{s.tag}", vertical=True, show_label=False, default_value=max_x, user_data=s, callback=lambda sender, a, u: self.viewmodel.on_x_drag(dpg.get_value(sender), u), parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.color)
-            else:
-                dpg.set_value(f"drag-{s.tag}", s.yshift)
+        else:
+            self.update_plot(s)
+        if not dpg.does_item_exist(f"drag-{s.tag}"):
+            dpg.add_drag_line(tag=f"drag-{s.tag}", vertical=False, show_label=False, default_value=s.yshift,
+                              user_data=s,
+                              callback=lambda sender, a, u: self.viewmodel.on_y_drag(dpg.get_value(sender), u),
+                              parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.color)
+            dpg.add_drag_line(tag=f"drag-x-{s.tag}", vertical=True, show_label=False, default_value=s.handle_x, user_data=s,
+                              callback=lambda sender, a, u: self.viewmodel.on_x_drag(dpg.get_value(sender), u),
+                              parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.color)
+        else:
+            dpg.set_value(f"drag-{s.tag}", s.yshift)
+        self.draw_sticks(s)
 
-        dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
-
-                # TODO: Attach scroll event handler to drag lines: y line to scroll y scale; x line maybe for width?
-
-    def update_plot(self, state_plot):
+    def update_plot(self, state_plot, mark_dragged_plot = None):
+        self.dragged_plot = mark_dragged_plot
         dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
 
+    def delete_sticks(self, spec_tag):
+        self.dragged_plot = spec_tag
+        for stick in self.sticks.get(spec_tag, []):
+            dpg.delete_item(stick)
+        self.sticks[spec_tag] = []
+
+    def on_drag_release(self):
+        if self.dragged_plot is not None:
+            spec = self.viewmodel.state_plots.get(self.dragged_plot)
+            if spec is not None:
+                AsyncManager.submit_task(f"draw sticks {self.dragged_plot}", self.draw_sticks, spec)
+                # self.draw_sticks(spec)
+        self.dragged_plot = None
+
+    def draw_sticks(self, s):
+        if self.show_sticks:
+            plot = f"plot_{self.viewmodel.is_emission}"
+            for stick in self.sticks.get(s.tag, []):
+                if dpg.does_item_exist(stick):
+                    dpg.delete_item(stick)
+            self.sticks[s.tag] = []
+            # self.sticks[s.tag] = self.sticks.get(s.tag, [])
+            if len(self.sticks.get(s.tag, [])) == len(s.sticks):
+                return
+            if not dpg.does_item_exist(f"sticks-{s.tag}"):
+                for stick_stack in s.sticks:
+                    if len(stick_stack):
+                        x = stick_stack[0] + s.xshift
+                        y = s.yshift
+                        for sub_stick in stick_stack[1]:
+                            top = y+sub_stick[0]*s.yscale
+                            dpg.draw_line((x, y), (x, top), color=[255-c for c in sub_stick[1]], thickness=0.001, parent=plot)
+                            self.sticks[s.tag].append(dpg.last_item())
+                            y = top
 
     def configure_theme(self):
         with dpg.theme(tag=f"plot_theme_{self.viewmodel.is_emission}"):

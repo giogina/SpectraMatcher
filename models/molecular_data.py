@@ -203,11 +203,11 @@ class ModeList:
 
     def __init__(self):
         self.IRs = {ir: [] for ir in self.IR_order}  # record of all vibrational modes by IR
-        self.mode_list = []
+        self.modes = {}
 
     def add_mode(self, wavenumber, sym, x, y, z, geometry):
-        mode = VibrationalMode(len(self.mode_list), wavenumber, sym, x, y, z, geometry)
-        self.mode_list.append(mode)
+        mode = VibrationalMode(len(list(self.modes.keys())), wavenumber, sym, x, y, z, geometry)
+        self.modes[mode.gaussian_name] = mode
         if sym in self.IRs.keys():
             self.IRs[sym] = [mode] + self.IRs[sym]  # TODO> allow re-ordering afterwards for all IRs within the project
         else:
@@ -230,8 +230,12 @@ class ModeList:
         self.determine_mode_names()
 
     def get_wavenumbers(self, nr=-1):
-        end = len(self.mode_list) if nr == -1 else nr + 1
-        return [mode.wavenumber for mode in self.mode_list[:end]]
+        mode_name_list = list(self.modes.keys())
+        end = len(mode_name_list) if nr == -1 else nr + 1
+        return [self.modes[name].wavenumber for name in mode_name_list[:end]]
+
+    def get_mode(self, gaussian_name: int):
+        return self.modes.get(gaussian_name)
 
 
 class FCPeak:
@@ -246,8 +250,10 @@ class FCSpectrum:
         self.is_emission = is_emission
         self.peaks = peaks
         self.zero_zero_transition_energy = zero_zero_transition_energy
-        self.multiplicator = multiplicator
-        key, self.x_data, self.y_data = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
+        key, self.x_data, self.y_data, mul = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
+        self.multiplicator = multiplicator * mul  # scaled from separate peaks, then highest resulting peak
+        for peak in self.peaks:
+            peak.intensity /= mul
         SpecPlotter.add_observer(self)
         self.x_data_arrays = {key: self.x_data}  # SpecPlotter key: array (save previously computed spectra)
         self.y_data_arrays = {key: self.y_data}  # SpecPlotter key: array (save previously computed spectra)
