@@ -250,6 +250,8 @@ class FCPeak:
 
 class FCSpectrum:
     xy_data_changed_notification = "Spectrum xy data changed"
+    peaks_changed_notification = "Spectrum peaks changed"
+
     def __init__(self, is_emission, peaks, zero_zero_transition_energy, multiplicator):
         self.is_emission = is_emission
         self._observers = []
@@ -279,6 +281,14 @@ class FCSpectrum:
     def set_vibrational_modes(self, modes: ModeList):
         self.vibrational_modes = modes
         self.peaks = WavenumberCorrector.compute_corrected_wavenumbers(self.peaks, self.vibrational_modes)
+        key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
+        for peak in self.peaks:
+            peak.intensity /= self.mul2
+        self.minima, self.maxima = self.compute_min_max()
+        self.x_data_arrays = {key: self.x_data}
+        self.y_data_arrays = {key: self.y_data}
+        self._notify_observers(FCSpectrum.xy_data_changed_notification)
+        self._notify_observers(FCSpectrum.peaks_changed_notification)
 
     def get_wavenumbers(self, nr=-1):
         end = len(self.peaks) if nr == -1 else nr + 1
@@ -321,6 +331,7 @@ class FCSpectrum:
                 self.x_data_arrays = {key: self.x_data}
                 self.y_data_arrays = {key: self.y_data}
                 self._notify_observers(FCSpectrum.xy_data_changed_notification)
+                self._notify_observers(FCSpectrum.peaks_changed_notification)
 
 
 

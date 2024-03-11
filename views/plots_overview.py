@@ -21,6 +21,7 @@ class PlotsOverview:
         self.line_series = []
         self.show_sticks = True  # todo: checkbox
         self.dragged_plot = None
+        self.redraw_sticks_on_release = False
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -180,18 +181,35 @@ class PlotsOverview:
         if redraw_sticks:
             AsyncManager.submit_task(f"draw sticks {state_plot.tag}", self.draw_sticks, state_plot)
 
-    def delete_sticks(self, spec_tag):
-        self.dragged_plot = spec_tag
-        if dpg.does_item_exist(f"sticks-{spec_tag}"):
-            dpg.delete_item(f"sticks-{spec_tag}")
+    def delete_sticks(self, spec_tag=None):  # None: all of them.
+        if spec_tag is not None:
+            self.dragged_plot = spec_tag
+            if dpg.does_item_exist(f"sticks-{spec_tag}"):
+                dpg.delete_item(f"sticks-{spec_tag}")
+        else:
+            for s in self.viewmodel.state_plots:
+                if dpg.does_item_exist(f"sticks-{s}"):
+                    dpg.delete_item(f"sticks-{s}")
+            self.redraw_sticks_on_release = True
 
     def on_drag_release(self):
-        if self.dragged_plot is not None:
+        if self.redraw_sticks_on_release:
+            print("Redraw sticks")
+            for spec in self.viewmodel.state_plots.values():
+                print(spec.tag)
+                dpg.set_value(f"drag-x-{spec.tag}", spec.handle_x + spec.xshift)
+                AsyncManager.submit_task(f"draw sticks {spec}", self.draw_sticks, spec)
+            self.redraw_sticks_on_release = False
+        elif self.dragged_plot is not None:
             spec = self.viewmodel.state_plots.get(self.dragged_plot)
             if spec is not None:
                 dpg.set_value(f"drag-x-{spec.tag}", spec.handle_x + spec.xshift)
-                AsyncManager.submit_task(f"draw sticks {self.dragged_plot}", self.draw_sticks, spec)
+                # AsyncManager.submit_task(f"draw sticks {self.dragged_plot}", self.draw_sticks, spec)
+                self.draw_sticks(spec)
         self.dragged_plot = None
+
+        # TODO:
+        #  * Redraw sticks on last spectrum update
 
     def draw_sticks(self, s):
         if self.show_sticks:

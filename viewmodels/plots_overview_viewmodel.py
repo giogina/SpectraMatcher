@@ -46,6 +46,16 @@ class StatePlot:
             self.ydata = self._compute_y_data()
             self.handle_x = self._base_xdata[np.where(self._base_ydata == max(self._base_ydata))[0][0]]
             self.spectrum_update_callback(self)
+        if event == FCSpectrum.peaks_changed_notification:
+            self.sticks = []  # stick: position, [[height, color]]
+            for peak in self.spectrum.peaks:
+                if peak.transition[0] != [0]:
+                    sub_stick_scale = peak.intensity / sum([t[1] for t in peak.transition])
+                    self.sticks.append([peak.corrected_wavenumber,
+                                        [[vib[1] * sub_stick_scale, [c * 255 for c in vib[0].vibration_properties]] for
+                                         vib in [(self.spectrum.vibrational_modes.get_mode(t[0]), t[1]) for t in
+                                                 peak.transition if len(t) == 2] if vib is not None]])
+
 
     def set_spectrum_update_callback(self, callback):
         self.spectrum_update_callback = callback
@@ -160,6 +170,7 @@ class PlotsOverviewViewmodel:
         SpecPlotter.change_half_width(self.is_emission, direction)
 
     def change_correction_factor(self, key, value):
+        self._callbacks.get("delete sticks")()
         WavenumberCorrector.set_correction_factor(key, value)
 
     def on_spectrum_click(self, *args):
