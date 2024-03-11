@@ -3,6 +3,7 @@ from models.molecular_data import FCSpectrum
 from models.state import State
 import numpy as np
 from utility.spectrum_plots import SpecPlotter
+from utility.wavenumber_corrector import WavenumberCorrector
 
 
 def noop(*args, **kwargs):
@@ -87,14 +88,15 @@ class PlotsOverviewViewmodel:
     def __init__(self, project, is_emission: bool):
         self._project = project
         self.is_emission = is_emission
-        # self._project.add_observer(self, "state data changed")
+        self._project.add_observer(self, "project loaded")
         ExperimentalSpectrum.add_observer(self)
         State.add_observer(self)
         self._callbacks = {
             "update plot": noop,
             "add spectrum": noop,
             "redraw plot": noop,
-            "delete sticks": noop
+            "delete sticks": noop,
+            "set correction factor values": noop,
         }
 
         self.xydatas = []  # experimental x, y
@@ -103,7 +105,9 @@ class PlotsOverviewViewmodel:
 
     def update(self, event, *args):
         print(f"Plots overview viewmodel received event: {event}")
-        if event == ExperimentalSpectrum.spectrum_analyzed_notification:
+        if event == "project loaded":
+            self._callbacks.get("set correction factor values")(WavenumberCorrector.correction_factors)
+        elif event == ExperimentalSpectrum.spectrum_analyzed_notification:
             self._extract_exp_x_y_data()
             self._callbacks.get("redraw plot")()
         elif event == State.state_ok_notification:
@@ -112,6 +116,9 @@ class PlotsOverviewViewmodel:
             if new_spec_tag is not None:
                 self._callbacks.get("add spectrum")(new_spec_tag)
             # self._callbacks.get("redraw plot")()  # todo> react to already-plotted state deletion (see if it's still in State.state_list?)
+
+    def get_start_xscales(self, key):
+        return self._project.ge
 
     def _extract_exp_x_y_data(self):
         xydatas = []
@@ -151,6 +158,9 @@ class PlotsOverviewViewmodel:
 
     def resize_half_width(self, direction):
         SpecPlotter.change_half_width(self.is_emission, direction)
+
+    def change_correction_factor(self, key, value):
+        WavenumberCorrector.set_correction_factor(key, value)
 
     def on_spectrum_click(self, *args):
         print(args)

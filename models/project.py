@@ -192,6 +192,7 @@ class Project(FileObserver):
                                                 self._data.get("open data files", []))
         if "experimental spectra" not in self._data.keys():
             self._data["experimental spectra"] = copy.deepcopy(self._data_defaults["experimental spectra"])
+        self._notify_observers("project loaded")
         return self
 
     def new(self, name, import_data_dirs=None, import_data_files=None):

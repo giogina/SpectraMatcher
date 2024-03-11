@@ -1,9 +1,8 @@
 import dearpygui.dearpygui as dpg
 
 from utility.async_manager import AsyncManager
-from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel
+from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel, WavenumberCorrector
 from utility.spectrum_plots import hsv_to_rgb
-from utility.wavenumber_corrector import WavenumberCorrector
 
 
 class PlotsOverview:
@@ -13,6 +12,7 @@ class PlotsOverview:
         self.viewmodel.set_callback("update plot", self.update_plot)
         self.viewmodel.set_callback("add spectrum", self.add_spectrum)
         self.viewmodel.set_callback("delete sticks", self.delete_sticks)
+        self.viewmodel.set_callback("set correction factor values", self.set_correction_factor_slider_values)
         self.custom_series = None
         self.spec_theme = {}
         self.hovered_spectrum = None
@@ -65,9 +65,13 @@ class PlotsOverview:
                                     dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, hsv_to_rgb(i / 7.0, 0.7, 0.5))
                                     dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, hsv_to_rgb(i / 7.0, 0.6, 0.5))
                         for i, x_scale_key in enumerate(['bends', 'H stretches', 'others']):
-                            dpg.add_slider_float(label=x_scale_key, default_value=WavenumberCorrector.correction_factors.get(x_scale_key, 0), vertical=False, max_value=1.0, min_value=0.8, callback=lambda s, a, u: WavenumberCorrector.set_correction_factor(u, a), user_data=x_scale_key)  #, format=""
+                            dpg.add_slider_float(label=x_scale_key, tag=f"{x_scale_key} {self.viewmodel.is_emission} slider", vertical=False, max_value=1.0, min_value=0.8, callback=lambda s, a, u: self.viewmodel.change_correction_factor(u, a), user_data=x_scale_key)  #, format=""
                             dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {i}")
                 self.configure_theme()
+
+    def set_correction_factor_slider_values(self, correction_factors):
+        for i, x_scale_key in enumerate(['bends', 'H stretches', 'others']):
+            dpg.set_value(f"{x_scale_key} {self.viewmodel.is_emission} slider", value=correction_factors.get(x_scale_key, 0))
 
     def _custom_series_callback(self, sender, app_data):
         try:

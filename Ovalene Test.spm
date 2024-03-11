@@ -97,7 +97,7 @@
     ],
     "progress": "import done",
     "active emission plotter": [
-        13.2,
+        31.2,
         -1404,
         8457,
         1
@@ -107,5 +107,10 @@
         -1215,
         6509,
         1
-    ]
+    ],
+    "wavenumber correction factors": {
+        "bends": 0.986,
+        "H stretches": 0.9670000076293945,
+        "others": 0.9940000176429749
+    }
 }
