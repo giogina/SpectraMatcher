@@ -34,13 +34,13 @@ class PlotsOverview:
 
             with dpg.table_row():
                 with dpg.table_cell():
-                    with dpg.plot(label="Experimental spectra", height=-200, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}"):
+                    with dpg.plot(label="Experimental spectra", height=-100, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}"):
                         # optionally create legend
                         dpg.add_plot_legend()
 
                         # REQUIRED: create x and y axes
-                        dpg.add_plot_axis(dpg.mvXAxis, label="x", tag=f"x_axis_{self.viewmodel.is_emission}")
-                        dpg.add_plot_axis(dpg.mvYAxis, label="y", tag=f"y_axis_{self.viewmodel.is_emission}")
+                        dpg.add_plot_axis(dpg.mvXAxis, label="wavenumber / cm⁻¹", tag=f"x_axis_{self.viewmodel.is_emission}")
+                        dpg.add_plot_axis(dpg.mvYAxis, label="relative intensity", tag=f"y_axis_{self.viewmodel.is_emission}")
 
                         dpg.set_axis_limits_auto(f"x_axis_{self.viewmodel.is_emission}")
                         dpg.set_axis_limits_auto(f"y_axis_{self.viewmodel.is_emission}")
@@ -55,7 +55,7 @@ class PlotsOverview:
                 with dpg.table_cell():
                     # with dpg.group():
                         # dpg.add_checkbox(label="auto-zoom", tag=f"auto_zoom_check_{self.viewmodel.is_emission}", default_value=True, callback=lambda s, a, u: self.viewmodel.on_toggle_autozoom(a))
-                    with dpg.group(horizontal=True):
+                    with dpg.group(horizontal=False):
 
                         for i in range(7):  # todo: react to state creation/deletion
                             with dpg.theme(tag=f"slider_theme_{self.viewmodel.is_emission} {i}"):  # TODO> state colors (start with these tho)
@@ -64,8 +64,8 @@ class PlotsOverview:
                                     dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, hsv_to_rgb(i / 7.0, 0.9, 0.9))
                                     dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, hsv_to_rgb(i / 7.0, 0.7, 0.5))
                                     dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, hsv_to_rgb(i / 7.0, 0.6, 0.5))
-
-                            dpg.add_slider_float(label=" ", default_value=1, vertical=True, max_value=1.0, height=160, format="")
+                        for i in range(3):
+                            dpg.add_slider_float(label=" ", default_value=1, vertical=False, max_value=1.0)  #, format=""
                             dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {i}")
                 self.configure_theme()
 
@@ -223,7 +223,7 @@ class PlotsOverview:
             with dpg.theme_component(dpg.mvDragLine):
                 dpg.add_theme_color(dpg.mvPlotCol_Line, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
 
-    def on_scroll(self, direction):
+    def on_scroll(self, direction):  # todo: check time since last scroll event, if tiny act similar as when dragging (to avoid triggering re-draw too often) (threaded function waiting and checking if there is a newer waiting function?)
         if self.hovered_spectrum is not None:
             self.viewmodel.resize_spectrum(self.hovered_spectrum, direction)
         elif self.hovered_x_drag_line is not None:
