@@ -1,6 +1,6 @@
 import math
 from collections import Counter
-
+from scipy import signal
 from utility.spectrum_plots import SpecPlotter
 
 _ELEMENT_NAMES = {'1': "H", '2': "He", '3': "Li", '4': "Be", '5': "B", '6': "C", '7': "N", '8': "O", '9': "F",
@@ -256,6 +256,7 @@ class FCSpectrum:
         self.multiplicator = multiplicator * mul  # scaled from separate peaks, then highest resulting peak
         for peak in self.peaks:
             peak.intensity /= mul
+        self.minima, self.maxima = self.compute_min_max()
         SpecPlotter.add_observer(self)
         self.x_data_arrays = {key: self.x_data}  # SpecPlotter key: array (save previously computed spectra)
         self.y_data_arrays = {key: self.y_data}  # SpecPlotter key: array (save previously computed spectra)
@@ -274,6 +275,18 @@ class FCSpectrum:
         end = len(self.peaks) if nr == -1 else nr + 1
         return [peak.wavenumber for peak in self.peaks[:end]]
 
+    def compute_min_max(self):
+        """Return indices of local minima and maxima of self.ydata"""
+        maxima, _ = list(signal.find_peaks(self.y_data))
+        if len(maxima) == 0:
+            return None, None
+        mins, _ = list(signal.find_peaks([-y for y in self.y_data]))
+        minima = [0]
+        minima.extend(mins)
+        minima.append(len(self.y_data) - 1)
+        print(minima, maxima)
+        return minima, maxima
+
     def update(self, event, *args):
         """Automatically re-calculate y_data when active SpecPlotter instance changes."""
         if event == SpecPlotter.active_plotter_changed_notification:
@@ -287,6 +300,7 @@ class FCSpectrum:
                     _, self.x_data, self.y_data, _ = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
                     self.x_data_arrays[key] = self.x_data
                     self.y_data_arrays[key] = self.y_data
+                self.minima, self.maxima = self.compute_min_max()
                 self._notify_observers(FCSpectrum.xy_data_changed_notification)
 
 
