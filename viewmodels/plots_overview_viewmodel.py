@@ -2,7 +2,6 @@ from models.experimental_spectrum import ExperimentalSpectrum
 from models.molecular_data import FCSpectrum
 from models.state import State
 import numpy as np
-from utility.async_manager import AsyncManager
 from utility.spectrum_plots import SpecPlotter
 
 
@@ -134,14 +133,6 @@ class PlotsOverviewViewmodel:
     def update_plot(self, state_plot):
         self._callbacks.get("update plot")(state_plot)
 
-    # def _extract_states(self):
-    #     print("Extract states called")
-    #     self.state_plots = {}
-    #     for state in State.state_list:
-    #         if state.ok and (self.is_emission and state.emission_spectrum is not None) or ((not self.is_emission) and state.excitation_spectrum is not None):
-    #             s = StatePlot(state, self.is_emission, yshift=len(list(self.state_plots.keys())) + 1)
-    #             self.state_plots[s.tag] = s
-
     def on_x_drag(self, value, state_plot):
         self.state_plots[state_plot.tag].set_x_shift(value)
         self._callbacks.get("delete sticks")(state_plot.tag)
@@ -159,7 +150,7 @@ class PlotsOverviewViewmodel:
             self._callbacks.get("update plot")(spec, redraw_sticks=True)
 
     def resize_half_width(self, direction):
-        SpecPlotter.change_half_width(self.is_emission, direction)  # todo> directly?
+        SpecPlotter.change_half_width(self.is_emission, direction)
 
     def on_spectrum_click(self, *args):
         print(args)

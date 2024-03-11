@@ -3,6 +3,7 @@ import dearpygui.dearpygui as dpg
 from utility.async_manager import AsyncManager
 from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel
 from utility.spectrum_plots import hsv_to_rgb
+from utility.wavenumber_corrector import WavenumberCorrector
 
 
 class PlotsOverview:
@@ -63,8 +64,8 @@ class PlotsOverview:
                                     dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, hsv_to_rgb(i / 7.0, 0.9, 0.9))
                                     dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, hsv_to_rgb(i / 7.0, 0.7, 0.5))
                                     dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, hsv_to_rgb(i / 7.0, 0.6, 0.5))
-                        for i in range(3):
-                            dpg.add_slider_float(label=" ", default_value=1, vertical=False, max_value=1.0)  #, format=""
+                        for i, x_scale_key in enumerate(['bends', 'H stretches', 'others']):
+                            dpg.add_slider_float(label=x_scale_key, default_value=WavenumberCorrector.correction_factors.get(x_scale_key, 0), vertical=False, max_value=1.0, min_value=0.8, callback=lambda s, a, u: WavenumberCorrector.set_correction_factor(u, a), user_data=x_scale_key)  #, format=""
                             dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {i}")
                 self.configure_theme()
 
