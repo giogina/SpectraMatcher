@@ -31,7 +31,7 @@ class StatePlot:
         for peak in self.spectrum.peaks:
             if peak.transition[0] != [0]:
                 sub_stick_scale = peak.intensity/sum([t[1] for t in peak.transition])
-                self.sticks.append([peak.wavenumber, [[vib[1]*sub_stick_scale, [c*255 for c in vib[0].vibration_properties]] for vib in [(state.vibrational_modes.get_mode(t[0]), t[1]) for t in peak.transition if len(t) == 2] if vib is not None]])
+                self.sticks.append([peak.corrected_wavenumber, [[vib[1]*sub_stick_scale, [c*255 for c in vib[0].vibration_properties]] for vib in [(self.spectrum.vibrational_modes.get_mode(t[0]), t[1]) for t in peak.transition if len(t) == 2] if vib is not None]])
         self.spectrum_update_callback = noop
 
     @staticmethod

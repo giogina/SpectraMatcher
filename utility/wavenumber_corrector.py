@@ -19,6 +19,22 @@ class WavenumberCorrector:
             o.update(message)
 
     @classmethod
-    def compute_corrected_wavenumbers(cls, peaks):
-        print(peaks)
+    def set_correction_factors(cls, bends, h_stretches, others):
+        cls.correction_factors['bends'] = bends
+        cls.correction_factors['H stretches'] = h_stretches
+        cls.correction_factors['others'] = others
         cls._notify_observers(cls.correction_factors_changed_notification)
+
+    @classmethod
+    def compute_corrected_wavenumbers(cls, peaks, modes):
+        # Weighted sum of wavenumbers * xscale(vibration type) for each mode in transition.
+        for peak in peaks:
+            if not (peak.transition == [[0]] or peak.transition == [[0, 0]]):
+                peak.corrected_wavenumber = 0
+                for t in peak.transition:
+                    multiplicity = t[1]
+                    mode = modes.get_mode(t[0])
+                    correction_factor = cls.correction_factors.get(mode.vibration_type)
+                    peak.corrected_wavenumber += mode.wavenumber*correction_factor*multiplicity
+                print(peak.wavenumber, peak.corrected_wavenumber, peak.transition)
+        return peaks

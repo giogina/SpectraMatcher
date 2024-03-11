@@ -151,11 +151,11 @@ class VibrationalMode:
                                       int(bend * 100) / 100]]  # Bends
 
         if self.vibration_properties[2] > 0.9:      # out-of-plane bends
-            self.vibration_type = "Bend"
+            self.vibration_type = 'bends'  # key of WavenumberCorrector.correction_factors
         elif self.vibration_properties[0] > 0.2:    # *-H stretches
-            self.vibration_type = "H stretch"
+            self.vibration_type = 'H stretches'
         else:                                       # Other stretches and deformations
-            self.vibration_type = "Other"
+            self.vibration_type = 'others'
 
     def bond_stretch(self,geometry, a, b):
         bond_eq = [geometry.x[a] - geometry.x[b],
@@ -264,7 +264,7 @@ class FCSpectrum:
         WavenumberCorrector.add_observer(self)
         self.x_data_arrays = {key: self.x_data}  # SpecPlotter key: array (save previously computed spectra)
         self.y_data_arrays = {key: self.y_data}  # SpecPlotter key: array (save previously computed spectra)
-        self.mode_list = None
+        self.vibrational_modes = None
 
     def add_observer(self, observer):
         self._observers.append(observer)
@@ -277,8 +277,8 @@ class FCSpectrum:
             o.update(message, self)
 
     def set_vibrational_modes(self, modes: ModeList):
-        print(f"Vibrational modes set: {'emission' if self.is_emission else 'excitation'}")
-        self.mode_list = modes
+        self.vibrational_modes = modes
+        self.peaks = WavenumberCorrector.compute_corrected_wavenumbers(self.peaks, self.vibrational_modes)
 
     def get_wavenumbers(self, nr=-1):
         end = len(self.peaks) if nr == -1 else nr + 1
@@ -312,14 +312,15 @@ class FCSpectrum:
                 self.minima, self.maxima = self.compute_min_max()
                 self._notify_observers(FCSpectrum.xy_data_changed_notification)
         elif event == WavenumberCorrector.correction_factors_changed_notification:
-            self.peaks = WavenumberCorrector.compute_corrected_wavenumbers(self.peaks)
-            key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
-            for peak in self.peaks:
-                peak.intensity /= self.mul2
-            self.minima, self.maxima = self.compute_min_max()
-            self.x_data_arrays = {key: self.x_data}
-            self.y_data_arrays = {key: self.y_data}
-            self._notify_observers(FCSpectrum.xy_data_changed_notification)
+            if self.vibrational_modes is not None:
+                self.peaks = WavenumberCorrector.compute_corrected_wavenumbers(self.peaks, self.vibrational_modes)
+                key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
+                for peak in self.peaks:
+                    peak.intensity /= self.mul2
+                self.minima, self.maxima = self.compute_min_max()
+                self.x_data_arrays = {key: self.x_data}
+                self.y_data_arrays = {key: self.y_data}
+                self._notify_observers(FCSpectrum.xy_data_changed_notification)
 
 
 
