@@ -15,6 +15,7 @@ class PlotsOverview:
         self.custom_series = None
         self.spec_theme = {}
         self.hovered_spectrum = None
+        self.hovered_x_drag_line = None
         self.show__all_drag_lines = False  # show all drag lines
         self.line_series = []
         self.show_sticks = True  # todo: checkbox
@@ -82,6 +83,7 @@ class PlotsOverview:
             # dpg.configure_item(sender, tooltip=False)
             dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [[], []])
             self.hovered_spectrum = None
+            self.hovered_x_drag_line = None
             for s_tag, s in self.viewmodel.state_plots.items():
                 if not dpg.does_item_exist(f"drag-x-{s_tag}"):
                     return  # drawing is currently underway
@@ -97,6 +99,7 @@ class PlotsOverview:
                 if s.yshift - 0.02 <= mouse_y_plot_space <= s.yshift+s.yscale:
                     if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) < 10:
                         dpg.show_item(f"drag-x-{s_tag}")
+                        self.hovered_x_drag_line = s_tag
                     if not -0.2 < s.yshift <= 0.9:
                         dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [s.xdata, s.ydata - s.yshift])
                         dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
@@ -219,7 +222,10 @@ class PlotsOverview:
                 dpg.add_theme_color(dpg.mvPlotCol_Line, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
 
     def on_scroll(self, direction):
-        self.viewmodel.resize_spectrum(self.hovered_spectrum, direction)
+        if self.hovered_spectrum is not None:
+            self.viewmodel.resize_spectrum(self.hovered_spectrum, direction)
+        elif self.hovered_x_drag_line is not None:
+            self.viewmodel.resize_half_width(direction)
 
     def show_drag_lines(self, show):
         self.show__all_drag_lines = show

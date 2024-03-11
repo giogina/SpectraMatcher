@@ -246,6 +246,8 @@ class FCPeak:
 
 
 class FCSpectrum:
+    xy_data_changed_notification = "Spectrum xy data changed"
+    _observers = []
     def __init__(self, is_emission, peaks, zero_zero_transition_energy, multiplicator):
         self.is_emission = is_emission
         self.peaks = peaks
@@ -257,6 +259,18 @@ class FCSpectrum:
         SpecPlotter.add_observer(self)
         self.x_data_arrays = {key: self.x_data}  # SpecPlotter key: array (save previously computed spectra)
         self.y_data_arrays = {key: self.y_data}  # SpecPlotter key: array (save previously computed spectra)
+
+    @classmethod
+    def add_observer(cls, observer):
+        cls._observers.append(observer)
+
+    @classmethod
+    def remove_observer(cls, observer):
+        cls._observers.remove(observer)
+
+    def _notify_observers(self, message):
+        for o in self._observers:
+            o.update(message, self)
 
     def get_wavenumbers(self, nr=-1):
         end = len(self.peaks) if nr == -1 else nr + 1
@@ -272,9 +286,10 @@ class FCSpectrum:
                     self.x_data = self.x_data_arrays[key]
                     self.y_data = self.y_data_arrays[key]
                 else:
-                    _, self.x_data, self.y_data = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
+                    _, self.x_data, self.y_data, _ = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
                     self.x_data_arrays[key] = self.x_data
                     self.y_data_arrays[key] = self.y_data
+                self._notify_observers(FCSpectrum.xy_data_changed_notification)
 
 
 

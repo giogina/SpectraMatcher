@@ -1,7 +1,9 @@
 from models.experimental_spectrum import ExperimentalSpectrum
+from models.molecular_data import FCSpectrum
 from models.state import State
 import numpy as np
 from utility.async_manager import AsyncManager
+from utility.spectrum_plots import SpecPlotter
 
 
 def noop(*args, **kwargs):
@@ -14,25 +16,39 @@ class StatePlot:
         self.tag = StatePlot.construct_tag(state, is_emission)
         self.state = state
         self.spectrum = state.get_spectrum(is_emission)
+        self.spectrum.add_observer(self)
         self.name = state.name
-        self._base_xdata = self.spectrum.x_data
-        self._base_ydata = self.spectrum.y_data
         self.xshift = xshift
         self.yshift = yshift
         self.yscale = 1
         self.color = state.color
+        self._base_xdata = self.spectrum.x_data
+        self._base_ydata = self.spectrum.y_data
         self.xdata = self._compute_x_data()
-        self.ydata = self._compute_y_data()  # todo: down-scale relative sticks height together with finished spectrum
+        self.ydata = self._compute_y_data()
         self.handle_x = self.xdata[np.where(self.ydata == max(self.ydata))[0][0]]
         self.sticks = []  # stick: position, [[height, color]]
         for peak in self.spectrum.peaks:
             if peak.transition[0] != [0]:
                 sub_stick_scale = peak.intensity/sum([t[1] for t in peak.transition])
                 self.sticks.append([peak.wavenumber, [[vib[1]*sub_stick_scale, [c*255 for c in vib[0].vibration_properties]] for vib in [(state.vibrational_modes.get_mode(t[0]), t[1]) for t in peak.transition if len(t) == 2] if vib is not None]])
+        self.spectrum_update_callback = noop
 
     @staticmethod
     def construct_tag(state, is_emission):
         return f"{state.name} - {is_emission} plot"
+
+    def update(self, event, *args):
+        if event == FCSpectrum.xy_data_changed_notification:
+            self._base_xdata = self.spectrum.x_data
+            self._base_ydata = self.spectrum.y_data
+            self.xdata = self._compute_x_data()
+            self.ydata = self._compute_y_data()
+            self.handle_x = self.xdata[np.where(self.ydata == max(self.ydata))[0][0]]
+            self.spectrum_update_callback(self)
+
+    def set_spectrum_update_callback(self, callback):
+        self.spectrum_update_callback = callback
 
     def _compute_x_data(self):
         return self._base_xdata + self.xshift
@@ -41,7 +57,6 @@ class StatePlot:
         return (self._base_ydata * self.yscale) + self.yshift
 
     def set_x_shift(self, xshift):
-        print(self.handle_x)
         self.xshift = xshift - self.handle_x
         self.xdata = self._compute_x_data()
 
@@ -67,6 +82,7 @@ class StatePlot:
             stop = len(self.xdata)
 
         return self.xdata[start:stop], self.ydata[start:stop]
+
 
 class PlotsOverviewViewmodel:
     def __init__(self, project, is_emission: bool):
@@ -113,8 +129,12 @@ class PlotsOverviewViewmodel:
             if tag not in self.state_plots.keys() or self.state_plots[tag].state != state:
                 state_index = State.state_list.index(state)
                 self.state_plots[tag] = StatePlot(state, self.is_emission, yshift=state_index)
+                self.state_plots[tag].set_spectrum_update_callback(self.update_plot)
                 return tag
         return None
+
+    def update_plot(self, state_plot):
+        self._callbacks.get("update plot")(state_plot)
 
     # def _extract_states(self):
     #     print("Extract states called")
@@ -139,6 +159,9 @@ class PlotsOverviewViewmodel:
             spec = self.state_plots[spec_tag]
             spec.resize_y_scale(direction)
             self._callbacks.get("update plot")(spec, redraw_sticks=True)
+
+    def resize_half_width(self, direction):
+        SpecPlotter.change_half_width(self.is_emission, direction)  # todo> directly?
 
     def on_spectrum_click(self, *args):
         print(args)

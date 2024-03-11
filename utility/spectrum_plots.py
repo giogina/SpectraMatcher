@@ -65,6 +65,14 @@ class SpecPlotter:
         for o in cls._observers:
             o.update(cls.active_plotter_changed_notification, plotter_key, is_emission)
 
+    @classmethod
+    def change_half_width(cls, is_emission, amount):
+        if is_emission:
+            plotter_key = cls._active_emission_plotter
+        else:
+            plotter_key = cls._active_excitation_plotter
+        cls.set_active_plotter(is_emission, plotter_key[0] + amount, plotter_key[1], plotter_key[2], plotter_key[3])
+
     def _base_lorentzian_array(self):
         """Compute 1D array of lorentzian peak values with top at (0,1) for x_data_length width scaled to 1"""
         a = np.array([1 / (1 + (x*self._x_step / self._half_width) ** 2) for x in np.arange(2 * self.x_data.size)])
