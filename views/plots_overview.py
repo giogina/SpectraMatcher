@@ -19,7 +19,6 @@ class PlotsOverview:
         self.show__all_drag_lines = False  # show all drag lines
         self.line_series = []
         self.show_sticks = True  # todo: checkbox
-        self.sticks = {}  # s.tag: [dpg.draw stick items]
         self.dragged_plot = None
 
         with dpg.handler_registry() as self.mouse_handlers:
@@ -178,39 +177,30 @@ class PlotsOverview:
 
     def delete_sticks(self, spec_tag):
         self.dragged_plot = spec_tag
-        for stick in self.sticks.get(spec_tag, []):
-            dpg.delete_item(stick)
-        self.sticks[spec_tag] = []
+        if dpg.does_item_exist(f"sticks-{spec_tag}"):
+            dpg.delete_item(f"sticks-{spec_tag}")
 
     def on_drag_release(self):
         if self.dragged_plot is not None:
             spec = self.viewmodel.state_plots.get(self.dragged_plot)
             if spec is not None:
                 dpg.set_value(f"drag-x-{spec.tag}", spec.handle_x + spec.xshift)
-                print(f"{spec.tag} Handle: {spec.handle_x}")
                 AsyncManager.submit_task(f"draw sticks {self.dragged_plot}", self.draw_sticks, spec)
-                # self.draw_sticks(spec)
         self.dragged_plot = None
 
     def draw_sticks(self, s):
         if self.show_sticks:
             plot = f"plot_{self.viewmodel.is_emission}"
-            for stick in self.sticks.get(s.tag, []):
-                if dpg.does_item_exist(stick):
-                    dpg.delete_item(stick)
-            self.sticks[s.tag] = []
-            # self.sticks[s.tag] = self.sticks.get(s.tag, [])
-            if len(self.sticks.get(s.tag, [])) == len(s.sticks):
-                return
-            if not dpg.does_item_exist(f"sticks-{s.tag}"):
+            if dpg.does_item_exist(f"sticks-{s.tag}"):
+                dpg.delete_item(f"sticks-{s.tag}")
+            with dpg.draw_layer(tag=f"sticks-{s.tag}", parent=plot):
                 for stick_stack in s.sticks:
                     if len(stick_stack):
                         x = stick_stack[0] + s.xshift
                         y = s.yshift
                         for sub_stick in stick_stack[1]:
                             top = y+sub_stick[0]*s.yscale
-                            dpg.draw_line((x, y), (x, top), color=[255-c for c in sub_stick[1]], thickness=0.001, parent=plot)
-                            self.sticks[s.tag].append(dpg.last_item())
+                            dpg.draw_line((x, y), (x, top), color=[255-c for c in sub_stick[1]], thickness=0.001)
                             y = top
 
     def configure_theme(self):
@@ -223,7 +213,7 @@ class PlotsOverview:
             with dpg.theme_component(dpg.mvDragLine):
                 dpg.add_theme_color(dpg.mvPlotCol_Line, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
 
-    def on_scroll(self, direction):  # todo: check time since last scroll event, if tiny act similar as when dragging (to avoid triggering re-draw too often) (threaded function waiting and checking if there is a newer waiting function?)
+    def on_scroll(self, direction):
         if self.hovered_spectrum is not None:
             self.viewmodel.resize_spectrum(self.hovered_spectrum, direction)
         elif self.hovered_x_drag_line is not None:

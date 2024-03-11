@@ -88,7 +88,6 @@ class PlotsOverviewViewmodel:
     def __init__(self, project, is_emission: bool):
         self._project = project
         self.is_emission = is_emission
-        print("Plots overview viewmodel created: ", is_emission)
         # self._project.add_observer(self, "state data changed")
         ExperimentalSpectrum.add_observer(self)
         State.add_observer(self)
@@ -123,7 +122,6 @@ class PlotsOverviewViewmodel:
         self.xydatas = xydatas
 
     def _extract_state(self, state):
-        print("Extract state called")
         if state in State.state_list and state.ok and (self.is_emission and state.emission_spectrum is not None) or ((not self.is_emission) and state.excitation_spectrum is not None):
             tag = StatePlot.construct_tag(state, self.is_emission)
             if tag not in self.state_plots.keys() or self.state_plots[tag].state != state:
@@ -146,13 +144,13 @@ class PlotsOverviewViewmodel:
 
     def on_x_drag(self, value, state_plot):
         self.state_plots[state_plot.tag].set_x_shift(value)
+        self._callbacks.get("delete sticks")(state_plot.tag)
         self._callbacks.get("update plot")(self.state_plots[state_plot.tag], mark_dragged_plot=state_plot.tag)
-        # AsyncManager.submit_task(f"del sticks {state_plot.tag}", self._callbacks.get("delete sticks"), state_plot.tag)
 
     def on_y_drag(self, value, state_plot):
         self.state_plots[state_plot.tag].set_y_shift(value)
+        self._callbacks.get("delete sticks")(state_plot.tag)
         self._callbacks.get("update plot")(self.state_plots[state_plot.tag], mark_dragged_plot=state_plot.tag)
-        # AsyncManager.submit_task(f"del sticks {state_plot.tag}", self._callbacks.get("delete sticks"), state_plot.tag)
 
     def resize_spectrum(self, spec_tag, direction):
         if spec_tag is not None and spec_tag in self.state_plots.keys():
