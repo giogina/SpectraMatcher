@@ -2,6 +2,8 @@ import math
 from collections import Counter
 from scipy import signal
 from utility.spectrum_plots import SpecPlotter
+from utility.wavenumber_corrector import WavenumberCorrector
+
 
 _ELEMENT_NAMES = {'1': "H", '2': "He", '3': "Li", '4': "Be", '5': "B", '6': "C", '7': "N", '8': "O", '9': "F",
                       '10': "Ne", '11': "Na", '12': "Mg", '13': "Al", '14': "Si", '15': "P", '16': "S", '17': "Cl", '18': "Ar",
@@ -241,6 +243,7 @@ class ModeList:
 class FCPeak:
     def __init__(self, wavenumber, transition, intensity):
         self.wavenumber = wavenumber
+        self.corrected_wavenumber = wavenumber
         self.transition = transition
         self.intensity = intensity
 
@@ -251,15 +254,17 @@ class FCSpectrum:
         self.is_emission = is_emission
         self._observers = []
         self.peaks = peaks
+        self.multiplicator = multiplicator
         self.zero_zero_transition_energy = zero_zero_transition_energy
-        key, self.x_data, self.y_data, mul = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
-        self.multiplicator = multiplicator * mul  # scaled from separate peaks, then highest resulting peak
+        key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
         for peak in self.peaks:
-            peak.intensity /= mul
+            peak.intensity /= self.mul2  # scale to match self.y_data scaling
         self.minima, self.maxima = self.compute_min_max()
         SpecPlotter.add_observer(self)
+        WavenumberCorrector.add_observer(self)
         self.x_data_arrays = {key: self.x_data}  # SpecPlotter key: array (save previously computed spectra)
         self.y_data_arrays = {key: self.y_data}  # SpecPlotter key: array (save previously computed spectra)
+        self.mode_list = None
 
     def add_observer(self, observer):
         self._observers.append(observer)
@@ -270,6 +275,10 @@ class FCSpectrum:
     def _notify_observers(self, message):
         for o in self._observers:
             o.update(message, self)
+
+    def set_vibrational_modes(self, modes: ModeList):
+        print(f"Vibrational modes set: {'emission' if self.is_emission else 'excitation'}")
+        self.mode_list = modes
 
     def get_wavenumbers(self, nr=-1):
         end = len(self.peaks) if nr == -1 else nr + 1
@@ -302,6 +311,15 @@ class FCSpectrum:
                     self.y_data_arrays[key] = self.y_data
                 self.minima, self.maxima = self.compute_min_max()
                 self._notify_observers(FCSpectrum.xy_data_changed_notification)
+        elif event == WavenumberCorrector.correction_factors_changed_notification:
+            self.peaks = WavenumberCorrector.compute_corrected_wavenumbers(self.peaks)
+            key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
+            for peak in self.peaks:
+                peak.intensity /= self.mul2
+            self.minima, self.maxima = self.compute_min_max()
+            self.x_data_arrays = {key: self.x_data}
+            self.y_data_arrays = {key: self.y_data}
+            self._notify_observers(FCSpectrum.xy_data_changed_notification)
 
 
 

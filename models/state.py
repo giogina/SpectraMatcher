@@ -95,13 +95,29 @@ class State:
             self.errors.append(f"Wrong ground state energy: {self.own_ground_state_energy} vs. global {self.molecule_and_method.get('ground state energy')}")
         if not self.molecule_and_method.get("molecule") == self.own_molecular_formula:
             self.errors.append(f"Wrong molecule: {self.own_molecular_formula} vs. global {self.molecule_and_method.get('molecule')}")
+        if self.vibrational_modes is None:
+            self.errors.append(f"No vibrational modes found.")
+        if not self.is_ground and self.excitation_spectrum is None:
+            self.errors.append(f"No excitation spectrum found.")
+        if not self.is_ground and self.emission_spectrum is None:
+            self.errors.append(f"No emission spectrum found.")
 
         self.ok = len(self.errors) == 0
         if not self.ok:
             print(f"Error in self-check of {self.name}:")
             for error in self.errors:
                 print(error)
-        self._notify_observers(self.state_ok_notification)
+        if self.ok:
+            if not self.is_ground:
+                ground = State.state_list[0]
+                if ground.is_ground and ground.ok:
+                    self.emission_spectrum.set_vibrational_modes(ground.vibrational_modes)
+                self.excitation_spectrum.set_vibrational_modes(self.vibrational_modes)
+            else:
+                for state in State.state_list[1:]:
+                    if state.ok and state.emission_spectrum is not None:
+                        state.emission_spectrum.set_vibrational_modes(self.vibrational_modes)
+            self._notify_observers(self.state_ok_notification)
         return self.ok
 
     def import_file(self, file):

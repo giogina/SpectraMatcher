@@ -13,6 +13,7 @@ import threading
 class Peak:
     def __init__(self, wavenumber, transition, intensity):
         self.wavenumber = wavenumber
+        self.corrected_wavenumber = wavenumber
         self.transition = transition
         self.intensity = intensity
 

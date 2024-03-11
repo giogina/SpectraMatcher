@@ -6,15 +6,12 @@ import logging
 import threading
 import time
 import ctypes
-import matplotlib.colors as mcolors
 
 from models.settings_manager import SettingsManager
 from models.data_file_manager import DataFileManager, FileObserver, File
 from models.state import State
 from models.experimental_spectrum import ExperimentalSpectrum
-
-
-# Define an observer interface
+from utility.wavenumber_corrector import WavenumberCorrector
 from utility.spectrum_plots import SpecPlotter
 
 
@@ -183,6 +180,9 @@ class Project(FileObserver):
             SpecPlotter.set_active_plotter(True, *self.get("active emission plotter"))
         if self.get("active excitation plotter") is not None:
             SpecPlotter.set_active_plotter(False, *self.get("active excitation plotter"))
+        if "wavenumber correction factors" not in self._data.keys():
+            self._data["wavenumber correction factors"] = {'bends': 0.986, 'H stretches': 0.975, 'others': 0.996}
+        WavenumberCorrector.correction_factors = self._data["wavenumber correction factors"]
         # Automatically keeps file manager dicts updated in self._data!
         self.data_file_manager.directory_toggle_states = self._data["directory toggle states"]
         self.data_file_manager.ignored_files_and_directories = self._data["ignored"]

@@ -82,7 +82,7 @@ class SpecPlotter:
         """peaks: array of tuples (position, height)"""
         res = np.zeros(self.x_data.size)
         for peak in peaks:
-            position_index = int((peak.wavenumber-self._x_min)/self._x_step)
+            position_index = int((peak.corrected_wavenumber-self._x_min)/self._x_step)
             res += self._shifted_peak(position_index)*peak.intensity
         return res
 
