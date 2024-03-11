@@ -26,7 +26,7 @@ class StatePlot:
         self._base_ydata = self.spectrum.y_data
         self.xdata = self._compute_x_data()
         self.ydata = self._compute_y_data()
-        self.handle_x = self.xdata[np.where(self.ydata == max(self.ydata))[0][0]]
+        self.handle_x = self._base_xdata[np.where(self._base_ydata == max(self._base_ydata))[0][0]]
         self.sticks = []  # stick: position, [[height, color]]
         for peak in self.spectrum.peaks:
             if peak.transition[0] != [0]:
@@ -44,7 +44,7 @@ class StatePlot:
             self._base_ydata = self.spectrum.y_data
             self.xdata = self._compute_x_data()
             self.ydata = self._compute_y_data()
-            self.handle_x = self.xdata[np.where(self.ydata == max(self.ydata))[0][0]]
+            self.handle_x = self._base_xdata[np.where(self._base_ydata == max(self._base_ydata))[0][0]]
             self.spectrum_update_callback(self)
 
     def set_spectrum_update_callback(self, callback):

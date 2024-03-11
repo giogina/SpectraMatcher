@@ -186,6 +186,8 @@ class PlotsOverview:
         if self.dragged_plot is not None:
             spec = self.viewmodel.state_plots.get(self.dragged_plot)
             if spec is not None:
+                dpg.set_value(f"drag-x-{spec.tag}", spec.handle_x + spec.xshift)
+                print(f"{spec.tag} Handle: {spec.handle_x}")
                 AsyncManager.submit_task(f"draw sticks {self.dragged_plot}", self.draw_sticks, spec)
                 # self.draw_sticks(spec)
         self.dragged_plot = None
