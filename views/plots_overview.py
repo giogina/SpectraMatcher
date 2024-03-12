@@ -22,6 +22,7 @@ class PlotsOverview:
         self.line_series = []
         self.show_sticks = None
         self.dragged_plot = None
+        self.gaussian_labels = False
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -68,6 +69,8 @@ class PlotsOverview:
                             dpg.add_slider_float(label=x_scale_key, tag=f"{x_scale_key} {self.viewmodel.is_emission} slider", vertical=False, max_value=1.0, min_value=0.8, callback=lambda s, a, u: self.viewmodel.change_correction_factor(u, a), user_data=x_scale_key)  #, format=""
                             dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {i}")
                         self.show_sticks = dpg.add_checkbox(label="Show stick spectra", callback=self.toggle_sticks)
+                        self.show_labels = dpg.add_checkbox(label="Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False)
+                        self.show_gaussian_labels = dpg.add_checkbox(label="Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True)
                 self.configure_theme()
 
     def set_correction_factor_slider_values(self, correction_factors):
@@ -200,6 +203,32 @@ class PlotsOverview:
                 # AsyncManager.submit_task(f"draw sticks {self.dragged_plot}", self.draw_sticks, spec)
                 self.draw_sticks(spec)
         self.dragged_plot = None
+
+    def toggle_labels(self, use_Gaussian_labels):
+        if use_Gaussian_labels:
+            if dpg.get_value(self.show_gaussian_labels):
+                self.gaussian_labels = True
+                for s in self.viewmodel.state_plots:
+                    self.draw_labels(s)
+                dpg.set_value(self.show_labels, False)
+            else:
+                self.delete_labels()
+        else:
+            if dpg.get_value(self.show_labels):
+                self.gaussian_labels = False
+                for s in self.viewmodel.state_plots:
+                    self.draw_labels(s)
+                dpg.set_value(self.show_gaussian_labels, False)
+            else:
+                self.delete_labels()
+
+    def draw_labels(self, state_plot):
+
+        # self.gaussian_labels
+        pass  # todo
+
+    def delete_labels(self):
+        pass  # todo
 
     def toggle_sticks(self, *args):
         if dpg.get_value(self.show_sticks):
