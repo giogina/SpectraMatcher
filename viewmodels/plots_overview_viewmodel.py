@@ -218,3 +218,4 @@ class PlotsOverviewViewmodel:
                 ymax = p.yshift + 1.1
         return xmin, xmax, ymin, ymax
 
+

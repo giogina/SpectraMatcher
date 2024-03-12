@@ -1,10 +1,17 @@
-
+def noop(*args, **kwargs):
+    pass
 
 class Labels:
     settings = {'peak intensity label threshold': 0.1,
                 'stick label relative threshold': 0.1,
                 'stick label absolute threshold': 0.1,
-                }  # todo> couple to project._data; implement controls & updates
+                'peak separation threshold': 0.8,
+                'label font size': 18,
+                'axis font size': 18,
+                'peak intensity match threshold': 0.03,
+                'distance match threshold': 30,
+                }  # todo> implement controls & updates
+    notify_changed_callback = noop
 
     @classmethod
     def construct_labels(cls, peaks, modes, is_emission):
@@ -37,3 +44,9 @@ class Labels:
             peak.label = label.strip().replace("  ", " ")
             peak.gaussian_label = gaussian_label.strip().replace("  ", " ")
         return peaks
+
+    @classmethod
+    def set(cls, key, value):
+        if key in cls.settings.keys():
+            cls.settings[key] = value
+        cls.notify_changed_callback()

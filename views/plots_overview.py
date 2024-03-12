@@ -71,9 +71,20 @@ class PlotsOverview:
                         for i, x_scale_key in enumerate(['bends', 'H stretches', 'others']):
                             dpg.add_slider_float(label=x_scale_key, tag=f"{x_scale_key} {self.viewmodel.is_emission} slider", vertical=False, max_value=1.0, min_value=0.8, callback=lambda s, a, u: self.viewmodel.change_correction_factor(u, a), user_data=x_scale_key)  #, format=""
                             dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {i}")
-                        self.show_sticks = dpg.add_checkbox(label="Show stick spectra", callback=self.toggle_sticks)
-                        self.show_labels = dpg.add_checkbox(label="Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False)
-                        self.show_gaussian_labels = dpg.add_checkbox(label="Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True)
+                        dpg.add_spacer(height=16)
+                        with dpg.collapsing_header(label="Label settings", default_open=True):
+                            self.show_sticks = dpg.add_checkbox(label="Show stick spectra", callback=self.toggle_sticks)
+                            self.show_labels = dpg.add_checkbox(label="Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False)
+                            self.show_gaussian_labels = dpg.add_checkbox(label="Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True)
+                            dpg.add_slider_float(label="Peak intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings.get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set('peak intensity label threshold', a))  # todo: attach all these to project._data
+                            dpg.add_slider_float(label="Peak separation threshold", min_value=0, max_value=1, default_value=Labels.settings.get('peak separation threshold', 0.8), callback=lambda s, a, u: Labels.set('peak separation threshold', a))
+                            dpg.add_slider_float(label="Stick relative threshold", min_value=0, max_value=1, default_value=Labels.settings.get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set('stick label relative threshold', a))
+                            dpg.add_slider_float(label="Stick absolute threshold", min_value=0, max_value=0.1, default_value=Labels.settings.get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set('stick label absolute threshold', a))
+                            dpg.add_slider_int(label="Label font size", min_value=12, max_value=24, default_value=Labels.settings.get('label font size', 18), callback=lambda s, a, u: Labels.set('label font size', a))
+                            dpg.add_slider_int(label="Axis font size", min_value=12, max_value=24, default_value=Labels.settings.get('axis font size', 18), callback=lambda s, a, u: Labels.set('axis font size', a))
+                            dpg.add_slider_float(label="Intensity match threshold", min_value=0, max_value=0.2, default_value=Labels.settings.get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Labels.set('peak intensity match threshold', a))
+                            dpg.add_slider_float(label="Distance match threshold", min_value=0, max_value=100, default_value=Labels.settings.get('distance match threshold', 30), callback=lambda s, a, u: Labels.set('distance match threshold', a))
+
                 self.configure_theme()
 
     def set_correction_factor_slider_values(self, correction_factors):
@@ -244,6 +255,10 @@ class PlotsOverview:
                     if len(label):
                         self.annotations[tag].append(dpg.add_plot_annotation(label=label, default_value=(cluster.x, state_plot.yshift + cluster.y_max+0.05), clamped=False, offset=(0, -3), color=[200, 200, 200, 0], parent=plot))
                         dpg.draw_line((cluster.x, state_plot.yshift+cluster.y+0.03), (cluster.x, state_plot.yshift+cluster.y_max+0.05), parent=plot)
+                        # TODO: Hover over annotation to see extra info about that vibration
+                        #  Ctrl-drag (or direct drag?) to change its position (value)
+                        #  Equal distribution of labels in available y space
+                        #  Nicer o/digit chars and double-chars
 
     def delete_labels(self):
         for tag in self.viewmodel.state_plots.keys():

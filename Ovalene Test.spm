@@ -112,5 +112,15 @@
         "bends": 0.986,
         "H stretches": 0.9039999842643738,
         "others": 0.9940000176429749
+    },
+    "label settings": {
+        "peak intensity label threshold": 0.1,
+        "stick label relative threshold": 0.1,
+        "stick label absolute threshold": 0.07100000232458115,
+        "peak separation threshold": 0.8,
+        "label font size": 18,
+        "axis font size": 18,
+        "peak intensity match threshold": 0.03,
+        "distance match threshold": 30
     }
 }

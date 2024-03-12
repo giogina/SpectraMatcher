@@ -11,6 +11,7 @@ from models.settings_manager import SettingsManager
 from models.data_file_manager import DataFileManager, FileObserver, File
 from models.state import State
 from models.experimental_spectrum import ExperimentalSpectrum
+from utility.labels import Labels
 from utility.wavenumber_corrector import WavenumberCorrector
 from utility.spectrum_plots import SpecPlotter
 
@@ -183,6 +184,18 @@ class Project(FileObserver):
         if "wavenumber correction factors" not in self._data.keys():
             self._data["wavenumber correction factors"] = {'bends': 0.986, 'H stretches': 0.975, 'others': 0.996}
         WavenumberCorrector.correction_factors = self._data["wavenumber correction factors"]
+        if "label settings" not in self._data.keys():
+            self._data["label settings"] = {'peak intensity label threshold': 0.1,
+                                            'stick label relative threshold': 0.1,
+                                            'stick label absolute threshold': 0.1,
+                                            'peak separation threshold': 0.8,
+                                            'label font size': 18,
+                                            'axis font size': 18,
+                                            'peak intensity match threshold': 0.03,
+                                            'distance match threshold': 30,
+                                            }
+        Labels.settings = self._data["label settings"]
+        Labels.notify_changed_callback = self.project_unsaved
         # Automatically keeps file manager dicts updated in self._data!
         self.data_file_manager.directory_toggle_states = self._data["directory toggle states"]
         self.data_file_manager.ignored_files_and_directories = self._data["ignored"]
