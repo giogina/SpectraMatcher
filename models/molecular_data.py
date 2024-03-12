@@ -3,6 +3,7 @@ from collections import Counter
 from scipy import signal
 from utility.spectrum_plots import SpecPlotter
 from utility.wavenumber_corrector import WavenumberCorrector
+from utility.labels import Labels
 
 
 _ELEMENT_NAMES = {'1': "H", '2': "He", '3': "Li", '4': "Be", '5': "B", '6': "C", '7': "N", '8': "O", '9': "F",
@@ -246,6 +247,7 @@ class FCPeak:
         self.corrected_wavenumber = wavenumber
         self.transition = transition
         self.intensity = intensity
+        self.types = {}  # gaussian_name: [bend, -H, others] properties for each transition  # todo
 
 
 class FCSpectrum:
@@ -278,9 +280,10 @@ class FCSpectrum:
         for o in self._observers:
             o.update(message, self)
 
-    def set_vibrational_modes(self, modes: ModeList):
+    def set_vibrational_modes(self, modes: ModeList):  # todo> subscribe to symmetry order updates; re-compute labels.
         self.vibrational_modes = modes
         self.peaks = WavenumberCorrector.compute_corrected_wavenumbers(self.peaks, self.vibrational_modes)
+        self.peaks = Labels.construct_labels(self.peaks, self.vibrational_modes, self.is_emission)
         key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
         for peak in self.peaks:
             peak.intensity /= self.mul2
