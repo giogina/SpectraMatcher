@@ -1,6 +1,11 @@
 
 
 class Labels:
+    settings = {'peak intensity label threshold': 0.1,
+                'stick label relative threshold': 0.1,
+                'stick label absolute threshold': 0.1,
+                }  # todo> couple to project._data; implement controls & updates
+
     @classmethod
     def construct_labels(cls, peaks, modes, is_emission):
         if is_emission:

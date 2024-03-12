@@ -248,6 +248,34 @@ class FCPeak:
         self.transition = transition
         self.intensity = intensity
         self.types = {}  # gaussian_name: [bend, -H, others] properties for each transition  # todo
+        self.label = ""
+        self.gaussian_label = ""
+
+    def get_label(self, gaussian: bool):
+        if gaussian:
+            return self.gaussian_label
+        else:
+            return self.label
+
+
+class Cluster:
+    """Cluster of peaks forming a local maximum of a spectrum"""
+    def __init__(self, x, y, y_max, peaks):
+        self.x = x
+        self.y = y
+        self.y_max = y_max
+        self.peaks = peaks
+        self.peaks.sort(key=lambda p: float(p.intensity), reverse=True)
+        self.on_top_of = [[]]
+        # 'lift': self.y_data[self.maxima[j]] + gap_height,
+        # 'width': max([get_label_width(c[l_key], font_size) for c in cluster]) * plot_scale[0],
+        # 'height': label_dims[font_size]['height'] * plot_scale[1],
+
+    def get_label(self, gaussian: bool):
+        threshold = Labels.settings['stick label relative threshold'] * float(self.peaks[0].intensity) + \
+                    Labels.settings['stick label absolute threshold']  # Threshold for counting as contributing to the peak
+        filtered_peaks = [p for p in self.peaks if p.intensity > threshold]
+        return "\n".join([p.get_label(gaussian) for p in filtered_peaks])
 
 
 class FCSpectrum:
@@ -263,12 +291,15 @@ class FCSpectrum:
         key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
         for peak in self.peaks:
             peak.intensity /= self.mul2  # scale to match self.y_data scaling
-        self.minima, self.maxima = self.compute_min_max()
+        self.determine_label_clusters()
         SpecPlotter.add_observer(self)
         WavenumberCorrector.add_observer(self)
         self.x_data_arrays = {key: self.x_data}  # SpecPlotter key: array (save previously computed spectra)
         self.y_data_arrays = {key: self.y_data}  # SpecPlotter key: array (save previously computed spectra)
         self.vibrational_modes = None
+        self.clusters = []
+        self.minima = None
+        self.maxima = None
 
     def add_observer(self, observer):
         self._observers.append(observer)
@@ -287,7 +318,7 @@ class FCSpectrum:
         key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
         for peak in self.peaks:
             peak.intensity /= self.mul2
-        self.minima, self.maxima = self.compute_min_max()
+        self.determine_label_clusters()
         self.x_data_arrays = {key: self.x_data}
         self.y_data_arrays = {key: self.y_data}
         self._notify_observers(FCSpectrum.xy_data_changed_notification)
@@ -306,8 +337,39 @@ class FCSpectrum:
         minima = [0]
         minima.extend(mins)
         minima.append(len(self.y_data) - 1)
-        print(minima, maxima)
-        return minima, maxima
+        self.minima = minima
+        self.maxima = maxima
+
+    def get_clusters(self):
+        return self.clusters
+
+    def determine_label_clusters(self):
+        self.compute_min_max()
+        if self.minima is None or self.maxima is None:
+            return
+        peaks = self.peaks.copy()
+        self.clusters = []
+        peaks.sort(key=lambda pk: pk.corrected_wavenumber)
+
+        j = 0  # maxima index
+        p = 0  # peaks index
+
+        for i in range(0, len(self.minima) - 1):
+            cluster = []
+            while self.maxima[j] < self.minima[i]:
+                j += 1
+                if j >= len(self.maxima):
+                    break
+            if j >= len(self.maxima):
+                break
+
+            while p < len(peaks) and peaks[p].corrected_wavenumber < self.x_data[self.minima[i]]:
+                p += 1
+            while p < len(peaks) and peaks[p].corrected_wavenumber < self.x_data[self.minima[i + 1]] and not peaks[p].get_label(False) == '':
+                cluster.append(peaks[p])
+                p += 1
+            if cluster:
+                self.clusters.append(Cluster(x=self.x_data[self.maxima[j]], y_max=max(self.y_data[max(0, self.maxima[j] - 8):min(self.maxima[j] + 8, len(self.y_data))]), y=self.y_data[self.maxima[j]], peaks=cluster))
 
     def update(self, event, *args):
         """Automatically re-calculate y_data when active SpecPlotter instance changes."""
@@ -322,7 +384,7 @@ class FCSpectrum:
                     _, self.x_data, self.y_data, _ = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
                     self.x_data_arrays[key] = self.x_data
                     self.y_data_arrays[key] = self.y_data
-                self.minima, self.maxima = self.compute_min_max()
+                self.determine_label_clusters()
                 self._notify_observers(FCSpectrum.xy_data_changed_notification)
         elif event == WavenumberCorrector.correction_factors_changed_notification:
             if self.vibrational_modes is not None:
@@ -330,7 +392,7 @@ class FCSpectrum:
                 key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
                 for peak in self.peaks:
                     peak.intensity /= self.mul2
-                self.minima, self.maxima = self.compute_min_max()
+                self.determine_label_clusters()
                 self.x_data_arrays = {key: self.x_data}
                 self.y_data_arrays = {key: self.y_data}
                 self._notify_observers(FCSpectrum.peaks_changed_notification)

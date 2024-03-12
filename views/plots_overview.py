@@ -1,6 +1,7 @@
 import dearpygui.dearpygui as dpg
 
 from utility.async_manager import AsyncManager
+from utility.labels import Labels
 from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel, WavenumberCorrector
 from utility.spectrum_plots import hsv_to_rgb
 
@@ -23,6 +24,8 @@ class PlotsOverview:
         self.show_sticks = None
         self.dragged_plot = None
         self.gaussian_labels = False
+        self.labels = False
+        self.annotations = {}  # state_plot tag: annotation object
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -208,27 +211,45 @@ class PlotsOverview:
         if use_Gaussian_labels:
             if dpg.get_value(self.show_gaussian_labels):
                 self.gaussian_labels = True
+                self.labels = True
                 for s in self.viewmodel.state_plots:
                     self.draw_labels(s)
                 dpg.set_value(self.show_labels, False)
             else:
+                self.labels = False
                 self.delete_labels()
         else:
             if dpg.get_value(self.show_labels):
                 self.gaussian_labels = False
+                self.labels = True
                 for s in self.viewmodel.state_plots:
                     self.draw_labels(s)
                 dpg.set_value(self.show_gaussian_labels, False)
             else:
+                self.labels = False
                 self.delete_labels()
 
-    def draw_labels(self, state_plot):
-
-        # self.gaussian_labels
-        pass  # todo
+    def draw_labels(self, tag):
+        if self.labels:
+            plot = f"plot_{self.viewmodel.is_emission}"
+            for annotation in self.annotations.get(tag, []):
+                if dpg.does_item_exist(annotation):
+                    dpg.delete_item(annotation)
+            self.annotations[tag] = []
+            state_plot = self.viewmodel.state_plots[tag]
+            clusters = state_plot.get_clusters()
+            for cluster in clusters:
+                if cluster.y > Labels.settings['peak intensity label threshold']:
+                    label = cluster.get_label(self.gaussian_labels)
+                    if len(label):
+                        self.annotations[tag].append(dpg.add_plot_annotation(label=label, default_value=(cluster.x, state_plot.yshift + cluster.y_max), offset=(0, -20), color=[200, 200, 200, 255], parent=plot))
 
     def delete_labels(self):
-        pass  # todo
+        for tag in self.viewmodel.state_plots.keys():
+            for annotation in self.annotations.get(tag, []):
+                if dpg.does_item_exist(annotation):
+                    dpg.delete_item(annotation)
+            self.annotations[tag] = []
 
     def toggle_sticks(self, *args):
         if dpg.get_value(self.show_sticks):

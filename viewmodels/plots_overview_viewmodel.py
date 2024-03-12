@@ -67,6 +67,9 @@ class StatePlot:
     def set_sticks_update_callback(self, callback):
         self.sticks_update_callback = callback
 
+    def get_clusters(self):
+        return self.spectrum.get_clusters()
+
     def _compute_x_data(self):
         return self._base_xdata + self.xshift
 
