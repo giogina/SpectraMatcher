@@ -242,7 +242,8 @@ class PlotsOverview:
                 if cluster.y > Labels.settings['peak intensity label threshold']:
                     label = cluster.get_label(self.gaussian_labels)
                     if len(label):
-                        self.annotations[tag].append(dpg.add_plot_annotation(label=label, default_value=(cluster.x, state_plot.yshift + cluster.y_max), offset=(0, -20), color=[200, 200, 200, 255], parent=plot))
+                        self.annotations[tag].append(dpg.add_plot_annotation(label=label, default_value=(cluster.x, state_plot.yshift + cluster.y_max+0.05), clamped=False, offset=(0, -3), color=[200, 200, 200, 0], parent=plot))
+                        dpg.draw_line((cluster.x, state_plot.yshift+cluster.y+0.03), (cluster.x, state_plot.yshift+cluster.y_max+0.05), parent=plot)
 
     def delete_labels(self):
         for tag in self.viewmodel.state_plots.keys():
