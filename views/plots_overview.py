@@ -239,6 +239,8 @@ class PlotsOverview:
             else:
                 self.labels = False
                 self.delete_labels()
+        Labels.set('show labels', self.labels)
+        Labels.set('gaussian labels', self.gaussian_labels)
 
     def draw_labels(self, tag):
         if self.labels:

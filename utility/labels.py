@@ -2,7 +2,9 @@ def noop(*args, **kwargs):
     pass
 
 class Labels:
-    settings = {'peak intensity label threshold': 0.1,
+    settings = {'show labels': False,
+                'gaussian labels:': False,
+                'peak intensity label threshold': 0.1,
                 'stick label relative threshold': 0.1,
                 'stick label absolute threshold': 0.1,
                 'peak separation threshold': 0.8,
@@ -49,4 +51,4 @@ class Labels:
     def set(cls, key, value):
         if key in cls.settings.keys():
             cls.settings[key] = value
-        cls.notify_changed_callback()
+        cls.notify_changed_callback()  # notify project
