@@ -12,16 +12,16 @@ class PlotsOverview:
         self.viewmodel.set_callback("update plot", self.update_plot)
         self.viewmodel.set_callback("add spectrum", self.add_spectrum)
         self.viewmodel.set_callback("delete sticks", self.delete_sticks)
+        self.viewmodel.set_callback("redraw sticks", self.draw_sticks)
         self.viewmodel.set_callback("set correction factor values", self.set_correction_factor_slider_values)
         self.custom_series = None
         self.spec_theme = {}
         self.hovered_spectrum = None
         self.hovered_x_drag_line = None
-        self.show__all_drag_lines = False  # show all drag lines
+        self.show_all_drag_lines = False  # show all drag lines
         self.line_series = []
         self.show_sticks = True  # todo: checkbox
         self.dragged_plot = None
-        self.redraw_sticks_on_release = False
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -92,7 +92,7 @@ class PlotsOverview:
             for s_tag, s in self.viewmodel.state_plots.items():
                 if not dpg.does_item_exist(f"drag-x-{s_tag}"):
                     return  # drawing is currently underway
-                if not self.show__all_drag_lines:
+                if not self.show_all_drag_lines:
                     if abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) < 0.02:
                         dpg.show_item(f"drag-{s_tag}")
                         self.hovered_spectrum = s_tag
@@ -193,23 +193,13 @@ class PlotsOverview:
             self.redraw_sticks_on_release = True
 
     def on_drag_release(self):
-        if self.redraw_sticks_on_release:
-            print("Redraw sticks")
-            for spec in self.viewmodel.state_plots.values():
-                print(spec.tag)
-                dpg.set_value(f"drag-x-{spec.tag}", spec.handle_x + spec.xshift)
-                AsyncManager.submit_task(f"draw sticks {spec}", self.draw_sticks, spec)
-            self.redraw_sticks_on_release = False
-        elif self.dragged_plot is not None:
+        if self.dragged_plot is not None:
             spec = self.viewmodel.state_plots.get(self.dragged_plot)
             if spec is not None:
                 dpg.set_value(f"drag-x-{spec.tag}", spec.handle_x + spec.xshift)
                 # AsyncManager.submit_task(f"draw sticks {self.dragged_plot}", self.draw_sticks, spec)
                 self.draw_sticks(spec)
         self.dragged_plot = None
-
-        # TODO:
-        #  * Redraw sticks on last spectrum update
 
     def draw_sticks(self, s):
         if self.show_sticks:
@@ -243,7 +233,7 @@ class PlotsOverview:
             self.viewmodel.resize_half_width(direction)
 
     def show_drag_lines(self, show):
-        self.show__all_drag_lines = show
+        self.show_all_drag_lines = show
         for tag in self.viewmodel.state_plots.keys():
             if dpg.does_item_exist(f"drag-{tag}"):
                 dpg.configure_item(f"drag-{tag}", show=show)

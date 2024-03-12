@@ -330,8 +330,8 @@ class FCSpectrum:
                 self.minima, self.maxima = self.compute_min_max()
                 self.x_data_arrays = {key: self.x_data}
                 self.y_data_arrays = {key: self.y_data}
-                self._notify_observers(FCSpectrum.xy_data_changed_notification)
                 self._notify_observers(FCSpectrum.peaks_changed_notification)
+                self._notify_observers(FCSpectrum.xy_data_changed_notification)
 
 
 

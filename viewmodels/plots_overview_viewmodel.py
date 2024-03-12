@@ -2,6 +2,9 @@ from models.experimental_spectrum import ExperimentalSpectrum
 from models.molecular_data import FCSpectrum
 from models.state import State
 import numpy as np
+import time
+
+from utility.async_manager import AsyncManager
 from utility.spectrum_plots import SpecPlotter
 from utility.wavenumber_corrector import WavenumberCorrector
 
@@ -33,6 +36,7 @@ class StatePlot:
                 sub_stick_scale = peak.intensity/sum([t[1] for t in peak.transition])
                 self.sticks.append([peak.corrected_wavenumber, [[vib[1]*sub_stick_scale, [c*255 for c in vib[0].vibration_properties]] for vib in [(self.spectrum.vibrational_modes.get_mode(t[0]), t[1]) for t in peak.transition if len(t) == 2] if vib is not None]])
         self.spectrum_update_callback = noop
+        self.sticks_update_callback = noop
 
     @staticmethod
     def construct_tag(state, is_emission):
@@ -55,10 +59,13 @@ class StatePlot:
                                         [[vib[1] * sub_stick_scale, [c * 255 for c in vib[0].vibration_properties]] for
                                          vib in [(self.spectrum.vibrational_modes.get_mode(t[0]), t[1]) for t in
                                                  peak.transition if len(t) == 2] if vib is not None]])
-
+            self.sticks_update_callback(self)
 
     def set_spectrum_update_callback(self, callback):
         self.spectrum_update_callback = callback
+
+    def set_sticks_update_callback(self, callback):
+        self.sticks_update_callback = callback
 
     def _compute_x_data(self):
         return self._base_xdata + self.xshift
@@ -106,12 +113,14 @@ class PlotsOverviewViewmodel:
             "add spectrum": noop,
             "redraw plot": noop,
             "delete sticks": noop,
+            "redraw sticks": noop,
             "set correction factor values": noop,
         }
 
         self.xydatas = []  # experimental x, y
         self.state_plots = {}  # whole State instances, for x, y, color, etc.
         self._auto_zoom = True
+        self.last_correction_factor_change_time = 0
 
     def update(self, event, *args):
         print(f"Plots overview viewmodel received event: {event}")
@@ -127,9 +136,6 @@ class PlotsOverviewViewmodel:
                 self._callbacks.get("add spectrum")(new_spec_tag)
             # self._callbacks.get("redraw plot")()  # todo> react to already-plotted state deletion (see if it's still in State.state_list?)
 
-    def get_start_xscales(self, key):
-        return self._project.ge
-
     def _extract_exp_x_y_data(self):
         xydatas = []
         for exp in ExperimentalSpectrum.spectra_list:
@@ -144,11 +150,24 @@ class PlotsOverviewViewmodel:
                 state_index = State.state_list.index(state)
                 self.state_plots[tag] = StatePlot(state, self.is_emission, yshift=state_index)
                 self.state_plots[tag].set_spectrum_update_callback(self.update_plot)
+                self.state_plots[tag].set_sticks_update_callback(self.update_sticks)
                 return tag
         return None
 
     def update_plot(self, state_plot):
         self._callbacks.get("update plot")(state_plot)
+
+    def update_sticks(self, state_plot):
+        AsyncManager.submit_task(f"schedule stick redraw for {state_plot.tag}", self.schedule_stick_spectrum_redraw, state_plot)
+
+    def schedule_stick_spectrum_redraw(self, state_plot):
+        debounce_period = 0.2
+        while True:
+            time_since_last_update = time.time() - self.last_correction_factor_change_time
+            if time_since_last_update >= debounce_period:
+                self._callbacks.get("redraw sticks")(state_plot)
+                break
+            time.sleep(debounce_period)
 
     def on_x_drag(self, value, state_plot):
         self.state_plots[state_plot.tag].set_x_shift(value)
@@ -170,6 +189,7 @@ class PlotsOverviewViewmodel:
         SpecPlotter.change_half_width(self.is_emission, direction)
 
     def change_correction_factor(self, key, value):
+        self.last_correction_factor_change_time = time.time()
         self._callbacks.get("delete sticks")()
         WavenumberCorrector.set_correction_factor(key, value)
 
