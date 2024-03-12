@@ -20,7 +20,7 @@ class PlotsOverview:
         self.hovered_x_drag_line = None
         self.show_all_drag_lines = False  # show all drag lines
         self.line_series = []
-        self.show_sticks = True  # todo: checkbox
+        self.show_sticks = None
         self.dragged_plot = None
 
         with dpg.handler_registry() as self.mouse_handlers:
@@ -57,7 +57,6 @@ class PlotsOverview:
                     # with dpg.group():
                         # dpg.add_checkbox(label="auto-zoom", tag=f"auto_zoom_check_{self.viewmodel.is_emission}", default_value=True, callback=lambda s, a, u: self.viewmodel.on_toggle_autozoom(a))
                     with dpg.group(horizontal=False):
-
                         for i in range(7):  # todo: react to state creation/deletion
                             with dpg.theme(tag=f"slider_theme_{self.viewmodel.is_emission} {i}"):  # TODO> state colors (start with these tho)
                                 with dpg.theme_component(0):
@@ -68,6 +67,7 @@ class PlotsOverview:
                         for i, x_scale_key in enumerate(['bends', 'H stretches', 'others']):
                             dpg.add_slider_float(label=x_scale_key, tag=f"{x_scale_key} {self.viewmodel.is_emission} slider", vertical=False, max_value=1.0, min_value=0.8, callback=lambda s, a, u: self.viewmodel.change_correction_factor(u, a), user_data=x_scale_key)  #, format=""
                             dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {i}")
+                        self.show_sticks = dpg.add_checkbox(label="Show stick spectra", callback=self.toggle_sticks)
                 self.configure_theme()
 
     def set_correction_factor_slider_values(self, correction_factors):
@@ -201,8 +201,15 @@ class PlotsOverview:
                 self.draw_sticks(spec)
         self.dragged_plot = None
 
+    def toggle_sticks(self, *args):
+        if dpg.get_value(self.show_sticks):
+            for s in self.viewmodel.state_plots.values():
+                self.draw_sticks(s)
+        else:
+            self.delete_sticks()
+
     def draw_sticks(self, s):
-        if self.show_sticks:
+        if dpg.get_value(self.show_sticks):
             plot = f"plot_{self.viewmodel.is_emission}"
             if dpg.does_item_exist(f"sticks-{s.tag}"):
                 dpg.delete_item(f"sticks-{s.tag}")
