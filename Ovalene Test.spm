@@ -108,19 +108,35 @@
         6509,
         1
     ],
+    "wavenumber correction factors": {
+        "true": {
+            "bends": 0.9020000100135803,
+            "H stretches": 0.975,
+            "others": 0.9629999995231628
+        },
+        "false": {
+            "bends": 0.986,
+            "H stretches": 0.975,
+            "others": 1.0
+        }
+    },
     "label settings": {
         "true": {
-            "peak intensity label threshold": 0.057999998331069946,
+            "show labels": false,
+            "show gaussian labels": true,
+            "peak intensity label threshold": 0.10999999940395355,
             "stick label relative threshold": 0.1,
             "stick label absolute threshold": 0.1,
-            "peak separation threshold": 0.8,
+            "peak separation threshold": 0.8840000033378601,
             "label font size": 18,
             "axis font size": 18,
             "peak intensity match threshold": 0.03,
             "distance match threshold": 30
         },
         "false": {
-            "peak intensity label threshold": 0.13600000739097595,
+            "show labels": false,
+            "show gaussian labels": false,
+            "peak intensity label threshold": 0.1,
             "stick label relative threshold": 0.1,
             "stick label absolute threshold": 0.1,
             "peak separation threshold": 0.8,
@@ -130,16 +146,14 @@
             "distance match threshold": 30
         }
     },
-    "wavenumber correction factors": {
+    "matcher settings": {
         "true": {
-            "bends": 0.9020000100135803,
-            "H stretches": 0.975,
-            "others": 0.9900000095367432
+            "peak intensity match threshold": 0.03,
+            "distance match threshold": 30
         },
         "false": {
-            "bends": 0.986,
-            "H stretches": 0.975,
-            "others": 0.9769999980926514
+            "peak intensity match threshold": 0.03,
+            "distance match threshold": 30
         }
     }
 }

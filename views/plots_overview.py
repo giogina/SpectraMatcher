@@ -2,6 +2,7 @@ import dearpygui.dearpygui as dpg
 
 from utility.async_manager import AsyncManager
 from utility.labels import Labels
+from utility.matcher import Matcher
 from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel, WavenumberCorrector
 from utility.spectrum_plots import hsv_to_rgb, adjust_color_for_dark_theme, SpecPlotter
 
@@ -14,7 +15,7 @@ class PlotsOverview:
         self.viewmodel.set_callback("add spectrum", self.add_spectrum)
         self.viewmodel.set_callback("delete sticks", self.delete_sticks)
         self.viewmodel.set_callback("redraw sticks", self.draw_sticks)
-        self.viewmodel.set_callback("post load update", self.post_load_update)
+        self.viewmodel.set_callback("post load update", self.set_ui_values_from_settings)
         self.custom_series = None
         self.spec_theme = {}
         self.hovered_spectrum = None
@@ -26,6 +27,8 @@ class PlotsOverview:
         self.gaussian_labels = False
         self.labels = False
         self.annotations = {}  # state_plot tag: annotation object
+        self.label_controls = {}
+        self.match_controls = {}
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -98,35 +101,61 @@ class PlotsOverview:
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
-                                    self.show_labels = dpg.add_checkbox(label=" Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False)
-                                    self.show_gaussian_labels = dpg.add_checkbox(label=" Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True)
-                                    dpg.add_slider_float(label=" Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))
-                                    dpg.add_slider_float(label=" Separation thr.", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('peak separation threshold', 0.8), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak separation threshold', a))
-                                    dpg.add_slider_float(label=" Stick rel. thr.", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label relative threshold', a))
-                                    dpg.add_slider_float(label=" Stick abs. thr.", min_value=0, max_value=0.1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label absolute threshold', a))
-                                    dpg.add_slider_int(label=" Label font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('label font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'label font size', a))
-                                    dpg.add_slider_int(label=" Axis font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('axis font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'axis font size', a))
-                                    dpg.add_button(label="Reset", width=-1)  # TODO
+                                    self.label_controls['show labels'] = dpg.add_checkbox(label=" Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False, default_value=Labels.settings[self.viewmodel.is_emission].get('show labels', False))
+                                    self.label_controls['show gaussian labels'] = dpg.add_checkbox(label=" Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True, default_value=Labels.settings[self.viewmodel.is_emission].get('show gaussian labels', False))
+                                    self.label_controls['peak intensity label threshold'] = dpg.add_slider_float(label=" Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))
+                                    self.label_controls['peak separation threshold'] = dpg.add_slider_float(label=" Separation thr.", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('peak separation threshold', 0.8), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak separation threshold', a))
+                                    self.label_controls['stick label relative threshold'] = dpg.add_slider_float(label=" Stick rel. thr.", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label relative threshold', a))
+                                    self.label_controls['stick label absolute threshold'] = dpg.add_slider_float(label=" Stick abs. thr.", min_value=0, max_value=0.1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label absolute threshold', a))
+                                    self.label_controls['label font size'] = dpg.add_slider_int(label=" Label font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('label font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'label font size', a))
+                                    self.label_controls['axis font size'] = dpg.add_slider_int(label=" Axis font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('axis font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'axis font size', a))
+                                    dpg.add_button(label="Defaults", width=-1, callback=self.restore_label_defaults)
+
                         dpg.add_spacer(height=16)
                         with dpg.collapsing_header(label="Match settings", default_open=True):
                             # dpg.add_spacer(height=6)
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
-                                    dpg.add_slider_float(label=" Intensity thr.", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
-                                    dpg.add_slider_float(label=" Distance thr.", min_value=0, max_value=100, default_value=Labels.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'distance match threshold', a))
+                                    self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(label=" Min. Intensity", min_value=0, max_value=0.2, default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
+                                    self.match_controls['distance match threshold'] = dpg.add_slider_float(label=" Max. Distance", min_value=0, max_value=100, default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a))
+                                    dpg.add_button(label="Defaults", width=-1)  # TODO
                                     dpg.add_button(label="Save as table", callback=self.print_table, width=-1)
-                                    dpg.add_button(label="Reset", width=-1)  # TODO
                 self.configure_theme()
+
+    def restore_label_defaults(self):
+        Labels.restore_defaults(self.viewmodel.is_emission)
+        self.set_ui_values_from_settings(labels=True)
+
+    def restore_matcher_defaults(self):
+        Matcher.restore_defaults(self.viewmodel.is_emission)
+        self.set_ui_values_from_settings(matcher=True)
 
     def print_table(self):
         pass
         # todo
 
-    def post_load_update(self):  # todo> equivalent update for Label & Match settings
-        for i, x_scale_key in enumerate(['bends', 'H stretches', 'others']):
-            dpg.set_value(f"{x_scale_key} {self.viewmodel.is_emission} slider", value=WavenumberCorrector.correction_factors[self.viewmodel.is_emission].get(x_scale_key, 0))
-        dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
+    def set_ui_values_from_settings(self, x_scale=False, half_width=False, labels=False, matcher=False):  # todo> equivalent update for Label & Match settings
+        load_all = True not in (x_scale, half_width, labels, matcher)
+
+        if load_all or x_scale:
+            for i, x_scale_key in enumerate(['bends', 'H stretches', 'others']):
+                dpg.set_value(f"{x_scale_key} {self.viewmodel.is_emission} slider", value=WavenumberCorrector.correction_factors[self.viewmodel.is_emission].get(x_scale_key, 0))
+        if load_all or half_width:
+            dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
+        if load_all or labels:
+            for key, item in self.label_controls.items():
+                print(self.viewmodel.is_emission, key, Labels.settings[self.viewmodel.is_emission][key])
+                dpg.set_value(item, Labels.settings[self.viewmodel.is_emission].get(key))
+            if Labels.settings[self.viewmodel.is_emission]['show labels']:
+                self.toggle_labels(False)
+            elif Labels.settings[self.viewmodel.is_emission]['show gaussian labels']:
+                self.toggle_labels(True)
+        if load_all or matcher:
+            for key, slider in self.match_controls.items():
+                dpg.set_value(slider, Matcher.settings[self.viewmodel.is_emission].get(key))
+
+
 
     def _custom_series_callback(self, sender, app_data):
         try:
@@ -231,6 +260,7 @@ class PlotsOverview:
         else:
             dpg.set_value(f"drag-{s.tag}", s.yshift)
         self.draw_sticks(s)
+        self.draw_labels(s.tag)
         dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
         dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
 
@@ -264,27 +294,27 @@ class PlotsOverview:
 
     def toggle_labels(self, use_Gaussian_labels):
         if use_Gaussian_labels:
-            if dpg.get_value(self.show_gaussian_labels):
+            if dpg.get_value(self.label_controls['show gaussian labels']):
                 self.gaussian_labels = True
                 self.labels = True
                 for s in self.viewmodel.state_plots:
                     self.draw_labels(s)
-                dpg.set_value(self.show_labels, False)
+                dpg.set_value(self.label_controls['show labels'], False)
             else:
                 self.labels = False
                 self.delete_labels()
         else:
-            if dpg.get_value(self.show_labels):
+            if dpg.get_value(self.label_controls['show labels']):
                 self.gaussian_labels = False
                 self.labels = True
                 for s in self.viewmodel.state_plots:
                     self.draw_labels(s)
-                dpg.set_value(self.show_gaussian_labels, False)
+                dpg.set_value(self.label_controls['show gaussian labels'], False)
             else:
                 self.labels = False
                 self.delete_labels()
-        Labels.set(self.viewmodel.is_emission, 'show labels', self.labels)
-        Labels.set(self.viewmodel.is_emission, 'gaussian labels', self.gaussian_labels)
+        Labels.set(self.viewmodel.is_emission, 'show labels', dpg.get_value(self.label_controls['show labels']))
+        Labels.set(self.viewmodel.is_emission, 'show gaussian labels', dpg.get_value(self.label_controls['show gaussian labels']))
 
     def draw_labels(self, tag):
         if self.labels:

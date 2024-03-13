@@ -2,6 +2,17 @@ from utility.noop import noop
 
 
 class Labels:
+    _DEFAULTS = {'show labels': False,
+                 'show gaussian labels': False,
+                 'peak intensity label threshold': 0.1,
+                 'stick label relative threshold': 0.1,
+                 'stick label absolute threshold': 0.1,
+                 'peak separation threshold': 0.8,
+                 'label font size': 18,
+                 'axis font size': 18,
+                 'peak intensity match threshold': 0.03,
+                 'distance match threshold': 30,
+                 }
     settings = {True: {}, False: {}}  # Coupled to project._data
     notify_changed_callback = noop
 
@@ -42,3 +53,14 @@ class Labels:
         if key in cls.settings[is_emission].keys():
             cls.settings[is_emission][key] = value
         cls.notify_changed_callback()  # notify project
+
+    @classmethod
+    def restore_defaults(cls, is_emission):
+        defaults = cls.defaults()
+        for key, value in defaults.items():
+            cls.settings[is_emission][key] = value
+        cls.notify_changed_callback()  # notify project
+
+    @classmethod
+    def defaults(cls):
+        return cls._DEFAULTS.copy()
