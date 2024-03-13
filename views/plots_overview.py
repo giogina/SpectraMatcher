@@ -265,17 +265,19 @@ class PlotsOverview:
             dpg.set_value(f"drag-{s.tag}", s.yshift)
         self.draw_sticks(s)
         self.draw_labels(s.tag)
-        print(self.labels)
         dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
         dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
 
     def update_plot(self, state_plot, mark_dragged_plot=None, redraw_sticks=False, update_drag_lines=False):
+        print("update plot")
         self.dragged_plot = mark_dragged_plot
         dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
         if update_drag_lines:
             dpg.set_value(f"drag-x-{state_plot.tag}", state_plot.handle_x + state_plot.xshift)
+            self.draw_labels(state_plot.tag)
         if redraw_sticks:
             AsyncManager.submit_task(f"draw sticks {state_plot.tag}", self.draw_sticks, state_plot)
+        self.update_labels(state_plot.tag)
 
     def delete_sticks(self, spec_tag=None):  # None: all of them.
         if spec_tag is not None:
@@ -340,22 +342,43 @@ class PlotsOverview:
                 if cluster.y > Labels.settings[self.viewmodel.is_emission]['peak intensity label threshold']:
                     label = cluster.get_label(self.gaussian_labels)
                     if len(label):
-                        self.annotations[tag].append(dpg.add_plot_annotation(label=label, default_value=(cluster.x, state_plot.yshift + cluster.y_max+0.05), clamped=False, offset=(0, -3), color=[200, 200, 200, 0], parent=plot))
-                        self.annotation_lines[tag].append(dpg.draw_line((cluster.x, state_plot.yshift+cluster.y+0.03), (cluster.x, state_plot.yshift+cluster.y_max+0.05), parent=plot))
+                        x = cluster.x + state_plot.xshift
+                        y = state_plot.yshift + cluster.y * state_plot.yscale
+                        ymax = state_plot.yshift + cluster.y_max * state_plot.yscale
+                        self.annotations[tag].append(dpg.add_plot_annotation(label=label, default_value=(x, ymax+0.05), clamped=False, offset=(0, -3), color=[200, 200, 200, 0], parent=plot, user_data=cluster))
+                        self.annotation_lines[tag].append(dpg.draw_line((x, y+0.03), (x, ymax+0.05), parent=plot))
+                        print(dpg.get_value(dpg.last_item()))
                         # TODO: Hover over annotation to see extra info about that vibration
                         #  Ctrl-drag (or direct drag?) to change its position (value)
                         #  Equal distribution of labels in available y space
                         #  Nicer o/digit chars and double-chars
 
             # dpg.bind_item_font(f"x_axis_{self.viewmodel.is_emission}", FontManager.get(Labels.settings[self.viewmodel.is_emission]['axis font size']))
-
+    def update_labels(self, tag):
+        if self.labels:
+            state_plot = self.viewmodel.state_plots.get(tag)
+            for line in self.annotation_lines.get(tag, []):
+                if dpg.does_item_exist(line):
+                    dpg.delete_item(line)
+            self.annotation_lines[tag] = []
+            for label in self.annotations.get(tag, []):
+                cluster = dpg.get_item_user_data(label)
+                x = cluster.x + state_plot.xshift
+                y = state_plot.yshift + cluster.y*state_plot.yscale
+                ymax = state_plot.yshift + cluster.y_max*state_plot.yscale
+                dpg.set_value(label, (x, ymax+0.05))
+                self.annotation_lines[tag].append(dpg.draw_line((x, y + 0.03), (x, ymax + 0.05), parent=f"plot_{self.viewmodel.is_emission}"))
 
     def delete_labels(self):
         for tag in self.viewmodel.state_plots.keys():
             for annotation in self.annotations.get(tag, []):
                 if dpg.does_item_exist(annotation):
                     dpg.delete_item(annotation)
-            self.annotations[tag] = []  # todo: do this on scroll/drag operations
+            self.annotations[tag] = []
+            for line in self.annotation_lines.get(tag, []):
+                if dpg.does_item_exist(line):
+                    dpg.delete_item(line)
+            self.annotation_lines[tag] = []
 
     def toggle_sticks(self, *args):
         if dpg.get_value(self.show_sticks):
