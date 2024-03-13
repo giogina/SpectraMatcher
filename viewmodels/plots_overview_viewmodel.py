@@ -16,6 +16,7 @@ class PlotsOverviewViewmodel:
         self._project.add_observer(self, "project loaded")
         ExperimentalSpectrum.add_observer(self)
         State.add_observer(self)
+        WavenumberCorrector.add_observer(self)
         self._callbacks = {
             "update plot": noop,
             "add spectrum": noop,
@@ -42,7 +43,9 @@ class PlotsOverviewViewmodel:
             new_spec_tag = self._extract_state(state)
             if new_spec_tag is not None:
                 self._callbacks.get("add spectrum")(new_spec_tag)
-            # self._callbacks.get("redraw plot")()  # todo> react to already-plotted state deletion (see if it's still in State.state_list?)
+            # todo> react to already-plotted state deletion (see if it's still in State.state_list?)
+        elif event == WavenumberCorrector.correction_factors_changed_notification:  # Keep it synced
+            self._callbacks.get("set correction factor values")(WavenumberCorrector.correction_factors)
 
     def _extract_exp_x_y_data(self):
         xydatas = []

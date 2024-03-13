@@ -1,18 +1,8 @@
-def noop(*args, **kwargs):
-    pass
+from utility.noop import noop
+
 
 class Labels:
-    settings = {'show labels': False,
-                'gaussian labels:': False,
-                'peak intensity label threshold': 0.1,
-                'stick label relative threshold': 0.1,
-                'stick label absolute threshold': 0.1,
-                'peak separation threshold': 0.8,
-                'label font size': 18,
-                'axis font size': 18,
-                'peak intensity match threshold': 0.03,
-                'distance match threshold': 30,
-                }  # todo> implement controls & updates
+    settings = {True: {}, False: {}}  # Coupled to project._data
     notify_changed_callback = noop
 
     @classmethod
@@ -48,7 +38,7 @@ class Labels:
         return peaks
 
     @classmethod
-    def set(cls, key, value):
-        if key in cls.settings.keys():
-            cls.settings[key] = value
+    def set(cls, is_emission, key, value):
+        if key in cls.settings[is_emission].keys():
+            cls.settings[is_emission][key] = value
         cls.notify_changed_callback()  # notify project

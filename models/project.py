@@ -185,15 +185,24 @@ class Project(FileObserver):
             self._data["wavenumber correction factors"] = {'bends': 0.986, 'H stretches': 0.975, 'others': 0.996}
         WavenumberCorrector.correction_factors = self._data["wavenumber correction factors"]
         if "label settings" not in self._data.keys():
-            self._data["label settings"] = {'peak intensity label threshold': 0.1,
-                                            'stick label relative threshold': 0.1,
-                                            'stick label absolute threshold': 0.1,
-                                            'peak separation threshold': 0.8,
-                                            'label font size': 18,
-                                            'axis font size': 18,
-                                            'peak intensity match threshold': 0.03,
-                                            'distance match threshold': 30,
-                                            }
+            self._data["label settings"] = {True: {'peak intensity label threshold': 0.1,
+                                                   'stick label relative threshold': 0.1,
+                                                   'stick label absolute threshold': 0.1,
+                                                   'peak separation threshold': 0.8,
+                                                   'label font size': 18,
+                                                   'axis font size': 18,
+                                                   'peak intensity match threshold': 0.03,
+                                                   'distance match threshold': 30,
+                                                   },
+                                            False: {'peak intensity label threshold': 0.1,
+                                                    'stick label relative threshold': 0.1,
+                                                    'stick label absolute threshold': 0.1,
+                                                    'peak separation threshold': 0.8,
+                                                    'label font size': 18,
+                                                    'axis font size': 18,
+                                                    'peak intensity match threshold': 0.03,
+                                                    'distance match threshold': 30,
+                                                    }}
         Labels.settings = self._data["label settings"]
         Labels.notify_changed_callback = self.project_unsaved
         # Automatically keeps file manager dicts updated in self._data!

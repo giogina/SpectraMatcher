@@ -94,17 +94,17 @@ class PlotsOverview:
                         with dpg.collapsing_header(label="Label settings", default_open=True):
                             self.show_labels = dpg.add_checkbox(label="Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False)
                             self.show_gaussian_labels = dpg.add_checkbox(label="Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True)
-                            dpg.add_slider_float(label="Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings.get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set('peak intensity label threshold', a))  # todo: attach all these to project._data
-                            dpg.add_slider_float(label="Separation threshold", min_value=0, max_value=1, default_value=Labels.settings.get('peak separation threshold', 0.8), callback=lambda s, a, u: Labels.set('peak separation threshold', a))
-                            dpg.add_slider_float(label="Stick rel. threshold", min_value=0, max_value=1, default_value=Labels.settings.get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set('stick label relative threshold', a))
-                            dpg.add_slider_float(label="Stick abs. threshold", min_value=0, max_value=0.1, default_value=Labels.settings.get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set('stick label absolute threshold', a))
-                            dpg.add_slider_int(label="Label font size", min_value=12, max_value=24, default_value=Labels.settings.get('label font size', 18), callback=lambda s, a, u: Labels.set('label font size', a))
-                            dpg.add_slider_int(label="Axis font size", min_value=12, max_value=24, default_value=Labels.settings.get('axis font size', 18), callback=lambda s, a, u: Labels.set('axis font size', a))
+                            dpg.add_slider_float(label="Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))  # todo: attach all these to project._data
+                            dpg.add_slider_float(label="Separation threshold", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('peak separation threshold', 0.8), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak separation threshold', a))
+                            dpg.add_slider_float(label="Stick rel. threshold", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label relative threshold', a))
+                            dpg.add_slider_float(label="Stick abs. threshold", min_value=0, max_value=0.1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label absolute threshold', a))
+                            dpg.add_slider_int(label="Label font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('label font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'label font size', a))
+                            dpg.add_slider_int(label="Axis font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('axis font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'axis font size', a))
                             dpg.add_button(label="Reset", width=-1)  # TODO
                         dpg.add_spacer(height=16)
                         with dpg.collapsing_header(label="Match settings", default_open=True):
-                            dpg.add_slider_float(label="Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings.get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Labels.set('peak intensity match threshold', a))
-                            dpg.add_slider_float(label="Distance threshold", min_value=0, max_value=100, default_value=Labels.settings.get('distance match threshold', 30), callback=lambda s, a, u: Labels.set('distance match threshold', a))
+                            dpg.add_slider_float(label="Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
+                            dpg.add_slider_float(label="Distance threshold", min_value=0, max_value=100, default_value=Labels.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'distance match threshold', a))
                             dpg.add_button(label="Save as table", callback=self.print_table, width=-1)
                             dpg.add_button(label="Reset", width=-1)  # TODO
                 self.configure_theme()
@@ -268,8 +268,8 @@ class PlotsOverview:
             else:
                 self.labels = False
                 self.delete_labels()
-        Labels.set('show labels', self.labels)
-        Labels.set('gaussian labels', self.gaussian_labels)
+        Labels.set(self.viewmodel.is_emission, 'show labels', self.labels)
+        Labels.set(self.viewmodel.is_emission, 'gaussian labels', self.gaussian_labels)
 
     def draw_labels(self, tag):
         if self.labels:
@@ -281,7 +281,7 @@ class PlotsOverview:
             state_plot = self.viewmodel.state_plots[tag]
             clusters = state_plot.get_clusters()
             for cluster in clusters:
-                if cluster.y > Labels.settings['peak intensity label threshold']:
+                if cluster.y > Labels.settings[self.viewmodel.is_emission]['peak intensity label threshold']:
                     label = cluster.get_label(self.gaussian_labels)
                     if len(label):
                         self.annotations[tag].append(dpg.add_plot_annotation(label=label, default_value=(cluster.x, state_plot.yshift + cluster.y_max+0.05), clamped=False, offset=(0, -3), color=[200, 200, 200, 0], parent=plot))
