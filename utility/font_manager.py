@@ -1,3 +1,5 @@
+import time
+
 from utility.icons import Icons
 import dearpygui.dearpygui as dpg
 
@@ -20,9 +22,21 @@ class FontManager:
             with dpg.font("./fonts/SansationRegular.ttf", cls.big_font) as cls.fonts[cls.big_font]:
                 dpg.add_font_range(0x2070, 0x2090, parent=cls.fonts[cls.big_font])  # todo: Find larger symbols for these
                 dpg.add_font_chars([0x0394])
+            start = time.time()
+            for i in range(12, 25):
+                cls.get(i)
             Icons().set_font_registry(cls.font_registry)
 
         dpg.bind_font(cls.fonts[cls.normal_font])
+
+    @classmethod
+    def get(cls, size):
+        if cls.font_registry is None:
+            return
+        if size not in cls.fonts.keys():
+            with dpg.font("./fonts/SansationRegular.ttf", size, parent=cls.font_registry) as cls.fonts[size]:
+                dpg.add_font_range(0x2070, 0x2090)
+        return cls.fonts[size]
 
     # self._load_fonts_async()  # Still needed or throw out? Or dynamically load fonts using font_reg?
     # def _load_fonts_async(self):
