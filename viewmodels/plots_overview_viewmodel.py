@@ -1,4 +1,5 @@
 import time
+import threading
 from models.experimental_spectrum import ExperimentalSpectrum
 from models.state import State
 from models.state_plot import StatePlot
@@ -65,9 +66,11 @@ class PlotsOverviewViewmodel:
         self._callbacks.get("update plot")(state_plot)
 
     def update_sticks(self, state_plot):
-        AsyncManager.submit_task(f"schedule stick redraw for {state_plot.tag}", self.schedule_stick_spectrum_redraw, state_plot)
+        thread = threading.Thread(target=self.schedule_stick_spectrum_redraw, args=(state_plot,))
+        thread.start()
+        # AsyncManager.submit_task(f"schedule stick redraw for {state_plot.tag}", self.schedule_stick_spectrum_redraw, state_plot)
 
-    def schedule_stick_spectrum_redraw(self, state_plot):
+    def schedule_stick_spectrum_redraw(self, state_plot):  # todo> set 'show sticks' variable here, don't trigger this if sticks not shown. Also, not for currently invisible spectrum.
         debounce_period = 0.2
         while True:
             time_since_last_update = time.time() - self.last_correction_factor_change_time

@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 class AsyncManager:
     _tasks = None
     _loop = None
-    _executor = ThreadPoolExecutor(max_workers=os.cpu_count() * 2)
+    _executor = ThreadPoolExecutor(max_workers=os.cpu_count() * 4)
     _waiting_task_map = {}  # Maps task_id to asyncio Task
     _running_task_map = {}  # Do I need this for the shutdown cancel?
     _stop = False
@@ -37,6 +37,7 @@ class AsyncManager:
                 return
             if cls._waiting_task_map.get(task_id) == (func, args):
                 del cls._waiting_task_map[task_id]  # Remove it from the map as it's now running
+                # print("Running task:", task_id)
                 result = await cls._loop.run_in_executor(cls._executor, func, *args)
                 cls.notify_observers(observers, notification, result)
 
@@ -51,6 +52,7 @@ class AsyncManager:
     @classmethod
     async def _submit_task(cls, task_id, func, *args, observers=None, notification=""):
         """Actual coroutine to handle task submission."""
+        print("submitting task: ", task_id)
         await cls._tasks.put((task_id, func, args, observers, notification))
 
     @classmethod
