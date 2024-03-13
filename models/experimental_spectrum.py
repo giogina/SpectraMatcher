@@ -213,7 +213,7 @@ class ExperimentalSpectrum:
         pws = signal.peak_widths(smooth_ydata, high_peaks)
 
         widths = [xdata[round(w[0])] - xdata[round(w[1])] for w in zip(pws[2], pws[3])]
-        width = int(abs(sum(widths) / len(widths)) * 8) / 10
+        width = int(abs(sum(widths) / len(widths)) * 5) / 10
         self.peak_width = width / ((max(xdata) - min(xdata)) / len(xdata))
 
         # TODO: allow for adjustment of prominence / width here? Or allow more / filter later?

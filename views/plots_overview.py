@@ -33,7 +33,7 @@ class PlotsOverview:
             dpg.add_key_down_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=True)
             dpg.add_key_release_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=False)
 
-        with dpg.table(header_row=False):
+        with dpg.table(header_row=False, borders_innerV=True, resizable=True):
             dpg.add_table_column(init_width_or_weight=4)
             dpg.add_table_column(init_width_or_weight=1)
 
@@ -76,18 +76,24 @@ class PlotsOverview:
                             self.show_sticks = dpg.add_checkbox(label="Show stick spectra", callback=self.toggle_sticks)
                             self.show_labels = dpg.add_checkbox(label="Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False)
                             self.show_gaussian_labels = dpg.add_checkbox(label="Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True)
-                            dpg.add_slider_float(label="Peak intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings.get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set('peak intensity label threshold', a))  # todo: attach all these to project._data
-                            dpg.add_slider_float(label="Peak separation threshold", min_value=0, max_value=1, default_value=Labels.settings.get('peak separation threshold', 0.8), callback=lambda s, a, u: Labels.set('peak separation threshold', a))
-                            dpg.add_slider_float(label="Stick relative threshold", min_value=0, max_value=1, default_value=Labels.settings.get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set('stick label relative threshold', a))
-                            dpg.add_slider_float(label="Stick absolute threshold", min_value=0, max_value=0.1, default_value=Labels.settings.get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set('stick label absolute threshold', a))
+                            dpg.add_slider_float(label="Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings.get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set('peak intensity label threshold', a))  # todo: attach all these to project._data
+                            dpg.add_slider_float(label="Separation threshold", min_value=0, max_value=1, default_value=Labels.settings.get('peak separation threshold', 0.8), callback=lambda s, a, u: Labels.set('peak separation threshold', a))
+                            dpg.add_slider_float(label="Stick rel. threshold", min_value=0, max_value=1, default_value=Labels.settings.get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set('stick label relative threshold', a))
+                            dpg.add_slider_float(label="Stick abs. threshold", min_value=0, max_value=0.1, default_value=Labels.settings.get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set('stick label absolute threshold', a))
                             dpg.add_slider_int(label="Label font size", min_value=12, max_value=24, default_value=Labels.settings.get('label font size', 18), callback=lambda s, a, u: Labels.set('label font size', a))
                             dpg.add_slider_int(label="Axis font size", min_value=12, max_value=24, default_value=Labels.settings.get('axis font size', 18), callback=lambda s, a, u: Labels.set('axis font size', a))
-                            dpg.add_slider_float(label="Intensity match threshold", min_value=0, max_value=0.2, default_value=Labels.settings.get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Labels.set('peak intensity match threshold', a))
-                            dpg.add_slider_float(label="Distance match threshold", min_value=0, max_value=100, default_value=Labels.settings.get('distance match threshold', 30), callback=lambda s, a, u: Labels.set('distance match threshold', a))
-
+                        dpg.add_spacer(height=16)
+                        with dpg.collapsing_header(label="Match settings", default_open=True):
+                            dpg.add_slider_float(label="Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings.get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Labels.set('peak intensity match threshold', a))
+                            dpg.add_slider_float(label="Distance threshold", min_value=0, max_value=100, default_value=Labels.settings.get('distance match threshold', 30), callback=lambda s, a, u: Labels.set('distance match threshold', a))
+                            dpg.add_button(label="Save as table", callback=self.print_table)
                 self.configure_theme()
 
-    def set_correction_factor_slider_values(self, correction_factors):
+    def print_table(self):
+        pass
+        # todo
+
+    def set_correction_factor_slider_values(self, correction_factors):  # todo> equivalent update for Label & Match settings
         for i, x_scale_key in enumerate(['bends', 'H stretches', 'others']):
             dpg.set_value(f"{x_scale_key} {self.viewmodel.is_emission} slider", value=correction_factors.get(x_scale_key, 0))
 
@@ -156,16 +162,17 @@ class PlotsOverview:
         self.line_series.append(dpg.last_item())
         dpg.bind_item_theme(dpg.last_item(), f"plot_theme_{self.viewmodel.is_emission}")
 
-        if len(self.viewmodel.xydatas):
-            for x_data, y_data in self.viewmodel.xydatas:
-                dpg.add_line_series(x_data, y_data, parent=f"y_axis_{self.viewmodel.is_emission}")
-                self.line_series.append(dpg.last_item())
-        if self.viewmodel.state_plots == {}:
-            dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
-
+        for x_data, y_data in self.viewmodel.xydatas:
+            self.add_experimental_spectrum(x_data, y_data)
         for s in self.viewmodel.state_plots.keys():
             self.add_spectrum(s)
-        dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
+
+    def add_experimental_spectrum(self, x_data, y_data):
+        dpg.add_line_series(x_data, y_data, parent=f"y_axis_{self.viewmodel.is_emission}")
+        self.line_series.append(dpg.last_item())
+        if self.viewmodel.state_plots == {}:
+            dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
+            dpg.bind_item_theme(dpg.last_item(), f"exp_spec_theme_{self.viewmodel.is_emission}")
 
     def add_spectrum(self, tag):
         xmin, xmax, ymin, ymax = self.viewmodel.get_zoom_range()
@@ -191,12 +198,14 @@ class PlotsOverview:
         else:
             dpg.set_value(f"drag-{s.tag}", s.yshift)
         self.draw_sticks(s)
+        dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
 
     def update_plot(self, state_plot, mark_dragged_plot=None, redraw_sticks=False):
         self.dragged_plot = mark_dragged_plot
         dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
         if redraw_sticks:
             AsyncManager.submit_task(f"draw sticks {state_plot.tag}", self.draw_sticks, state_plot)
+    # TODO: changing correction factors does not yet adjust the drag lines.
 
     def delete_sticks(self, spec_tag=None):  # None: all of them.
         if spec_tag is not None:
@@ -267,7 +276,7 @@ class PlotsOverview:
             for annotation in self.annotations.get(tag, []):
                 if dpg.does_item_exist(annotation):
                     dpg.delete_item(annotation)
-            self.annotations[tag] = []
+            self.annotations[tag] = []  # todo: do this on scroll/drag operations
 
     def toggle_sticks(self, *args):
         if dpg.get_value(self.show_sticks):
@@ -300,6 +309,10 @@ class PlotsOverview:
                 dpg.add_theme_style(dpg.mvPlotStyleVar_MarkerSize, 1, category=dpg.mvThemeCat_Plots)
             with dpg.theme_component(dpg.mvDragLine):
                 dpg.add_theme_color(dpg.mvPlotCol_Line, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
+
+        with dpg.theme(tag=f"exp_spec_theme_{self.viewmodel.is_emission}"):
+            with dpg.theme_component(dpg.mvLineSeries):
+                dpg.add_theme_color(dpg.mvPlotCol_Line, (200, 200, 255, 200), category=dpg.mvThemeCat_Plots)
 
     def on_scroll(self, direction):
         if self.hovered_spectrum is not None:
