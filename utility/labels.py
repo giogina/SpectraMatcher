@@ -15,6 +15,8 @@ class Labels:
                  }
     settings = {True: {}, False: {}}  # Coupled to project._data
     notify_changed_callback = noop
+    _observers = []
+    label_settings_updated_notification = "Label settings updated"
 
     @classmethod
     def construct_labels(cls, peaks, modes, is_emission):
@@ -49,10 +51,24 @@ class Labels:
         return peaks
 
     @classmethod
+    def add_observer(cls, observer):
+        cls._observers.append(observer)
+
+    @classmethod
+    def remove_observer(cls, observer):
+        cls._observers.remove(observer)
+
+    @classmethod
+    def _notify_observers(cls, message, is_emission):
+        for o in cls._observers:
+            o.update(message, is_emission)
+
+    @classmethod
     def set(cls, is_emission, key, value):
         if key in cls.settings[is_emission].keys():
             cls.settings[is_emission][key] = value
         cls.notify_changed_callback()  # notify project
+        cls._notify_observers(cls.label_settings_updated_notification, is_emission)
 
     @classmethod
     def restore_defaults(cls, is_emission):
@@ -60,6 +76,7 @@ class Labels:
         for key, value in defaults.items():
             cls.settings[is_emission][key] = value
         cls.notify_changed_callback()  # notify project
+        cls._notify_observers(cls.label_settings_updated_notification, is_emission)
 
     @classmethod
     def defaults(cls):

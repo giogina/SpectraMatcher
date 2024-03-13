@@ -16,6 +16,7 @@ class PlotsOverview:
         self.viewmodel.set_callback("delete sticks", self.delete_sticks)
         self.viewmodel.set_callback("redraw sticks", self.draw_sticks)
         self.viewmodel.set_callback("post load update", self.set_ui_values_from_settings)
+        self.viewmodel.set_callback("update labels", self.draw_labels)
         self.custom_series = None
         self.spec_theme = {}
         self.hovered_spectrum = None
@@ -42,7 +43,7 @@ class PlotsOverview:
 
             with dpg.table_row():
                 with dpg.table_cell():
-                    with dpg.plot(label="Experimental spectra", height=-100, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}"):
+                    with dpg.plot(label="Experimental spectra", height=-1, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}"):
                         # optionally create legend
                         dpg.add_plot_legend()
 
@@ -83,7 +84,7 @@ class PlotsOverview:
                                 dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, [0, 0, 150])
                                 dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, [0, 0, 220])
                                 dpg.add_theme_color(dpg.mvThemeCol_SliderGrabActive, [0, 0, 250])
-# todo: set on load & on extraction from file; save to project
+
                         self.half_width_slider = dpg.add_slider_float(label="Half-width", min_value=0.1, max_value=60, callback=lambda s, a, u: self.viewmodel.resize_half_width(a, relative=False))
                         dpg.add_spacer(height=16)
                         with dpg.collapsing_header(label="Anharmonic corrections", default_open=True):
@@ -105,7 +106,7 @@ class PlotsOverview:
                                     self.label_controls['show gaussian labels'] = dpg.add_checkbox(label=" Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True, default_value=Labels.settings[self.viewmodel.is_emission].get('show gaussian labels', False))
                                     self.label_controls['peak intensity label threshold'] = dpg.add_slider_float(label=" Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))
                                     self.label_controls['peak separation threshold'] = dpg.add_slider_float(label=" Separation thr.", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('peak separation threshold', 0.8), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak separation threshold', a))
-                                    self.label_controls['stick label relative threshold'] = dpg.add_slider_float(label=" Stick rel. thr.", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label relative threshold', a))
+                                    self.label_controls['stick label relative threshold'] = dpg.add_slider_float(label=" Stick rel. thr.", min_value=0, max_value=0.1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label relative threshold', a))
                                     self.label_controls['stick label absolute threshold'] = dpg.add_slider_float(label=" Stick abs. thr.", min_value=0, max_value=0.1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label absolute threshold', a))
                                     self.label_controls['label font size'] = dpg.add_slider_int(label=" Label font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('label font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'label font size', a))
                                     self.label_controls['axis font size'] = dpg.add_slider_int(label=" Axis font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('axis font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'axis font size', a))
@@ -119,7 +120,7 @@ class PlotsOverview:
                                 with dpg.group(horizontal=False):
                                     self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(label=" Min. Intensity", min_value=0, max_value=0.2, default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
                                     self.match_controls['distance match threshold'] = dpg.add_slider_float(label=" Max. Distance", min_value=0, max_value=100, default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a))
-                                    dpg.add_button(label="Defaults", width=-1)  # TODO
+                                    dpg.add_button(label="Defaults", width=-1, callback=self.restore_matcher_defaults)
                                     dpg.add_button(label="Save as table", callback=self.print_table, width=-1)
                 self.configure_theme()
 
@@ -307,7 +308,6 @@ class PlotsOverview:
                 self.delete_labels()
         else:
             if dpg.get_value(self.label_controls['show labels']):
-                print("Toggling labels on")
                 self.gaussian_labels = False
                 self.labels = True
                 for s in self.viewmodel.state_plots:
@@ -333,7 +333,7 @@ class PlotsOverview:
                     label = cluster.get_label(self.gaussian_labels)
                     if len(label):
                         self.annotations[tag].append(dpg.add_plot_annotation(label=label, default_value=(cluster.x, state_plot.yshift + cluster.y_max+0.05), clamped=False, offset=(0, -3), color=[200, 200, 200, 0], parent=plot))
-                        dpg.draw_line((cluster.x, state_plot.yshift+cluster.y+0.03), (cluster.x, state_plot.yshift+cluster.y_max+0.05), parent=plot)
+                        self.annotations[tag].append(dpg.draw_line((cluster.x, state_plot.yshift+cluster.y+0.03), (cluster.x, state_plot.yshift+cluster.y_max+0.05), parent=plot))
                         # TODO: Hover over annotation to see extra info about that vibration
                         #  Ctrl-drag (or direct drag?) to change its position (value)
                         #  Equal distribution of labels in available y space

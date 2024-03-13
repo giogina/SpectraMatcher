@@ -8,7 +8,7 @@ from utility.system_file_browser import *
 import logging
 from screeninfo import get_monitors
 from contextlib import contextmanager
-
+# TODO: Implement more shortcuts & menu actions (visible panels? Switch to spectrum tab?)
 
 class MainMenu:
     """Takes care of the viewport menu as well as keyboard shortcuts (combinations including Ctrl or Alt only)"""

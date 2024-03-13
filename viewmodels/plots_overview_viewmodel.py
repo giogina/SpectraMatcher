@@ -3,6 +3,8 @@ import threading
 from models.experimental_spectrum import ExperimentalSpectrum
 from models.state import State
 from models.state_plot import StatePlot
+from utility.labels import Labels
+from utility.matcher import Matcher
 from utility.spectrum_plots import SpecPlotter
 from utility.wavenumber_corrector import WavenumberCorrector
 from utility.noop import noop
@@ -15,6 +17,8 @@ class PlotsOverviewViewmodel:
         self._project.add_observer(self, "project loaded")
         ExperimentalSpectrum.add_observer(self)
         State.add_observer(self)
+        Labels.add_observer(self)
+        Matcher.add_observer(self)
         self._callbacks = {
             "update plot": noop,
             "add spectrum": noop,
@@ -22,6 +26,7 @@ class PlotsOverviewViewmodel:
             "delete sticks": noop,
             "redraw sticks": noop,
             "set correction factor values": noop,
+            "update labels": noop,
         }
 
         self.xydatas = []  # experimental x, y
@@ -42,6 +47,9 @@ class PlotsOverviewViewmodel:
             if new_spec_tag is not None:
                 self._callbacks.get("add spectrum")(new_spec_tag)
             # todo> react to already-plotted state deletion (see if it's still in State.state_list?)
+        elif event == Labels.label_settings_updated_notification:
+            for tag, s in self.state_plots.items():
+                self._callbacks.get("update labels")(tag)
 
     def _extract_exp_x_y_data(self):
         xydatas = []
