@@ -56,18 +56,19 @@ class PlotsOverviewViewmodel:
             if tag not in self.state_plots.keys() or self.state_plots[tag].state != state:
                 state_index = State.state_list.index(state)
                 self.state_plots[tag] = StatePlot(state, self.is_emission, yshift=state_index)
-                self.state_plots[tag].set_spectrum_update_callback(self.update_plot)
+                self.state_plots[tag].set_spectrum_update_callback(self.update_plot_and_drag_lines)
                 self.state_plots[tag].set_sticks_update_callback(self.update_sticks)
                 return tag
         return None
 
-    def update_plot(self, state_plot):
-        self._callbacks.get("update plot")(state_plot)
+    def update_plot_and_drag_lines(self, state_plot):
+        if state_plot != self.state_plots[state_plot.tag]:
+            print(f"Different plot instance detected! {state_plot.tag}")
+        self._callbacks.get("update plot")(state_plot, update_drag_lines=True)
 
     def update_sticks(self, state_plot):
         thread = threading.Thread(target=self.schedule_stick_spectrum_redraw, args=(state_plot,))
         thread.start()
-        # AsyncManager.submit_task(f"schedule stick redraw for {state_plot.tag}", self.schedule_stick_spectrum_redraw, state_plot)
 
     def schedule_stick_spectrum_redraw(self, state_plot):  # todo> set 'show sticks' variable here, don't trigger this if sticks not shown. Also, not for currently invisible spectrum.
         debounce_period = 0.2

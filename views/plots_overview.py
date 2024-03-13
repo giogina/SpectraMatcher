@@ -94,21 +94,29 @@ class PlotsOverview:
                                     self.show_sticks = dpg.add_checkbox(label="Show stick spectra", callback=self.toggle_sticks)
                         dpg.add_spacer(height=16)
                         with dpg.collapsing_header(label="Label settings", default_open=True):
-                            self.show_labels = dpg.add_checkbox(label=" Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False)
-                            self.show_gaussian_labels = dpg.add_checkbox(label=" Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True)
-                            dpg.add_slider_float(label=" Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))
-                            dpg.add_slider_float(label=" Separation thr.", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('peak separation threshold', 0.8), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak separation threshold', a))
-                            dpg.add_slider_float(label=" Stick rel. thr.", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label relative threshold', a))
-                            dpg.add_slider_float(label=" Stick abs. thr.", min_value=0, max_value=0.1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label absolute threshold', a))
-                            dpg.add_slider_int(label=" Label font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('label font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'label font size', a))
-                            dpg.add_slider_int(label=" Axis font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('axis font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'axis font size', a))
-                            dpg.add_button(label="Reset", width=-1)  # TODO
+                            # dpg.add_spacer(height=6)
+                            with dpg.group(horizontal=True):
+                                dpg.add_spacer(width=6)
+                                with dpg.group(horizontal=False):
+                                    self.show_labels = dpg.add_checkbox(label=" Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False)
+                                    self.show_gaussian_labels = dpg.add_checkbox(label=" Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True)
+                                    dpg.add_slider_float(label=" Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))
+                                    dpg.add_slider_float(label=" Separation thr.", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('peak separation threshold', 0.8), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak separation threshold', a))
+                                    dpg.add_slider_float(label=" Stick rel. thr.", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label relative threshold', a))
+                                    dpg.add_slider_float(label=" Stick abs. thr.", min_value=0, max_value=0.1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label absolute threshold', a))
+                                    dpg.add_slider_int(label=" Label font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('label font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'label font size', a))
+                                    dpg.add_slider_int(label=" Axis font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('axis font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'axis font size', a))
+                                    dpg.add_button(label="Reset", width=-1)  # TODO
                         dpg.add_spacer(height=16)
                         with dpg.collapsing_header(label="Match settings", default_open=True):
-                            dpg.add_slider_float(label=" Intensity thr.", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
-                            dpg.add_slider_float(label=" Distance thr.", min_value=0, max_value=100, default_value=Labels.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'distance match threshold', a))
-                            dpg.add_button(label="Save as table", callback=self.print_table, width=-1)
-                            dpg.add_button(label="Reset", width=-1)  # TODO
+                            # dpg.add_spacer(height=6)
+                            with dpg.group(horizontal=True):
+                                dpg.add_spacer(width=6)
+                                with dpg.group(horizontal=False):
+                                    dpg.add_slider_float(label=" Intensity thr.", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
+                                    dpg.add_slider_float(label=" Distance thr.", min_value=0, max_value=100, default_value=Labels.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'distance match threshold', a))
+                                    dpg.add_button(label="Save as table", callback=self.print_table, width=-1)
+                                    dpg.add_button(label="Reset", width=-1)  # TODO
                 self.configure_theme()
 
     def print_table(self):
@@ -226,13 +234,13 @@ class PlotsOverview:
         dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
         dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
 
-    def update_plot(self, state_plot, mark_dragged_plot=None, redraw_sticks=False):
+    def update_plot(self, state_plot, mark_dragged_plot=None, redraw_sticks=False, update_drag_lines=False):
         self.dragged_plot = mark_dragged_plot
         dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
+        if update_drag_lines:
+            dpg.set_value(f"drag-x-{state_plot.tag}", state_plot.handle_x + state_plot.xshift)
         if redraw_sticks:
             AsyncManager.submit_task(f"draw sticks {state_plot.tag}", self.draw_sticks, state_plot)
-            dpg.set_value(f"drag-x-{state_plot.tag}", state_plot.handle_x + state_plot.xshift)
-    # TODO: changing correction factors does not yet adjust the drag lines.
 
     def delete_sticks(self, spec_tag=None):  # None: all of them.
         if spec_tag is not None:
@@ -347,6 +355,8 @@ class PlotsOverview:
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4)
                 dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 6, 6)
+            with dpg.theme_component(dpg.mvCollapsingHeader):
+                dpg.add_theme_color(dpg.mvThemeCol_Header, [200, 200, 255, 80])
 
         dpg.bind_item_theme(self.plot_settings_group, plot_settings_theme)
 
