@@ -50,7 +50,7 @@ class ExperimentalSpectrum:
 
     def _notify_observers(self, message):
         for o in self._observers:
-            print(f"Updating state observers: {message}")
+            # print(f"Updating state observers: {message}")
             o.update(message, self)
 
     def check(self):
@@ -140,7 +140,6 @@ class ExperimentalSpectrum:
         file.experiment = None
         rel_col = self.columns[column_keys[self.settings['relative wavenumber column']]]
         self.name = ("Emission " if self.is_emission else "Excitation ") + f"{rel_col[0]} .. {rel_col[-1]} cm⁻¹"
-        print(self.name)
         self._notify_observers(self.new_spectrum_notification)
         self.determine_peaks()
 
@@ -251,7 +250,9 @@ class ExperimentalSpectrum:
             return None
         x_min = min([exp.x_min for exp in exp_list])
         x_max = max([exp.x_max for exp in exp_list])
-        half_width = [exp.peak_width for exp in exp_list if exp.x_min == x_min][0]
+        half_width = SpecPlotter.get_half_width(is_emission)  # Prevent overwriting of half-width
+        if half_width is None:
+            half_width = [exp.peak_width for exp in exp_list if exp.x_min == x_min][0]
         SpecPlotter.set_active_plotter(is_emission, half_width, x_min-1000, 2*x_max+1000)
 
 

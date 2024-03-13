@@ -182,7 +182,11 @@ class Project(FileObserver):
         if self.get("active excitation plotter") is not None:
             SpecPlotter.set_active_plotter(False, *self.get("active excitation plotter"))
         if "wavenumber correction factors" not in self._data.keys():
-            self._data["wavenumber correction factors"] = {'bends': 0.986, 'H stretches': 0.975, 'others': 0.996}
+            self._data["wavenumber correction factors"] = {True: {'bends': 0.986, 'H stretches': 0.975, 'others': 0.996},
+                                                           False: {'bends': 0.986, 'H stretches': 0.975, 'others': 0.996}}
+        elif 'true' in self._data["wavenumber correction factors"].keys():
+            self._data["wavenumber correction factors"] = {True: self._data["wavenumber correction factors"]['true'],
+                                                           False: self._data["wavenumber correction factors"]['false']}
         WavenumberCorrector.correction_factors = self._data["wavenumber correction factors"]
         if "label settings" not in self._data.keys():
             self._data["label settings"] = {True: {'peak intensity label threshold': 0.1,
@@ -203,6 +207,9 @@ class Project(FileObserver):
                                                     'peak intensity match threshold': 0.03,
                                                     'distance match threshold': 30,
                                                     }}
+        elif 'true' in self._data["label settings"].keys():
+            self._data["label settings"] = {True: self._data["label settings"]['true'],
+                                            False: self._data["label settings"]['false']}
         Labels.settings = self._data["label settings"]
         Labels.notify_changed_callback = self.project_unsaved
         # Automatically keeps file manager dicts updated in self._data!

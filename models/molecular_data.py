@@ -315,7 +315,7 @@ class FCSpectrum:
 
     def set_vibrational_modes(self, modes: ModeList):  # todo> subscribe to symmetry order updates; re-compute labels.
         self.vibrational_modes = modes
-        self.peaks = WavenumberCorrector.compute_corrected_wavenumbers(self.peaks, self.vibrational_modes)
+        self.peaks = WavenumberCorrector.compute_corrected_wavenumbers(self.is_emission, self.peaks, self.vibrational_modes)
         self.peaks = Labels.construct_labels(self.peaks, self.vibrational_modes, self.is_emission)
         key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
         for peak in self.peaks:
@@ -390,20 +390,20 @@ class FCSpectrum:
                 self._notify_observers(FCSpectrum.xy_data_changed_notification)
         elif event == WavenumberCorrector.correction_factors_changed_notification:
             if self.vibrational_modes is not None:
-                self.peaks = WavenumberCorrector.compute_corrected_wavenumbers(self.peaks, self.vibrational_modes)
+                self.peaks = WavenumberCorrector.compute_corrected_wavenumbers(self.is_emission, self.peaks, self.vibrational_modes)
                 AsyncManager.submit_task(f"Recompute spectrum {self.zero_zero_transition_energy} {self.is_emission}",
                                          SpecPlotter.get_spectrum_array, self.peaks, self.is_emission,
                                          notification="xy data ready", observers=[self])  # todo; why is it not smooth?
         elif event == "xy data ready":
-                # key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
-                (key, self.x_data, self.y_data, self.mul2) = args[0]
-                for peak in self.peaks:
-                    peak.intensity /= self.mul2
-                self.determine_label_clusters()
-                self.x_data_arrays = {key: self.x_data}
-                self.y_data_arrays = {key: self.y_data}
-                self._notify_observers(FCSpectrum.peaks_changed_notification)
-                self._notify_observers(FCSpectrum.xy_data_changed_notification)
+            # key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
+            (key, self.x_data, self.y_data, self.mul2) = args[0]
+            for peak in self.peaks:
+                peak.intensity /= self.mul2
+            self.determine_label_clusters()
+            self.x_data_arrays = {key: self.x_data}
+            self.y_data_arrays = {key: self.y_data}
+            self._notify_observers(FCSpectrum.peaks_changed_notification)
+            self._notify_observers(FCSpectrum.xy_data_changed_notification)
 
 
     # def recompute_everything(self):

@@ -3,7 +3,6 @@ import threading
 from models.experimental_spectrum import ExperimentalSpectrum
 from models.state import State
 from models.state_plot import StatePlot
-from utility.async_manager import AsyncManager
 from utility.spectrum_plots import SpecPlotter
 from utility.wavenumber_corrector import WavenumberCorrector
 from utility.noop import noop
@@ -16,7 +15,6 @@ class PlotsOverviewViewmodel:
         self._project.add_observer(self, "project loaded")
         ExperimentalSpectrum.add_observer(self)
         State.add_observer(self)
-        WavenumberCorrector.add_observer(self)
         self._callbacks = {
             "update plot": noop,
             "add spectrum": noop,
@@ -32,9 +30,9 @@ class PlotsOverviewViewmodel:
         self.last_correction_factor_change_time = 0
 
     def update(self, event, *args):
-        print(f"Plots overview viewmodel received event: {event}")
+        # print(f"Plots overview viewmodel received event: {event}")
         if event == "project loaded":
-            self._callbacks.get("set correction factor values")(WavenumberCorrector.correction_factors)
+            self._callbacks.get("post load update")()
         elif event == ExperimentalSpectrum.spectrum_analyzed_notification:
             self._extract_exp_x_y_data()
             self._callbacks.get("redraw plot")()
@@ -44,8 +42,6 @@ class PlotsOverviewViewmodel:
             if new_spec_tag is not None:
                 self._callbacks.get("add spectrum")(new_spec_tag)
             # todo> react to already-plotted state deletion (see if it's still in State.state_list?)
-        elif event == WavenumberCorrector.correction_factors_changed_notification:  # Keep it synced
-            self._callbacks.get("set correction factor values")(WavenumberCorrector.correction_factors)
 
     def _extract_exp_x_y_data(self):
         xydatas = []
@@ -104,7 +100,7 @@ class PlotsOverviewViewmodel:
     def change_correction_factor(self, key, value):
         self.last_correction_factor_change_time = time.time()
         self._callbacks.get("delete sticks")()
-        WavenumberCorrector.set_correction_factor(key, value)
+        WavenumberCorrector.set_correction_factor(self.is_emission, key, value)
 
     def on_spectrum_click(self, *args):
         print(args)

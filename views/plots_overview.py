@@ -14,7 +14,7 @@ class PlotsOverview:
         self.viewmodel.set_callback("add spectrum", self.add_spectrum)
         self.viewmodel.set_callback("delete sticks", self.delete_sticks)
         self.viewmodel.set_callback("redraw sticks", self.draw_sticks)
-        self.viewmodel.set_callback("set correction factor values", self.set_correction_factor_slider_values)
+        self.viewmodel.set_callback("post load update", self.post_load_update)
         self.custom_series = None
         self.spec_theme = {}
         self.hovered_spectrum = None
@@ -58,7 +58,7 @@ class PlotsOverview:
                         dpg.add_line_series([], [], parent=f"y_axis_{self.viewmodel.is_emission}", tag=f"exp_overlay_{self.viewmodel.is_emission}")
 
                 with dpg.table_cell():
-                    with dpg.group(horizontal=False):
+                    with dpg.group(horizontal=False) as self.plot_settings_group:
                         with dpg.theme(tag=f"slider_theme_{self.viewmodel.is_emission} Red"):
                             with dpg.theme_component(0):
                                 dpg.add_theme_color(dpg.mvThemeCol_FrameBg, [160, 0, 0, 180])
@@ -111,9 +111,10 @@ class PlotsOverview:
         pass
         # todo
 
-    def set_correction_factor_slider_values(self, correction_factors):  # todo> equivalent update for Label & Match settings
+    def post_load_update(self):  # todo> equivalent update for Label & Match settings
         for i, x_scale_key in enumerate(['bends', 'H stretches', 'others']):
-            dpg.set_value(f"{x_scale_key} {self.viewmodel.is_emission} slider", value=correction_factors.get(x_scale_key, 0))
+            dpg.set_value(f"{x_scale_key} {self.viewmodel.is_emission} slider", value=WavenumberCorrector.correction_factors[self.viewmodel.is_emission].get(x_scale_key, 0))
+        dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
 
     def _custom_series_callback(self, sender, app_data):
         try:
@@ -334,6 +335,11 @@ class PlotsOverview:
         with dpg.theme(tag=f"exp_spec_theme_{self.viewmodel.is_emission}"):
             with dpg.theme_component(dpg.mvLineSeries):
                 dpg.add_theme_color(dpg.mvPlotCol_Line, (200, 200, 255, 255), category=dpg.mvThemeCat_Plots)
+
+        with dpg.theme() as plot_settings_theme:
+            with dpg.theme_component(dpg.mvAll):
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4)
+        dpg.bind_item_theme(self.plot_settings_group, plot_settings_theme)
 
     def on_scroll(self, direction):
         if self.hovered_spectrum is not None:

@@ -52,7 +52,6 @@ class SpecPlotter:
         self._x_max = int(x_max/x_step)*x_step
         self._x_step = x_step
         self.x_data = np.array(np.arange(start=self._x_min, stop=self._x_max, step=self._x_step))
-        print("xdata in SpecPlotter: ", self.x_data)
         self._base_peak = self._base_lorentzian_array()
         self._base_peak_middle_index = int((self._base_peak.size-1)/2)  # index at which _base_peak peaks
         self.log = False
@@ -101,8 +100,12 @@ class SpecPlotter:
     @classmethod
     def get_half_width(cls, is_emission):
         if is_emission:
+            if cls._active_emission_plotter is None:
+                return None
             return cls._active_emission_plotter[0]
         else:
+            if cls._active_excitation_plotter is None:
+                return None
             return cls._active_excitation_plotter[0]
 
     def _base_lorentzian_array(self):
