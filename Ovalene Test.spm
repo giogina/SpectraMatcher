@@ -122,8 +122,8 @@
     },
     "label settings": {
         "true": {
-            "show labels": false,
-            "show gaussian labels": true,
+            "show labels": true,
+            "show gaussian labels": false,
             "peak intensity label threshold": 0.10999999940395355,
             "stick label relative threshold": 0.1,
             "stick label absolute threshold": 0.1,

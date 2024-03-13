@@ -135,7 +135,7 @@ class PlotsOverview:
         pass
         # todo
 
-    def set_ui_values_from_settings(self, x_scale=False, half_width=False, labels=False, matcher=False):  # todo> equivalent update for Label & Match settings
+    def set_ui_values_from_settings(self, x_scale=False, half_width=False, labels=False, matcher=False):
         load_all = True not in (x_scale, half_width, labels, matcher)
 
         if load_all or x_scale:
@@ -145,17 +145,18 @@ class PlotsOverview:
             dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
         if load_all or labels:
             for key, item in self.label_controls.items():
-                print(self.viewmodel.is_emission, key, Labels.settings[self.viewmodel.is_emission][key])
-                dpg.set_value(item, Labels.settings[self.viewmodel.is_emission].get(key))
-            if Labels.settings[self.viewmodel.is_emission]['show labels']:
-                self.toggle_labels(False)
-            elif Labels.settings[self.viewmodel.is_emission]['show gaussian labels']:
-                self.toggle_labels(True)
+                value = Labels.settings[self.viewmodel.is_emission].get(key)
+                dpg.set_value(item, value)
+                if not (key in ('show labels', 'show gaussian labels') and value is False and (Labels.settings[self.viewmodel.is_emission].get('show labels') or Labels.settings[self.viewmodel.is_emission].get('show gaussian labels'))):
+                    print("Callback ", key, value, dpg.get_item_callback(item))
+                    if dpg.get_item_callback(item) is not None:
+                        dpg.get_item_callback(item)(item, value, dpg.get_item_user_data(item))
         if load_all or matcher:
-            for key, slider in self.match_controls.items():
-                dpg.set_value(slider, Matcher.settings[self.viewmodel.is_emission].get(key))
-
-
+            for key, item in self.match_controls.items():
+                value = Matcher.settings[self.viewmodel.is_emission].get(key)
+                dpg.set_value(item, value)
+                if dpg.get_item_callback(item) is not None:
+                    dpg.get_item_callback(item)(item, value, dpg.get_item_user_data(item))
 
     def _custom_series_callback(self, sender, app_data):
         try:
@@ -261,6 +262,7 @@ class PlotsOverview:
             dpg.set_value(f"drag-{s.tag}", s.yshift)
         self.draw_sticks(s)
         self.draw_labels(s.tag)
+        print(self.labels)
         dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
         dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
 
@@ -305,6 +307,7 @@ class PlotsOverview:
                 self.delete_labels()
         else:
             if dpg.get_value(self.label_controls['show labels']):
+                print("Toggling labels on")
                 self.gaussian_labels = False
                 self.labels = True
                 for s in self.viewmodel.state_plots:
