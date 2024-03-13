@@ -3,7 +3,7 @@ import dearpygui.dearpygui as dpg
 from utility.async_manager import AsyncManager
 from utility.labels import Labels
 from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel, WavenumberCorrector
-from utility.spectrum_plots import hsv_to_rgb
+from utility.spectrum_plots import hsv_to_rgb, adjust_color_for_dark_theme
 
 
 class PlotsOverview:
@@ -61,19 +61,37 @@ class PlotsOverview:
                     # with dpg.group():
                         # dpg.add_checkbox(label="auto-zoom", tag=f"auto_zoom_check_{self.viewmodel.is_emission}", default_value=True, callback=lambda s, a, u: self.viewmodel.on_toggle_autozoom(a))
                     with dpg.group(horizontal=False):
-                        for i in range(7):  # todo: react to state creation/deletion
-                            with dpg.theme(tag=f"slider_theme_{self.viewmodel.is_emission} {i}"):  # TODO> state colors (start with these tho)
-                                with dpg.theme_component(0):
-                                    dpg.add_theme_color(dpg.mvThemeCol_FrameBg, hsv_to_rgb(i / 7.0, 0.5, 0.5))
-                                    dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, hsv_to_rgb(i / 7.0, 0.9, 0.9))
-                                    dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, hsv_to_rgb(i / 7.0, 0.7, 0.5))
-                                    dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, hsv_to_rgb(i / 7.0, 0.6, 0.5))
-                        for i, x_scale_key in enumerate(['bends', 'H stretches', 'others']):
-                            dpg.add_slider_float(label=x_scale_key, tag=f"{x_scale_key} {self.viewmodel.is_emission} slider", vertical=False, max_value=1.0, min_value=0.8, callback=lambda s, a, u: self.viewmodel.change_correction_factor(u, a), user_data=x_scale_key)  #, format=""
-                            dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {i}")
+                        # TODO> state colors (start with the hsv ones tho)
+                        with dpg.theme(tag=f"slider_theme_{self.viewmodel.is_emission} Red"):
+                            with dpg.theme_component(0):
+                                dpg.add_theme_color(dpg.mvThemeCol_FrameBg, [160, 0, 0, 180])
+                                dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, [160, 0, 0, 200])
+                                dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, [160, 0, 0])
+                                dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, [180, 0, 0])
+                                dpg.add_theme_color(dpg.mvThemeCol_SliderGrabActive, [220, 0, 0])
+                        with dpg.theme(tag=f"slider_theme_{self.viewmodel.is_emission} Green"):
+                            with dpg.theme_component(0):
+                                dpg.add_theme_color(dpg.mvThemeCol_FrameBg, [0, 160, 0, 180])
+                                dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, [0, 160, 0, 200])
+                                dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, [0, 160, 0])
+                                dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, [0, 180, 0])
+                                dpg.add_theme_color(dpg.mvThemeCol_SliderGrabActive, [0, 220, 0])
+                        with dpg.theme(tag=f"slider_theme_{self.viewmodel.is_emission} Blue"):
+                            with dpg.theme_component(0):
+                                dpg.add_theme_color(dpg.mvThemeCol_FrameBg, [0, 0, 120, 180])
+                                dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, [0, 0, 150, 200])
+                                dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, [0, 0, 150])
+                                dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, [0, 0, 220])
+                                dpg.add_theme_color(dpg.mvThemeCol_SliderGrabActive, [0, 0, 250])  # TODO> Make reaction to these sliders async (for each spectrum separately)
+
+                        dpg.add_spacer(height=16)
+                        with dpg.collapsing_header(label="Anharmonic corrections", default_open=True):
+                            for i, x_scale_key in enumerate(['H stretches', 'bends', 'others']):
+                                dpg.add_slider_float(label=['H-* stretches', 'Bends', 'Others'][i], tag=f"{x_scale_key} {self.viewmodel.is_emission} slider", vertical=False, max_value=1.0, min_value=0.8, callback=lambda s, a, u: self.viewmodel.change_correction_factor(u, a), user_data=x_scale_key)  #, format=""
+                                dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {['Red', 'Blue', 'Green'][i]}")
+                            self.show_sticks = dpg.add_checkbox(label="Show stick spectra", callback=self.toggle_sticks)
                         dpg.add_spacer(height=16)
                         with dpg.collapsing_header(label="Label settings", default_open=True):
-                            self.show_sticks = dpg.add_checkbox(label="Show stick spectra", callback=self.toggle_sticks)
                             self.show_labels = dpg.add_checkbox(label="Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False)
                             self.show_gaussian_labels = dpg.add_checkbox(label="Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True)
                             dpg.add_slider_float(label="Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings.get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set('peak intensity label threshold', a))  # todo: attach all these to project._data
@@ -82,11 +100,13 @@ class PlotsOverview:
                             dpg.add_slider_float(label="Stick abs. threshold", min_value=0, max_value=0.1, default_value=Labels.settings.get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set('stick label absolute threshold', a))
                             dpg.add_slider_int(label="Label font size", min_value=12, max_value=24, default_value=Labels.settings.get('label font size', 18), callback=lambda s, a, u: Labels.set('label font size', a))
                             dpg.add_slider_int(label="Axis font size", min_value=12, max_value=24, default_value=Labels.settings.get('axis font size', 18), callback=lambda s, a, u: Labels.set('axis font size', a))
+                            dpg.add_button(label="Reset", width=-1)  # TODO
                         dpg.add_spacer(height=16)
                         with dpg.collapsing_header(label="Match settings", default_open=True):
                             dpg.add_slider_float(label="Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings.get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Labels.set('peak intensity match threshold', a))
                             dpg.add_slider_float(label="Distance threshold", min_value=0, max_value=100, default_value=Labels.settings.get('distance match threshold', 30), callback=lambda s, a, u: Labels.set('distance match threshold', a))
-                            dpg.add_button(label="Save as table", callback=self.print_table)
+                            dpg.add_button(label="Save as table", callback=self.print_table, width=-1)
+                            dpg.add_button(label="Reset", width=-1)  # TODO
                 self.configure_theme()
 
     def print_table(self):
@@ -150,7 +170,7 @@ class PlotsOverview:
     def sticks_callback(self, sender, app_data):
         return
 
-    def redraw_plot(self):
+    def redraw_plot(self):  # todo: what if auto_fit was false to begin with, maybe truncating spectra wouldn't be necessary?
         print("Redraw plot...")
         # dpg.delete_item(f"y_axis_{self.viewmodel.is_emission}", children_only=True)
         for tag in self.line_series:
@@ -297,7 +317,8 @@ class PlotsOverview:
                         y = s.yshift
                         for sub_stick in stick_stack[1]:
                             top = y+sub_stick[0]*s.yscale
-                            dpg.draw_line((x, y), (x, top), color=[255-c for c in sub_stick[1]], thickness=0.001)
+                            color = adjust_color_for_dark_theme(sub_stick[1])+[160]
+                            dpg.draw_line((x, y), (x, top), color=color, thickness=0.001)
                             y = top
 
     def configure_theme(self):
@@ -312,7 +333,7 @@ class PlotsOverview:
 
         with dpg.theme(tag=f"exp_spec_theme_{self.viewmodel.is_emission}"):
             with dpg.theme_component(dpg.mvLineSeries):
-                dpg.add_theme_color(dpg.mvPlotCol_Line, (200, 200, 255, 200), category=dpg.mvThemeCat_Plots)
+                dpg.add_theme_color(dpg.mvPlotCol_Line, (200, 200, 255, 255), category=dpg.mvThemeCat_Plots)
 
     def on_scroll(self, direction):
         if self.hovered_spectrum is not None:

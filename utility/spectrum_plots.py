@@ -1,5 +1,6 @@
 import numpy as np
 import logging
+import colorsys
 
 
 def hsv_to_rgb(h, s, v):
@@ -12,6 +13,25 @@ def hsv_to_rgb(h, s, v):
     if i == 3: return (255*p, 255*q, 255*v)
     if i == 4: return (255*t, 255*p, 255*v)
     if i == 5: return (255*v, 255*p, 255*q)
+
+
+def adjust_color_for_dark_theme(color):
+    r, g, b = color[0], color[1], color[2]
+    # Convert RGB to HSV; RGB values are expected to be in [0, 255] range
+    h, s, v = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
+
+    # Define a threshold to determine if the color is "dark"
+    threshold = 0.5
+
+    # If the value is below the threshold, increase it to brighten the color
+    if v < threshold:
+        v = 1.0  # Set to maximum brightness
+
+    # Convert HSV back to RGB
+    r_adj, g_adj, b_adj = colorsys.hsv_to_rgb(h, s, v)
+
+    # Return the adjusted RGB values, scaled back to [0, 255] range
+    return [int(r_adj * 255), int(g_adj * 255), int(b_adj * 255)]
 
 
 class SpecPlotter:
