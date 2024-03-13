@@ -98,8 +98,8 @@ class PlotsOverviewViewmodel:
             spec.resize_y_scale(direction)
             self._callbacks.get("update plot")(spec, redraw_sticks=True)
 
-    def resize_half_width(self, direction):
-        SpecPlotter.change_half_width(self.is_emission, direction)
+    def resize_half_width(self, direction, relative=True):
+        return SpecPlotter.change_half_width(self.is_emission, direction, relative)
 
     def change_correction_factor(self, key, value):
         self.last_correction_factor_change_time = time.time()

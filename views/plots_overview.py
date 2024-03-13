@@ -3,7 +3,7 @@ import dearpygui.dearpygui as dpg
 from utility.async_manager import AsyncManager
 from utility.labels import Labels
 from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel, WavenumberCorrector
-from utility.spectrum_plots import hsv_to_rgb, adjust_color_for_dark_theme
+from utility.spectrum_plots import hsv_to_rgb, adjust_color_for_dark_theme, SpecPlotter
 
 
 class PlotsOverview:
@@ -58,10 +58,7 @@ class PlotsOverview:
                         dpg.add_line_series([], [], parent=f"y_axis_{self.viewmodel.is_emission}", tag=f"exp_overlay_{self.viewmodel.is_emission}")
 
                 with dpg.table_cell():
-                    # with dpg.group():
-                        # dpg.add_checkbox(label="auto-zoom", tag=f"auto_zoom_check_{self.viewmodel.is_emission}", default_value=True, callback=lambda s, a, u: self.viewmodel.on_toggle_autozoom(a))
                     with dpg.group(horizontal=False):
-                        # TODO> state colors (start with the hsv ones tho)
                         with dpg.theme(tag=f"slider_theme_{self.viewmodel.is_emission} Red"):
                             with dpg.theme_component(0):
                                 dpg.add_theme_color(dpg.mvThemeCol_FrameBg, [160, 0, 0, 180])
@@ -82,8 +79,9 @@ class PlotsOverview:
                                 dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, [0, 0, 150, 200])
                                 dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, [0, 0, 150])
                                 dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, [0, 0, 220])
-                                dpg.add_theme_color(dpg.mvThemeCol_SliderGrabActive, [0, 0, 250])  # TODO> Make reaction to these sliders async (for each spectrum separately)
-
+                                dpg.add_theme_color(dpg.mvThemeCol_SliderGrabActive, [0, 0, 250])
+# todo: set on load & on extraction from file; save to project
+                        self.half_width_slider = dpg.add_slider_float(label="Half-width", min_value=0.1, max_value=60, callback=lambda s, a, u: self.viewmodel.resize_half_width(a, relative=False))
                         dpg.add_spacer(height=16)
                         with dpg.collapsing_header(label="Anharmonic corrections", default_open=True):
                             for i, x_scale_key in enumerate(['H stretches', 'bends', 'others']):
@@ -94,7 +92,7 @@ class PlotsOverview:
                         with dpg.collapsing_header(label="Label settings", default_open=True):
                             self.show_labels = dpg.add_checkbox(label="Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False)
                             self.show_gaussian_labels = dpg.add_checkbox(label="Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True)
-                            dpg.add_slider_float(label="Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))  # todo: attach all these to project._data
+                            dpg.add_slider_float(label="Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))
                             dpg.add_slider_float(label="Separation threshold", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('peak separation threshold', 0.8), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak separation threshold', a))
                             dpg.add_slider_float(label="Stick rel. threshold", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label relative threshold', a))
                             dpg.add_slider_float(label="Stick abs. threshold", min_value=0, max_value=0.1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label absolute threshold', a))
@@ -219,12 +217,14 @@ class PlotsOverview:
             dpg.set_value(f"drag-{s.tag}", s.yshift)
         self.draw_sticks(s)
         dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
+        dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
 
     def update_plot(self, state_plot, mark_dragged_plot=None, redraw_sticks=False):
         self.dragged_plot = mark_dragged_plot
         dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
         if redraw_sticks:
             AsyncManager.submit_task(f"draw sticks {state_plot.tag}", self.draw_sticks, state_plot)
+            dpg.set_value(f"drag-x-{state_plot.tag}", state_plot.handle_x + state_plot.xshift)
     # TODO: changing correction factors does not yet adjust the drag lines.
 
     def delete_sticks(self, spec_tag=None):  # None: all of them.
@@ -339,7 +339,8 @@ class PlotsOverview:
         if self.hovered_spectrum is not None:
             self.viewmodel.resize_spectrum(self.hovered_spectrum, direction)
         elif self.hovered_x_drag_line is not None:
-            self.viewmodel.resize_half_width(direction)
+            half_width = self.viewmodel.resize_half_width(direction)
+            dpg.set_value(self.half_width_slider, half_width)
 
     def show_drag_lines(self, show):
         self.show_all_drag_lines = show
