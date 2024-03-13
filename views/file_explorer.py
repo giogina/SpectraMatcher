@@ -255,23 +255,31 @@ class FileExplorer:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
                 dpg.add_spacer(height=2)
-            with dpg.menu(label="Add to project..."):
-                if file.type == FileType.FREQ_GROUND:
-                    dpg.add_menu_item(label="   ground state", user_data=State.state_list[0], callback=lambda: self.viewmodel.import_state_file(file, State.state_list[0]))
-                elif file.type in FileType.LOG_TYPES:
-                    for state in State.state_list[1:]:
-                        dpg.add_menu_item(label=f"   {state.name}", user_data=state, callback=lambda: self.viewmodel.import_state_file(file, state))
-                elif file.type in (FileType.EXPERIMENT_EXCITATION, FileType.EXPERIMENT_EMISSION):
-                    dpg.add_menu_item(label="   experimental spectra", callback=lambda: self.viewmodel.import_experimental_file(file))
+            if file.type in (FileType.FREQ_GROUND, FileType.EXPERIMENT_EXCITATION, FileType.EXPERIMENT_EMISSION) or file.type in FileType.LOG_TYPES:
+                add_sep = True
+                with dpg.menu(label="Add to project..."):
+                    if file.type == FileType.FREQ_GROUND:
+                        dpg.add_menu_item(label="   ground state", user_data=State.state_list[0], callback=lambda: self.viewmodel.import_state_file(file, State.state_list[0]))
+                    elif file.type in FileType.LOG_TYPES:
+                        for state in State.state_list[1:]:
+                            dpg.add_menu_item(label=f"   {state.name}", user_data=state, callback=lambda: self.viewmodel.import_state_file(file, state))
+                    elif file.type in (FileType.EXPERIMENT_EXCITATION, FileType.EXPERIMENT_EMISSION):
+                        dpg.add_menu_item(label="   experimental spectra", callback=lambda: self.viewmodel.import_experimental_file(file))
+            else:
+                add_sep = False
             if file.parent_directory is None:
-                dpg.add_spacer(height=2)
-                dpg.add_separator()
-                dpg.add_spacer(height=2)
+                if add_sep:
+                    dpg.add_spacer(height=2)
+                    dpg.add_separator()
+                    dpg.add_spacer(height=2)
+                add_sep = True
                 dpg.add_selectable(label="Remove", user_data=file.tag, callback=self._remove_file)
             if file.type in FileType.LOG_TYPES and (file.geometry is not None) or (file.initial_geom is not None) or (file.final_geom is not None):
-                dpg.add_spacer(height=2)
-                dpg.add_separator()
-                dpg.add_spacer(height=2)
+                if add_sep:
+                    dpg.add_spacer(height=2)
+                    dpg.add_separator()
+                    dpg.add_spacer(height=2)
+                add_sep = True
                 if file.type in (FileType.FC_EMISSION, FileType.FC_EXCITATION):
                     if file.initial_geom is not None:
                         dpg.add_selectable(label="Copy initial geometry to clipboard ", user_data=file.initial_geom, callback=lambda s, a, u: pyperclip.copy(u.get_gaussian_geometry()))
@@ -286,10 +294,10 @@ class FileExplorer:
                 dpg.add_selectable(label="Copy geometry to clipboard ", user_data=file.geometry, callback=lambda s, a, u: pyperclip.copy(u.get_gaussian_geometry()))
             # if file.properties.get(GaussianLog.STATUS, "") == GaussianLog.NEGATIVE_FREQUENCY:
             #     dpg.add_selectable(label="Copy adjusted geometry for re-optimization", user_data=file.path)  # TODO (stretch)
-
-            dpg.add_spacer(height=2)
-            dpg.add_separator()
-            dpg.add_spacer(height=2)
+            if add_sep:
+                dpg.add_spacer(height=2)
+                dpg.add_separator()
+                dpg.add_spacer(height=2)
             dpg.add_selectable(label="Show in Explorer ", user_data=file.path.replace("/", "\\"),
                                callback=lambda s, a, u: subprocess.Popen(f'explorer /select,"{u}"'))
 

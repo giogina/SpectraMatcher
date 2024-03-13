@@ -262,10 +262,11 @@ class FCPeak:
 
 class Cluster:
     """Cluster of peaks forming a local maximum of a spectrum"""
-    def __init__(self, x, y, y_max, peaks):
+    def __init__(self, x, y, y_max, peaks, is_emission):
         self.x = x
         self.y = y
         self.y_max = y_max
+        self.is_emission = is_emission
         self.peaks = peaks
         self.peaks.sort(key=lambda p: float(p.intensity), reverse=True)
         self.on_top_of = [[]]
@@ -274,8 +275,8 @@ class Cluster:
         # 'height': label_dims[font_size]['height'] * plot_scale[1],
 
     def get_label(self, gaussian: bool):
-        threshold = Labels.settings['stick label relative threshold'] * float(self.peaks[0].intensity) + \
-                    Labels.settings['stick label absolute threshold']  # Threshold for counting as contributing to the peak
+        threshold = Labels.settings[self.is_emission]['stick label relative threshold'] * float(self.peaks[0].intensity) + \
+                    Labels.settings[self.is_emission]['stick label absolute threshold']  # Threshold for counting as contributing to the peak
         filtered_peaks = [p for p in self.peaks if p.intensity > threshold]
         return "\n".join([p.get_label(gaussian) for p in filtered_peaks])
 
@@ -371,7 +372,7 @@ class FCSpectrum:
                 cluster.append(peaks[p])
                 p += 1
             if cluster:
-                self.clusters.append(Cluster(x=self.x_data[self.maxima[j]], y_max=max(self.y_data[max(0, self.maxima[j] - 8):min(self.maxima[j] + 8, len(self.y_data))]), y=self.y_data[self.maxima[j]], peaks=cluster))
+                self.clusters.append(Cluster(x=self.x_data[self.maxima[j]], y_max=max(self.y_data[max(0, self.maxima[j] - 8):min(self.maxima[j] + 8, len(self.y_data))]), y=self.y_data[self.maxima[j]], peaks=cluster, is_emission=self.is_emission))
 
     def update(self, event, *args):
         """Automatically re-calculate y_data when active SpecPlotter instance changes."""
@@ -393,7 +394,7 @@ class FCSpectrum:
                 self.peaks = WavenumberCorrector.compute_corrected_wavenumbers(self.is_emission, self.peaks, self.vibrational_modes)
                 AsyncManager.submit_task(f"Recompute spectrum {self.zero_zero_transition_energy} {self.is_emission}",
                                          SpecPlotter.get_spectrum_array, self.peaks, self.is_emission,
-                                         notification="xy data ready", observers=[self])  # todo; why is it not smooth?
+                                         notification="xy data ready", observers=[self])
         elif event == "xy data ready":
             # key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
             (key, self.x_data, self.y_data, self.mul2) = args[0]

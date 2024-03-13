@@ -44,8 +44,8 @@ class PlotsOverview:
                         dpg.add_plot_legend()
 
                         # REQUIRED: create x and y axes
-                        dpg.add_plot_axis(dpg.mvXAxis, label="wavenumber / cm⁻¹", tag=f"x_axis_{self.viewmodel.is_emission}")
-                        dpg.add_plot_axis(dpg.mvYAxis, label="relative intensity", tag=f"y_axis_{self.viewmodel.is_emission}")
+                        dpg.add_plot_axis(dpg.mvXAxis, label="wavenumber / cm⁻¹", tag=f"x_axis_{self.viewmodel.is_emission}", no_gridlines=True)
+                        dpg.add_plot_axis(dpg.mvYAxis, label="relative intensity", tag=f"y_axis_{self.viewmodel.is_emission}", no_gridlines=True)
 
                         dpg.set_axis_limits_auto(f"x_axis_{self.viewmodel.is_emission}")
                         dpg.set_axis_limits_auto(f"y_axis_{self.viewmodel.is_emission}")
@@ -84,25 +84,29 @@ class PlotsOverview:
                         self.half_width_slider = dpg.add_slider_float(label="Half-width", min_value=0.1, max_value=60, callback=lambda s, a, u: self.viewmodel.resize_half_width(a, relative=False))
                         dpg.add_spacer(height=16)
                         with dpg.collapsing_header(label="Anharmonic corrections", default_open=True):
-                            for i, x_scale_key in enumerate(['H stretches', 'bends', 'others']):
-                                dpg.add_slider_float(label=['H-* stretches', 'Bends', 'Others'][i], tag=f"{x_scale_key} {self.viewmodel.is_emission} slider", vertical=False, max_value=1.0, min_value=0.8, callback=lambda s, a, u: self.viewmodel.change_correction_factor(u, a), user_data=x_scale_key)  #, format=""
-                                dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {['Red', 'Blue', 'Green'][i]}")
-                            self.show_sticks = dpg.add_checkbox(label="Show stick spectra", callback=self.toggle_sticks)
+                            dpg.add_spacer(height=6)
+                            with dpg.group(horizontal=True):
+                                dpg.add_spacer(width=6)
+                                with dpg.group(horizontal=False):
+                                    for i, x_scale_key in enumerate(['H stretches', 'bends', 'others']):
+                                        dpg.add_slider_float(label=[' H-* stretches', ' Bends', ' Others'][i], tag=f"{x_scale_key} {self.viewmodel.is_emission} slider", vertical=False, max_value=1.0, min_value=0.8, callback=lambda s, a, u: self.viewmodel.change_correction_factor(u, a), user_data=x_scale_key)  #, format=""
+                                        dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {['Red', 'Blue', 'Green'][i]}")
+                                    self.show_sticks = dpg.add_checkbox(label="Show stick spectra", callback=self.toggle_sticks)
                         dpg.add_spacer(height=16)
                         with dpg.collapsing_header(label="Label settings", default_open=True):
-                            self.show_labels = dpg.add_checkbox(label="Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False)
-                            self.show_gaussian_labels = dpg.add_checkbox(label="Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True)
-                            dpg.add_slider_float(label="Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))
-                            dpg.add_slider_float(label="Separation threshold", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('peak separation threshold', 0.8), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak separation threshold', a))
-                            dpg.add_slider_float(label="Stick rel. threshold", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label relative threshold', a))
-                            dpg.add_slider_float(label="Stick abs. threshold", min_value=0, max_value=0.1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label absolute threshold', a))
-                            dpg.add_slider_int(label="Label font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('label font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'label font size', a))
-                            dpg.add_slider_int(label="Axis font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('axis font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'axis font size', a))
+                            self.show_labels = dpg.add_checkbox(label=" Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False)
+                            self.show_gaussian_labels = dpg.add_checkbox(label=" Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True)
+                            dpg.add_slider_float(label=" Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))
+                            dpg.add_slider_float(label=" Separation thr.", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('peak separation threshold', 0.8), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak separation threshold', a))
+                            dpg.add_slider_float(label=" Stick rel. thr.", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label relative threshold', a))
+                            dpg.add_slider_float(label=" Stick abs. thr.", min_value=0, max_value=0.1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label absolute threshold', a))
+                            dpg.add_slider_int(label=" Label font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('label font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'label font size', a))
+                            dpg.add_slider_int(label=" Axis font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('axis font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'axis font size', a))
                             dpg.add_button(label="Reset", width=-1)  # TODO
                         dpg.add_spacer(height=16)
                         with dpg.collapsing_header(label="Match settings", default_open=True):
-                            dpg.add_slider_float(label="Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
-                            dpg.add_slider_float(label="Distance threshold", min_value=0, max_value=100, default_value=Labels.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'distance match threshold', a))
+                            dpg.add_slider_float(label=" Intensity thr.", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
+                            dpg.add_slider_float(label=" Distance thr.", min_value=0, max_value=100, default_value=Labels.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'distance match threshold', a))
                             dpg.add_button(label="Save as table", callback=self.print_table, width=-1)
                             dpg.add_button(label="Reset", width=-1)  # TODO
                 self.configure_theme()
@@ -152,6 +156,7 @@ class PlotsOverview:
                         dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
 
                     # dpg.draw_circle((mouse_x_pixel_space, mouse_y_pixel_space), 30)
+                    dpg.configure_item(sender, tooltip=False)
                     dpg.configure_item(sender, tooltip=True)
                     dpg.set_value(self.tooltiptext, f"Diff: {abs(dpg.get_value(f'drag-x-{s_tag}') - mouse_x_plot_space)}")
             # for i in range(0, len(transformed_x)):
@@ -168,7 +173,8 @@ class PlotsOverview:
 
     def sticks_callback(self, sender, app_data):
         return
-
+# TODO: Preview plot fixable (ctrl+click or button on plot overview panel), in addition to hover plot
+    # TODO: Hover plot only when mouse is in plot area
     def redraw_plot(self):  # todo: what if auto_fit was false to begin with, maybe truncating spectra wouldn't be necessary?
         print("Redraw plot...")
         # dpg.delete_item(f"y_axis_{self.viewmodel.is_emission}", children_only=True)
@@ -193,7 +199,7 @@ class PlotsOverview:
             dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
             dpg.bind_item_theme(dpg.last_item(), f"exp_spec_theme_{self.viewmodel.is_emission}")
 
-    def add_spectrum(self, tag):
+    def add_spectrum(self, tag):  # TODO: erase pop-up menu when this spectrum comes into view
         xmin, xmax, ymin, ymax = self.viewmodel.get_zoom_range()
         s = self.viewmodel.state_plots[tag]
         if not dpg.does_item_exist(tag):
@@ -339,6 +345,9 @@ class PlotsOverview:
         with dpg.theme() as plot_settings_theme:
             with dpg.theme_component(dpg.mvAll):
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 6, 6)
+
         dpg.bind_item_theme(self.plot_settings_group, plot_settings_theme)
 
     def on_scroll(self, direction):
