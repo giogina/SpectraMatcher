@@ -40,10 +40,16 @@ class PlotsOverview:
         self.pixels_per_plot_x = 1
         self.pixels_per_plot_y = 1
         self.peak_edit_mode_enabled = False
+        self.peak_indicator_points = []
+        self.hovered_peak_indicator_point = None
+        self.exp_hovered = False
+        self.mouse_plot_pos = (0, 0)
+        self.dragged_peak = None
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
             dpg.add_mouse_release_handler(dpg.mvMouseButton_Left, callback=self.on_drag_release)
+            dpg.add_mouse_release_handler(dpg.mvMouseButton_Right, callback=self.on_right_click_release)
             dpg.add_key_down_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=True)
             dpg.add_key_release_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=False)
 
@@ -162,12 +168,38 @@ class PlotsOverview:
             dpg.hide_item(self.expand_plot_settings_button)
             dpg.configure_item(self.expand_plot_settings_button, show=True, pos=(dpg.get_viewport_width() - 40, 45))
 
+    def on_right_click_release(self):
+        point = self.hovered_peak_indicator_point
+        if point is not None:
+            exp, peak = dpg.get_item_user_data(point)
+            exp.delete_peak(peak)
+            dpg.delete_item(point)
+            self.peak_indicator_points.remove(point)
+
     def enable_edit_peaks(self, enable):
         self.peak_edit_mode_enabled = enable
-        for exp in ExperimentalSpectrum.spectra_list:
-            if exp.is_emission == self.viewmodel.is_emission:
-                for peak in exp.peaks:
-                    dpg.add_drag_point(default_value=(peak.wavenumber, peak.intensity), user_data=exp, parent=self.plot)
+        self.delete_peak_indicator_points()
+        if enable:
+            for exp in ExperimentalSpectrum.spectra_list:
+                if exp.is_emission == self.viewmodel.is_emission:
+                    for peak in exp.peaks:
+                        self.add_peak_drag_point(exp, peak)
+
+    def add_peak_drag_point(self, exp, peak):
+        self.peak_indicator_points.append(dpg.add_drag_point(default_value=(peak.wavenumber, peak.intensity), callback=lambda s, a, u: self.mark_peak_dragged(s), user_data=(exp, peak), parent=self.plot))
+
+    def delete_peak_indicator_points(self):
+        for point in self.peak_indicator_points:
+            if dpg.does_item_exist(point):
+                dpg.delete_item(point)
+        self.peak_indicator_points = []
+
+    def mark_peak_dragged(self, peak_point):
+        self.dragged_peak = peak_point
+        exp, peak = dpg.get_item_user_data(peak_point)
+        index = exp.get_x_index(dpg.get_value(peak_point)[0])
+        dpg.set_value(self.dragged_peak, (exp.xdata[index], exp.ydata[index]))
+
     # todo: move/add/delete peaks
     # todo: save edited peaks
     # todo: option to re-detect / filter peaks with different prominence &
@@ -229,6 +261,7 @@ class PlotsOverview:
             mouse_y_plot_space = _helper_data["MouseY_PlotSpace"]
             mouse_x_pixel_space = _helper_data["MouseX_PixelSpace"]
             mouse_y_pixel_space = _helper_data["MouseY_PixelSpace"]
+            self.mouse_plot_pos = (mouse_x_plot_space, mouse_y_plot_space)
             self.pixels_per_plot_x = (transformed_x[1]-transformed_x[0])/1000
             self.pixels_per_plot_y = transformed_y[1]-transformed_y[0]
             dpg.delete_item(sender, children_only=True, slot=2)
@@ -269,6 +302,14 @@ class PlotsOverview:
                     dpg.configure_item(sender, tooltip=False)
                     dpg.configure_item(sender, tooltip=True)
                     dpg.set_value(self.tooltiptext, f"Diff: {abs(dpg.get_value(f'drag-x-{s_tag}') - mouse_x_plot_space)}")
+
+            if self.peak_edit_mode_enabled:
+                self.hovered_peak_indicator_point = None
+                for point in self.peak_indicator_points:
+                    if max(self.pixel_distance(dpg.get_value(point), [mouse_x_plot_space, mouse_y_plot_space])) < 6:
+                        self.hovered_peak_indicator_point = point
+                        break
+                self.exp_hovered = 0 <=mouse_y_plot_space <= 1
             # for i in range(0, len(transformed_x)):
             #     dpg.draw_text((transformed_x[i] + 15, transformed_y[i] - 15), str(i), size=20)
             #     dpg.draw_circle((transformed_x[i], transformed_y[i]), 15, fill=(50+i*5, 50+i*50, 0, 255))
@@ -367,7 +408,21 @@ class PlotsOverview:
                 dpg.set_value(f"drag-x-{spec.tag}", spec.handle_x + spec.xshift)
                 # AsyncManager.submit_task(f"draw sticks {self.dragged_plot}", self.draw_sticks, spec)
                 self.draw_sticks(spec)
+        elif self.exp_hovered and self.peak_edit_mode_enabled:
+            if self.dragged_peak is not None:
+                exp, peak = dpg.get_item_user_data(self.dragged_peak)
+                exp.delete_peak(peak)
+            for exp in ExperimentalSpectrum.spectra_list:
+                if exp.is_emission == self.viewmodel.is_emission:
+                    if exp.x_min <= self.mouse_plot_pos[0] <= exp.x_max:
+                        if self.dragged_peak is None:
+                            self.add_peak_drag_point(exp, exp.add_peak(self.mouse_plot_pos[0]))
+                        else:
+                            exp.add_peak(dpg.get_value(self.dragged_peak)[0])
+                        break
         self.dragged_plot = None
+        self.dragged_peak = None
+        self.exp_hovered = False
 
     def toggle_labels(self, use_Gaussian_labels):
         if use_Gaussian_labels:

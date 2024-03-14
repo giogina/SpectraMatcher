@@ -81,20 +81,6 @@
         "molecule": "C\u2083\u2082H\u2081\u2084",
         "ground state energy": -269539068
     },
-    "experiment settings": [
-        {
-            "path": "C:\\Users\\Giogina\\Documents\\ovalene\\experiment\\ovalene_DF_exp.txt",
-            "intensity column": 3,
-            "relative wavenumber column": 0,
-            "absolute wavenumber column": 1
-        },
-        {
-            "path": "C:\\Users\\Giogina\\Documents\\ovalene\\experiment\\ovalene_EX_exp.txt",
-            "intensity column": 2,
-            "relative wavenumber column": 0,
-            "absolute wavenumber column": 1
-        }
-    ],
     "progress": "import done",
     "active emission plotter": [
         10.9,
@@ -155,5 +141,26 @@
             "peak intensity match threshold": 0.03,
             "distance match threshold": 30
         }
-    }
+    },
+    "experiment settings": [
+        {
+            "path": "C:\\Users\\Giogina\\Documents\\ovalene\\experiment\\ovalene_DF_exp.txt",
+            "chosen peaks": [
+                -3,
+                1162
+            ],
+            "removed peaks": [],
+            "intensity column": 3,
+            "relative wavenumber column": 0,
+            "absolute wavenumber column": 1
+        },
+        {
+            "path": "C:\\Users\\Giogina\\Documents\\ovalene\\experiment\\ovalene_EX_exp.txt",
+            "chosen peaks": [],
+            "removed peaks": [],
+            "intensity column": 2,
+            "relative wavenumber column": 0,
+            "absolute wavenumber column": 1
+        }
+    ]
 }

@@ -1,6 +1,16 @@
 from models.data_file_manager import File, FileType
 from scipy import signal
+import numpy as np
 from utility.spectrum_plots import SpecPlotter
+from utility.noop import noop
+
+
+
+class ExpPeak:
+    def __init__(self, wavenumber, intensity, index):
+        self.wavenumber = wavenumber
+        self.intensity = intensity
+        self.index = index  # w.r.t the xy data arrays
 
 
 class ExperimentalSpectrum:
@@ -8,6 +18,7 @@ class ExperimentalSpectrum:
     _observers = []
     new_spectrum_notification = "New experimental spectrum"
     spectrum_analyzed_notification = "Experimental spectrum analyzed"
+    peaks_settings_changed_callback = noop  # to inform project
 
     def __init__(self, file: File, settings=None):
         # settings = {"path": str,
@@ -15,11 +26,14 @@ class ExperimentalSpectrum:
         # "relative wavenumber column": int,
         # "absolute wavenumber column": int,
         # "intensity column": int,
-        # "chosen peaks": [peak indices]
-        # "removed peaks": [peak indices]
+        # "chosen peaks": [int(peak wavenumber)s]
+        # "removed peaks": [int(peak wavenumber)s]
         # }}
         if settings is None:
-            settings = {"path": file.path}
+            settings = {"path": file.path,
+                        "chosen peaks": [],
+                        "removed peaks": [],
+                        }
         self.settings = settings  # coupled to project._data
         self.spectra_list.append(self)
 
@@ -56,6 +70,54 @@ class ExperimentalSpectrum:
         for o in self._observers:
             # print(f"Updating state observers: {message}")
             o.update(message, self)
+
+    def add_peak(self, x):
+        index = index=self.get_x_index(x)
+        new_peak = ExpPeak(wavenumber=self.xdata[index], intensity=self.ydata[index], index=index)
+        self.peaks.append(new_peak)
+        if self.settings.get("chosen peaks") is None:
+            self.settings["chosen peaks"] = [int(new_peak.wavenumber)]
+        else:
+            if int(new_peak.wavenumber) not in self.settings["chosen peaks"]:
+                self.settings["chosen peaks"].append(int(new_peak.wavenumber))
+            if int(new_peak.wavenumber) in self.settings.get("removed peaks", []):
+                self.settings["removed peaks"].remove(int(new_peak.wavenumber))
+        print("add peak: ", new_peak.wavenumber)
+        ExperimentalSpectrum.peaks_settings_changed_callback(self)
+        return new_peak  # todo> save to settings
+
+    def get_x_index(self, x):
+        if self.xdata is None:
+            return -1
+        if self.xdata[0] < self.xdata[1]:  # ascending
+            index = np.searchsorted(self.xdata, x)
+        else:
+            index = np.searchsorted(-self.xdata, -x)
+
+        index = int(index)
+        if index == 0:
+            closest_index = 0
+        elif index == len(self.xdata):
+            closest_index = index - 1
+        else:
+            if abs(x - self.xdata[index - 1]) <= abs(x - self.xdata[index]):
+                closest_index = index - 1
+            else:
+                closest_index = index
+        return closest_index
+
+    def delete_peak(self, peak: ExpPeak):
+        if peak in self.peaks:
+            print("delete peak: ", peak)
+            self.peaks.remove(peak)  # todo: save to settings
+            if self.settings.get("removed peaks") is None:
+                self.settings["removed peaks"] = [int(peak.wavenumber)]
+            else:
+                if int(peak.wavenumber) not in self.settings["removed peaks"]:
+                    self.settings["removed peaks"].append(int(peak.wavenumber))
+                if int(peak.wavenumber) in self.settings.get("chosen peaks", []):
+                    self.settings["chosen peaks"].remove(int(peak.wavenumber))
+        ExperimentalSpectrum.peaks_settings_changed_callback(self)
 
     def check(self):
         """Confirm integrity of own data"""
@@ -231,14 +293,21 @@ class ExperimentalSpectrum:
         ExperimentalSpectrum.adjust_spec_plotter_range(self.is_emission)
         # for peak in self.peaks:
         #     print(peak.wavenumber, peak.intensity, peak.prominence)
+
 # todo> prominence and width limits are settings; changing them triggers re-evaluation of peaks
     def detect_peaks(self, prominence, width):
         peaks, _ = signal.find_peaks(self.smooth_ydata, prominence=prominence, width=width)
-        peaks = list(peaks) + self.settings.get("chosen peaks", [])
+        peaks = list(peaks)
+        for chosen_peak in self.settings.get("chosen peaks", []):
+            if self.x_min <= chosen_peak <= self.x_max:
+                index = self.get_x_index(chosen_peak)
+                if index not in peaks:
+                    peaks.append(index)
         self.peaks = []
         for p in peaks:
-            if p not in self.settings.get("removed peaks", []):
+            if int(self.xdata[p]) not in self.settings.get("removed peaks", []):
                 self.peaks.append(ExpPeak(index=p, wavenumber=self.xdata[p], intensity=self.ydata[p]))
+
         # prominences = signal.peak_prominences(self.smooth_ydata, [p.index for p in self.peaks])
         # widths = signal.peak_widths(self.smooth_ydata, [p.index for p in self.peaks])
         #
@@ -266,12 +335,5 @@ class ExperimentalSpectrum:
             half_width = [exp.peak_width for exp in exp_list if exp.x_min == x_min][0]
         SpecPlotter.set_active_plotter(is_emission, half_width, x_min-1000, 2*x_max+1000)
 
-
-class ExpPeak:
-    def __init__(self, wavenumber, intensity, index, prominence=0):
-        self.wavenumber = wavenumber
-        self.intensity = intensity
-        self.index = index
-        self.prominence = prominence
 
 
