@@ -2,6 +2,8 @@ import dearpygui.dearpygui as dpg
 
 from utility.async_manager import AsyncManager
 from utility.font_manager import FontManager
+from utility.icons import Icons
+from utility.item_themes import ItemThemes
 from utility.labels import Labels
 from utility.matcher import Matcher
 from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel, WavenumberCorrector
@@ -9,7 +11,7 @@ from utility.spectrum_plots import hsv_to_rgb, adjust_color_for_dark_theme, Spec
 
 
 class PlotsOverview:
-    def __init__(self, viewmodel: PlotsOverviewViewmodel):
+    def __init__(self, viewmodel: PlotsOverviewViewmodel, append_viewport_resize_update_callback):
         self.viewmodel = viewmodel
         self.viewmodel.set_callback("redraw plot", self.redraw_plot)
         self.viewmodel.set_callback("update plot", self.update_plot)
@@ -30,8 +32,12 @@ class PlotsOverview:
         self.labels = False
         self.annotations = {}  # state_plot tag: annotation object
         self.annotation_lines = {}  # state_plot tag: annotation object
+        self.label_drag_points = {}
         self.label_controls = {}
         self.match_controls = {}
+        self.icons = Icons()
+        self.pixels_per_plot_x = 1
+        self.pixels_per_plot_y = 1
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -39,9 +45,9 @@ class PlotsOverview:
             dpg.add_key_down_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=True)
             dpg.add_key_release_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=False)
 
-        with dpg.table(header_row=False, borders_innerV=True, resizable=True):
-            dpg.add_table_column(init_width_or_weight=4)
-            dpg.add_table_column(init_width_or_weight=1)
+        with dpg.table(header_row=False, borders_innerV=True, resizable=True) as self.layout_table:
+            self.plot_column = dpg.add_table_column(init_width_or_weight=4)
+            self.plot_settings_column = dpg.add_table_column(init_width_or_weight=1)
 
             with dpg.table_row():
                 with dpg.table_cell():
@@ -53,17 +59,31 @@ class PlotsOverview:
                         dpg.add_plot_axis(dpg.mvXAxis, label="wavenumber / cm⁻¹", tag=f"x_axis_{self.viewmodel.is_emission}", no_gridlines=True)
                         dpg.add_plot_axis(dpg.mvYAxis, label="relative intensity", tag=f"y_axis_{self.viewmodel.is_emission}", no_gridlines=True)
 
-                        dpg.set_axis_limits_auto(f"x_axis_{self.viewmodel.is_emission}")
-                        dpg.set_axis_limits_auto(f"y_axis_{self.viewmodel.is_emission}")
+                        # dpg.set_axis_limits_auto(f"x_axis_{self.viewmodel.is_emission}")
+                        # dpg.set_axis_limits_auto(f"y_axis_{self.viewmodel.is_emission}")
 
-                        with dpg.custom_series([0.0, 1.0, 2.0, 4.0, 5.0], [0.0, 1.0, 2.0, 4.0, 5.0], 2,
+                        with dpg.custom_series([0.0, 1000.0], [1.0, 0.0], 2,
                                                parent=f"y_axis_{self.viewmodel.is_emission}",
                                                callback=self._custom_series_callback) as self.custom_series:
                             self.tooltiptext = dpg.add_text("Current Point: ")
 
                         dpg.add_line_series([], [], parent=f"y_axis_{self.viewmodel.is_emission}", tag=f"exp_overlay_{self.viewmodel.is_emission}")
-
+                        # self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
                 with dpg.table_cell():
+                    with dpg.child_window(width=-1, height=32) as self.plot_settings_action_bar:
+                        with dpg.table(header_row=False):
+                            dpg.add_table_column(width_fixed=True, init_width_or_weight=40)
+                            dpg.add_table_column(width_stretch=True)
+                            dpg.add_table_column(width_fixed=True, init_width_or_weight=220)
+                            with dpg.table_row():
+                                with dpg.group(horizontal=True):
+                                    self.collapse_plot_settings_button = self.icons.insert(dpg.add_button(height=32, width=32, callback=lambda s, a, u: self.collapse_plot_settings(False), show=True), Icons.caret_right, size=16)
+                                # dpg.add_spacer()
+                                dpg.add_button(height=32, label="Plot settings")
+                                dpg.bind_item_theme(dpg.last_item(), ItemThemes.invisible_button_theme())
+                                dpg.add_spacer(width=32)
+                    dpg.bind_item_theme(self.plot_settings_action_bar, ItemThemes.action_bar_theme())
+
                     with dpg.group(horizontal=False) as self.plot_settings_group:
                         with dpg.theme(tag=f"slider_theme_{self.viewmodel.is_emission} Red"):
                             with dpg.theme_component(0):
@@ -86,8 +106,10 @@ class PlotsOverview:
                                 dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, [0, 0, 150])
                                 dpg.add_theme_color(dpg.mvThemeCol_SliderGrab, [0, 0, 220])
                                 dpg.add_theme_color(dpg.mvThemeCol_SliderGrabActive, [0, 0, 250])
-
-                        self.half_width_slider = dpg.add_slider_float(label="Half-width", min_value=0.1, max_value=60, callback=lambda s, a, u: self.viewmodel.resize_half_width(a, relative=False))
+                        dpg.add_spacer(height=24)
+                        with dpg.group(horizontal=True):
+                            dpg.add_spacer(width=6)
+                            self.half_width_slider = dpg.add_slider_float(label="Half-width", min_value=0.1, max_value=60, callback=lambda s, a, u: self.viewmodel.resize_half_width(a, relative=False))
                         dpg.add_spacer(height=16)
                         with dpg.collapsing_header(label="Anharmonic corrections", default_open=True):
                             dpg.add_spacer(height=6)
@@ -98,7 +120,8 @@ class PlotsOverview:
                                         dpg.add_slider_float(label=[' H-* stretches', ' Bends', ' Others'][i], tag=f"{x_scale_key} {self.viewmodel.is_emission} slider", vertical=False, max_value=1.0, min_value=0.8, callback=lambda s, a, u: self.viewmodel.change_correction_factor(u, a), user_data=x_scale_key)  #, format=""
                                         dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {['Red', 'Blue', 'Green'][i]}")
                                     self.show_sticks = dpg.add_checkbox(label="Show stick spectra", callback=self.toggle_sticks)
-                        dpg.add_spacer(height=16)
+                            dpg.add_spacer(height=6)
+                        dpg.add_spacer(height=6)
                         with dpg.collapsing_header(label="Label settings", default_open=True):
                             # dpg.add_spacer(height=6)
                             with dpg.group(horizontal=True):
@@ -106,15 +129,15 @@ class PlotsOverview:
                                 with dpg.group(horizontal=False):
                                     self.label_controls['show labels'] = dpg.add_checkbox(label=" Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False, default_value=Labels.settings[self.viewmodel.is_emission].get('show labels', False))
                                     self.label_controls['show gaussian labels'] = dpg.add_checkbox(label=" Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True, default_value=Labels.settings[self.viewmodel.is_emission].get('show gaussian labels', False))
-                                    self.label_controls['peak intensity label threshold'] = dpg.add_slider_float(label=" Intensity threshold", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))
-                                    self.label_controls['peak separation threshold'] = dpg.add_slider_float(label=" Separation thr.", min_value=0, max_value=1, default_value=Labels.settings[self.viewmodel.is_emission].get('peak separation threshold', 0.8), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak separation threshold', a))
-                                    self.label_controls['stick label relative threshold'] = dpg.add_slider_float(label=" Stick rel. thr.", min_value=0, max_value=0.1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label relative threshold', a))
-                                    self.label_controls['stick label absolute threshold'] = dpg.add_slider_float(label=" Stick abs. thr.", min_value=0, max_value=0.1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label absolute threshold', a))
+                                    self.label_controls['peak intensity label threshold'] = dpg.add_slider_float(label=" Min. Intensity", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))
+                                    # self.label_controls['peak separation threshold'] = dpg.add_slider_float(label=" Min. Separation", min_value=0, max_value=100, default_value=Labels.settings[self.viewmodel.is_emission].get('peak separation threshold', 1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak separation threshold', a))  # In original, caused re-draw with higher half-width to smooth out peaks. Probably not necessary.
+                                    self.label_controls['stick label relative threshold'] = dpg.add_slider_float(label=" Min rel. stick", min_value=0, max_value=0.5, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label relative threshold', 0.1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label relative threshold', a))
+                                    self.label_controls['stick label absolute threshold'] = dpg.add_slider_float(label=" Min abs. stick", min_value=0, max_value=0.1, default_value=Labels.settings[self.viewmodel.is_emission].get('stick label absolute threshold', 0.001), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'stick label absolute threshold', a))
                                     self.label_controls['label font size'] = dpg.add_slider_int(label=" Font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('label font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'label font size', a))
                                     # self.label_controls['axis font size'] = dpg.add_slider_int(label=" Axis font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('axis font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'axis font size', a))
-                                    dpg.add_button(label="Defaults", width=-1, callback=self.restore_label_defaults)
-
-                        dpg.add_spacer(height=16)
+                                    dpg.add_button(label="Defaults", width=-6, callback=self.restore_label_defaults)
+                            dpg.add_spacer(height=6)
+                        dpg.add_spacer(height=6)
                         with dpg.collapsing_header(label="Match settings", default_open=True):
                             # dpg.add_spacer(height=6)
                             with dpg.group(horizontal=True):
@@ -122,9 +145,30 @@ class PlotsOverview:
                                 with dpg.group(horizontal=False):
                                     self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(label=" Min. Intensity", min_value=0, max_value=0.2, default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
                                     self.match_controls['distance match threshold'] = dpg.add_slider_float(label=" Max. Distance", min_value=0, max_value=100, default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a))
-                                    dpg.add_button(label="Defaults", width=-1, callback=self.restore_matcher_defaults)
-                                    dpg.add_button(label="Save as table", callback=self.print_table, width=-1)
-                self.configure_theme()
+                                    dpg.add_button(label="Defaults", width=-6, callback=self.restore_matcher_defaults)
+                                    dpg.add_button(label="Save as table", callback=self.print_table, width=-6)
+        self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, show=False, parent="emission tab" if self.viewmodel.is_emission else "excitation tab", callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
+        append_viewport_resize_update_callback(self.viewport_resize_update)
+        self.configure_theme()
+        # TODO: React to arrow button presses by adjusting last changed control.
+        # TODO: Scroll on sliders to change them
+# TODO: Preview plot fixable (ctrl+click or button on plot overview panel), in addition to hover plot
+
+    def viewport_resize_update(self):
+        if dpg.get_item_configuration(self.expand_plot_settings_button).get('show'):
+            dpg.hide_item(self.expand_plot_settings_button)
+            dpg.configure_item(self.expand_plot_settings_button, show=True, pos=(dpg.get_viewport_width() - 40, 45))
+
+    def collapse_plot_settings(self, show=False):
+        dpg.configure_item(self.plot_settings_group, show=show)
+        dpg.configure_item(self.plot_settings_action_bar, show=show)
+        dpg.configure_item(self.collapse_plot_settings_button, show=show)
+        dpg.configure_item(self.expand_plot_settings_button, show=not show, pos=(dpg.get_viewport_width()-40, 45))
+        if show:
+            dpg.configure_item(self.layout_table, resizable=True, policy=dpg.mvTable_SizingStretchProp)
+        else:
+            dpg.configure_item(self.layout_table, resizable=False, policy=dpg.mvTable_SizingFixedFit)
+            dpg.configure_item(self.plot_column, width_stretch=True)
 
     def restore_label_defaults(self):
         Labels.restore_defaults(self.viewmodel.is_emission)
@@ -163,6 +207,8 @@ class PlotsOverview:
 
     def _custom_series_callback(self, sender, app_data):
         try:
+            if not dpg.is_item_hovered(f"plot_{self.viewmodel.is_emission}"):
+                return
             _helper_data = app_data[0]
             transformed_x = app_data[1]
             transformed_y = app_data[2]
@@ -170,6 +216,8 @@ class PlotsOverview:
             mouse_y_plot_space = _helper_data["MouseY_PlotSpace"]
             mouse_x_pixel_space = _helper_data["MouseX_PixelSpace"]
             mouse_y_pixel_space = _helper_data["MouseY_PixelSpace"]
+            self.pixels_per_plot_x = (transformed_x[1]-transformed_x[0])/1000
+            self.pixels_per_plot_y = transformed_y[1]-transformed_y[0]
             dpg.delete_item(sender, children_only=True, slot=2)
             dpg.push_container_stack(sender)
             # dpg.configure_item(sender, tooltip=False)
@@ -196,7 +244,14 @@ class PlotsOverview:
                         dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [s.xdata, s.ydata - s.yshift])
                         dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
 
-                    # dpg.draw_circle((mouse_x_pixel_space, mouse_y_pixel_space), 30)
+                if self.labels:
+                    for _, label in self.annotations[s_tag].items():
+                        pos = dpg.get_value(label)
+                        if abs(mouse_x_plot_space-pos[0]) < 40 and abs(mouse_y_plot_space-pos[1]) < 0.1:
+                            dpg.show_item(self.label_drag_points[s_tag][label])
+                        else:
+                            dpg.hide_item(self.label_drag_points[s_tag][label])
+
                     dpg.configure_item(sender, tooltip=False)
                     dpg.configure_item(sender, tooltip=True)
                     dpg.set_value(self.tooltiptext, f"Diff: {abs(dpg.get_value(f'drag-x-{s_tag}') - mouse_x_plot_space)}")
@@ -214,9 +269,8 @@ class PlotsOverview:
 
     def sticks_callback(self, sender, app_data):
         return
-# TODO: Preview plot fixable (ctrl+click or button on plot overview panel), in addition to hover plot
-    # TODO: Hover plot only when mouse is in plot area
-    def redraw_plot(self):  # todo: what if auto_fit was false to begin with, maybe truncating spectra wouldn't be necessary?
+
+    def redraw_plot(self):
         print("Redraw plot...")
         # dpg.delete_item(f"y_axis_{self.viewmodel.is_emission}", children_only=True)
         for tag in self.line_series:
@@ -269,7 +323,6 @@ class PlotsOverview:
         dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
 
     def update_plot(self, state_plot, mark_dragged_plot=None, redraw_sticks=False, update_drag_lines=False):
-        print("update plot")
         self.dragged_plot = mark_dragged_plot
         dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
         if update_drag_lines:
@@ -326,14 +379,19 @@ class PlotsOverview:
     def draw_labels(self, tag):
         if self.labels:
             plot = f"plot_{self.viewmodel.is_emission}"
-            for annotation in self.annotations.get(tag, []):
+            for annotation in self.annotations.get(tag, {}).values():
                 if dpg.does_item_exist(annotation):
                     dpg.delete_item(annotation)
-            for line in self.annotation_lines.get(tag, []):
-                if dpg.does_item_exist(line):
-                    dpg.delete_item(line)
-            self.annotations[tag] = []
-            self.annotation_lines[tag] = []
+                self.delete_label_line(tag, annotation)
+            for drag_point in self.label_drag_points.get(tag, {}).values():
+                if dpg.does_item_exist(drag_point):
+                    dpg.delete_item(drag_point)
+            # for line in self.annotation_lines.get(tag, {}).values():
+            #     if dpg.does_item_exist(line):
+            #         dpg.delete_item(line)
+            self.annotations[tag] = {}
+            self.label_drag_points[tag] = {}
+            self.annotation_lines[tag] = {}
             state_plot = self.viewmodel.state_plots[tag]
             clusters = state_plot.get_clusters()
             label_font = FontManager.get(Labels.settings[self.viewmodel.is_emission]['label font size'])
@@ -345,40 +403,75 @@ class PlotsOverview:
                         x = cluster.x + state_plot.xshift
                         y = state_plot.yshift + cluster.y * state_plot.yscale
                         ymax = state_plot.yshift + cluster.y_max * state_plot.yscale
-                        self.annotations[tag].append(dpg.add_plot_annotation(label=label, default_value=(x, ymax+0.05), clamped=False, offset=(0, -3), color=[200, 200, 200, 0], parent=plot, user_data=cluster))
-                        self.annotation_lines[tag].append(dpg.draw_line((x, y+0.03), (x, ymax+0.05), parent=plot))
-                        print(dpg.get_value(dpg.last_item()))
+                        annotation = dpg.add_plot_annotation(label=label, default_value=(x, ymax+0.05), clamped=False, offset=(0, -3), color=[200, 200, 200, 0], parent=plot, user_data=(cluster, state_plot.tag))
+                        self.annotations[tag][(x, ymax)] = annotation
+                        self.label_drag_points[tag][annotation] = dpg.add_drag_point(default_value=(x, ymax+0.05), color=[255, 255, 0], show_label=False, show=False, user_data=annotation, callback=lambda s, a, u: self.move_label(dpg.get_value(s)[:2], u, update_drag_point=False), parent=plot)
+                        # self.annotation_lines[tag][annotation] = dpg.draw_line((x, y+0.03), (x, ymax+0.05), parent=plot)
+                        self.annotation_lines[tag][annotation] = self.draw_label_line((x, y+0.03), (0, 0.03))
                         # TODO: Hover over annotation to see extra info about that vibration
-                        #  Ctrl-drag (or direct drag?) to change its position (value)
                         #  Equal distribution of labels in available y space
                         #  Nicer o/digit chars and double-chars
 
-            # dpg.bind_item_font(f"x_axis_{self.viewmodel.is_emission}", FontManager.get(Labels.settings[self.viewmodel.is_emission]['axis font size']))
+    def move_label(self, pos, label, state_plot=None, update_drag_point=True):
+        dpg.set_value(label, pos)
+        cluster, tag = dpg.get_item_user_data(label)  # todo: actually adjust location relative to the peak; save.
+
+        # todo: use this for all label moves. specify relative pos - save in cluster?
+        # todo: press shift to fix x & only shift y
+        if state_plot is None:
+            state_plot = self.viewmodel.state_plots.get(tag)
+        self.delete_label_line(tag, label)
+        x = cluster.x + state_plot.xshift
+        y = state_plot.yshift + cluster.y * state_plot.yscale
+        self.annotation_lines[tag][label] = self.draw_label_line((x, y + 0.03), (pos[0]-x, pos[1]-y-0.02))
+        if update_drag_point:
+            dpg.set_value(self.label_drag_points[tag][label], pos)
+
+    def delete_label_line(self, tag, label):
+        line_v, line_d = self.annotation_lines[tag].get(label, (None, None))
+        if line_v is not None:
+            if dpg.does_item_exist(line_v):
+                dpg.delete_item(line_v)
+            if dpg.does_item_exist(line_d):
+                dpg.delete_item(line_d)
+            del self.annotation_lines[tag][label]
+
+    def draw_label_line(self, peak_pos, label_offset):
+        elbow_pos = (peak_pos[0], peak_pos[1] + label_offset[1]-abs(label_offset[0]/self.pixels_per_plot_y*self.pixels_per_plot_x))
+        label_pos = (peak_pos[0] + label_offset[0], peak_pos[1] + label_offset[1])
+        line_v = dpg.draw_line(peak_pos, elbow_pos, parent=f"plot_{self.viewmodel.is_emission}")
+        line_d = dpg.draw_line(elbow_pos, label_pos, parent=f"plot_{self.viewmodel.is_emission}")
+        return line_v, line_d
+
     def update_labels(self, tag):
         if self.labels:
             state_plot = self.viewmodel.state_plots.get(tag)
-            for line in self.annotation_lines.get(tag, []):
-                if dpg.does_item_exist(line):
-                    dpg.delete_item(line)
-            self.annotation_lines[tag] = []
-            for label in self.annotations.get(tag, []):
-                cluster = dpg.get_item_user_data(label)
+            for label in self.annotations.get(tag, {}).values():
+                self.delete_label_line(tag, label)
+                cluster, _ = dpg.get_item_user_data(label)
                 x = cluster.x + state_plot.xshift
                 y = state_plot.yshift + cluster.y*state_plot.yscale
                 ymax = state_plot.yshift + cluster.y_max*state_plot.yscale
                 dpg.set_value(label, (x, ymax+0.05))
-                self.annotation_lines[tag].append(dpg.draw_line((x, y + 0.03), (x, ymax + 0.05), parent=f"plot_{self.viewmodel.is_emission}"))
+                dpg.set_value(self.label_drag_points[tag][label], (x, ymax+0.05))
+                self.annotation_lines[tag][label] = self.draw_label_line((x, y+0.03), (0, 0.03))
+                # self.annotation_lines[tag][label] = dpg.draw_line((x, y + 0.03), (x, ymax + 0.05), parent=f"plot_{self.viewmodel.is_emission}")
 
     def delete_labels(self):
         for tag in self.viewmodel.state_plots.keys():
-            for annotation in self.annotations.get(tag, []):
+            for annotation in self.annotations.get(tag, {}).values():
                 if dpg.does_item_exist(annotation):
                     dpg.delete_item(annotation)
-            self.annotations[tag] = []
-            for line in self.annotation_lines.get(tag, []):
-                if dpg.does_item_exist(line):
-                    dpg.delete_item(line)
-            self.annotation_lines[tag] = []
+                self.delete_label_line(tag, annotation)
+            self.annotations[tag] = {}
+            for drag_point in self.label_drag_points.get(tag, {}).values():
+                if dpg.does_item_exist(drag_point):
+                    dpg.delete_item(drag_point)
+            self.label_drag_points[tag] = {}
+            # for line in self.annotation_lines.get(tag, {}).values():
+            #     if dpg.does_item_exist(line):
+            #         dpg.delete_item(line)
+            # self.annotation_lines[tag] = {}
 
     def toggle_sticks(self, *args):
         if dpg.get_value(self.show_sticks):
@@ -424,8 +517,14 @@ class PlotsOverview:
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 6, 6)
             with dpg.theme_component(dpg.mvCollapsingHeader):
                 dpg.add_theme_color(dpg.mvThemeCol_Header, [200, 200, 255, 80])
-
         dpg.bind_item_theme(self.plot_settings_group, plot_settings_theme)
+
+        with dpg.theme() as expand_button_theme:
+            with dpg.theme_component(dpg.mvAll):
+                dpg.add_theme_color(dpg.mvThemeCol_Button, [200, 200, 255, 200])
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 2, 2)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 0)
+        dpg.bind_item_theme(self.expand_plot_settings_button, expand_button_theme)
 
     def on_scroll(self, direction):
         if self.hovered_spectrum is not None:

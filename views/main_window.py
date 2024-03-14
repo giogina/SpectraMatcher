@@ -31,6 +31,9 @@ class MainWindow:
         dpg.create_viewport(title='SpectraMatcher',
                             width=monitor.width, height=monitor.height-30, x_pos=0, y_pos=0)
 
+        self.viewport_resize_callbacks = []  # list of functions to be called when viewport resizes
+        dpg.set_viewport_resize_callback(self.on_viewport_resize)
+
         with dpg.window(tag="main window", label="SpectraMatcher", no_scrollbar=True):
             self.menu = MainMenu(self.viewModel)
             with dpg.tab_bar(tag="main tab bar"):
@@ -52,7 +55,7 @@ class MainWindow:
                             with dpg.table_cell():
                                 self.project_settings_panel = SpectraOverview(self.viewModel.get_spectra_overview_viewmodel(is_emission=True))
                             with dpg.table_cell():
-                                self.emission_plots_overview_panel = PlotsOverview(self.viewModel.get_plots_overview_viewmodel(is_emission=True))
+                                self.emission_plots_overview_panel = PlotsOverview(self.viewModel.get_plots_overview_viewmodel(is_emission=True), self.append_viewport_resize_callback)
 
                 with dpg.tab(label=" Excitation Spectra ", tag="excitation tab"):
                     with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1):
@@ -62,7 +65,7 @@ class MainWindow:
                             with dpg.table_cell():
                                 self.project_settings_panel = SpectraOverview(self.viewModel.get_spectra_overview_viewmodel(is_emission=True))
                             with dpg.table_cell():
-                                self.emission_plots_overview_panel = PlotsOverview(self.viewModel.get_plots_overview_viewmodel(is_emission=False))
+                                self.emission_plots_overview_panel = PlotsOverview(self.viewModel.get_plots_overview_viewmodel(is_emission=False), self.append_viewport_resize_callback)
 
         self.configure_theme()
         dpg.set_primary_window("main window", True)
@@ -71,6 +74,13 @@ class MainWindow:
         self.viewModel.set_title_callback(callback=self.update_title)
         self.viewModel.set_message_callback(callback=self.menu.show_dialog)
         self.viewModel.set_switch_tab_callback(callback=self.switch_tab)
+
+    def append_viewport_resize_callback(self, func):  # hand this to any view that needs to react to viewport resize
+        self.viewport_resize_callbacks.append(func)
+
+    def on_viewport_resize(self):
+        for func in self.viewport_resize_callbacks:
+            func()
 
     def switch_tab(self, progress):
         print("Switch tab", dpg.get_item_configuration("main tab bar"))

@@ -593,15 +593,7 @@ class FileExplorer:
         dpg.bind_item_theme("file explorer panel", file_explorer_theme)
         self.file_explorer_theme = file_explorer_theme
 
-        with dpg.theme() as action_bar_theme:
-            with dpg.theme_component(dpg.mvAll):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [0, 0, 0, 0])
-                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 0)
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
-                dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [200, 200, 255, 80])
-                dpg.add_theme_color(dpg.mvThemeCol_TextDisabled, [200, 200, 255, 50])
-
-        dpg.bind_item_theme("action bar", action_bar_theme)
+        dpg.bind_item_theme("action bar", ItemThemes.action_bar_theme())
 
         with dpg.theme() as table_header_theme:
             with dpg.theme_component(dpg.mvButton):
