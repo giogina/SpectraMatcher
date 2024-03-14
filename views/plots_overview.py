@@ -1,5 +1,6 @@
 import dearpygui.dearpygui as dpg
 
+from models.experimental_spectrum import ExperimentalSpectrum
 from utility.async_manager import AsyncManager
 from utility.font_manager import FontManager
 from utility.icons import Icons
@@ -38,6 +39,7 @@ class PlotsOverview:
         self.icons = Icons()
         self.pixels_per_plot_x = 1
         self.pixels_per_plot_y = 1
+        self.peak_edit_mode_enabled = False
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -51,7 +53,7 @@ class PlotsOverview:
 
             with dpg.table_row():
                 with dpg.table_cell():
-                    with dpg.plot(label="Experimental spectra", height=-1, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}"):
+                    with dpg.plot(label="Experimental spectra", height=-1, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}") as self.plot:
                         # optionally create legend
                         dpg.add_plot_legend()
 
@@ -143,6 +145,7 @@ class PlotsOverview:
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
+                                    dpg.add_checkbox(label="Edit peaks", default_value=False, callback=lambda s, a, u: self.enable_edit_peaks(dpg.get_value(s)))
                                     self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(label=" Min. Intensity", min_value=0, max_value=0.2, default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
                                     self.match_controls['distance match threshold'] = dpg.add_slider_float(label=" Max. Distance", min_value=0, max_value=100, default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a))
                                     dpg.add_button(label="Defaults", width=-6, callback=self.restore_matcher_defaults)
@@ -158,6 +161,16 @@ class PlotsOverview:
         if dpg.get_item_configuration(self.expand_plot_settings_button).get('show'):
             dpg.hide_item(self.expand_plot_settings_button)
             dpg.configure_item(self.expand_plot_settings_button, show=True, pos=(dpg.get_viewport_width() - 40, 45))
+
+    def enable_edit_peaks(self, enable):
+        self.peak_edit_mode_enabled = enable
+        for exp in ExperimentalSpectrum.spectra_list:
+            if exp.is_emission == self.viewmodel.is_emission:
+                for peak in exp.peaks:
+                    dpg.add_drag_point(default_value=(peak.wavenumber, peak.intensity), user_data=exp, parent=self.plot)
+    # todo: move/add/delete peaks
+    # todo: save edited peaks
+    # todo: option to re-detect / filter peaks with different prominence &
 
     def collapse_plot_settings(self, show=False):
         dpg.configure_item(self.plot_settings_group, show=show)
@@ -486,10 +499,9 @@ class PlotsOverview:
 
     def draw_sticks(self, s):
         if dpg.get_value(self.show_sticks):
-            plot = f"plot_{self.viewmodel.is_emission}"
             if dpg.does_item_exist(f"sticks-{s.tag}"):
                 dpg.delete_item(f"sticks-{s.tag}")
-            with dpg.draw_layer(tag=f"sticks-{s.tag}", parent=plot):
+            with dpg.draw_layer(tag=f"sticks-{s.tag}", parent=self.plot):
                 for stick_stack in s.sticks:
                     if len(stick_stack):
                         x = stick_stack[0] + s.xshift

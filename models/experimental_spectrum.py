@@ -33,6 +33,10 @@ class ExperimentalSpectrum:
         self.x_min = None
         self.x_max = None
 
+        self.xdata = []
+        self.ydata = []
+        self.smooth_ydata = []
+
         self.ok = False
         self.errors = []
 
@@ -190,6 +194,8 @@ class ExperimentalSpectrum:
 
         self.x_min = min(xdata)
         self.x_max = max(xdata)
+        self.xdata = xdata
+        self.ydata = ydata
 
         smooth_ydata = []
         for iy, y in enumerate(ydata):  # Take running average to make peak detection easier
@@ -202,6 +208,7 @@ class ExperimentalSpectrum:
             self.zero_zero_transition = int(xdata[0] + wndata[0])
         else:
             self.errors.append(f"Absolute and relative wavenumber columns don't match")
+        self.smooth_ydata = smooth_ydata
 
         # determine width from high / most prominent peaks
         high_peaks = []
@@ -216,17 +223,7 @@ class ExperimentalSpectrum:
         self.peak_width = width / ((max(xdata) - min(xdata)) / len(xdata))
 
         # TODO: allow for adjustment of prominence / width here? Or allow more / filter later?
-        peaks, _ = signal.find_peaks(smooth_ydata, prominence=0.005,
-                                     width=10 / (abs(xdata[-1] - xdata[0]) / len(xdata)))
-        peaks = list(peaks) + self.settings.get("chosen peaks", [])
-        self.peaks = []
-        for p in peaks:
-            if p not in self.settings.get("removed peaks", []):
-                self.peaks.append(ExpPeak(index=p, wavenumber=xdata[p], intensity=ydata[p]))
-        prominences = signal.peak_prominences(smooth_ydata, [p.index for p in self.peaks])
-
-        for p, peak in enumerate(self.peaks):
-            peak.prominence = prominences[0][p]
+        self.detect_peaks(prominence=0.05, width=10 / (abs(xdata[-1] - xdata[0]) / len(xdata)))
 
         self.ok = len(self.errors) == 0
         self._notify_observers(self.spectrum_analyzed_notification)
@@ -234,6 +231,20 @@ class ExperimentalSpectrum:
         ExperimentalSpectrum.adjust_spec_plotter_range(self.is_emission)
         # for peak in self.peaks:
         #     print(peak.wavenumber, peak.intensity, peak.prominence)
+# todo> prominence and width limits are settings; changing them triggers re-evaluation of peaks
+    def detect_peaks(self, prominence, width):
+        peaks, _ = signal.find_peaks(self.smooth_ydata, prominence=prominence, width=width)
+        peaks = list(peaks) + self.settings.get("chosen peaks", [])
+        self.peaks = []
+        for p in peaks:
+            if p not in self.settings.get("removed peaks", []):
+                self.peaks.append(ExpPeak(index=p, wavenumber=self.xdata[p], intensity=self.ydata[p]))
+        # prominences = signal.peak_prominences(self.smooth_ydata, [p.index for p in self.peaks])
+        # widths = signal.peak_widths(self.smooth_ydata, [p.index for p in self.peaks])
+        #
+        # for p, peak in enumerate(self.peaks):
+        #     peak.prominence = prominences[0][p]
+        #     peak.width = widths[0][p]
 
     @classmethod
     def remove(cls, exp):
