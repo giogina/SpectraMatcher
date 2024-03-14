@@ -245,9 +245,10 @@ class PlotsOverview:
                         dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
 
                 if self.labels:
-                    for _, label in self.annotations[s_tag].items():
+                    for label in self.annotations[s_tag].values():
                         pos = dpg.get_value(label)
-                        if abs(mouse_x_plot_space-pos[0]) < 40 and abs(mouse_y_plot_space-pos[1]) < 0.1:
+                        dist = self.pixel_distance([mouse_x_plot_space, mouse_y_plot_space], pos)
+                        if max(dist) < 10:
                             dpg.show_item(self.label_drag_points[s_tag][label])
                         else:
                             dpg.hide_item(self.label_drag_points[s_tag][label])
@@ -266,6 +267,9 @@ class PlotsOverview:
             dpg.pop_container_stack()
         except Exception as e:
             print(f"Exception in custom series callback: {e}")
+
+    def pixel_distance(self, plot_pos_1, plot_pos_2):
+        return abs((plot_pos_1[0] - plot_pos_2[0])*self.pixels_per_plot_x), abs((plot_pos_1[1] - plot_pos_2[1])*self.pixels_per_plot_y)
 
     def sticks_callback(self, sender, app_data):
         return
