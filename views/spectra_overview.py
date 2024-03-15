@@ -30,7 +30,6 @@ class SpectraOverview:  # TODO> List like project setup: Name, color buttons, sh
                 dpg.add_table_column(width_stretch=True)
                 dpg.add_table_column(width_fixed=True, init_width_or_weight=40)
                 with dpg.table_row():
-                    # with dpg.group(horizontal=True):
                     dpg.add_spacer()
                     dpg.add_button(height=32, label="Spectra")
                     dpg.bind_item_theme(dpg.last_item(), ItemThemes.invisible_button_theme())
@@ -50,12 +49,10 @@ class SpectraOverview:  # TODO> List like project setup: Name, color buttons, sh
         dpg.configure_item(self.spectra_list_group, show=show)
         dpg.configure_item(self.spectra_list_action_bar, show=show)
         dpg.configure_item(self.collapse_plot_settings_button, show=show)
-        dpg.configure_item(self.expand_panel_button, show=not show) #, pos=(40, 45)
+        dpg.configure_item(self.expand_panel_button, show=not show)
         if show:
             dpg.configure_item(self.layout_table, resizable=True, policy=dpg.mvTable_SizingStretchProp)
             dpg.configure_item(f"{'Emission' if self.viewmodel.is_emission else 'Excitation'} plot left spacer", width=0)
-            # if self.expand_panel_button is not None:
-            #     dpg.delete_item(self.expand_panel_button)
         else:
             dpg.configure_item(f"{'Emission' if self.viewmodel.is_emission else 'Excitation'} plot left spacer", width=20)
             dpg.configure_item(self.layout_table, resizable=False, policy=dpg.mvTable_SizingFixedFit)
