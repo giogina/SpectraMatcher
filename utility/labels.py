@@ -12,6 +12,7 @@ class Labels:
                  'axis font size': 18,
                  'peak intensity match threshold': 0.03,
                  'distance match threshold': 30,
+                 'global y shifts': 1.25
                  }
     settings = {True: {}, False: {}}  # Coupled to project._data
     notify_changed_callback = noop

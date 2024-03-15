@@ -69,7 +69,8 @@ class PlotsOverviewViewmodel:
             tag = StatePlot.construct_tag(state, self.is_emission)
             if tag not in self.state_plots.keys() or self.state_plots[tag].state != state:
                 state_index = State.state_list.index(state)
-                self.state_plots[tag] = StatePlot(state, self.is_emission, yshift=state_index*1.25)
+                self.state_plots[tag] = StatePlot(state, self.is_emission, yshift=state_index*Labels.settings[self.is_emission].get('global y shifts', 1.25))
+                self.state_plots[tag].index = state_index
                 self.state_plots[tag].set_spectrum_update_callback(self.update_plot_and_drag_lines)
                 self.state_plots[tag].set_sticks_update_callback(self.update_sticks)
                 return tag
@@ -103,6 +104,7 @@ class PlotsOverviewViewmodel:
         self.state_plots[state_plot.tag].set_y_shift(value)
         self._callbacks.get("delete sticks")(state_plot.tag)
         self._callbacks.get("update plot")(self.state_plots[state_plot.tag], mark_dragged_plot=state_plot.tag)
+        self._callbacks.get("update list spec")(state_plot)
 
     def resize_spectrum(self, spec_tag, direction):
         if spec_tag is not None and spec_tag in self.state_plots.keys():
@@ -115,6 +117,14 @@ class PlotsOverviewViewmodel:
         state_plot.set_y_scale(value)
         self._callbacks.get("update plot")(state_plot, redraw_sticks=True)
         self._callbacks.get("update list spec")(state_plot)
+
+    def set_y_shifts(self, value):
+        Labels.set(self.is_emission, 'global y shifts', value)
+        for tag, state_plot in self.state_plots.items():
+            state_plot.set_y_shift(state_plot.index*value)
+            self._callbacks.get("delete sticks")(state_plot.tag)
+            self._callbacks.get("update plot")(state_plot, fit_y_axis=True)
+            self._callbacks.get("update list spec")(state_plot)
 
     def resize_half_width(self, direction, relative=True):
         return SpecPlotter.change_half_width(self.is_emission, direction, relative)

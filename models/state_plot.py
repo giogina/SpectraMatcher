@@ -11,6 +11,7 @@ class StatePlot:
         self.spectrum = state.get_spectrum(is_emission)
         self.spectrum.add_observer(self)
         self.name = state.name
+        self.index = -1
         self.xshift = xshift
         self.yshift = yshift
         self.yscale = 1

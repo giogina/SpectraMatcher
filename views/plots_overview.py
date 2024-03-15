@@ -47,6 +47,7 @@ class PlotsOverview:
         self.exp_hovered = False
         self.mouse_plot_pos = (0, 0)
         self.dragged_peak = None
+        self.vertical_slider_active = False
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -117,7 +118,9 @@ class PlotsOverview:
                         dpg.add_spacer(height=24)
                         with dpg.group(horizontal=True):
                             dpg.add_spacer(width=6)
-                            self.half_width_slider = dpg.add_slider_float(label="Half-width", min_value=0.1, max_value=60, callback=lambda s, a, u: self.viewmodel.resize_half_width(a, relative=False))
+                            with dpg.group(horizontal=False):
+                                self.half_width_slider = dpg.add_slider_float(label="Half-width", min_value=0.1, max_value=60, callback=lambda s, a, u: self.viewmodel.resize_half_width(a, relative=False))
+                                self.vertical_spacing_slider = dpg.add_slider_float(label="Vertical spacing", min_value=-2, max_value=2, default_value=1.25, callback=lambda s, a, u: self.viewmodel.set_y_shifts(a))
                         dpg.add_spacer(height=16)
                         with dpg.collapsing_header(label="Anharmonic corrections", default_open=True):
                             dpg.add_spacer(height=6)
@@ -235,7 +238,7 @@ class PlotsOverview:
         pass
         # todo
 
-    def set_ui_values_from_settings(self, x_scale=False, half_width=False, labels=False, peak_detection=False, matcher=False):
+    def set_ui_values_from_settings(self, x_scale=False, half_width=False, y_shifts=False, labels=False, peak_detection=False, matcher=False):
         load_all = True not in (x_scale, half_width, labels, matcher)
 
         if load_all or x_scale:
@@ -243,6 +246,8 @@ class PlotsOverview:
                 dpg.set_value(f"{x_scale_key} {self.viewmodel.is_emission} slider", value=WavenumberCorrector.correction_factors[self.viewmodel.is_emission].get(x_scale_key, 0))
         if load_all or half_width:
             dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
+        if load_all or y_shifts:
+            dpg.set_value(self.vertical_spacing_slider, Labels.settings[self.viewmodel.is_emission].get('global y shifts', 1.25))
         if load_all or labels:
             for key, item in self.label_controls.items():
                 value = Labels.settings[self.viewmodel.is_emission].get(key)
@@ -394,7 +399,7 @@ class PlotsOverview:
         dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
         dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
 
-    def update_plot(self, state_plot, mark_dragged_plot=None, redraw_sticks=False, update_drag_lines=False):
+    def update_plot(self, state_plot, mark_dragged_plot=None, redraw_sticks=False, update_drag_lines=False, fit_y_axis=False):
         self.dragged_plot = mark_dragged_plot
         dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
         if update_drag_lines:
@@ -403,6 +408,9 @@ class PlotsOverview:
         if redraw_sticks:
             AsyncManager.submit_task(f"draw sticks {state_plot.tag}", self.draw_sticks, state_plot)
         self.update_labels(state_plot.tag)
+        if fit_y_axis:
+            self.vertical_slider_active = True
+            dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
 
     def delete_sticks(self, spec_tag=None):  # None: all of them.
         if spec_tag is not None:
@@ -434,9 +442,13 @@ class PlotsOverview:
                         else:
                             exp.add_peak(dpg.get_value(self.dragged_peak)[0])
                         break
+        for spec in self.viewmodel.state_plots.values():
+            dpg.set_value(f"drag-{spec.tag}", spec.yshift)
+            self.draw_sticks(spec)
         self.dragged_plot = None
         self.dragged_peak = None
         self.exp_hovered = False
+        self.vertical_slider_active = False
 
     def toggle_labels(self, use_Gaussian_labels):
         if use_Gaussian_labels:
