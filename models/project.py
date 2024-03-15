@@ -197,6 +197,14 @@ class Project(FileObserver):
                                             False: self._data["label settings"]['false']}
         Labels.settings = self._data["label settings"]
         Labels.notify_changed_callback = self.project_unsaved
+        if "peak detection settings" not in self._data.keys():
+            self._data["peak detection settings"] = {True:  ExperimentalSpectrum.defaults(),
+                                                     False: ExperimentalSpectrum.defaults()}
+        elif 'true' in self._data["peak detection settings"].keys():
+            self._data["peak detection settings"] = {True: self._data["peak detection settings"]['true'],
+                                                     False: self._data["peak detection settings"]['false']}
+        ExperimentalSpectrum._settings = self._data["peak detection settings"]
+        ExperimentalSpectrum.notify_changed_callback = self.project_unsaved
         if "matcher settings" not in self._data.keys():
             self._data["matcher settings"] = {True:  Matcher.defaults(),
                                               False: Matcher.defaults()}

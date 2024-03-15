@@ -27,6 +27,7 @@ class PlotsOverviewViewmodel:
             "redraw sticks": noop,
             "set correction factor values": noop,
             "update labels": noop,
+            "redraw peaks": noop,
         }
 
         self.xydatas = []  # experimental x, y
@@ -50,6 +51,8 @@ class PlotsOverviewViewmodel:
         elif event == Labels.label_settings_updated_notification:
             for tag, s in self.state_plots.items():
                 self._callbacks.get("update labels")(tag)
+        elif event == ExperimentalSpectrum.peaks_changed_notification:
+            self._callbacks.get("redraw peaks")()
 
     def _extract_exp_x_y_data(self):
         xydatas = []

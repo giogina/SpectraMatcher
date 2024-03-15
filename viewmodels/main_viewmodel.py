@@ -4,7 +4,6 @@ from models.settings_manager import SettingsManager
 from viewmodels.data_files_viewmodel import DataFileViewModel
 from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel
 from viewmodels.project_setup_viewmodel import ProjectSetupViewModel
-from viewmodels.spectra_overview_viewmodel import SpectraOverviewViewmodel
 from launcher import Launcher
 from utility.system_file_browser import inquire_close_unsaved
 from utility.async_manager import AsyncManager

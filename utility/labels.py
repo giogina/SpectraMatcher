@@ -74,7 +74,8 @@ class Labels:
     def restore_defaults(cls, is_emission):
         defaults = cls.defaults()
         for key, value in defaults.items():
-            cls.settings[is_emission][key] = value
+            if key not in ('show labels', 'show gaussian labels'):
+                cls.settings[is_emission][key] = value
         cls.notify_changed_callback()  # notify project
         cls._notify_observers(cls.label_settings_updated_notification, is_emission)
 

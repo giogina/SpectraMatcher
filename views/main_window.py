@@ -13,8 +13,6 @@ from screeninfo import get_monitors
 import threading
 import logging
 
-from views.spectra_overview import SpectraOverview
-
 
 class MainWindow:
 
@@ -48,24 +46,10 @@ class MainWindow:
                                 self.project_setup_panel = ProjectSetup(self.viewModel.get_project_setup_viewmodel())
 
                 with dpg.tab(label=" Emission Spectra ", tag="emission tab"):
-                    with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1):
-                        dpg.add_table_column(label="project settings", init_width_or_weight=1)
-                        dpg.add_table_column(label="plots", init_width_or_weight=4)
-                        with dpg.table_row():
-                            with dpg.table_cell():
-                                self.project_settings_panel = SpectraOverview(self.viewModel.get_spectra_overview_viewmodel(is_emission=True))
-                            with dpg.table_cell():
-                                self.emission_plots_overview_panel = PlotsOverview(self.viewModel.get_plots_overview_viewmodel(is_emission=True), self.append_viewport_resize_callback)
+                    self.emission_plots_overview_panel = PlotsOverview(self.viewModel.get_plots_overview_viewmodel(is_emission=True), self.append_viewport_resize_callback)
 
                 with dpg.tab(label=" Excitation Spectra ", tag="excitation tab"):
-                    with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1):
-                        dpg.add_table_column(label="project settings", init_width_or_weight=1)  #
-                        dpg.add_table_column(label="plots", init_width_or_weight=3)
-                        with dpg.table_row():
-                            with dpg.table_cell():
-                                self.project_settings_panel = SpectraOverview(self.viewModel.get_spectra_overview_viewmodel(is_emission=True))
-                            with dpg.table_cell():
-                                self.emission_plots_overview_panel = PlotsOverview(self.viewModel.get_plots_overview_viewmodel(is_emission=False), self.append_viewport_resize_callback)
+                    self.excitation_plots_overview_panel = PlotsOverview(self.viewModel.get_plots_overview_viewmodel(is_emission=False), self.append_viewport_resize_callback)
 
         self.configure_theme()
         dpg.set_primary_window("main window", True)
@@ -161,7 +145,10 @@ class MainWindow:
 
     def _on_viewport_close(self):
         print("Viewport is closing. Exiting application.")
-        self.viewModel.on_close()  # project lock cleanup
+        try:
+            self.viewModel.on_close()  # project lock cleanup
+        except Exception as e:
+            print(f"Error closing: {e}")
         dpg.stop_dearpygui()
         sys.exit()
 

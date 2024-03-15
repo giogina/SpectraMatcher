@@ -15,10 +15,18 @@ class ExpPeak:
 
 class ExperimentalSpectrum:
     spectra_list = []
+    _settings = {True: {}, False: {}}
     _observers = []
     new_spectrum_notification = "New experimental spectrum"
     spectrum_analyzed_notification = "Experimental spectrum analyzed"
-    peaks_settings_changed_callback = noop  # to inform project
+    peaks_changed_notification = "Experimental spectrum peaks changed"
+    notify_changed_callback = noop  # to inform project
+
+    @classmethod
+    def defaults(cls):
+        return {'peak prominence threshold': 0.05,
+                'peak width threshold': 10,
+                }
 
     def __init__(self, file: File, settings=None):
         # settings = {"path": str,
@@ -71,8 +79,38 @@ class ExperimentalSpectrum:
             # print(f"Updating state observers: {message}")
             o.update(message, self)
 
+    @classmethod
+    def set(cls, is_emission, keyword, value):
+        cls._settings[is_emission][keyword] = value
+        cls.notify_changed_callback()
+        for spec in cls.spectra_list:
+            if spec.is_emission == is_emission:
+                spec.detect_peaks()
+
+    @classmethod
+    def get(cls, is_emission, keyword, default=None):
+        return cls._settings[is_emission].get(keyword, default)
+
+    @classmethod
+    def reset_defaults(cls, is_emission):
+        for key, value in ExperimentalSpectrum.defaults().items():
+            cls._settings[is_emission][key] = value
+        cls.notify_changed_callback()
+        for spec in cls.spectra_list:
+            if spec.is_emission == is_emission:
+                spec.detect_peaks()
+
+    @classmethod
+    def reset_manual_peaks(cls, is_emission):
+        for spec in cls.spectra_list:
+            if spec.is_emission == is_emission:
+                spec.settings["chosen peaks"] = []
+                spec.settings["removed peaks"] = []
+                spec.detect_peaks()
+        ExperimentalSpectrum.notify_changed_callback()
+
     def add_peak(self, x):
-        index = index=self.get_x_index(x)
+        index = self.get_x_index(x)
         new_peak = ExpPeak(wavenumber=self.xdata[index], intensity=self.ydata[index], index=index)
         self.peaks.append(new_peak)
         if self.settings.get("chosen peaks") is None:
@@ -82,9 +120,8 @@ class ExperimentalSpectrum:
                 self.settings["chosen peaks"].append(int(new_peak.wavenumber))
             if int(new_peak.wavenumber) in self.settings.get("removed peaks", []):
                 self.settings["removed peaks"].remove(int(new_peak.wavenumber))
-        print("add peak: ", new_peak.wavenumber)
-        ExperimentalSpectrum.peaks_settings_changed_callback(self)
-        return new_peak  # todo> save to settings
+        ExperimentalSpectrum.notify_changed_callback()
+        return new_peak
 
     def get_x_index(self, x):
         if self.xdata is None:
@@ -109,7 +146,7 @@ class ExperimentalSpectrum:
     def delete_peak(self, peak: ExpPeak):
         if peak in self.peaks:
             print("delete peak: ", peak)
-            self.peaks.remove(peak)  # todo: save to settings
+            self.peaks.remove(peak)
             if self.settings.get("removed peaks") is None:
                 self.settings["removed peaks"] = [int(peak.wavenumber)]
             else:
@@ -117,7 +154,7 @@ class ExperimentalSpectrum:
                     self.settings["removed peaks"].append(int(peak.wavenumber))
                 if int(peak.wavenumber) in self.settings.get("chosen peaks", []):
                     self.settings["chosen peaks"].remove(int(peak.wavenumber))
-        ExperimentalSpectrum.peaks_settings_changed_callback(self)
+        ExperimentalSpectrum.notify_changed_callback()
 
     def check(self):
         """Confirm integrity of own data"""
@@ -285,7 +322,7 @@ class ExperimentalSpectrum:
         self.peak_width = width / ((max(xdata) - min(xdata)) / len(xdata))
 
         # TODO: allow for adjustment of prominence / width here? Or allow more / filter later?
-        self.detect_peaks(prominence=0.05, width=10 / (abs(xdata[-1] - xdata[0]) / len(xdata)))
+        self.detect_peaks()  #prominence=0.05, width=10 / (abs(xdata[-1] - xdata[0]) / len(xdata))
 
         self.ok = len(self.errors) == 0
         self._notify_observers(self.spectrum_analyzed_notification)
@@ -295,10 +332,10 @@ class ExperimentalSpectrum:
         #     print(peak.wavenumber, peak.intensity, peak.prominence)
 
 # todo> prominence and width limits are settings; changing them triggers re-evaluation of peaks
-    def detect_peaks(self, prominence, width):
-        peaks, _ = signal.find_peaks(self.smooth_ydata, prominence=prominence, width=width)
+    def detect_peaks(self):
+        peaks, _ = signal.find_peaks(self.smooth_ydata, prominence=ExperimentalSpectrum.get(self.is_emission, 'peak prominence threshold'), width=ExperimentalSpectrum.get(self.is_emission, 'peak width threshold'))
         peaks = list(peaks)
-        for chosen_peak in self.settings.get("chosen peaks", []):
+        for chosen_peak in ExperimentalSpectrum._settings[self.is_emission].get("chosen peaks", []):
             if self.x_min <= chosen_peak <= self.x_max:
                 index = self.get_x_index(chosen_peak)
                 if index not in peaks:
@@ -307,6 +344,8 @@ class ExperimentalSpectrum:
         for p in peaks:
             if int(self.xdata[p]) not in self.settings.get("removed peaks", []):
                 self.peaks.append(ExpPeak(index=p, wavenumber=self.xdata[p], intensity=self.ydata[p]))
+
+        self._notify_observers(self.peaks_changed_notification)
 
         # prominences = signal.peak_prominences(self.smooth_ydata, [p.index for p in self.peaks])
         # widths = signal.peak_widths(self.smooth_ydata, [p.index for p in self.peaks])

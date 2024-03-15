@@ -146,10 +146,14 @@
         {
             "path": "C:\\Users\\Giogina\\Documents\\ovalene\\experiment\\ovalene_DF_exp.txt",
             "chosen peaks": [
-                -3,
-                1162
+                921,
+                359,
+                1208
             ],
-            "removed peaks": [],
+            "removed peaks": [
+                354,
+                3308
+            ],
             "intensity column": 3,
             "relative wavenumber column": 0,
             "absolute wavenumber column": 1
@@ -162,5 +166,15 @@
             "relative wavenumber column": 0,
             "absolute wavenumber column": 1
         }
-    ]
+    ],
+    "peak detection settings": {
+        "true": {
+            "peak prominence threshold": 0.010999999940395355,
+            "peak width threshold": 5
+        },
+        "false": {
+            "peak prominence threshold": 0.05,
+            "peak width threshold": 10
+        }
+    }
 }

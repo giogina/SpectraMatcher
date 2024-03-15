@@ -21,6 +21,7 @@ class PlotsOverview:
         self.viewmodel.set_callback("redraw sticks", self.draw_sticks)
         self.viewmodel.set_callback("post load update", self.set_ui_values_from_settings)
         self.viewmodel.set_callback("update labels", self.draw_labels)
+        self.viewmodel.set_callback("redraw peaks", self.redraw_peak_drag_points)
         self.custom_series = None
         self.spec_theme = {}
         self.hovered_spectrum = None
@@ -35,6 +36,7 @@ class PlotsOverview:
         self.annotation_lines = {}  # state_plot tag: annotation object
         self.label_drag_points = {}
         self.label_controls = {}
+        self.peak_controls = {}
         self.match_controls = {}
         self.icons = Icons()
         self.pixels_per_plot_x = 1
@@ -54,16 +56,31 @@ class PlotsOverview:
             dpg.add_key_release_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=False)
 
         with dpg.table(header_row=False, borders_innerV=True, resizable=True) as self.layout_table:
+            self.spectra_list_column = dpg.add_table_column(init_width_or_weight=1)
             self.plot_column = dpg.add_table_column(init_width_or_weight=4)
             self.plot_settings_column = dpg.add_table_column(init_width_or_weight=1)
 
             with dpg.table_row():
                 with dpg.table_cell():
-                    with dpg.plot(label="Experimental spectra", height=-1, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}") as self.plot:
-                        # optionally create legend
-                        dpg.add_plot_legend()
+                    with dpg.child_window(width=-1, height=32) as self.plot_settings_action_bar:
+                        with dpg.table(header_row=False):
+                            dpg.add_table_column(width_fixed=True, init_width_or_weight=40)
+                            dpg.add_table_column(width_stretch=True)
+                            dpg.add_table_column(width_fixed=True, init_width_or_weight=220)
+                            with dpg.table_row():
+                                # with dpg.group(horizontal=True):
+                                dpg.add_spacer()
+                                dpg.add_button(height=32, label="Spectra")
+                                dpg.bind_item_theme(dpg.last_item(), ItemThemes.invisible_button_theme())
+                                self.collapse_plot_settings_button = self.icons.insert(
+                                    dpg.add_button(height=32, width=32,
+                                                   callback=lambda s, a, u: self.collapse_spectrum_list(False),
+                                                   show=True), Icons.caret_left, size=16)
+                    dpg.bind_item_theme(self.plot_settings_action_bar, ItemThemes.action_bar_theme())
 
-                        # REQUIRED: create x and y axes
+                with dpg.table_cell():
+                    with dpg.plot(label="Experimental spectra", height=-1, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}") as self.plot:
+
                         dpg.add_plot_axis(dpg.mvXAxis, label="wavenumber / cm⁻¹", tag=f"x_axis_{self.viewmodel.is_emission}", no_gridlines=True)
                         dpg.add_plot_axis(dpg.mvYAxis, label="relative intensity", tag=f"y_axis_{self.viewmodel.is_emission}", no_gridlines=True)
 
@@ -146,12 +163,21 @@ class PlotsOverview:
                                     dpg.add_button(label="Defaults", width=-6, callback=self.restore_label_defaults)
                             dpg.add_spacer(height=6)
                         dpg.add_spacer(height=6)
+                        with dpg.collapsing_header(label="Peak detection", default_open=True):
+                            with dpg.group(horizontal=True):
+                                dpg.add_spacer(width=6)
+                                with dpg.group(horizontal=False):
+                                    dpg.add_checkbox(label="Edit peaks", default_value=False, callback=lambda s, a, u: self.enable_edit_peaks(dpg.get_value(s)))
+                                    self.peak_controls['peak prominence threshold'] = dpg.add_slider_float(label=" Min. prominence", min_value=0, max_value=0.1, default_value=ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak prominence threshold', 0.005), callback=lambda s, a, u: ExperimentalSpectrum.set(self.viewmodel.is_emission, 'peak prominence threshold', a))
+                                    self.peak_controls['peak width threshold'] = dpg.add_slider_int(label=" Min. width", min_value=0, max_value=100, default_value=ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak width threshold', 2), callback=lambda s, a, u: ExperimentalSpectrum.set(self.viewmodel.is_emission, 'peak width threshold', a))
+                                    dpg.add_button(label="Defaults", width=-6, callback=lambda s, a, u: ExperimentalSpectrum.reset_defaults(self.viewmodel.is_emission))
+                                    dpg.add_button(label="Reset manual selection", width=-6, callback=lambda s, a, u: ExperimentalSpectrum.reset_manual_peaks(self.viewmodel.is_emission))
+                        dpg.add_spacer(height=6)
                         with dpg.collapsing_header(label="Match settings", default_open=True):
                             # dpg.add_spacer(height=6)
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
-                                    dpg.add_checkbox(label="Edit peaks", default_value=False, callback=lambda s, a, u: self.enable_edit_peaks(dpg.get_value(s)))
                                     self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(label=" Min. Intensity", min_value=0, max_value=0.2, default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
                                     self.match_controls['distance match threshold'] = dpg.add_slider_float(label=" Max. Distance", min_value=0, max_value=100, default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a))
                                     dpg.add_button(label="Defaults", width=-6, callback=self.restore_matcher_defaults)
@@ -178,8 +204,11 @@ class PlotsOverview:
 
     def enable_edit_peaks(self, enable):
         self.peak_edit_mode_enabled = enable
+        self.redraw_peak_drag_points()
+
+    def redraw_peak_drag_points(self):
         self.delete_peak_indicator_points()
-        if enable:
+        if self.peak_edit_mode_enabled:
             for exp in ExperimentalSpectrum.spectra_list:
                 if exp.is_emission == self.viewmodel.is_emission:
                     for peak in exp.peaks:
@@ -227,7 +256,7 @@ class PlotsOverview:
         pass
         # todo
 
-    def set_ui_values_from_settings(self, x_scale=False, half_width=False, labels=False, matcher=False):
+    def set_ui_values_from_settings(self, x_scale=False, half_width=False, labels=False, peak_detection=False, matcher=False):
         load_all = True not in (x_scale, half_width, labels, matcher)
 
         if load_all or x_scale:
@@ -243,6 +272,12 @@ class PlotsOverview:
                     print("Callback ", key, value, dpg.get_item_callback(item))
                     if dpg.get_item_callback(item) is not None:
                         dpg.get_item_callback(item)(item, value, dpg.get_item_user_data(item))
+        if load_all or peak_detection:
+            for key, item in self.peak_controls.items():
+                value = ExperimentalSpectrum.get(self.viewmodel.is_emission, key)
+                dpg.set_value(item, value)
+                if dpg.get_item_callback(item) is not None:
+                    dpg.get_item_callback(item)(item, value, dpg.get_item_user_data(item))
         if load_all or matcher:
             for key, item in self.match_controls.items():
                 value = Matcher.settings[self.viewmodel.is_emission].get(key)
