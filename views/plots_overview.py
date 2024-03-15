@@ -56,44 +56,29 @@ class PlotsOverview:
             dpg.add_key_release_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=False)
 
         with dpg.table(header_row=False, borders_innerV=True, resizable=True) as self.layout_table:
-            self.spectra_list_column = dpg.add_table_column(init_width_or_weight=1)
             self.plot_column = dpg.add_table_column(init_width_or_weight=4)
             self.plot_settings_column = dpg.add_table_column(init_width_or_weight=1)
 
             with dpg.table_row():
                 with dpg.table_cell():
-                    with dpg.child_window(width=-1, height=32) as self.plot_settings_action_bar:
-                        with dpg.table(header_row=False):
-                            dpg.add_table_column(width_fixed=True, init_width_or_weight=40)
-                            dpg.add_table_column(width_stretch=True)
-                            dpg.add_table_column(width_fixed=True, init_width_or_weight=220)
-                            with dpg.table_row():
-                                # with dpg.group(horizontal=True):
-                                dpg.add_spacer()
-                                dpg.add_button(height=32, label="Spectra")
-                                dpg.bind_item_theme(dpg.last_item(), ItemThemes.invisible_button_theme())
-                                self.collapse_plot_settings_button = self.icons.insert(
-                                    dpg.add_button(height=32, width=32,
-                                                   callback=lambda s, a, u: self.collapse_spectrum_list(False),
-                                                   show=True), Icons.caret_left, size=16)
-                    dpg.bind_item_theme(self.plot_settings_action_bar, ItemThemes.action_bar_theme())
+                    with dpg.group(horizontal=True):
+                        dpg.add_spacer(width=0, tag=f"{'Emission' if self.viewmodel.is_emission else 'Excitation'} plot left spacer")
+                        with dpg.plot(label="Experimental spectra", height=-1, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}") as self.plot:
 
-                with dpg.table_cell():
-                    with dpg.plot(label="Experimental spectra", height=-1, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}") as self.plot:
+                            dpg.add_plot_axis(dpg.mvXAxis, label="wavenumber / cm⁻¹", tag=f"x_axis_{self.viewmodel.is_emission}", no_gridlines=True)
+                            dpg.add_plot_axis(dpg.mvYAxis, label="relative intensity", tag=f"y_axis_{self.viewmodel.is_emission}", no_gridlines=True)
 
-                        dpg.add_plot_axis(dpg.mvXAxis, label="wavenumber / cm⁻¹", tag=f"x_axis_{self.viewmodel.is_emission}", no_gridlines=True)
-                        dpg.add_plot_axis(dpg.mvYAxis, label="relative intensity", tag=f"y_axis_{self.viewmodel.is_emission}", no_gridlines=True)
+                            # dpg.set_axis_limits_auto(f"x_axis_{self.viewmodel.is_emission}")
+                            # dpg.set_axis_limits_auto(f"y_axis_{self.viewmodel.is_emission}")
 
-                        # dpg.set_axis_limits_auto(f"x_axis_{self.viewmodel.is_emission}")
-                        # dpg.set_axis_limits_auto(f"y_axis_{self.viewmodel.is_emission}")
+                            with dpg.custom_series([0.0, 1000.0], [1.0, 0.0], 2,
+                                                   parent=f"y_axis_{self.viewmodel.is_emission}",
+                                                   callback=self._custom_series_callback) as self.custom_series:
+                                self.tooltiptext = dpg.add_text("Current Point: ")
 
-                        with dpg.custom_series([0.0, 1000.0], [1.0, 0.0], 2,
-                                               parent=f"y_axis_{self.viewmodel.is_emission}",
-                                               callback=self._custom_series_callback) as self.custom_series:
-                            self.tooltiptext = dpg.add_text("Current Point: ")
-
-                        dpg.add_line_series([], [], parent=f"y_axis_{self.viewmodel.is_emission}", tag=f"exp_overlay_{self.viewmodel.is_emission}")
-                        # self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
+                            dpg.add_line_series([], [], parent=f"y_axis_{self.viewmodel.is_emission}", tag=f"exp_overlay_{self.viewmodel.is_emission}")
+                            # self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
+                        # self.plot_right_spacer = dpg.add_spacer(width=0)
                 with dpg.table_cell():
                     with dpg.child_window(width=-1, height=32) as self.plot_settings_action_bar:
                         with dpg.table(header_row=False):
@@ -228,10 +213,6 @@ class PlotsOverview:
         exp, peak = dpg.get_item_user_data(peak_point)
         index = exp.get_x_index(dpg.get_value(peak_point)[0])
         dpg.set_value(self.dragged_peak, (exp.xdata[index], exp.ydata[index]))
-
-    # todo: move/add/delete peaks
-    # todo: save edited peaks
-    # todo: option to re-detect / filter peaks with different prominence &
 
     def collapse_plot_settings(self, show=False):
         dpg.configure_item(self.plot_settings_group, show=show)

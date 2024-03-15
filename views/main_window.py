@@ -6,6 +6,7 @@ from views.main_menu import MainMenu
 from views.file_explorer import FileExplorer
 from views.project_setup import ProjectSetup
 from views.plots_overview import PlotsOverview
+from views.spectra_overview import SpectraOverview
 from utility.icons import Icons
 from utility.font_manager import FontManager
 import dearpygui.dearpygui as dpg
@@ -14,12 +15,14 @@ import threading
 import logging
 
 
+
 class MainWindow:
 
     def __init__(self, path):
         self.result = 0
         self.logger = logging.getLogger(__name__)
         self.viewModel = MainViewModel(path)
+        self.icons = Icons()
 
         dpg.create_context()
         dpg.configure_app(auto_device=True)
@@ -45,11 +48,27 @@ class MainWindow:
                             with dpg.table_cell():
                                 self.project_setup_panel = ProjectSetup(self.viewModel.get_project_setup_viewmodel())
 
+                emission_viewmodel = self.viewModel.get_plots_overview_viewmodel(is_emission=True)
                 with dpg.tab(label=" Emission Spectra ", tag="emission tab"):
-                    self.emission_plots_overview_panel = PlotsOverview(self.viewModel.get_plots_overview_viewmodel(is_emission=True), self.append_viewport_resize_callback)
+                    with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1, tag="Emission layout table"):
+                        dpg.add_table_column(label="spectra settings", init_width_or_weight=1, tag="Emission spectra column")
+                        dpg.add_table_column(label="plots", init_width_or_weight=5, tag="Emission plots column")
+                        with dpg.table_row():
+                            with dpg.table_cell():
+                                self.project_settings_panel = SpectraOverview(emission_viewmodel)
+                            with dpg.table_cell():
+                                self.emission_plots_overview_panel = PlotsOverview(emission_viewmodel, self.append_viewport_resize_callback)
 
+                excitation_viewmodel = self.viewModel.get_plots_overview_viewmodel(is_emission=False)
                 with dpg.tab(label=" Excitation Spectra ", tag="excitation tab"):
-                    self.excitation_plots_overview_panel = PlotsOverview(self.viewModel.get_plots_overview_viewmodel(is_emission=False), self.append_viewport_resize_callback)
+                    with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1, tag="Excitation layout table"):
+                        dpg.add_table_column(label="spectra settings", init_width_or_weight=1, tag="Excitation spectra column")  #
+                        dpg.add_table_column(label="plots", init_width_or_weight=5, tag="Excitation plots column")
+                        with dpg.table_row():
+                            with dpg.table_cell():
+                                self.project_settings_panel = SpectraOverview(excitation_viewmodel)
+                            with dpg.table_cell():
+                                self.excitation_plots_overview_panel = PlotsOverview(excitation_viewmodel, self.append_viewport_resize_callback)
 
         self.configure_theme()
         dpg.set_primary_window("main window", True)
