@@ -77,8 +77,6 @@ class PlotsOverview:
                                 self.tooltiptext = dpg.add_text("Current Point: ")
 
                             dpg.add_line_series([], [], parent=f"y_axis_{self.viewmodel.is_emission}", tag=f"exp_overlay_{self.viewmodel.is_emission}")
-                            # self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
-                        # self.plot_right_spacer = dpg.add_spacer(width=0)
                 with dpg.table_cell():
                     with dpg.child_window(width=-1, height=32) as self.plot_settings_action_bar:
                         with dpg.table(header_row=False):
@@ -505,7 +503,6 @@ class PlotsOverview:
         cluster, tag = dpg.get_item_user_data(label)  # todo: actually adjust location relative to the peak; save.
 
         # todo: use this for all label moves. specify relative pos - save in cluster?
-        # todo: press shift to fix x & only shift y
         if state_plot is None:
             state_plot = self.viewmodel.state_plots.get(tag)
         self.delete_label_line(tag, label)

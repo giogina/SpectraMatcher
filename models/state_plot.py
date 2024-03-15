@@ -79,6 +79,10 @@ class StatePlot:
         self.yscale = max(0, self.yscale)
         self.ydata = self._compute_y_data()
 
+    def set_y_scale(self, value):
+        self.yscale = value
+        self.ydata = self._compute_y_data()
+
     def get_xydata(self, xmin, xmax):
         if self.xdata[0] < xmin:
             step = float(self.xdata[1] - self.xdata[0])

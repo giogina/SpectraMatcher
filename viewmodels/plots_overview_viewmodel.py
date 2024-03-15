@@ -28,6 +28,8 @@ class PlotsOverviewViewmodel:
             "set correction factor values": noop,
             "update labels": noop,
             "redraw peaks": noop,
+            "add list spectrum": noop,
+            "update list spec": noop,
         }
 
         self.xydatas = []  # experimental x, y
@@ -47,6 +49,7 @@ class PlotsOverviewViewmodel:
             new_spec_tag = self._extract_state(state)
             if new_spec_tag is not None:
                 self._callbacks.get("add spectrum")(new_spec_tag)
+                self._callbacks.get("add list spectrum")(self.state_plots[new_spec_tag])
             # todo> react to already-plotted state deletion (see if it's still in State.state_list?)
         elif event == Labels.label_settings_updated_notification:
             for tag, s in self.state_plots.items():
@@ -66,7 +69,7 @@ class PlotsOverviewViewmodel:
             tag = StatePlot.construct_tag(state, self.is_emission)
             if tag not in self.state_plots.keys() or self.state_plots[tag].state != state:
                 state_index = State.state_list.index(state)
-                self.state_plots[tag] = StatePlot(state, self.is_emission, yshift=state_index)
+                self.state_plots[tag] = StatePlot(state, self.is_emission, yshift=state_index*1.25)
                 self.state_plots[tag].set_spectrum_update_callback(self.update_plot_and_drag_lines)
                 self.state_plots[tag].set_sticks_update_callback(self.update_sticks)
                 return tag
@@ -81,7 +84,7 @@ class PlotsOverviewViewmodel:
         thread = threading.Thread(target=self.schedule_stick_spectrum_redraw, args=(state_plot,))
         thread.start()
 
-    def schedule_stick_spectrum_redraw(self, state_plot):  # todo> set 'show sticks' variable here, don't trigger this if sticks not shown. Also, not for currently invisible spectrum.
+    def schedule_stick_spectrum_redraw(self, state_plot):
         debounce_period = 0.2
         while True:
             time_since_last_update = time.time() - self.last_correction_factor_change_time
@@ -94,6 +97,7 @@ class PlotsOverviewViewmodel:
         self.state_plots[state_plot.tag].set_x_shift(value)
         self._callbacks.get("delete sticks")(state_plot.tag)
         self._callbacks.get("update plot")(self.state_plots[state_plot.tag], mark_dragged_plot=state_plot.tag)
+        self._callbacks.get("update list spec")(self.state_plots[state_plot.tag])
 
     def on_y_drag(self, value, state_plot):
         self.state_plots[state_plot.tag].set_y_shift(value)
@@ -105,6 +109,12 @@ class PlotsOverviewViewmodel:
             spec = self.state_plots[spec_tag]
             spec.resize_y_scale(direction)
             self._callbacks.get("update plot")(spec, redraw_sticks=True)
+            self._callbacks.get("update list spec")(spec)
+
+    def set_y_scale(self, value, state_plot):
+        state_plot.set_y_scale(value)
+        self._callbacks.get("update plot")(state_plot, redraw_sticks=True)
+        self._callbacks.get("update list spec")(state_plot)
 
     def resize_half_width(self, direction, relative=True):
         return SpecPlotter.change_half_width(self.is_emission, direction, relative)
