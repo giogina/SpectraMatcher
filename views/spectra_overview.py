@@ -50,9 +50,11 @@ class SpectraOverview:  # TODO> List like project setup: Name, color buttons, sh
 
     # TODO: Entries for experimental spectra
     #  Allow adjustment of minx, maxx of exp spectra
+    #  Same min, max x adjustment via horizontal drag lines visible on hover
     #  Allow color choices
 
-    # TODO: "Reset" button
+    # TODO: "Reset" button for spectra, resetting xshift, yshift, xscale
+    #  Make hide/show button functional (for all elements - line series, drag lines, sticks)
 
     def add_spectrum(self, state_plot: StatePlot):
         self.spectrum_controls[state_plot.tag] = {}
@@ -68,7 +70,8 @@ class SpectraOverview:  # TODO> List like project setup: Name, color buttons, sh
                         dpg.configure_item(self.spectrum_controls[tag]['yshift'], max_value=len(self.viewmodel.state_plots)*1.2)
                 dpg.add_spacer(width=6)
                 with dpg.group(horizontal=False):
-                    self.icons.insert(dpg.add_button(width=29, height=29), Icons.eye_slash, size=16)
+                    self.spectrum_controls[state_plot.tag]['show'] = self.icons.insert(dpg.add_button(width=29, height=29, callback=lambda s, a, u: self.hide_spectrum(u, False), user_data=state_plot.tag, show=False), Icons.eye, size=15)
+                    self.spectrum_controls[state_plot.tag]['hide'] = self.icons.insert(dpg.add_button(width=29, height=29, callback=lambda s, a, u: self.hide_spectrum(u, True), user_data=state_plot.tag), Icons.eye_slash, size=15)
                     dpg.add_color_edit(state_plot.state.get_color(), no_inputs=True, callback=lambda s, a, u: self.viewmodel.set_color([c*255 for c in a], u), user_data=state_plot)
             dpg.add_spacer(height=6)
         self.last_inserted_spec_tag = self.spectrum_headers[state_plot.tag]
@@ -77,6 +80,15 @@ class SpectraOverview:  # TODO> List like project setup: Name, color buttons, sh
         dpg.set_value(self.spectrum_controls[state_plot.tag]['xshift'], state_plot.xshift)
         dpg.set_value(self.spectrum_controls[state_plot.tag]['yshift'], state_plot.yshift)
         dpg.set_value(self.spectrum_controls[state_plot.tag]['yscale'], state_plot.yscale)
+
+    def hide_spectrum(self, tag, hide=True):
+        if hide:
+            dpg.show_item(self.spectrum_controls[tag]['show'])
+            dpg.hide_item(self.spectrum_controls[tag]['hide'])
+        else:
+            dpg.show_item(self.spectrum_controls[tag]['hide'])
+            dpg.hide_item(self.spectrum_controls[tag]['show'])
+        self.viewmodel.hide_spectrum(tag, hide)
 
     def collapse_spectrum_list(self, show):
         dpg.configure_item(self.spectra_list_group, show=show)

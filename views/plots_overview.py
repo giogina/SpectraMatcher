@@ -23,6 +23,7 @@ class PlotsOverview:
         self.viewmodel.set_callback("post load update", self.set_ui_values_from_settings)
         self.viewmodel.set_callback("update labels", self.draw_labels)
         self.viewmodel.set_callback("redraw peaks", self.redraw_peak_drag_points)
+        self.viewmodel.set_callback("hide spectrum", self.hide_spectrum)
         self.custom_series = None
         self.spec_theme = {}
         self.hovered_spectrum = None
@@ -238,7 +239,6 @@ class PlotsOverview:
     def print_table(self):  # todo
         pass
 
-
     def set_ui_values_from_settings(self, x_scale=False, half_width=False, y_shifts=False, labels=False, peak_detection=False, matcher=False):
         load_all = True not in (x_scale, half_width, labels, matcher)
 
@@ -293,35 +293,36 @@ class PlotsOverview:
             for s_tag, s in self.viewmodel.state_plots.items():
                 if not dpg.does_item_exist(f"drag-x-{s_tag}"):
                     return  # drawing is currently underway
-                if not self.show_all_drag_lines:
-                    if abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) < 0.02:
-                        dpg.show_item(f"drag-{s_tag}")
-                        self.hovered_spectrum = s_tag
-                    elif abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) > 0.1:
-                        dpg.hide_item(f"drag-{s_tag}")
-                    if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) > 50:
-                        dpg.hide_item(f"drag-x-{s_tag}")
+                if dpg.is_item_shown(s.tag):  # non-hidden spectrum
+                    if not self.show_all_drag_lines:
+                        if abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) < 0.02:
+                            dpg.show_item(f"drag-{s_tag}")
+                            self.hovered_spectrum = s_tag
+                        elif abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) > 0.1:
+                            dpg.hide_item(f"drag-{s_tag}")
+                        if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) > 50:
+                            dpg.hide_item(f"drag-x-{s_tag}")
 
-                if s.yshift - 0.02 <= mouse_y_plot_space <= s.yshift+s.yscale:
-                    if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) < 10:
-                        dpg.show_item(f"drag-x-{s_tag}")
-                        self.hovered_x_drag_line = s_tag
-                    if not -0.2 < s.yshift <= 0.9:
-                        dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [s.xdata, s.ydata - s.yshift])
-                        dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
+                    if s.yshift - 0.02 <= mouse_y_plot_space <= s.yshift+s.yscale:
+                        if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) < 10:
+                            dpg.show_item(f"drag-x-{s_tag}")
+                            self.hovered_x_drag_line = s_tag
+                        if not -0.2 < s.yshift <= 0.9:
+                            dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [s.xdata, s.ydata - s.yshift])
+                            dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
 
-                if self.labels:
-                    for label in self.annotations[s_tag].values():
-                        pos = dpg.get_value(label)
-                        dist = self.pixel_distance([mouse_x_plot_space, mouse_y_plot_space], pos)
-                        if max(dist) < 10:
-                            dpg.show_item(self.label_drag_points[s_tag][label])
-                        else:
-                            dpg.hide_item(self.label_drag_points[s_tag][label])
+                    if self.labels:
+                        for label in self.annotations[s_tag].values():
+                            pos = dpg.get_value(label)
+                            dist = self.pixel_distance([mouse_x_plot_space, mouse_y_plot_space], pos)
+                            if max(dist) < 10:
+                                dpg.show_item(self.label_drag_points[s_tag][label])
+                            else:
+                                dpg.hide_item(self.label_drag_points[s_tag][label])
 
-                    dpg.configure_item(sender, tooltip=False)
-                    dpg.configure_item(sender, tooltip=True)
-                    dpg.set_value(self.tooltiptext, f"Diff: {abs(dpg.get_value(f'drag-x-{s_tag}') - mouse_x_plot_space)}")
+                        dpg.configure_item(sender, tooltip=False)
+                        dpg.configure_item(sender, tooltip=True)
+                        dpg.set_value(self.tooltiptext, f"Diff: {abs(dpg.get_value(f'drag-x-{s_tag}') - mouse_x_plot_space)}")
 
             if self.peak_edit_mode_enabled:
                 self.hovered_peak_indicator_point = None
@@ -329,7 +330,7 @@ class PlotsOverview:
                     if max(self.pixel_distance(dpg.get_value(point), [mouse_x_plot_space, mouse_y_plot_space])) < 6:
                         self.hovered_peak_indicator_point = point
                         break
-                self.exp_hovered = 0 <=mouse_y_plot_space <= 1
+                self.exp_hovered = 0 <= mouse_y_plot_space <= 1
             # for i in range(0, len(transformed_x)):
             #     dpg.draw_text((transformed_x[i] + 15, transformed_y[i] - 15), str(i), size=20)
             #     dpg.draw_circle((transformed_x[i], transformed_y[i]), 15, fill=(50+i*5, 50+i*50, 0, 255))
@@ -376,9 +377,8 @@ class PlotsOverview:
         xmin, xmax, ymin, ymax = self.viewmodel.get_zoom_range()
         s = self.viewmodel.state_plots[tag]
         if not dpg.does_item_exist(tag):
-
             xdata, ydata = s.get_xydata(xmin, xmax)  # truncated versions
-            dpg.add_line_series(xdata, ydata, label=s.name, parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  # , user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
+            dpg.add_line_series(xdata, ydata, label=s.name, show=not s.state.settings.get("hidden", False), parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  # , user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
             self.line_series.append(s.tag)
         else:
             self.update_plot(s)
@@ -398,6 +398,18 @@ class PlotsOverview:
             self.update_spectrum_color(spec)
         dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
         dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
+
+    def hide_spectrum(self, tag, hide):
+        dpg.configure_item(tag, show=not hide)  # line series
+        if hide:
+            self.delete_sticks(tag)
+            self.delete_labels(tag)
+            dpg.configure_item(f"drag-{tag}", show=False)  # y drag line
+            dpg.configure_item(f"drag-x-{tag}", show=False)  # x drag line
+        else:
+            self.draw_sticks(self.viewmodel.state_plots[tag])
+            self.draw_labels(tag)
+        dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
 
     def update_spectrum_color(self, spec):
         with dpg.theme() as self.spec_theme[spec.tag]:
@@ -483,7 +495,7 @@ class PlotsOverview:
         Labels.set(self.viewmodel.is_emission, 'show gaussian labels', dpg.get_value(self.label_controls['show gaussian labels']))
 
     def draw_labels(self, tag):
-        if self.labels:
+        if self.labels and dpg.is_item_shown(tag):
             plot = f"plot_{self.viewmodel.is_emission}"
             for annotation in self.annotations.get(tag, {}).values():
                 if dpg.does_item_exist(annotation):
@@ -521,16 +533,16 @@ class PlotsOverview:
     def move_label(self, pos, label, state_plot=None, update_drag_point=True):
         dpg.set_value(label, pos)
         cluster, tag = dpg.get_item_user_data(label)  # todo: actually adjust location relative to the peak; save.
-
         # todo: use this for all label moves. specify relative pos - save in cluster?
-        if state_plot is None:
-            state_plot = self.viewmodel.state_plots.get(tag)
-        self.delete_label_line(tag, label)
-        x = cluster.x + state_plot.xshift
-        y = state_plot.yshift + cluster.y * state_plot.yscale
-        self.annotation_lines[tag][label] = self.draw_label_line((x, y + 0.03), (pos[0]-x, pos[1]-y-0.02))
-        if update_drag_point:
-            dpg.set_value(self.label_drag_points[tag][label], pos)
+        if dpg.is_item_shown(tag):
+            if state_plot is None:
+                state_plot = self.viewmodel.state_plots.get(tag)
+            self.delete_label_line(tag, label)
+            x = cluster.x + state_plot.xshift
+            y = state_plot.yshift + cluster.y * state_plot.yscale
+            self.annotation_lines[tag][label] = self.draw_label_line((x, y + 0.03), (pos[0]-x, pos[1]-y-0.02))
+            if update_drag_point:
+                dpg.set_value(self.label_drag_points[tag][label], pos)
 
     def delete_label_line(self, tag, label):
         line_v, line_d = self.annotation_lines[tag].get(label, (None, None))
@@ -549,7 +561,7 @@ class PlotsOverview:
         return line_v, line_d
 
     def update_labels(self, tag):
-        if self.labels:
+        if self.labels and dpg.is_item_shown(tag):
             state_plot = self.viewmodel.state_plots.get(tag)
             for label in self.annotations.get(tag, {}).values():
                 self.delete_label_line(tag, label)
@@ -562,21 +574,32 @@ class PlotsOverview:
                 self.annotation_lines[tag][label] = self.draw_label_line((x, y+0.03), (0, 0.03))
                 # self.annotation_lines[tag][label] = dpg.draw_line((x, y + 0.03), (x, ymax + 0.05), parent=f"plot_{self.viewmodel.is_emission}")
 
-    def delete_labels(self):
-        for tag in self.viewmodel.state_plots.keys():
-            for annotation in self.annotations.get(tag, {}).values():
+    def delete_labels(self, spec_tag=None):
+        if spec_tag is None:
+            for tag in self.viewmodel.state_plots.keys():
+                for annotation in self.annotations.get(tag, {}).values():
+                    if dpg.does_item_exist(annotation):
+                        dpg.delete_item(annotation)
+                    self.delete_label_line(tag, annotation)
+                self.annotations[tag] = {}
+                for drag_point in self.label_drag_points.get(tag, {}).values():
+                    if dpg.does_item_exist(drag_point):
+                        dpg.delete_item(drag_point)
+                self.label_drag_points[tag] = {}
+                # for line in self.annotation_lines.get(tag, {}).values():
+                #     if dpg.does_item_exist(line):
+                #         dpg.delete_item(line)
+                # self.annotation_lines[tag] = {}
+        else:
+            for annotation in self.annotations.get(spec_tag, {}).values():
                 if dpg.does_item_exist(annotation):
                     dpg.delete_item(annotation)
-                self.delete_label_line(tag, annotation)
-            self.annotations[tag] = {}
-            for drag_point in self.label_drag_points.get(tag, {}).values():
+                self.delete_label_line(spec_tag, annotation)
+            self.annotations[spec_tag] = {}
+            for drag_point in self.label_drag_points.get(spec_tag, {}).values():
                 if dpg.does_item_exist(drag_point):
                     dpg.delete_item(drag_point)
-            self.label_drag_points[tag] = {}
-            # for line in self.annotation_lines.get(tag, {}).values():
-            #     if dpg.does_item_exist(line):
-            #         dpg.delete_item(line)
-            # self.annotation_lines[tag] = {}
+            self.label_drag_points[spec_tag] = {}
 
     def toggle_sticks(self, *args):
         if dpg.get_value(self.show_sticks):
@@ -586,19 +609,20 @@ class PlotsOverview:
             self.delete_sticks()
 
     def draw_sticks(self, s):
-        if dpg.get_value(self.show_sticks):
-            if dpg.does_item_exist(f"sticks-{s.tag}"):
-                dpg.delete_item(f"sticks-{s.tag}")
-            with dpg.draw_layer(tag=f"sticks-{s.tag}", parent=self.plot):
-                for stick_stack in s.sticks:
-                    if len(stick_stack):
-                        x = stick_stack[0] + s.xshift
-                        y = s.yshift
-                        for sub_stick in stick_stack[1]:
-                            top = y+sub_stick[0]*s.yscale
-                            color = adjust_color_for_dark_theme(sub_stick[1])+[160]
-                            dpg.draw_line((x, y), (x, top), color=color, thickness=0.001)
-                            y = top
+        if dpg.is_item_shown(s.tag):
+            if dpg.get_value(self.show_sticks):
+                if dpg.does_item_exist(f"sticks-{s.tag}"):
+                    dpg.delete_item(f"sticks-{s.tag}")
+                with dpg.draw_layer(tag=f"sticks-{s.tag}", parent=self.plot):
+                    for stick_stack in s.sticks:
+                        if len(stick_stack):
+                            x = stick_stack[0] + s.xshift
+                            y = s.yshift
+                            for sub_stick in stick_stack[1]:
+                                top = y+sub_stick[0]*s.yscale
+                                color = adjust_color_for_dark_theme(sub_stick[1])+[160]
+                                dpg.draw_line((x, y), (x, top), color=color, thickness=0.001)
+                                y = top
 
     def configure_theme(self):
         with dpg.theme(tag=f"plot_theme_{self.viewmodel.is_emission}"):
@@ -640,7 +664,8 @@ class PlotsOverview:
     def show_drag_lines(self, show):
         self.show_all_drag_lines = show
         for tag in self.viewmodel.state_plots.keys():
-            if dpg.does_item_exist(f"drag-{tag}"):
-                dpg.configure_item(f"drag-{tag}", show=show)
-            if dpg.does_item_exist(f"drag-x-{tag}"):
-                dpg.configure_item(f"drag-x-{tag}", show=show)
+            if dpg.is_item_shown(tag):
+                if dpg.does_item_exist(f"drag-{tag}"):
+                    dpg.configure_item(f"drag-{tag}", show=show)
+                if dpg.does_item_exist(f"drag-x-{tag}"):
+                    dpg.configure_item(f"drag-x-{tag}", show=show)

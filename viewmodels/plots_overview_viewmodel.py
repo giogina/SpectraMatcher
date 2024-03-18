@@ -31,6 +31,7 @@ class PlotsOverviewViewmodel:
             "add list spectrum": noop,
             "update list spec": noop,
             "update spectrum color": noop,
+            "hide spectrum": noop,
         }
 
         self.xydatas = []  # experimental x, y
@@ -160,5 +161,9 @@ class PlotsOverviewViewmodel:
             if p.yshift + 1 > ymax + 0.1:
                 ymax = p.yshift + 1.1
         return xmin, xmax, ymin, ymax
+
+    def hide_spectrum(self, tag, hide=True):
+        self.state_plots[tag].state.settings["hidden"] = hide  # todo> load again
+        self._callbacks.get("hide spectrum")(tag, hide)
 
 

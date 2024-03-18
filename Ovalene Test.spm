@@ -80,7 +80,8 @@
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log",
             "color selection type": "manual",
             "x shift": 0.0,
-            "y scale": 0.3919999897480011
+            "y scale": 0.3919999897480011,
+            "hidden": true
         },
         {
             "color": [
@@ -91,7 +92,10 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log",
-            "y scale": 0.5000000000000001
+            "y scale": 1.0,
+            "x shift": -5.012484758154642,
+            "hidden": false,
+            "y shift": 2.1026101141924958
         },
         {
             "color": [
@@ -101,7 +105,8 @@
             ],
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT emission\\FCHT.log",
-            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\ovalene-excited-3-opt-freq-disp.log"
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\ovalene-excited-3-opt-freq-disp.log",
+            "hidden": true
         },
         {
             "color": [
@@ -111,7 +116,8 @@
             ],
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT emission\\FCHT.log",
-            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\ovalene-excited-4-opt-freq-disp.log"
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\ovalene-excited-4-opt-freq-disp.log",
+            "hidden": true
         },
         {
             "color": [
@@ -133,7 +139,8 @@
                 80.14848366379738,
                 255.0
             ],
-            "color selection type": "manual"
+            "color selection type": "manual",
+            "hidden": false
         }
     ],
     "progress": "import done",
@@ -151,7 +158,7 @@
     },
     "label settings": {
         "true": {
-            "show labels": false,
+            "show labels": true,
             "show gaussian labels": false,
             "peak intensity label threshold": 0.1,
             "stick label relative threshold": 0.1,
