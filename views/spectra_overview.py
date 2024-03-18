@@ -3,10 +3,9 @@ from models.state_plot import StatePlot
 from utility.icons import Icons
 from utility.item_themes import ItemThemes
 from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel
-from utility.noop import noop
 
 
-class SpectraOverview:  # TODO> List like project setup: Name, color buttons, show/hide buttons
+class SpectraOverview:
     def __init__(self, viewmodel: PlotsOverviewViewmodel):
         self.viewmodel = viewmodel
         self.icons = Icons()
@@ -56,9 +55,6 @@ class SpectraOverview:  # TODO> List like project setup: Name, color buttons, sh
     #  Same min, max x adjustment via horizontal drag lines visible on hover
     #  Allow color choices
 
-    # TODO: "Reset" button for spectra, resetting xshift, yshift, xscale
-    #  Make hide/show button functional (for all elements - line series, drag lines, sticks)
-
     def on_right_click_release(self):
         for tag in self.viewmodel.state_plots.keys():
             if dpg.is_item_hovered(self.spectrum_controls[tag]['hide']) or dpg.is_item_hovered(self.spectrum_controls[tag]['show']):
@@ -67,6 +63,12 @@ class SpectraOverview:  # TODO> List like project setup: Name, color buttons, sh
                         self.hide_spectrum(tag2)
                 self.hide_spectrum(tag, False)
 
+    def reset_spectrum_controls(self, tag):
+        defaults = {'xshift': 0., 'yscale': 1.}
+        state_plot = self.viewmodel.state_plots[tag]
+        self.viewmodel.on_x_drag(defaults['xshift'] + state_plot.handle_x, state_plot)
+        self.viewmodel.set_y_scale(defaults['yscale'], state_plot)
+
     def add_spectrum(self, state_plot: StatePlot):
         self.spectrum_controls[state_plot.tag] = {}
         with dpg.collapsing_header(label=state_plot.name, parent=self.spectra_list_group, before=self.last_inserted_spec_tag, default_open=True) as self.spectrum_headers[state_plot.tag]:
@@ -74,16 +76,17 @@ class SpectraOverview:  # TODO> List like project setup: Name, color buttons, sh
             with dpg.group(horizontal=True):
                 dpg.add_spacer(width=6)
                 with dpg.group(horizontal=False):
-                    self.spectrum_controls[state_plot.tag]['xshift'] = dpg.add_slider_float(format="shift = %.1f cm⁻¹", min_value=-1000, max_value=5000, default_value=state_plot.xshift, callback=lambda s, a, u: self.viewmodel.on_x_drag(a, u), user_data=state_plot, width=-66)
+                    self.spectrum_controls[state_plot.tag]['xshift'] = dpg.add_slider_float(format="shift = %.1f cm⁻¹", min_value=-1000, max_value=5000, default_value=state_plot.xshift, callback=lambda s, a, u: self.viewmodel.on_x_drag(a - state_plot.handle_x, u), user_data=state_plot, width=-66)
                     self.spectrum_controls[state_plot.tag]['yscale'] = dpg.add_slider_float(format="scale = %.3f", min_value=0, max_value=1.2, default_value=state_plot.yscale, callback=lambda s, a, u: self.viewmodel.set_y_scale(a, u), user_data=state_plot, width=-66)
                     self.spectrum_controls[state_plot.tag]['yshift'] = dpg.add_slider_float(format="y position = %.2f", min_value=0, max_value=len(self.viewmodel.state_plots)*1.2, default_value=state_plot.yshift, callback=lambda s, a, u: self.viewmodel.on_y_drag(a, u), user_data=state_plot, width=-66)
                     for tag in self.viewmodel.state_plots:
                         dpg.configure_item(self.spectrum_controls[tag]['yshift'], max_value=len(self.viewmodel.state_plots)*1.2)
                 dpg.add_spacer(width=6)
                 with dpg.group(horizontal=False):
-                    self.spectrum_controls[state_plot.tag]['show'] = self.icons.insert(dpg.add_button(width=29, height=29, callback=lambda s, a, u: self.hide_spectrum(u, False), user_data=state_plot.tag, show=state_plot.state.settings['hidden']), Icons.eye, size=15)
-                    self.spectrum_controls[state_plot.tag]['hide'] = self.icons.insert(dpg.add_button(width=29, height=29, callback=lambda s, a, u: self.hide_spectrum(u, True), user_data=state_plot.tag, show=not state_plot.state.settings['hidden']), Icons.eye_slash, size=15)
-                    dpg.add_color_edit(state_plot.state.get_color(), no_inputs=True, callback=lambda s, a, u: self.viewmodel.set_color([c*255 for c in a], u), user_data=state_plot)
+                    self.spectrum_controls[state_plot.tag]['show'] = self.icons.insert(dpg.add_button(width=30, height=30, callback=lambda s, a, u: self.hide_spectrum(u, False), user_data=state_plot.tag, show=state_plot.state.settings['hidden']), Icons.eye, size=15)
+                    self.spectrum_controls[state_plot.tag]['hide'] = self.icons.insert(dpg.add_button(width=30, height=30, callback=lambda s, a, u: self.hide_spectrum(u, True), user_data=state_plot.tag, show=not state_plot.state.settings['hidden']), Icons.eye_slash, size=15)
+                    dpg.add_color_edit(state_plot.state.get_color(), width=30, height=30, no_inputs=True, callback=lambda s, a, u: self.viewmodel.set_color([c*255 for c in a], u), user_data=state_plot)
+                    self.spectrum_controls[state_plot.tag]['reset'] = self.icons.insert(dpg.add_button(width=30, height=30, callback=lambda s, a, u: self.reset_spectrum_controls(u), user_data=state_plot.tag), Icons.rotate_left, size=15)
             dpg.add_spacer(height=6)
         self.last_inserted_spec_tag = self.spectrum_headers[state_plot.tag]
 
