@@ -70,7 +70,7 @@ class PlotsOverviewViewmodel:
             tag = StatePlot.construct_tag(state, self.is_emission)
             if tag not in self.state_plots.keys() or self.state_plots[tag].state != state:
                 state_index = State.state_list.index(state)
-                self.state_plots[tag] = StatePlot(state, self.is_emission, yshift=state_index*Labels.settings[self.is_emission].get('global y shifts', 1.25))
+                self.state_plots[tag] = StatePlot(state, self.is_emission, state_index=state_index)
                 self.state_plots[tag].index = state_index
                 self.state_plots[tag].set_spectrum_update_callback(self.update_plot_and_drag_lines)
                 self.state_plots[tag].set_sticks_update_callback(self.update_sticks)

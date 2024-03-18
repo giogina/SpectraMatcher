@@ -78,7 +78,9 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log",
-            "color selection type": "manual"
+            "color selection type": "manual",
+            "x shift": 0.0,
+            "y scale": 0.3919999897480011
         },
         {
             "color": [
@@ -88,7 +90,8 @@
             ],
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
-            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log"
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log",
+            "y scale": 0.5000000000000001
         },
         {
             "color": [
@@ -195,7 +198,7 @@
         }
     },
     "active emission plotter": [
-        20.7,
+        10.7,
         -1404,
         8457,
         1

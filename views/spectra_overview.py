@@ -52,6 +52,8 @@ class SpectraOverview:  # TODO> List like project setup: Name, color buttons, sh
     #  Allow adjustment of minx, maxx of exp spectra
     #  Allow color choices
 
+    # TODO: "Reset" button
+
     def add_spectrum(self, state_plot: StatePlot):
         self.spectrum_controls[state_plot.tag] = {}
         with dpg.collapsing_header(label=state_plot.name, parent=self.spectra_list_group, before=self.last_inserted_spec_tag, default_open=True) as self.spectrum_headers[state_plot.tag]:

@@ -1,22 +1,21 @@
+from utility.labels import Labels
 from utility.noop import noop
 from models.molecular_data import FCSpectrum
 import numpy as np
 
 
 class StatePlot:
-    def __init__(self, state, is_emission: bool, xshift=0, yshift=1):
+    def __init__(self, state, is_emission: bool, state_index=0):
         print(f"Making StatePlot for {state.name}")
         self.tag = StatePlot.construct_tag(state, is_emission)
         self.state = state
         self.spectrum = state.get_spectrum(is_emission)
         self.spectrum.add_observer(self)
         self.name = state.name
-        self.index = 0
-        self.xshift = xshift
-        self.yshift = yshift
-        self.yscale = 1
-        # self.color = state.settings.get("color", (200, 200, 200))  # todo: why is it different?!
-        # self.color = state.color
+        self.index = state_index
+        self.xshift = self.state.settings.get("x shift", 0)
+        self.yshift = self.state.settings.get("y shift", state_index*Labels.settings[is_emission].get('global y shifts', 1.25))
+        self.yscale = self.state.settings.get("y scale", 1)
         self._base_xdata = self.spectrum.x_data
         self._base_ydata = self.spectrum.y_data
         self.xdata = self._compute_x_data()
@@ -70,19 +69,23 @@ class StatePlot:
 
     def set_x_shift(self, xshift):
         self.xshift = xshift - self.handle_x
+        self.state.settings["x shift"] = self.xshift
         self.xdata = self._compute_x_data()
 
     def set_y_shift(self, yshift):
         self.yshift = yshift
+        self.state.settings["y shift"] = yshift
         self.ydata = self._compute_y_data()
 
     def resize_y_scale(self, direction):
         self.yscale += direction * 0.1
         self.yscale = max(0, self.yscale)
+        self.state.settings["y scale"] = self.yscale
         self.ydata = self._compute_y_data()
 
     def set_y_scale(self, value):
         self.yscale = value
+        self.state.settings["y scale"] = value
         self.ydata = self._compute_y_data()
 
     def set_color(self, color, selection_type="manual"):
