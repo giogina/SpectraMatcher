@@ -134,6 +134,9 @@ class PlotsOverviewViewmodel:
         self._callbacks.get("delete sticks")()
         WavenumberCorrector.set_correction_factor(self.is_emission, key, value)
 
+    def set_color(self, color, state_plot):
+        state_plot.set_color(color)
+
     def on_spectrum_click(self, *args):
         print(args)
 

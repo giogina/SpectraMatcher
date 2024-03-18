@@ -101,11 +101,11 @@ class SpecPlotter:
     def get_half_width(cls, is_emission):
         if is_emission:
             if cls._active_emission_plotter is None:
-                return None
+                return 10
             return cls._active_emission_plotter[0]
         else:
             if cls._active_excitation_plotter is None:
-                return None
+                return 10
             return cls._active_excitation_plotter[0]
 
     def _base_lorentzian_array(self):
@@ -133,7 +133,7 @@ class SpecPlotter:
             top = max(0.01, max(ydata))
             return plotter_key, cls._plotters[plotter_key].x_data, ydata / top, top
         else:
-            return None, None, []
+            return None, None, [], 1
 
     def _shifted_peak(self, position_index):
         """Shifts and truncates self._base_peak to be correctly positioned in self._x_data."""

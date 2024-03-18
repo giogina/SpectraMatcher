@@ -11,11 +11,12 @@ class StatePlot:
         self.spectrum = state.get_spectrum(is_emission)
         self.spectrum.add_observer(self)
         self.name = state.name
-        self.index = -1
+        self.index = 0
         self.xshift = xshift
         self.yshift = yshift
         self.yscale = 1
-        self.color = state.color
+        # self.color = state.settings.get("color", (200, 200, 200))  # todo: why is it different?!
+        # self.color = state.color
         self._base_xdata = self.spectrum.x_data
         self._base_ydata = self.spectrum.y_data
         self.xdata = self._compute_x_data()
@@ -83,6 +84,10 @@ class StatePlot:
     def set_y_scale(self, value):
         self.yscale = value
         self.ydata = self._compute_y_data()
+
+    def set_color(self, color):
+        self.color = color
+        # self.state.settings["color"] = color
 
     def get_xydata(self, xmin, xmax):
         if self.xdata[0] < xmin:

@@ -291,6 +291,8 @@ class FCSpectrum:
         self.peaks = peaks
         self.multiplicator = multiplicator
         self.zero_zero_transition_energy = zero_zero_transition_energy
+        self.minima = None
+        self.maxima = None
         key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
         for peak in self.peaks:
             peak.intensity /= self.mul2  # scale to match self.y_data scaling
@@ -301,8 +303,6 @@ class FCSpectrum:
         self.y_data_arrays = {key: self.y_data}  # SpecPlotter key: array (save previously computed spectra)
         self.vibrational_modes = None
         self.clusters = []
-        self.minima = None
-        self.maxima = None
 
     def add_observer(self, observer):
         self._observers.append(observer)

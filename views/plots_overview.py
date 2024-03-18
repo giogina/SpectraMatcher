@@ -8,7 +8,7 @@ from utility.item_themes import ItemThemes
 from utility.labels import Labels
 from utility.matcher import Matcher
 from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel, WavenumberCorrector
-from utility.spectrum_plots import hsv_to_rgb, adjust_color_for_dark_theme, SpecPlotter
+from utility.spectrum_plots import adjust_color_for_dark_theme, SpecPlotter
 
 
 class PlotsOverview:
@@ -375,23 +375,25 @@ class PlotsOverview:
         xmin, xmax, ymin, ymax = self.viewmodel.get_zoom_range()
         s = self.viewmodel.state_plots[tag]
         if not dpg.does_item_exist(tag):
-            with dpg.theme() as self.spec_theme[s.tag]:
-                with dpg.theme_component(dpg.mvLineSeries):
-                    dpg.add_theme_color(dpg.mvPlotCol_Line, s.color, category=dpg.mvThemeCat_Plots)
+
             xdata, ydata = s.get_xydata(xmin, xmax)  # truncated versions
             dpg.add_line_series(xdata, ydata, label=s.name, parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  # , user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
             self.line_series.append(s.tag)
-            dpg.bind_item_theme(s.tag, self.spec_theme[s.tag])
+            for spec in self.viewmodel.state_plots.values():
+                with dpg.theme() as self.spec_theme[spec.tag]:
+                    with dpg.theme_component(dpg.mvLineSeries):
+                        dpg.add_theme_color(dpg.mvPlotCol_Line, spec.state.color, category=dpg.mvThemeCat_Plots)
+                dpg.bind_item_theme(spec.tag, self.spec_theme[spec.tag])
         else:
             self.update_plot(s)
         if not dpg.does_item_exist(f"drag-{s.tag}"):
             dpg.add_drag_line(tag=f"drag-{s.tag}", vertical=False, show_label=False, default_value=s.yshift,
                               user_data=s,
                               callback=lambda sender, a, u: self.viewmodel.on_y_drag(dpg.get_value(sender), u),
-                              parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.color)
+                              parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.state.color)
             dpg.add_drag_line(tag=f"drag-x-{s.tag}", vertical=True, show_label=False, default_value=s.handle_x, user_data=s,
                               callback=lambda sender, a, u: self.viewmodel.on_x_drag(dpg.get_value(sender), u),
-                              parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.color)
+                              parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.state.color)
         else:
             dpg.set_value(f"drag-{s.tag}", s.yshift)
         self.draw_sticks(s)
