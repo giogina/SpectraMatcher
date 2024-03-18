@@ -66,7 +66,7 @@ class SpectraOverview:
     def reset_spectrum_controls(self, tag):
         defaults = {'xshift': 0., 'yscale': 1.}
         state_plot = self.viewmodel.state_plots[tag]
-        self.viewmodel.on_x_drag(defaults['xshift'] + state_plot.handle_x, state_plot)
+        self.viewmodel.on_x_drag(defaults['xshift'], state_plot, slider=True)
         self.viewmodel.set_y_scale(defaults['yscale'], state_plot)
 
     def add_spectrum(self, state_plot: StatePlot):
@@ -76,7 +76,7 @@ class SpectraOverview:
             with dpg.group(horizontal=True):
                 dpg.add_spacer(width=6)
                 with dpg.group(horizontal=False):
-                    self.spectrum_controls[state_plot.tag]['xshift'] = dpg.add_slider_float(format="shift = %.1f cm⁻¹", min_value=-1000, max_value=5000, default_value=state_plot.xshift, callback=lambda s, a, u: self.viewmodel.on_x_drag(a - state_plot.handle_x, u), user_data=state_plot, width=-66)
+                    self.spectrum_controls[state_plot.tag]['xshift'] = dpg.add_slider_float(format="shift = %.1f cm⁻¹", min_value=-1000, max_value=5000, default_value=state_plot.xshift, callback=lambda s, a, u: self.viewmodel.on_x_drag(a, u, slider=True), user_data=state_plot, width=-66)
                     self.spectrum_controls[state_plot.tag]['yscale'] = dpg.add_slider_float(format="scale = %.3f", min_value=0, max_value=1.2, default_value=state_plot.yscale, callback=lambda s, a, u: self.viewmodel.set_y_scale(a, u), user_data=state_plot, width=-66)
                     self.spectrum_controls[state_plot.tag]['yshift'] = dpg.add_slider_float(format="y position = %.2f", min_value=0, max_value=len(self.viewmodel.state_plots)*1.2, default_value=state_plot.yshift, callback=lambda s, a, u: self.viewmodel.on_y_drag(a, u), user_data=state_plot, width=-66)
                     for tag in self.viewmodel.state_plots:

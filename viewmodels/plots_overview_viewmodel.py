@@ -96,7 +96,9 @@ class PlotsOverviewViewmodel:
                 break
             time.sleep(debounce_period)
 
-    def on_x_drag(self, value, state_plot):
+    def on_x_drag(self, value, state_plot, slider=False):
+        if slider:
+            value = value + self.state_plots[state_plot.tag].handle_x
         self.state_plots[state_plot.tag].set_x_shift(value)
         self._callbacks.get("delete sticks")(state_plot.tag)
         self._callbacks.get("update plot")(self.state_plots[state_plot.tag], mark_dragged_plot=state_plot.tag)
