@@ -22,6 +22,9 @@ class SpectraOverview:  # TODO> List like project setup: Name, color buttons, sh
 
         self.expand_panel_button = self.icons.insert(dpg.add_button(height=20, width=20, pos=(10, 65), show=False, parent="emission tab" if self.viewmodel.is_emission else "excitation tab", callback=lambda s, a, u: self.collapse_spectrum_list(True)), Icons.caret_right, size=16)
 
+        with dpg.handler_registry() as self.mouse_handlers:
+            dpg.add_mouse_release_handler(dpg.mvMouseButton_Right, callback=self.on_right_click_release)
+
         with dpg.child_window(width=-1, height=32) as self.spectra_list_action_bar:
 
             with dpg.theme() as self.expand_button_theme:
@@ -55,6 +58,14 @@ class SpectraOverview:  # TODO> List like project setup: Name, color buttons, sh
 
     # TODO: "Reset" button for spectra, resetting xshift, yshift, xscale
     #  Make hide/show button functional (for all elements - line series, drag lines, sticks)
+
+    def on_right_click_release(self):
+        for tag in self.viewmodel.state_plots.keys():
+            if dpg.is_item_hovered(self.spectrum_controls[tag]['hide']) or dpg.is_item_hovered(self.spectrum_controls[tag]['show']):
+                for tag2 in self.viewmodel.state_plots.keys():
+                    if tag2 != tag:
+                        self.hide_spectrum(tag2)
+                self.hide_spectrum(tag, False)
 
     def add_spectrum(self, state_plot: StatePlot):
         self.spectrum_controls[state_plot.tag] = {}

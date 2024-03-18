@@ -95,7 +95,7 @@
             "y scale": 1.0,
             "x shift": -5.012484758154642,
             "hidden": false,
-            "y shift": 2.1026101141924958
+            "y shift": 1.2714691073505264
         },
         {
             "color": [
@@ -127,7 +127,8 @@
             ],
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT emission\\FCHT.log",
-            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\ovalene-excited-5-opt-freq-disp.log"
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\ovalene-excited-5-opt-freq-disp.log",
+            "hidden": true
         },
         {
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT\\FCHT.log",
@@ -140,7 +141,7 @@
                 255.0
             ],
             "color selection type": "manual",
-            "hidden": false
+            "hidden": true
         }
     ],
     "progress": "import done",

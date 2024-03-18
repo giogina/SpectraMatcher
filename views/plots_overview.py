@@ -171,6 +171,7 @@ class PlotsOverview:
                                     dpg.add_button(label="Defaults", width=-6, callback=self.restore_matcher_defaults)
                                     dpg.add_button(label="Save as table", callback=self.print_table, width=-6)
         self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, show=False, parent="emission tab" if self.viewmodel.is_emission else "excitation tab", callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
+        self.dummy_series = dpg.add_scatter_series([0, 2000], [-0.1, 1.1], parent=f"y_axis_{self.viewmodel.is_emission}")
         append_viewport_resize_update_callback(self.viewport_resize_update)
         self.configure_theme()
         # TODO: React to arrow button presses by adjusting last changed control.
@@ -357,9 +358,7 @@ class PlotsOverview:
         self.line_series = []
 
         xmin, xmax, ymin, ymax = self.viewmodel.get_zoom_range()
-        dpg.add_scatter_series([xmin, xmax], [ymin, ymax], parent=f"y_axis_{self.viewmodel.is_emission}")
-        self.line_series.append(dpg.last_item())
-        dpg.bind_item_theme(dpg.last_item(), f"plot_theme_{self.viewmodel.is_emission}")
+        dpg.set_value(self.dummy_series, [[xmin, xmax], [ymin, ymax]])
 
         for x_data, y_data in self.viewmodel.xydatas:
             self.add_experimental_spectrum(x_data, y_data)
@@ -396,7 +395,7 @@ class PlotsOverview:
         self.draw_labels(s.tag)
         for spec in self.viewmodel.state_plots.values():
             self.update_spectrum_color(spec)
-        dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
+        self.fit_y()
         dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
 
     def hide_spectrum(self, tag, hide):
@@ -409,7 +408,7 @@ class PlotsOverview:
         else:
             self.draw_sticks(self.viewmodel.state_plots[tag])
             self.draw_labels(tag)
-        dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
+        self.fit_y()
 
     def update_spectrum_color(self, spec):
         with dpg.theme() as self.spec_theme[spec.tag]:
@@ -430,7 +429,9 @@ class PlotsOverview:
         self.update_labels(state_plot.tag)
         if fit_y_axis:
             self.vertical_slider_active = True
-            dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
+            self.fit_y()
+        else:
+            self.fit_y(dummy_series_update_only=True)
 
     def delete_sticks(self, spec_tag=None):  # None: all of them.
         if spec_tag is not None:
@@ -633,6 +634,7 @@ class PlotsOverview:
                 dpg.add_theme_style(dpg.mvPlotStyleVar_MarkerSize, 1, category=dpg.mvThemeCat_Plots)
             with dpg.theme_component(dpg.mvDragLine):
                 dpg.add_theme_color(dpg.mvPlotCol_Line, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
+        dpg.bind_item_theme(self.dummy_series, f"plot_theme_{self.viewmodel.is_emission}")
 
         with dpg.theme(tag=f"exp_spec_theme_{self.viewmodel.is_emission}"):
             with dpg.theme_component(dpg.mvLineSeries):
@@ -669,3 +671,16 @@ class PlotsOverview:
                     dpg.configure_item(f"drag-{tag}", show=show)
                 if dpg.does_item_exist(f"drag-x-{tag}"):
                     dpg.configure_item(f"drag-x-{tag}", show=show)
+
+    def fit_y(self, dummy_series_update_only=False):
+        ymin = -0.1
+        ymax = 1.25
+        for tag, spec in self.viewmodel.state_plots.items():
+            if dpg.is_item_shown(tag):
+                ymin = min(ymin, spec.yshift - 0.25)
+                ymax = max(ymax, spec.yshift + 1.25)
+        print(ymin, ymax)
+        y_axis = f"y_axis_{self.viewmodel.is_emission}"
+        dpg.set_value(self.dummy_series, value=[[0, 0], [ymin, ymax]])
+        if not dummy_series_update_only:
+            dpg.fit_axis_data(y_axis)
