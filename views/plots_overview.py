@@ -679,7 +679,6 @@ class PlotsOverview:
             if dpg.is_item_shown(tag):
                 ymin = min(ymin, spec.yshift - 0.25)
                 ymax = max(ymax, spec.yshift + 1.25)
-        print(ymin, ymax)
         y_axis = f"y_axis_{self.viewmodel.is_emission}"
         dpg.set_value(self.dummy_series, value=[[0, 0], [ymin, ymax]])
         if not dummy_series_update_only:

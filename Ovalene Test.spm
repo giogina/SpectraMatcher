@@ -81,7 +81,8 @@
             "color selection type": "manual",
             "x shift": 0.0,
             "y scale": 0.3919999897480011,
-            "hidden": true
+            "hidden": false,
+            "y shift": 1.25
         },
         {
             "color": [
@@ -94,8 +95,8 @@
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log",
             "y scale": 1.0,
             "x shift": -5.012484758154642,
-            "hidden": false,
-            "y shift": 1.2714691073505264
+            "hidden": true,
+            "y shift": 1.25
         },
         {
             "color": [
@@ -106,7 +107,8 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\ovalene-excited-3-opt-freq-disp.log",
-            "hidden": true
+            "hidden": false,
+            "y shift": 2.5
         },
         {
             "color": [
@@ -117,7 +119,8 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\ovalene-excited-4-opt-freq-disp.log",
-            "hidden": true
+            "hidden": true,
+            "y shift": 2.5
         },
         {
             "color": [
@@ -128,7 +131,8 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\ovalene-excited-5-opt-freq-disp.log",
-            "hidden": true
+            "hidden": false,
+            "y shift": 3.75
         },
         {
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT\\FCHT.log",
@@ -141,7 +145,8 @@
                 255.0
             ],
             "color selection type": "manual",
-            "hidden": true
+            "hidden": false,
+            "y shift": 5.0
         }
     ],
     "progress": "import done",
