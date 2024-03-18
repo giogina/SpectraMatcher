@@ -101,7 +101,10 @@ class PlotsOverviewViewmodel:
             value = value + self.state_plots[state_plot.tag].handle_x
         self.state_plots[state_plot.tag].set_x_shift(value)
         self._callbacks.get("delete sticks")(state_plot.tag)
-        self._callbacks.get("update plot")(self.state_plots[state_plot.tag], mark_dragged_plot=state_plot.tag)
+        if slider:
+            self._callbacks.get("update plot")(self.state_plots[state_plot.tag], update_drag_lines=True)
+        else:
+            self._callbacks.get("update plot")(self.state_plots[state_plot.tag], mark_dragged_plot=state_plot.tag)
         self._callbacks.get("update list spec")(self.state_plots[state_plot.tag])
 
     def on_y_drag(self, value, state_plot):

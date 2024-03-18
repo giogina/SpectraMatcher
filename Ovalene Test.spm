@@ -121,8 +121,10 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\ovalene-excited-4-opt-freq-disp.log",
-            "hidden": true,
-            "y shift": 2.5
+            "hidden": false,
+            "y shift": 2.5,
+            "x shift": 0.0,
+            "y scale": 1.0
         },
         {
             "color": [
