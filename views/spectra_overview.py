@@ -15,6 +15,7 @@ class SpectraOverview:  # TODO> List like project setup: Name, color buttons, sh
         self.plots_column = "Emission plots column" if self.viewmodel.is_emission else "Excitation plots column"
         self.expand_panel_button = None
         self.spectrum_controls = {}  # spec.tag: {property: spec property controls}
+        self.spectrum_headers = {}  # spec.tag: collapsing_header item
 
         self.viewmodel.set_callback("add list spectrum", self.add_spectrum)
         self.viewmodel.set_callback("update list spec", self.update_spectrum)
@@ -43,28 +44,32 @@ class SpectraOverview:  # TODO> List like project setup: Name, color buttons, sh
         dpg.bind_item_theme(self.spectra_list_action_bar, ItemThemes.action_bar_theme())
 
         with dpg.group() as self.spectra_list_group:
-            pass
+            self.last_inserted_spec_tag = dpg.add_spacer(height=0)  # new specs inserted before this tag
 
         self.configure_theme()
 
+    # TODO: Entries for experimental spectra
+    #  Allow adjustment of minx, maxx of exp spectra
+    #  Allow color choices
+
     def add_spectrum(self, state_plot: StatePlot):
         self.spectrum_controls[state_plot.tag] = {}
-        with dpg.collapsing_header(label=state_plot.name, parent=self.spectra_list_group, default_open=True):
+        with dpg.collapsing_header(label=state_plot.name, parent=self.spectra_list_group, before=self.last_inserted_spec_tag, default_open=True) as self.spectrum_headers[state_plot.tag]:
             dpg.add_spacer(height=6)
             with dpg.group(horizontal=True):
                 dpg.add_spacer(width=6)
                 with dpg.group(horizontal=False):
-                    with dpg.group(horizontal=True):
-                        self.icons.insert(dpg.add_button(width=32, height=32), Icons.eye_slash, size=16)
-                        dpg.add_color_edit(state_plot.state.get_color(), no_inputs=True, callback=lambda s, a, u: self.viewmodel.set_color([c*255 for c in a], u), user_data=state_plot)
-                        # todo: color button
-                        # todo: sort specs bottom-up?
-                    self.spectrum_controls[state_plot.tag]['xshift'] = dpg.add_slider_float(format="shift = %.1f cm⁻¹", min_value=-1000, max_value=5000, default_value=state_plot.xshift, callback=lambda s, a, u: self.viewmodel.on_x_drag(a, u), user_data=state_plot)
-                    self.spectrum_controls[state_plot.tag]['yscale'] = dpg.add_slider_float(format="scale = %.3f", min_value=0, max_value=1.2, default_value=state_plot.yscale, callback=lambda s, a, u: self.viewmodel.set_y_scale(a, u), user_data=state_plot)
-                    self.spectrum_controls[state_plot.tag]['yshift'] = dpg.add_slider_float(format="y position = %.2f", min_value=0, max_value=len(self.viewmodel.state_plots)*1.2, default_value=state_plot.yshift, callback=lambda s, a, u: self.viewmodel.on_y_drag(a, u), user_data=state_plot)
+                    self.spectrum_controls[state_plot.tag]['xshift'] = dpg.add_slider_float(format="shift = %.1f cm⁻¹", min_value=-1000, max_value=5000, default_value=state_plot.xshift, callback=lambda s, a, u: self.viewmodel.on_x_drag(a, u), user_data=state_plot, width=-66)
+                    self.spectrum_controls[state_plot.tag]['yscale'] = dpg.add_slider_float(format="scale = %.3f", min_value=0, max_value=1.2, default_value=state_plot.yscale, callback=lambda s, a, u: self.viewmodel.set_y_scale(a, u), user_data=state_plot, width=-66)
+                    self.spectrum_controls[state_plot.tag]['yshift'] = dpg.add_slider_float(format="y position = %.2f", min_value=0, max_value=len(self.viewmodel.state_plots)*1.2, default_value=state_plot.yshift, callback=lambda s, a, u: self.viewmodel.on_y_drag(a, u), user_data=state_plot, width=-66)
                     for tag in self.viewmodel.state_plots:
                         dpg.configure_item(self.spectrum_controls[tag]['yshift'], max_value=len(self.viewmodel.state_plots)*1.2)
+                dpg.add_spacer(width=6)
+                with dpg.group(horizontal=False):
+                    self.icons.insert(dpg.add_button(width=29, height=29), Icons.eye_slash, size=16)
+                    dpg.add_color_edit(state_plot.state.get_color(), no_inputs=True, callback=lambda s, a, u: self.viewmodel.set_color([c*255 for c in a], u), user_data=state_plot)
             dpg.add_spacer(height=6)
+        self.last_inserted_spec_tag = self.spectrum_headers[state_plot.tag]
 
     def update_spectrum(self, state_plot: StatePlot):
         dpg.set_value(self.spectrum_controls[state_plot.tag]['xshift'], state_plot.xshift)
