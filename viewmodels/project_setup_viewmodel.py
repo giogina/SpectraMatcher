@@ -126,7 +126,7 @@ class ProjectSetupViewModel(ProjectObserver):
         self._callbacks.get("update experimental data")()
         self._project.copy_experiment_settings()
 
-    def import_done(self):  # TODO: Everything up to pressing this button should be done automatically if project progress is larger.
+    def import_done(self):
         for state in State.state_list:
             if not state.check():
                 self._callbacks.get("dialog")(title=f"Errors in data of {state.name}", message='\n'.join(state.errors))

@@ -56,9 +56,8 @@ class SpectraOverview:  # TODO> List like project setup: Name, color buttons, sh
                 with dpg.group(horizontal=False):
                     with dpg.group(horizontal=True):
                         self.icons.insert(dpg.add_button(width=32, height=32), Icons.eye_slash, size=16)
-                        dpg.add_color_edit(state_plot.state.color, no_inputs=True, callback=lambda s, a, u: self.viewmodel.set_color(a, u), user_data=state_plot)
+                        dpg.add_color_edit(state_plot.state.get_color(), no_inputs=True, callback=lambda s, a, u: self.viewmodel.set_color([c*255 for c in a], u), user_data=state_plot)
                         # todo: color button
-                        # todo> for some reason, colors aren't distributed evenly anymore. Why?!
                         # todo: sort specs bottom-up?
                     self.spectrum_controls[state_plot.tag]['xshift'] = dpg.add_slider_float(format="shift = %.1f cm⁻¹", min_value=-1000, max_value=5000, default_value=state_plot.xshift, callback=lambda s, a, u: self.viewmodel.on_x_drag(a, u), user_data=state_plot)
                     self.spectrum_controls[state_plot.tag]['yscale'] = dpg.add_slider_float(format="scale = %.3f", min_value=0, max_value=1.2, default_value=state_plot.yscale, callback=lambda s, a, u: self.viewmodel.set_y_scale(a, u), user_data=state_plot)

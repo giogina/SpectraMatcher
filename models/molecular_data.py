@@ -249,7 +249,7 @@ class FCPeak:
         self.corrected_wavenumber = wavenumber
         self.transition = transition
         self.intensity = intensity
-        self.types = {}  # gaussian_name: [bend, -H, others] properties for each transition  # todo
+        self.types = {}  # gaussian_name: [bend, -H, others] properties for each transition
         self.label = ""
         self.gaussian_label = ""
 

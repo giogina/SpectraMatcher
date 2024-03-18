@@ -227,13 +227,10 @@ class State:
     @classmethod
     def sort_states_by_energy(cls):
         cls.state_list.sort(key=lambda x: (x.delta_E is None, x.delta_E))
-        for state in cls.state_list:
-            print("Color before: ", state.color)
         for i, state in enumerate(cls.state_list):
-            # if state.settings.get("color") is None:
-            # state.settings["color"] = hsv_to_rgb((i-1)/(len(cls.state_list)), 0.9, 0.9)
-            state.color = hsv_to_rgb(i/len(cls.state_list), 0.9, 0.9)
-            print("Determine colors: ", i, len(cls.state_list), i/len(cls.state_list)*255, state.color)
+            if state.settings.get("color selection type") not in ("manual", ):  # todo: keywords for different color schemes
+                state.settings["color"] = hsv_to_rgb(i/len(cls.state_list), 0.9, 0.9)
+            # state.color = hsv_to_rgb(i/len(cls.state_list), 0.9, 0.9)
             if i == 0:
                 if not state.is_ground:
                     print("WARNING: 0th state somehow not ground state")
@@ -246,9 +243,6 @@ class State:
                 state.name = "3rd excited state"
             else:
                 state.name = f"{i}th excited state"
-
-        for state in cls.state_list:
-            print("Color after: ", state.color)
 
     def wipe(self):
         """Restore a clean slate"""
@@ -296,3 +290,6 @@ class State:
                         for file in file_structure.get(delta_E, []):
                             if not file.ignored:
                                 s.assimilate_file_data(file)
+
+    def get_color(self):
+        return self.settings.get("color", (200, 200, 200))

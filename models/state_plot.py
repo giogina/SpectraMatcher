@@ -85,9 +85,9 @@ class StatePlot:
         self.yscale = value
         self.ydata = self._compute_y_data()
 
-    def set_color(self, color):
-        self.color = color
-        # self.state.settings["color"] = color
+    def set_color(self, color, selection_type="manual"):
+        self.state.settings["color"] = color
+        self.state.settings["color selection type"] = selection_type
 
     def get_xydata(self, xmin, xmax):
         if self.xdata[0] < xmin:

@@ -30,6 +30,7 @@ class PlotsOverviewViewmodel:
             "redraw peaks": noop,
             "add list spectrum": noop,
             "update list spec": noop,
+            "update spectrum color": noop,
         }
 
         self.xydatas = []  # experimental x, y
@@ -136,6 +137,7 @@ class PlotsOverviewViewmodel:
 
     def set_color(self, color, state_plot):
         state_plot.set_color(color)
+        self._callbacks.get("update spectrum color")(state_plot)
 
     def on_spectrum_click(self, *args):
         print(args)

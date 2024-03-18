@@ -17,6 +17,7 @@ class PlotsOverview:
         self.viewmodel.set_callback("redraw plot", self.redraw_plot)
         self.viewmodel.set_callback("update plot", self.update_plot)
         self.viewmodel.set_callback("add spectrum", self.add_spectrum)
+        self.viewmodel.set_callback("update spectrum color", self.update_spectrum_color)
         self.viewmodel.set_callback("delete sticks", self.delete_sticks)
         self.viewmodel.set_callback("redraw sticks", self.draw_sticks)
         self.viewmodel.set_callback("post load update", self.set_ui_values_from_settings)
@@ -234,9 +235,9 @@ class PlotsOverview:
         Matcher.restore_defaults(self.viewmodel.is_emission)
         self.set_ui_values_from_settings(matcher=True)
 
-    def print_table(self):
+    def print_table(self):  # todo
         pass
-        # todo
+
 
     def set_ui_values_from_settings(self, x_scale=False, half_width=False, y_shifts=False, labels=False, peak_detection=False, matcher=False):
         load_all = True not in (x_scale, half_width, labels, matcher)
@@ -379,27 +380,32 @@ class PlotsOverview:
             xdata, ydata = s.get_xydata(xmin, xmax)  # truncated versions
             dpg.add_line_series(xdata, ydata, label=s.name, parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  # , user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
             self.line_series.append(s.tag)
-            for spec in self.viewmodel.state_plots.values():
-                with dpg.theme() as self.spec_theme[spec.tag]:
-                    with dpg.theme_component(dpg.mvLineSeries):
-                        dpg.add_theme_color(dpg.mvPlotCol_Line, spec.state.color, category=dpg.mvThemeCat_Plots)
-                dpg.bind_item_theme(spec.tag, self.spec_theme[spec.tag])
         else:
             self.update_plot(s)
         if not dpg.does_item_exist(f"drag-{s.tag}"):
             dpg.add_drag_line(tag=f"drag-{s.tag}", vertical=False, show_label=False, default_value=s.yshift,
                               user_data=s,
                               callback=lambda sender, a, u: self.viewmodel.on_y_drag(dpg.get_value(sender), u),
-                              parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.state.color)
+                              parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.state.get_color())
             dpg.add_drag_line(tag=f"drag-x-{s.tag}", vertical=True, show_label=False, default_value=s.handle_x, user_data=s,
                               callback=lambda sender, a, u: self.viewmodel.on_x_drag(dpg.get_value(sender), u),
-                              parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.state.color)
+                              parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.state.get_color())
         else:
             dpg.set_value(f"drag-{s.tag}", s.yshift)
         self.draw_sticks(s)
         self.draw_labels(s.tag)
+        for spec in self.viewmodel.state_plots.values():
+            self.update_spectrum_color(spec)
         dpg.fit_axis_data(f"y_axis_{self.viewmodel.is_emission}")
         dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
+
+    def update_spectrum_color(self, spec):
+        with dpg.theme() as self.spec_theme[spec.tag]:
+            with dpg.theme_component(dpg.mvLineSeries):
+                dpg.add_theme_color(dpg.mvPlotCol_Line, spec.state.get_color(), category=dpg.mvThemeCat_Plots)
+        dpg.bind_item_theme(spec.tag, self.spec_theme[spec.tag])
+        dpg.configure_item(f"drag-{spec.tag}", color=spec.state.get_color())
+        dpg.configure_item(f"drag-x-{spec.tag}", color=spec.state.get_color())
 
     def update_plot(self, state_plot, mark_dragged_plot=None, redraw_sticks=False, update_drag_lines=False, fit_y_axis=False):
         self.dragged_plot = mark_dragged_plot

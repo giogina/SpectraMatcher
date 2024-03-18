@@ -321,17 +321,13 @@ class ExperimentalSpectrum:
         width = int(abs(sum(widths) / len(widths)) * 5) / 10
         self.peak_width = width / ((max(xdata) - min(xdata)) / len(xdata))
 
-        # TODO: allow for adjustment of prominence / width here? Or allow more / filter later?
         self.detect_peaks()  #prominence=0.05, width=10 / (abs(xdata[-1] - xdata[0]) / len(xdata))
 
         self.ok = len(self.errors) == 0
         self._notify_observers(self.spectrum_analyzed_notification)
 
         ExperimentalSpectrum.adjust_spec_plotter_range(self.is_emission)
-        # for peak in self.peaks:
-        #     print(peak.wavenumber, peak.intensity, peak.prominence)
 
-# todo> prominence and width limits are settings; changing them triggers re-evaluation of peaks
     def detect_peaks(self):
         peaks, _ = signal.find_peaks(self.smooth_ydata, prominence=ExperimentalSpectrum.get(self.is_emission, 'peak prominence threshold'), width=ExperimentalSpectrum.get(self.is_emission, 'peak width threshold'))
         peaks = list(peaks)
