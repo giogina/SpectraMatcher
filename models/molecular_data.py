@@ -274,7 +274,6 @@ class Cluster:
         self.width = 0
         self.height = 0
         self.to_be_positioned = False
-        self.positioning_done = False
         self.left_neighbour = None
         self.right_neighbour = None
         self.space = [0, 0] # space in wavenumbers to left and right to-be-positioned neighbours
@@ -288,6 +287,7 @@ class Cluster:
 
     def construct_label(self, gaussian: bool):
         if self.y < Labels.settings[self.is_emission]['peak intensity label threshold']:
+            self.label = ""
             return ""
         threshold = Labels.settings[self.is_emission]['stick label relative threshold'] * float(self.peaks[0].intensity) + \
                     Labels.settings[self.is_emission]['stick label absolute threshold']  # Threshold for counting as contributing to the peak
@@ -384,7 +384,6 @@ class FCSpectrum:
             cluster.rel_y = gap_height
             cluster.floor = cluster.y + cluster.rel_y
             cluster.to_be_positioned = len(cluster.label) > 0
-            # cluster.positioning_done = False
             if cluster.to_be_positioned:
                 cluster.left_neighbour = prev_unpositioned_cluster
                 if prev_unpositioned_cluster is not None:
@@ -433,47 +432,6 @@ class FCSpectrum:
                 # print(cluster.label, cluster.rel_x, cluster.rel_y)
 
             to_be_positioned = [c for c in self.clusters if c.to_be_positioned]
-
-
-
-
-
-
-    # def decide_label_y_order(self):  # font_dimensions: x, y
-    #     positioned_clusters = []  # indices in self.clusters
-    #     positioning_done = []
-    #     to_be_positioned = [i for i, c in enumerate(self.clusters) if c.width > 0 and c.height > 0]  # start with list of all cluster indices
-    #     while to_be_positioned:
-    #         spaces = [[tbp, sum(self.space_between_lines(to_be_positioned, tbp))/self.clusters[tbp].width] for tbp in to_be_positioned]
-    #
-    #         placeables = []
-    #         if len(spaces) == 1:
-    #             placeables = [spaces[0][0]]
-    #         else:
-    #             if spaces[0][1] > spaces[1][1]:
-    #                 placeables = [spaces[0][0]]
-    #                 self.clusters[spaces[1][0]].on_top_of.extend([o+[spaces[0][0]] for o in self.clusters[spaces[0][0]].on_top_of])
-    #             for i in range(1, len(spaces)-1):
-    #                 if spaces[i][1] > spaces[i-1][1] and spaces[i][1] > spaces[i+1][1]:
-    #                     placeables.append(spaces[i][0])
-    #                     self.clusters[spaces[i-1][0]].on_top_of.extend([o + [spaces[i][0]] for o in self.clusters[spaces[i][0]].on_top_of])
-    #                     self.clusters[spaces[i+1][0]].on_top_of.extend([o + [spaces[i][0]] for o in self.clusters[spaces[i][0]].on_top_of])
-    #             if spaces[-1][1] > spaces[-2][1]:
-    #                 placeables.append(spaces[-1][0])
-    #                 self.clusters[spaces[-2][0]].on_top_of.extend([o + [spaces[-1][0]] for o in self.clusters[spaces[-1][0]].on_top_of])
-    #
-    #         if not placeables:
-    #             print("No label position found: ", to_be_positioned)
-    #             break
-    #
-    #         for p in placeables:
-    #             positioned_clusters.append(self.clusters[p])
-    #             positioning_done.append(p)
-    #             to_be_positioned.remove(p)
-    #
-    #     for c in positioned_clusters:
-    #         print(c.filtered_peak_labels, c.on_top_of)
-
 
     def get_wavenumbers(self, nr=-1):
         end = len(self.peaks) if nr == -1 else nr + 1

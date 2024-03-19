@@ -68,8 +68,8 @@ class Labels:
     def set(cls, is_emission, key, value):
         if key in cls.settings[is_emission].keys():
             cls.settings[is_emission][key] = value
-        cls.notify_changed_callback()  # notify project
-        cls._notify_observers(cls.label_settings_updated_notification, is_emission)
+            cls.notify_changed_callback()  # notify project
+            cls._notify_observers(cls.label_settings_updated_notification, is_emission)
 
     @classmethod
     def restore_defaults(cls, is_emission):

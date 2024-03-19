@@ -509,11 +509,14 @@ class PlotsOverview:
             self.annotations[tag] = {}
             self.label_drag_points[tag] = {}
             self.annotation_lines[tag] = {}
-            state_plot = self.viewmodel.state_plots[tag]
-            clusters = state_plot.get_clusters()  # todo: re-distribute labels only on viewport resize, panel collapse/expand, font size change
+
             font_size = Labels.settings[self.viewmodel.is_emission]['label font size']
             label_font = FontManager.get(font_size)
             dpg.bind_item_font(plot, label_font)
+
+            state_plot = self.viewmodel.state_plots[tag]
+            clusters = state_plot.get_clusters()  # todo: re-distribute labels only on viewport resize, panel collapse/expand, font size change
+
             for cluster in clusters:
                 cluster.construct_label(self.gaussian_labels)
                 text_size = dpg.get_text_size(cluster.label, font=label_font)
