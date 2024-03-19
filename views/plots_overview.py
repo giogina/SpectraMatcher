@@ -497,6 +497,7 @@ class PlotsOverview:
 
     def draw_labels(self, tag):
         if self.labels and dpg.is_item_shown(tag):
+            print("draw labels...")
             plot = f"plot_{self.viewmodel.is_emission}"
             for annotation in self.annotations.get(tag, {}).values():
                 if dpg.does_item_exist(annotation):
@@ -505,14 +506,11 @@ class PlotsOverview:
             for drag_point in self.label_drag_points.get(tag, {}).values():
                 if dpg.does_item_exist(drag_point):
                     dpg.delete_item(drag_point)
-            # for line in self.annotation_lines.get(tag, {}).values():
-            #     if dpg.does_item_exist(line):
-            #         dpg.delete_item(line)
             self.annotations[tag] = {}
             self.label_drag_points[tag] = {}
             self.annotation_lines[tag] = {}
             state_plot = self.viewmodel.state_plots[tag]
-            clusters = state_plot.get_clusters()  # sorted by intensity  # todo: re-distribute labels only on viewport resize, panel collapse/expand, font size change
+            clusters = state_plot.get_clusters()  # todo: re-distribute labels only on viewport resize, panel collapse/expand, font size change
             font_size = Labels.settings[self.viewmodel.is_emission]['label font size']
             label_font = FontManager.get(font_size)
             dpg.bind_item_font(plot, label_font)
@@ -523,24 +521,21 @@ class PlotsOverview:
             state_plot.spectrum.decide_label_positions(gap_width=font_size/self.pixels_per_plot_x, gap_height=font_size/self.pixels_per_plot_y)
             for cluster in clusters:
                 if len(cluster.label):
-                    # print(cluster.label, cluster.rel_x, cluster.rel_y)
-                    # todo> diagonal lines only if straight line wouldn't reach the label
-                    #  Save manual relative positions
                     x = cluster.x + state_plot.xshift
                     y = state_plot.yshift + cluster.y * state_plot.yscale
-                    # ymax = state_plot.yshift + cluster.y_max * state_plot.yscale
-                    annotation = dpg.add_plot_annotation(label=cluster.label, default_value=(x+cluster.rel_x, y+cluster.rel_y+0.06), clamped=False, offset=(0, -2), color=[0, 200, 200, 0], parent=plot, user_data=(cluster, state_plot.tag))  #[200, 200, 200, 0]
+                    annotation = dpg.add_plot_annotation(label=cluster.label, default_value=(x+cluster.rel_x, y+cluster.rel_y+0.05), clamped=False, offset=(0, -cluster.height/2/self.pixels_per_plot_y), color=[0, 0, 0, 0], parent=plot, user_data=(cluster, state_plot.tag))  #[200, 200, 200, 0]
                     self.annotations[tag][(x, y)] = annotation
                     self.label_drag_points[tag][annotation] = dpg.add_drag_point(default_value=(x+cluster.rel_x, y+cluster.rel_y+0.05), color=[255, 255, 0], show_label=False, show=False, user_data=annotation, callback=lambda s, a, u: self.move_label(dpg.get_value(s)[:2], u, update_drag_point=False), parent=plot)
-                    # self.annotation_lines[tag][annotation] = dpg.draw_line((x, y+0.03), (x, ymax+0.05), parent=plot)
-                    self.annotation_lines[tag][annotation] = self.draw_label_line((x, y+0.03), (cluster.rel_x, cluster.rel_y+0.02))
+                    self.annotation_lines[tag][annotation] = self.draw_label_line(cluster, (x, y))
+
                     # TODO: Hover over annotation to see extra info about that vibration
-                    #  Equal distribution of labels in available y space
                     #  Nicer o/digit chars and double-chars
+                    #  Save manual relative positions
 
     def move_label(self, pos, label, state_plot=None, update_drag_point=True):
         dpg.set_value(label, pos)
-        cluster, tag = dpg.get_item_user_data(label)  # todo: actually adjust location relative to the peak; save.
+        cluster, tag = dpg.get_item_user_data(label)
+        # todo: actually adjust location relative to the peak; save.
         # todo: use this for all label moves. specify relative pos - save in cluster?
         if dpg.is_item_shown(tag):
             if state_plot is None:
@@ -548,7 +543,9 @@ class PlotsOverview:
             self.delete_label_line(tag, label)
             x = cluster.x + state_plot.xshift
             y = state_plot.yshift + cluster.y * state_plot.yscale
-            self.annotation_lines[tag][label] = self.draw_label_line((x, y + 0.03), (pos[0]-x, pos[1]-y-0.02))
+            cluster.rel_x = pos[0] - x
+            cluster.rel_y = pos[1] - y - 0.05
+            self.annotation_lines[tag][label] = self.draw_label_line(cluster, (x, y))
             if update_drag_point:
                 dpg.set_value(self.label_drag_points[tag][label], pos)
 
@@ -561,11 +558,20 @@ class PlotsOverview:
                 dpg.delete_item(line_d)
             del self.annotation_lines[tag][label]
 
-    def draw_label_line(self, peak_pos, label_offset):
-        elbow_pos = (peak_pos[0], peak_pos[1] + label_offset[1]-abs(label_offset[0]/self.pixels_per_plot_y*self.pixels_per_plot_x))
-        label_pos = (peak_pos[0] + label_offset[0], peak_pos[1] + label_offset[1])
-        line_v = dpg.draw_line(peak_pos, elbow_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0.)
-        line_d = dpg.draw_line(elbow_pos, label_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0.)
+    def draw_label_line(self, cluster, peak_pos):  # TODO> These need to be updated on scroll.
+        anchor_offset_x = 0
+        if abs(cluster.rel_x) > cluster.width / 2:
+            if cluster.rel_x < 0:
+                anchor_offset_x = cluster.rel_x + cluster.width / 2
+            else:
+                anchor_offset_x = cluster.rel_x - cluster.width / 2
+        anchor_offset_y = abs(anchor_offset_x*self.pixels_per_plot_x/self.pixels_per_plot_y)
+
+        start_pos = (peak_pos[0], peak_pos[1] + 5/self.pixels_per_plot_y)  # spacing
+        elbow_pos = (peak_pos[0], peak_pos[1] + cluster.rel_y + 0.05 - 0/self.pixels_per_plot_y - anchor_offset_y)
+        label_pos = (peak_pos[0] + anchor_offset_x, peak_pos[1] + cluster.rel_y + 0.05 - 0/self.pixels_per_plot_y)
+        line_v = dpg.draw_line(start_pos, elbow_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=[200, 200, 255, 200])
+        line_d = dpg.draw_line(elbow_pos, label_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=[200, 200, 255, 200])
         return line_v, line_d
 
     def update_labels(self, tag):
@@ -576,10 +582,9 @@ class PlotsOverview:
                 cluster, _ = dpg.get_item_user_data(label)
                 x = cluster.x + state_plot.xshift
                 y = state_plot.yshift + cluster.y*state_plot.yscale
-                ymax = state_plot.yshift + cluster.y_max*state_plot.yscale
-                dpg.set_value(label, (x, ymax+0.05))
-                dpg.set_value(self.label_drag_points[tag][label], (x, ymax+0.05))
-                self.annotation_lines[tag][label] = self.draw_label_line((x, y+0.03), (0, 0.03))
+                dpg.set_value(label, (x+cluster.rel_x, y+cluster.rel_y+0.05))
+                dpg.set_value(self.label_drag_points[tag][label], (x+cluster.rel_x, y+cluster.rel_y+0.05))
+                self.annotation_lines[tag][label] = self.draw_label_line(cluster, (x, y))
                 # self.annotation_lines[tag][label] = dpg.draw_line((x, y + 0.03), (x, ymax + 0.05), parent=f"plot_{self.viewmodel.is_emission}")
 
     def delete_labels(self, spec_tag=None):
@@ -641,6 +646,8 @@ class PlotsOverview:
                 dpg.add_theme_style(dpg.mvPlotStyleVar_MarkerSize, 1, category=dpg.mvThemeCat_Plots)
             with dpg.theme_component(dpg.mvDragLine):
                 dpg.add_theme_color(dpg.mvPlotCol_Line, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
+            # with dpg.theme_component(dpg.mvLineSeries):
+            #     dpg.add_theme_color(dpg.mvPlotCol_InlayText, (200, 0, 0))
         dpg.bind_item_theme(self.dummy_series, f"plot_theme_{self.viewmodel.is_emission}")
 
         with dpg.theme(tag=f"exp_spec_theme_{self.viewmodel.is_emission}"):

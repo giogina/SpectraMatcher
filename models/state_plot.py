@@ -61,6 +61,7 @@ class StatePlot:
     def get_clusters(self):
         return self.spectrum.get_clusters()
 
+
     def _compute_x_data(self):
         return self._base_xdata + self.xshift
 
