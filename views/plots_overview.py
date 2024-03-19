@@ -182,6 +182,8 @@ class PlotsOverview:
         if dpg.get_item_configuration(self.expand_plot_settings_button).get('show'):
             dpg.hide_item(self.expand_plot_settings_button)
             dpg.configure_item(self.expand_plot_settings_button, show=True, pos=(dpg.get_viewport_width() - 40, 45))
+        for tag in self.viewmodel.state_plots.keys():
+            self.draw_labels(tag)
 
     def on_right_click_release(self):
         point = self.hovered_peak_indicator_point
@@ -228,6 +230,8 @@ class PlotsOverview:
         else:
             dpg.configure_item(self.layout_table, resizable=False, policy=dpg.mvTable_SizingFixedFit)
             dpg.configure_item(self.plot_column, width_stretch=True)
+        for tag in self.viewmodel.state_plots.keys():
+            self.draw_labels(tag)  # redistribute those
 
     def restore_label_defaults(self):
         Labels.restore_defaults(self.viewmodel.is_emission)
@@ -273,21 +277,21 @@ class PlotsOverview:
 
     def _custom_series_callback(self, sender, app_data):
         try:
-            if not dpg.is_item_hovered(f"plot_{self.viewmodel.is_emission}"):
-                return
             _helper_data = app_data[0]
-            transformed_x = app_data[1]
-            transformed_y = app_data[2]
             mouse_x_plot_space = _helper_data["MouseX_PlotSpace"]
             mouse_y_plot_space = _helper_data["MouseY_PlotSpace"]
+            transformed_x = app_data[1]
+            transformed_y = app_data[2]
+            self.pixels_per_plot_x = (transformed_x[1]-transformed_x[0])/1000
+            self.pixels_per_plot_y = transformed_y[1]-transformed_y[0]
+            if not dpg.is_item_hovered(f"plot_{self.viewmodel.is_emission}"):
+                return
             mouse_x_pixel_space = _helper_data["MouseX_PixelSpace"]
             mouse_y_pixel_space = _helper_data["MouseY_PixelSpace"]
             self.mouse_plot_pos = (mouse_x_plot_space, mouse_y_plot_space)
-            self.pixels_per_plot_x = (transformed_x[1]-transformed_x[0])/1000
-            self.pixels_per_plot_y = transformed_y[1]-transformed_y[0]
             dpg.delete_item(sender, children_only=True, slot=2)
             dpg.push_container_stack(sender)
-            # dpg.configure_item(sender, tooltip=False)
+            dpg.configure_item(sender, tooltip=False)
             dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [[], []])
             self.hovered_spectrum = None
             self.hovered_x_drag_line = None
@@ -515,7 +519,7 @@ class PlotsOverview:
             dpg.bind_item_font(plot, label_font)
 
             state_plot = self.viewmodel.state_plots[tag]
-            clusters = state_plot.get_clusters()  # todo: re-distribute labels only on viewport resize, panel collapse/expand, font size change
+            clusters = state_plot.get_clusters()
 
             for cluster in clusters:
                 cluster.construct_label(self.gaussian_labels)
@@ -526,22 +530,19 @@ class PlotsOverview:
                 if len(cluster.label):
                     x = cluster.x + state_plot.xshift
                     y = state_plot.yshift + cluster.y * state_plot.yscale
-                    annotation = dpg.add_plot_annotation(label=cluster.label, default_value=(x+cluster.rel_x, y+cluster.rel_y*state_plot.yscale+0.05), clamped=False, offset=(0, -cluster.height/2/self.pixels_per_plot_y), color=[0, 0, 0, 0], parent=plot, user_data=(cluster, state_plot.tag))  #[200, 200, 200, 0]
+                    annotation = dpg.add_plot_annotation(label=cluster.label, default_value=(x+cluster.rel_x, y+cluster.rel_y+0.05), clamped=False, offset=(0, -cluster.height/2/self.pixels_per_plot_y), color=[0, 0, 0, 0], parent=plot, user_data=(cluster, state_plot.tag))  #[200, 200, 200, 0]
                     self.annotations[tag][(x, y)] = annotation
-                    self.label_drag_points[tag][annotation] = dpg.add_drag_point(default_value=(x+cluster.rel_x, y+cluster.rel_y*state_plot.yscale+0.05), color=[255, 255, 0], show_label=False, show=False, user_data=annotation, callback=lambda s, a, u: self.move_label(dpg.get_value(s)[:2], u, update_drag_point=False), parent=plot)
+                    self.label_drag_points[tag][annotation] = dpg.add_drag_point(default_value=(x+cluster.rel_x, y+cluster.rel_y+0.05), color=[255, 255, 0], show_label=False, show=False, user_data=annotation, callback=lambda s, a, u: self.move_label(dpg.get_value(s)[:2], u, update_drag_point=False), parent=plot)
                     self.annotation_lines[tag][annotation] = self.draw_label_line(cluster, (x, y), state_plot, annotation)
 
-                    # TODO: Hover over annotation to see extra info about that vibration
-                    #  Nicer o/digit chars and double-chars
-                    #  Save manual relative positions
-                    #  adjust offset to make labels stick to their lines on scroll
-                    #  only scale lines & positions up when yscale > 0.8 or so, to keep labels from overlapping
+                    # TODO:
+                    #  Save manual relative positions (& zoom state?)
+                    #  redo labels when yscale changes significantly (and include yscale in that computation) - just the y positioning; x values and orders are all good.
+                    #  re-distribute labels on , panel collapse/expand
 
     def move_label(self, pos, label, state_plot=None, update_drag_point=True):
         dpg.set_value(label, pos)
         cluster, tag = dpg.get_item_user_data(label)
-        # todo: actually adjust location relative to the peak; save.
-        # todo: use this for all label moves. specify relative pos - save in cluster?
         if dpg.is_item_shown(tag):
             if state_plot is None:
                 state_plot = self.viewmodel.state_plots.get(tag)
@@ -585,8 +586,8 @@ class PlotsOverview:
             anchor_offset_y = 0
 
         start_pos = (peak_pos[0], peak_pos[1] + 5/self.pixels_per_plot_y)  # spacing
-        elbow_pos = (peak_pos[0], peak_pos[1] + cluster.rel_y * state_plot.yscale + 0.05 - anchor_offset_y)
-        label_pos = (peak_pos[0] + anchor_offset_x, peak_pos[1] + cluster.rel_y * state_plot.yscale + 0.05) # y+(cluster.rel_y+0.05)*state_plot.yscale)
+        elbow_pos = (peak_pos[0], peak_pos[1] + cluster.rel_y + 0.05 - anchor_offset_y)
+        label_pos = (peak_pos[0] + anchor_offset_x, peak_pos[1] + cluster.rel_y + 0.05)
         line_v = dpg.draw_line(start_pos, elbow_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=[200, 200, 255, 200])
         line_d = dpg.draw_line(elbow_pos, label_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=[200, 200, 255, 200])
         return line_v, line_d
@@ -599,8 +600,8 @@ class PlotsOverview:
                 cluster, _ = dpg.get_item_user_data(label)
                 x = cluster.x + state_plot.xshift
                 y = state_plot.yshift + cluster.y*state_plot.yscale
-                dpg.set_value(label, (x+cluster.rel_x, y+cluster.rel_y*state_plot.yscale+0.05))
-                dpg.set_value(self.label_drag_points[tag][label], (x+cluster.rel_x, y+cluster.rel_y*state_plot.yscale+0.05))
+                dpg.set_value(label, (x+cluster.rel_x, y+cluster.rel_y+0.05))
+                dpg.set_value(self.label_drag_points[tag][label], (x+cluster.rel_x, y+cluster.rel_y+0.05))
                 self.annotation_lines[tag][label] = self.draw_label_line(cluster, (x, y), state_plot, label)
 
     def delete_labels(self, spec_tag=None):
