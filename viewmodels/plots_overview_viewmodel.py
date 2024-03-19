@@ -52,6 +52,8 @@ class PlotsOverviewViewmodel:
             if new_spec_tag is not None:
                 self._callbacks.get("add spectrum")(new_spec_tag)
                 self._callbacks.get("add list spectrum")(self.state_plots[new_spec_tag])
+                for tag, s in self.state_plots.items():
+                    self._callbacks.get("update labels")(tag)
             # todo> react to already-plotted state deletion (see if it's still in State.state_list?)
         elif event == Labels.label_settings_updated_notification:
             for tag, s in self.state_plots.items():

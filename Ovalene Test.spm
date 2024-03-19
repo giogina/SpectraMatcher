@@ -121,7 +121,7 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\ovalene-excited-4-opt-freq-disp.log",
-            "hidden": false,
+            "hidden": true,
             "y shift": 2.5,
             "x shift": 0.0,
             "y scale": 1.0
@@ -170,9 +170,9 @@
         "true": {
             "show labels": true,
             "show gaussian labels": false,
-            "peak intensity label threshold": 0.18400000035762787,
-            "stick label relative threshold": 0.15299999713897705,
-            "stick label absolute threshold": 0.08399999886751175,
+            "peak intensity label threshold": 0.010999999940395355,
+            "stick label relative threshold": 0.04600000008940697,
+            "stick label absolute threshold": 0.007000000216066837,
             "peak separation threshold": 0.8,
             "label font size": 18,
             "axis font size": 18,

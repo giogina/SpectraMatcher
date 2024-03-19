@@ -529,13 +529,13 @@ class PlotsOverview:
                     annotation = dpg.add_plot_annotation(label=cluster.label, default_value=(x+cluster.rel_x, y+cluster.rel_y*state_plot.yscale+0.05), clamped=False, offset=(0, -cluster.height/2/self.pixels_per_plot_y), color=[0, 0, 0, 0], parent=plot, user_data=(cluster, state_plot.tag))  #[200, 200, 200, 0]
                     self.annotations[tag][(x, y)] = annotation
                     self.label_drag_points[tag][annotation] = dpg.add_drag_point(default_value=(x+cluster.rel_x, y+cluster.rel_y*state_plot.yscale+0.05), color=[255, 255, 0], show_label=False, show=False, user_data=annotation, callback=lambda s, a, u: self.move_label(dpg.get_value(s)[:2], u, update_drag_point=False), parent=plot)
-                    self.annotation_lines[tag][annotation] = self.draw_label_line(cluster, (x, y), state_plot)
+                    self.annotation_lines[tag][annotation] = self.draw_label_line(cluster, (x, y), state_plot, annotation)
 
                     # TODO: Hover over annotation to see extra info about that vibration
                     #  Nicer o/digit chars and double-chars
                     #  Save manual relative positions
-                    #  bug with min intensity not always updating the filter
                     #  adjust offset to make labels stick to their lines on scroll
+                    #  only scale lines & positions up when yscale > 0.8 or so, to keep labels from overlapping
 
     def move_label(self, pos, label, state_plot=None, update_drag_point=True):
         dpg.set_value(label, pos)
@@ -550,7 +550,7 @@ class PlotsOverview:
             y = state_plot.yshift + cluster.y * state_plot.yscale
             cluster.rel_x = pos[0] - x  # todo> yshift
             cluster.rel_y = pos[1] - y - 0.05
-            self.annotation_lines[tag][label] = self.draw_label_line(cluster, (x, y), state_plot)
+            self.annotation_lines[tag][label] = self.draw_label_line(cluster, (x, y), state_plot, label)
             if update_drag_point:
                 dpg.set_value(self.label_drag_points[tag][label], pos)
 
@@ -563,14 +563,26 @@ class PlotsOverview:
                 dpg.delete_item(line_d)
             del self.annotation_lines[tag][label]
 
-    def draw_label_line(self, cluster, peak_pos, state_plot):  # TODO> These need to be updated on scroll.
-        anchor_offset_x = 0
+    def draw_label_line(self, cluster, peak_pos, state_plot, annotation):
+        label_offset = dpg.get_item_configuration(annotation)["offset"]
+        # label_pos = dpg.get_value(annotation)
         if abs(cluster.rel_x) > cluster.width / 2:
             if cluster.rel_x < 0:
                 anchor_offset_x = cluster.rel_x + cluster.width / 2
+                # new_label_x_offset = -cluster.width/2
             else:
                 anchor_offset_x = cluster.rel_x - cluster.width / 2
+                # new_label_x_offset = cluster.width/2
+        else:
+            anchor_offset_x = 0
+            new_label_x_offset = 0
+
+        # dpg.set_value(annotation, (cluster.x + state_plot.xshift + cluster.rel_x - 0.6*new_label_x_offset, label_pos[1]))
+        # dpg.configure_item(annotation, offset=(0.3*new_label_x_offset*self.pixels_per_plot_x, label_offset[1]))
         anchor_offset_y = abs(anchor_offset_x*self.pixels_per_plot_x/self.pixels_per_plot_y)
+        if anchor_offset_y * self.pixels_per_plot_y < 4:
+            anchor_offset_x = 0
+            anchor_offset_y = 0
 
         start_pos = (peak_pos[0], peak_pos[1] + 5/self.pixels_per_plot_y)  # spacing
         elbow_pos = (peak_pos[0], peak_pos[1] + cluster.rel_y * state_plot.yscale + 0.05 - anchor_offset_y)
@@ -589,7 +601,7 @@ class PlotsOverview:
                 y = state_plot.yshift + cluster.y*state_plot.yscale
                 dpg.set_value(label, (x+cluster.rel_x, y+cluster.rel_y*state_plot.yscale+0.05))
                 dpg.set_value(self.label_drag_points[tag][label], (x+cluster.rel_x, y+cluster.rel_y*state_plot.yscale+0.05))
-                self.annotation_lines[tag][label] = self.draw_label_line(cluster, (x, y), state_plot)
+                self.annotation_lines[tag][label] = self.draw_label_line(cluster, (x, y), state_plot, label)
 
     def delete_labels(self, spec_tag=None):
         if spec_tag is None:
