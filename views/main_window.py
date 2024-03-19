@@ -102,7 +102,7 @@ class MainWindow:
                    [100, 100, 255],  # 5
                    [131, 131, 255],  # 6
                    [180, 180, 255],  # 7
-                   ]  # todo: some kind of centralized color management, using settings to store palette
+                   ]
         with dpg.theme() as global_theme:
             with dpg.theme_component(dpg.mvTab):
                 dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 0, 0)

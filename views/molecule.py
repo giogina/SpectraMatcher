@@ -20,7 +20,7 @@ for u in vertices:
     for v in vertices:
         for w in vertices:
             if math.isclose(distance(v, w), 2) and math.isclose(distance(v, u), 2) and math.isclose(distance(u, w), 2):
-                faces.append([u, v, w])   # TODO: figure out shading
+                faces.append([u, v, w])   # figure out shading
 
 with dpg.window(label="molecule", width=550, height=550):
 

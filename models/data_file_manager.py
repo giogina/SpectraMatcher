@@ -418,7 +418,7 @@ class File:
                 properties["delimiter"] = delim
             except Exception as e:
                 print(f"File {self.path} couldn't be read! {e}")
-        elif self.extension in ['.csv', '.tsv', '.xlsx', '.xls', '.xlsm', '.xltx', '.xltm', '.ods']:  # TODO> Document available formats.
+        elif self.extension in ['.csv', '.tsv', '.xlsx', '.xls', '.xlsm', '.xltx', '.xltm', '.ods']:
             is_table = True
         else:
             self.type = FileType.OTHER

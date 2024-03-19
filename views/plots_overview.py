@@ -324,10 +324,8 @@ class PlotsOverview:
                                 dpg.show_item(self.label_drag_points[s_tag][label])
                             else:
                                 dpg.hide_item(self.label_drag_points[s_tag][label])
-
-                        dpg.configure_item(sender, tooltip=False)
-                        dpg.configure_item(sender, tooltip=True)
-                        dpg.set_value(self.tooltiptext, f"Diff: {abs(dpg.get_value(f'drag-x-{s_tag}') - mouse_x_plot_space)}")
+                        # dpg.configure_item(sender, tooltip=True)
+                        # dpg.set_value(self.tooltiptext, f"Diff: {abs(dpg.get_value(f'drag-x-{s_tag}') - mouse_x_plot_space)}")
 
             if self.peak_edit_mode_enabled:
                 self.hovered_peak_indicator_point = None
@@ -336,14 +334,6 @@ class PlotsOverview:
                         self.hovered_peak_indicator_point = point
                         break
                 self.exp_hovered = 0 <= mouse_y_plot_space <= 1
-            # for i in range(0, len(transformed_x)):
-            #     dpg.draw_text((transformed_x[i] + 15, transformed_y[i] - 15), str(i), size=20)
-            #     dpg.draw_circle((transformed_x[i], transformed_y[i]), 15, fill=(50+i*5, 50+i*50, 0, 255))
-            #     if mouse_x_pixel_space < transformed_x[i] + 15 and mouse_x_pixel_space > transformed_x[
-            #         i] - 15 and mouse_y_pixel_space > transformed_y[i] - 15 and mouse_y_pixel_space < transformed_y[i] + 15:
-            #         dpg.draw_circle((transformed_x[i], transformed_y[i]), 30)
-            #         dpg.configure_item(sender, tooltip=True)
-            #         dpg.set_value(self.tooltiptext, "Current Point: " + str(i))
             dpg.pop_container_stack()
         except Exception as e:
             print(f"Exception in custom series callback: {e}")
@@ -376,7 +366,7 @@ class PlotsOverview:
             dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
             dpg.bind_item_theme(dpg.last_item(), f"exp_spec_theme_{self.viewmodel.is_emission}")
 
-    def add_spectrum(self, tag):  # TODO: erase pop-up menu when this spectrum comes into view
+    def add_spectrum(self, tag):
         xmin, xmax, ymin, ymax = self.viewmodel.get_zoom_range()
         s = self.viewmodel.state_plots[tag]
         if not dpg.does_item_exist(tag):
@@ -538,7 +528,11 @@ class PlotsOverview:
                     # TODO:
                     #  Save manual relative positions (& zoom state?)
                     #  redo labels when yscale changes significantly (and include yscale in that computation) - just the y positioning; x values and orders are all good.
-                    #  re-distribute labels on , panel collapse/expand
+                    #  fix overlapping non-immediate neigbours bug
+
+                    # TODO:
+                    #  match checkbox - trigger matching with lowest shown spectrum
+                    #  dragging another spectrum there causes a composite spectrum (drag lines slightly offset), complete fit
 
     def move_label(self, pos, label, state_plot=None, update_drag_point=True):
         dpg.set_value(label, pos)
@@ -549,7 +543,7 @@ class PlotsOverview:
             self.delete_label_line(tag, label)
             x = cluster.x + state_plot.xshift
             y = state_plot.yshift + cluster.y * state_plot.yscale
-            cluster.rel_x = pos[0] - x  # todo> yshift
+            cluster.rel_x = pos[0] - x
             cluster.rel_y = pos[1] - y - 0.05
             self.annotation_lines[tag][label] = self.draw_label_line(cluster, (x, y), state_plot, label)
             if update_drag_point:
@@ -616,10 +610,6 @@ class PlotsOverview:
                     if dpg.does_item_exist(drag_point):
                         dpg.delete_item(drag_point)
                 self.label_drag_points[tag] = {}
-                # for line in self.annotation_lines.get(tag, {}).values():
-                #     if dpg.does_item_exist(line):
-                #         dpg.delete_item(line)
-                # self.annotation_lines[tag] = {}
         else:
             for annotation in self.annotations.get(spec_tag, {}).values():
                 if dpg.does_item_exist(annotation):

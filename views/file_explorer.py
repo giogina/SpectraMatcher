@@ -293,7 +293,7 @@ class FileExplorer:
             if file.type == FileType.GAUSSIAN_INPUT and file.geometry is not None:
                 dpg.add_selectable(label="Copy geometry to clipboard ", user_data=file.geometry, callback=lambda s, a, u: pyperclip.copy(u.get_gaussian_geometry()))
             # if file.properties.get(GaussianLog.STATUS, "") == GaussianLog.NEGATIVE_FREQUENCY:
-            #     dpg.add_selectable(label="Copy adjusted geometry for re-optimization", user_data=file.path)  # TODO (stretch)
+            #     dpg.add_selectable(label="Copy adjusted geometry for re-optimization", user_data=file.path)
             if add_sep:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()

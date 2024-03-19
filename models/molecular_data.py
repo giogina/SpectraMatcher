@@ -204,7 +204,7 @@ class VibrationalMode:
 
 
 class ModeList:
-    IR_order = ['AG', 'B1G', 'B2G', 'B3G', 'AU', 'B1U', 'B2U', 'B3U']  # TODO> Persist this order in settings
+    IR_order = ['AG', 'B1G', 'B2G', 'B3G', 'AU', 'B1U', 'B2U', 'B3U']
 
     def __init__(self):
         self.IRs = {ir: [] for ir in self.IR_order}  # record of all vibrational modes by IR
@@ -214,7 +214,7 @@ class ModeList:
         mode = VibrationalMode(len(list(self.modes.keys())), wavenumber, sym, x, y, z, geometry)
         self.modes[mode.gaussian_name] = mode
         if sym in self.IRs.keys():
-            self.IRs[sym] = [mode] + self.IRs[sym]  # TODO> allow re-ordering afterwards for all IRs within the project
+            self.IRs[sym] = [mode] + self.IRs[sym]
         else:
             self.IRs[sym] = [mode]
             self.IR_order.append(sym)
