@@ -170,9 +170,9 @@
         "true": {
             "show labels": true,
             "show gaussian labels": false,
-            "peak intensity label threshold": 0.05900000035762787,
-            "stick label relative threshold": 0.1,
-            "stick label absolute threshold": 0.03099999949336052,
+            "peak intensity label threshold": 0.14499999582767487,
+            "stick label relative threshold": 0.30799999833106995,
+            "stick label absolute threshold": 0.06400000303983688,
             "peak separation threshold": 0.8,
             "label font size": 18,
             "axis font size": 18,

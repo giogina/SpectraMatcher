@@ -512,24 +512,31 @@ class PlotsOverview:
             self.label_drag_points[tag] = {}
             self.annotation_lines[tag] = {}
             state_plot = self.viewmodel.state_plots[tag]
-            clusters = state_plot.get_clusters()
-            label_font = FontManager.get(Labels.settings[self.viewmodel.is_emission]['label font size'])
+            clusters = state_plot.get_clusters()  # sorted by intensity  # todo: re-distribute labels only on viewport resize, panel collapse/expand, font size change
+            font_size = Labels.settings[self.viewmodel.is_emission]['label font size']
+            label_font = FontManager.get(font_size)
             dpg.bind_item_font(plot, label_font)
             for cluster in clusters:
-                if cluster.y > Labels.settings[self.viewmodel.is_emission]['peak intensity label threshold']:
-                    label = cluster.get_label(self.gaussian_labels)
-                    if len(label):
-                        x = cluster.x + state_plot.xshift
-                        y = state_plot.yshift + cluster.y * state_plot.yscale
-                        ymax = state_plot.yshift + cluster.y_max * state_plot.yscale
-                        annotation = dpg.add_plot_annotation(label=label, default_value=(x, ymax+0.05), clamped=False, offset=(0, -3), color=[200, 200, 200, 0], parent=plot, user_data=(cluster, state_plot.tag))
-                        self.annotations[tag][(x, ymax)] = annotation
-                        self.label_drag_points[tag][annotation] = dpg.add_drag_point(default_value=(x, ymax+0.05), color=[255, 255, 0], show_label=False, show=False, user_data=annotation, callback=lambda s, a, u: self.move_label(dpg.get_value(s)[:2], u, update_drag_point=False), parent=plot)
-                        # self.annotation_lines[tag][annotation] = dpg.draw_line((x, y+0.03), (x, ymax+0.05), parent=plot)
-                        self.annotation_lines[tag][annotation] = self.draw_label_line((x, y+0.03), (0, 0.03))
-                        # TODO: Hover over annotation to see extra info about that vibration
-                        #  Equal distribution of labels in available y space
-                        #  Nicer o/digit chars and double-chars
+                cluster.construct_label(self.gaussian_labels)
+                text_size = dpg.get_text_size(cluster.label, font=label_font)
+                cluster.set_label_size([text_size[0]/self.pixels_per_plot_x, text_size[1]/self.pixels_per_plot_y])
+            state_plot.spectrum.decide_label_positions(gap_width=font_size/self.pixels_per_plot_x, gap_height=font_size/self.pixels_per_plot_y)
+            for cluster in clusters:
+                if len(cluster.label):
+                    # print(cluster.label, cluster.rel_x, cluster.rel_y)
+                    # todo> diagonal lines only if straight line wouldn't reach the label
+                    #  Save manual relative positions
+                    x = cluster.x + state_plot.xshift
+                    y = state_plot.yshift + cluster.y * state_plot.yscale
+                    # ymax = state_plot.yshift + cluster.y_max * state_plot.yscale
+                    annotation = dpg.add_plot_annotation(label=cluster.label, default_value=(x+cluster.rel_x, y+cluster.rel_y+0.06), clamped=False, offset=(0, -2), color=[0, 200, 200, 0], parent=plot, user_data=(cluster, state_plot.tag))  #[200, 200, 200, 0]
+                    self.annotations[tag][(x, y)] = annotation
+                    self.label_drag_points[tag][annotation] = dpg.add_drag_point(default_value=(x+cluster.rel_x, y+cluster.rel_y+0.05), color=[255, 255, 0], show_label=False, show=False, user_data=annotation, callback=lambda s, a, u: self.move_label(dpg.get_value(s)[:2], u, update_drag_point=False), parent=plot)
+                    # self.annotation_lines[tag][annotation] = dpg.draw_line((x, y+0.03), (x, ymax+0.05), parent=plot)
+                    self.annotation_lines[tag][annotation] = self.draw_label_line((x, y+0.03), (cluster.rel_x, cluster.rel_y+0.02))
+                    # TODO: Hover over annotation to see extra info about that vibration
+                    #  Equal distribution of labels in available y space
+                    #  Nicer o/digit chars and double-chars
 
     def move_label(self, pos, label, state_plot=None, update_drag_point=True):
         dpg.set_value(label, pos)
@@ -557,8 +564,8 @@ class PlotsOverview:
     def draw_label_line(self, peak_pos, label_offset):
         elbow_pos = (peak_pos[0], peak_pos[1] + label_offset[1]-abs(label_offset[0]/self.pixels_per_plot_y*self.pixels_per_plot_x))
         label_pos = (peak_pos[0] + label_offset[0], peak_pos[1] + label_offset[1])
-        line_v = dpg.draw_line(peak_pos, elbow_pos, parent=f"plot_{self.viewmodel.is_emission}")
-        line_d = dpg.draw_line(elbow_pos, label_pos, parent=f"plot_{self.viewmodel.is_emission}")
+        line_v = dpg.draw_line(peak_pos, elbow_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0.)
+        line_d = dpg.draw_line(elbow_pos, label_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0.)
         return line_v, line_d
 
     def update_labels(self, tag):

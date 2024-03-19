@@ -265,20 +265,41 @@ class Cluster:
     def __init__(self, x, y, y_max, peaks, is_emission):
         self.x = x
         self.y = y
+        self.floor = y
         self.y_max = y_max
         self.is_emission = is_emission
         self.peaks = peaks
         self.peaks.sort(key=lambda p: float(p.intensity), reverse=True)
-        self.on_top_of = [[]]
+        self.label = ""
+        self.width = 0
+        self.height = 0
+        self.to_be_positioned = False
+        self.positioning_done = False
+        self.left_neighbour = None
+        self.right_neighbour = None
+        self.space = [0, 0] # space in wavenumbers to left and right to-be-positioned neighbours
+        self.rel_x = 0  # shift in wavenumbers of label position w.r.t. peak position
+        self.rel_y = 0
+
+        self.on_top_of = [[]]  # all adjacent clusters that should be below this one (if horizontal space is insufficient)
         # 'lift': self.y_data[self.maxima[j]] + gap_height,
         # 'width': max([get_label_width(c[l_key], font_size) for c in cluster]) * plot_scale[0],
         # 'height': label_dims[font_size]['height'] * plot_scale[1],
 
-    def get_label(self, gaussian: bool):
+    def construct_label(self, gaussian: bool):
+        if self.y < Labels.settings[self.is_emission]['peak intensity label threshold']:
+            return ""
         threshold = Labels.settings[self.is_emission]['stick label relative threshold'] * float(self.peaks[0].intensity) + \
                     Labels.settings[self.is_emission]['stick label absolute threshold']  # Threshold for counting as contributing to the peak
-        filtered_peaks = [p for p in self.peaks if p.intensity > threshold]
-        return "\n".join([p.get_label(gaussian) for p in filtered_peaks])
+        filtered_peak_labels = [p.get_label(gaussian) for p in self.peaks if p.intensity > threshold]
+        self.label = "\n".join(filtered_peak_labels)
+        return self.label
+
+    def set_label_size(self, size):
+        self.width = size[0]
+        self.height = size[1]
+
+    # def get_width(self, font_size):
 
 
 class FCSpectrum:
@@ -294,6 +315,8 @@ class FCSpectrum:
         self.minima = None
         self.maxima = None
         key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
+        self.x_min = min(self.x_data)
+        self.x_max = max(self.x_data)
         for peak in self.peaks:
             peak.intensity /= self.mul2  # scale to match self.y_data scaling
         self.determine_label_clusters()
@@ -327,6 +350,131 @@ class FCSpectrum:
         self._notify_observers(FCSpectrum.xy_data_changed_notification)
         self._notify_observers(FCSpectrum.peaks_changed_notification)
 
+    def space_between_lines(self, to_be_placed, i):
+        """bounds in wavenumbers (original xdata)"""
+        if len(to_be_placed) == 1:
+            bounds = [self.x_min, self.x_max]
+        elif i == to_be_placed[0]:
+            bounds = [self.x_min, self.clusters[to_be_placed[1]].x]
+        elif i == to_be_placed[-1]:
+            bounds = [self.clusters[to_be_placed[-2]].x, self.x_max]
+        else:
+            j = to_be_placed.index(i)
+            bounds = [self.clusters[to_be_placed[j - 1]].x, self.clusters[to_be_placed[j + 1]].x]
+        return [self.clusters[i].x - bounds[0] - self.clusters[i].width / 2, bounds[1] - self.clusters[i].x  - self.clusters[i].width / 2]
+
+    def compute_space_between_unpositioned_neighbours(self):
+        unpositioned_cluster = None
+        for cluster in self.clusters:
+            if cluster.to_be_positioned:
+                unpositioned_cluster = cluster
+                break
+        if unpositioned_cluster is not None:
+            unpositioned_cluster.space[0] = unpositioned_cluster.x - self.x_min
+            while unpositioned_cluster.right_neighbour is not None:
+                distance = unpositioned_cluster.right_neighbour.x - unpositioned_cluster.x
+                unpositioned_cluster.right_neighbour.space[0] = distance - unpositioned_cluster.right_neighbour.width / 2
+                unpositioned_cluster.space[1] = distance - unpositioned_cluster.width / 2
+                unpositioned_cluster = unpositioned_cluster.right_neighbour
+            unpositioned_cluster.space[1] = self.x_max - unpositioned_cluster.x
+
+    def decide_label_positions(self, gap_width, gap_height):
+        prev_unpositioned_cluster = None
+        for cluster in self.clusters:
+            cluster.rel_y = gap_height
+            cluster.floor = cluster.y + cluster.rel_y
+            cluster.to_be_positioned = len(cluster.label) > 0
+            # cluster.positioning_done = False
+            if cluster.to_be_positioned:
+                cluster.left_neighbour = prev_unpositioned_cluster
+                if prev_unpositioned_cluster is not None:
+                    prev_unpositioned_cluster.right_neighbour = cluster
+                prev_unpositioned_cluster = cluster
+        if prev_unpositioned_cluster is not None:
+            prev_unpositioned_cluster.right_neighbour = None  # use neighbours to keep track of spacings
+
+        to_be_positioned = [c for c in self.clusters if c.to_be_positioned]
+        while to_be_positioned:
+            self.compute_space_between_unpositioned_neighbours()
+            placeables = [cluster for cluster in to_be_positioned if sum(cluster.space) >= 0
+                          and (cluster.left_neighbour is None or cluster.left_neighbour.floor >= cluster.floor or sum(cluster.left_neighbour.space) < 0)
+                          and (cluster.right_neighbour is None or cluster.right_neighbour.floor >= cluster.floor or sum(cluster.right_neighbour.space) < 0)]
+            if not placeables:
+                print("No label position found: ", [(c.label, sum(c.space),
+                                                     None if c.left_neighbour is None else (c.left_neighbour.label, sum(c.left_neighbour.space), c.floor - c.left_neighbour.floor),
+                                                     None if c.right_neighbour is None else (c.right_neighbour.label, sum(c.right_neighbour.space), c.floor - c.right_neighbour.floor)) for c in to_be_positioned if c not in placeables])
+                break
+
+            for cluster in placeables:
+
+                # adjust horizontal spacing
+                if sum(cluster.space) <= 2*gap_width:
+                    cluster.rel_x = cluster.space[1]/2 - cluster.space[0]/2  # kinda cramped; center it.
+                elif cluster.space[0] < gap_width:
+                    cluster.rel_x = gap_width - cluster.space[0]  # nudge it away from left line
+                elif cluster.space[1] < gap_width:
+                    cluster.rel_x = cluster.space[1] - gap_width  # nudge it away from right line
+                else:
+                    cluster.rel_x = 0  # all good, keep it there.
+
+                # adjust lift of neighbours
+                if cluster.left_neighbour is not None:
+                    cluster.left_neighbour.right_neighbour = cluster.right_neighbour
+                    if cluster.space[0] + cluster.rel_x < cluster.left_neighbour.width / 2 + gap_width:
+                        cluster.left_neighbour.floor = max(cluster.left_neighbour.floor, cluster.floor + cluster.height + gap_height)
+                        cluster.left_neighbour.rel_y = cluster.left_neighbour.floor - cluster.left_neighbour.y
+                if cluster.right_neighbour is not None:
+                    cluster.right_neighbour.left_neighbour = cluster.left_neighbour
+                    if cluster.space[1] - cluster.rel_x < cluster.right_neighbour.width / 2 + gap_width:
+                        cluster.right_neighbour.floor = max(cluster.right_neighbour.floor, cluster.floor + cluster.height + gap_height)
+                        cluster.right_neighbour.rel_y = cluster.right_neighbour.floor - cluster.right_neighbour.y
+
+                cluster.to_be_positioned = False
+                # print(cluster.label, cluster.rel_x, cluster.rel_y)
+
+            to_be_positioned = [c for c in self.clusters if c.to_be_positioned]
+
+
+
+
+
+
+    # def decide_label_y_order(self):  # font_dimensions: x, y
+    #     positioned_clusters = []  # indices in self.clusters
+    #     positioning_done = []
+    #     to_be_positioned = [i for i, c in enumerate(self.clusters) if c.width > 0 and c.height > 0]  # start with list of all cluster indices
+    #     while to_be_positioned:
+    #         spaces = [[tbp, sum(self.space_between_lines(to_be_positioned, tbp))/self.clusters[tbp].width] for tbp in to_be_positioned]
+    #
+    #         placeables = []
+    #         if len(spaces) == 1:
+    #             placeables = [spaces[0][0]]
+    #         else:
+    #             if spaces[0][1] > spaces[1][1]:
+    #                 placeables = [spaces[0][0]]
+    #                 self.clusters[spaces[1][0]].on_top_of.extend([o+[spaces[0][0]] for o in self.clusters[spaces[0][0]].on_top_of])
+    #             for i in range(1, len(spaces)-1):
+    #                 if spaces[i][1] > spaces[i-1][1] and spaces[i][1] > spaces[i+1][1]:
+    #                     placeables.append(spaces[i][0])
+    #                     self.clusters[spaces[i-1][0]].on_top_of.extend([o + [spaces[i][0]] for o in self.clusters[spaces[i][0]].on_top_of])
+    #                     self.clusters[spaces[i+1][0]].on_top_of.extend([o + [spaces[i][0]] for o in self.clusters[spaces[i][0]].on_top_of])
+    #             if spaces[-1][1] > spaces[-2][1]:
+    #                 placeables.append(spaces[-1][0])
+    #                 self.clusters[spaces[-2][0]].on_top_of.extend([o + [spaces[-1][0]] for o in self.clusters[spaces[-1][0]].on_top_of])
+    #
+    #         if not placeables:
+    #             print("No label position found: ", to_be_positioned)
+    #             break
+    #
+    #         for p in placeables:
+    #             positioned_clusters.append(self.clusters[p])
+    #             positioning_done.append(p)
+    #             to_be_positioned.remove(p)
+    #
+    #     for c in positioned_clusters:
+    #         print(c.filtered_peak_labels, c.on_top_of)
+
+
     def get_wavenumbers(self, nr=-1):
         end = len(self.peaks) if nr == -1 else nr + 1
         return [peak.wavenumber for peak in self.peaks[:end]]
@@ -344,6 +492,7 @@ class FCSpectrum:
         self.maxima = maxima
 
     def get_clusters(self):
+        self.clusters.sort(key=lambda c: c.x)
         return self.clusters
 
     def determine_label_clusters(self):
@@ -373,6 +522,12 @@ class FCSpectrum:
                 p += 1
             if cluster:
                 self.clusters.append(Cluster(x=self.x_data[self.maxima[j]], y_max=max(self.y_data[max(0, self.maxima[j] - 8):min(self.maxima[j] + 8, len(self.y_data))]), y=self.y_data[self.maxima[j]], peaks=cluster, is_emission=self.is_emission))
+
+        for i, cluster in enumerate(self.clusters):
+            if i > 0:
+                prev_cluster = self.clusters[i-1]
+                prev_cluster.right_neighbour = cluster
+                cluster.left_neighbour = prev_cluster
 
     def update(self, event, *args):
         """Automatically re-calculate y_data when active SpecPlotter instance changes."""
