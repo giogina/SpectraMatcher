@@ -580,10 +580,14 @@ class PlotsOverview:
             for label in self.annotations.get(tag, {}).values():
                 self.delete_label_line(tag, label)
                 cluster, _ = dpg.get_item_user_data(label)
-                peak_pos, label_pos = cluster.get_plot_pos(state_plot, gap_height=Labels.settings[self.viewmodel.is_emission]['label font size']/self.pixels_per_plot_y)
-                dpg.set_value(label, label_pos)
-                dpg.set_value(self.label_drag_points[tag][label], label_pos)
-                self.annotation_lines[tag][label] = self.draw_label_line(cluster, peak_pos)
+                if cluster.y * state_plot.yscale < Labels.settings[self.viewmodel.is_emission]['peak intensity label threshold']:
+                    dpg.hide_item(label)
+                else:
+                    dpg.show_item(label)
+                    peak_pos, label_pos = cluster.get_plot_pos(state_plot, gap_height=Labels.settings[self.viewmodel.is_emission]['label font size']/self.pixels_per_plot_y)
+                    dpg.set_value(label, label_pos)
+                    dpg.set_value(self.label_drag_points[tag][label], label_pos)
+                    self.annotation_lines[tag][label] = self.draw_label_line(cluster, peak_pos)
 
     def delete_labels(self, spec_tag=None):
         if spec_tag is None:
@@ -614,7 +618,6 @@ class PlotsOverview:
                 self.draw_sticks(s)
         else:
             self.delete_sticks()
-            # todo> re-position labels on zoom changes
 
     def draw_sticks(self, s):
         if dpg.is_item_shown(s.tag):
@@ -671,6 +674,10 @@ class PlotsOverview:
         elif self.hovered_x_drag_line is not None:
             half_width = self.viewmodel.resize_half_width(direction)
             dpg.set_value(self.half_width_slider, half_width)
+        elif dpg.is_item_hovered(self.plot):
+            for tag in self.viewmodel.state_plots.keys():
+                if dpg.is_item_shown(tag):
+                    self.draw_labels(tag)
 
     def show_drag_lines(self, show):
         self.show_all_drag_lines = show

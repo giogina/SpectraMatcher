@@ -283,8 +283,8 @@ class Cluster:
         self.plot_x = 0  # own label position in the plot, dynamically updated as labels are moved
         self.plot_y = 0
 
-    def construct_label(self, gaussian: bool, yscale=1):  # todo: update according to yscale on scroll
-        if self.y < Labels.settings[self.is_emission]['peak intensity label threshold']:
+    def construct_label(self, gaussian: bool, yscale):
+        if self.y * yscale < Labels.settings[self.is_emission]['peak intensity label threshold']:
             self.label = ""
             return ""
         threshold = Labels.settings[self.is_emission]['stick label relative threshold'] * float(self.peaks[0].intensity) + \
