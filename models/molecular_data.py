@@ -297,11 +297,11 @@ class Cluster:
         self.width = size[0]
         self.height = size[1]
 
-    def get_plot_pos(self, state_plot):
+    def get_plot_pos(self, state_plot, gap_height=0.001):
         x = self.x + state_plot.xshift
         y = state_plot.yshift + self.y * state_plot.yscale
         self.plot_x = x + self.rel_x
-        self.plot_y = max(y + (0.05 + self.rel_y) * state_plot.yscale, max([0]+[c.get_roof() for c in self.on_top_of]))
+        self.plot_y = max(y + (0.05 + self.rel_y) * state_plot.yscale, gap_height+max([0]+[c.get_roof() for c in self.on_top_of]))
         return (x, y), (self.plot_x, self.plot_y)  # should self.rel_y be adapted here?
 
     def set_plot_pos(self, pos, state_plot):

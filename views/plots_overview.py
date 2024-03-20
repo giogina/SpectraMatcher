@@ -520,9 +520,7 @@ class PlotsOverview:
             clusters = state_plot.spectrum.get_clusters(in_placement_order=True)
             for cluster in clusters:
                 if len(cluster.label):
-                    # x = cluster.x + state_plot.xshift
-                    # y = state_plot.yshift + cluster.y * state_plot.yscale
-                    peak_pos, label_pos = cluster.get_plot_pos(state_plot)
+                    peak_pos, label_pos = cluster.get_plot_pos(state_plot, gap_height=Labels.settings[self.viewmodel.is_emission]['label font size']/self.pixels_per_plot_y)
                     annotation = dpg.add_plot_annotation(label=cluster.label, default_value=label_pos, clamped=False, offset=(0, -cluster.height/2/self.pixels_per_plot_y), color=[0, 0, 0, 0], parent=plot, user_data=(cluster, state_plot.tag))  #[200, 200, 200, 0]
                     self.annotations[tag][peak_pos] = annotation
                     self.label_drag_points[tag][annotation] = dpg.add_drag_point(default_value=label_pos, color=[255, 255, 0], show_label=False, show=False, user_data=annotation, callback=lambda s, a, u: self.move_label(dpg.get_value(s)[:2], u, update_drag_point=False), parent=plot)
@@ -560,7 +558,6 @@ class PlotsOverview:
             del self.annotation_lines[tag][label]
 
     def draw_label_line(self, cluster, peak_pos):
-
         if abs(cluster.rel_x) > cluster.width / 2:
             if cluster.rel_x < 0:
                 anchor_offset_x = cluster.rel_x + cluster.width / 2
@@ -572,10 +569,15 @@ class PlotsOverview:
         if anchor_offset_y * self.pixels_per_plot_y < 4:
             anchor_offset_x = 0
             anchor_offset_y = 0
-
-        start_pos = (peak_pos[0], peak_pos[1] + 5/self.pixels_per_plot_y)  # spacing
-        elbow_pos = (peak_pos[0], cluster.plot_y - anchor_offset_y)
-        label_pos = (peak_pos[0] + anchor_offset_x, cluster.plot_y)
+        if peak_pos[1] + 5/self.pixels_per_plot_y > cluster.plot_y - anchor_offset_y: # avoid downwards vertical lines
+            x_spacing = (-5 if anchor_offset_x > 0 else 5)/self.pixels_per_plot_x
+            start_pos = (peak_pos[0], peak_pos[1] + 5/self.pixels_per_plot_y)
+            elbow_pos = (peak_pos[0], peak_pos[1] + 5/self.pixels_per_plot_y)
+            label_pos = (peak_pos[0] + anchor_offset_x + x_spacing, peak_pos[1] + anchor_offset_y)
+        else:
+            start_pos = (peak_pos[0], peak_pos[1] + 5/self.pixels_per_plot_y)  # spacing
+            elbow_pos = (peak_pos[0], cluster.plot_y - anchor_offset_y)
+            label_pos = (peak_pos[0] + anchor_offset_x, cluster.plot_y)
         line_v = dpg.draw_line(start_pos, elbow_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=[200, 200, 255, 200])
         line_d = dpg.draw_line(elbow_pos, label_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=[200, 200, 255, 200])
         return line_v, line_d
@@ -586,7 +588,7 @@ class PlotsOverview:
             for label in self.annotations.get(tag, {}).values():
                 self.delete_label_line(tag, label)
                 cluster, _ = dpg.get_item_user_data(label)
-                peak_pos, label_pos = cluster.get_plot_pos(state_plot)
+                peak_pos, label_pos = cluster.get_plot_pos(state_plot, gap_height=Labels.settings[self.viewmodel.is_emission]['label font size']/self.pixels_per_plot_y)
                 dpg.set_value(label, label_pos)
                 dpg.set_value(self.label_drag_points[tag][label], label_pos)
                 self.annotation_lines[tag][label] = self.draw_label_line(cluster, peak_pos)
