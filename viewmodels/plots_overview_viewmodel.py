@@ -119,6 +119,10 @@ class PlotsOverviewViewmodel:
         self._callbacks.get("update list spec")(state_plot)
         self.last_action_y = lambda direction: self.on_y_drag(value+0.01*direction, state_plot)
 
+        # for s in self.state_plots.values():
+        #     if abs(value - s.yshift) < 0.01:
+
+
     def resize_spectrum(self, spec_tag, direction):
         if spec_tag is not None and spec_tag in self.state_plots.keys():
             spec = self.state_plots[spec_tag]

@@ -185,10 +185,6 @@ class PlotsOverview:
         self.dummy_series = dpg.add_scatter_series([0, 2000], [-0.1, 1.1], parent=f"y_axis_{self.viewmodel.is_emission}")
         append_viewport_resize_update_callback(self.viewport_resize_update)
         self.configure_theme()
-        # TODO: React to arrow button presses by adjusting last changed control.
-        # TODO: Scroll on sliders to change them
-# TODO: Preview plot fixable (ctrl+click or button on plot overview panel), in addition to hover plot
-     # todo: scroll lines not adapted to loaded x shifts
 
     def viewport_resize_update(self):
         if dpg.get_item_configuration(self.expand_plot_settings_button).get('show'):
