@@ -93,10 +93,10 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log",
-            "y scale": 0.5000000000000001,
-            "x shift": 11.287661497540512,
+            "y scale": 0.6000000000000001,
+            "x shift": 227.9749505690586,
             "hidden": false,
-            "y shift": 1.2551386623164762
+            "y shift": 1.351312974194252
         },
         {
             "color": [
@@ -170,7 +170,7 @@
         "true": {
             "show labels": true,
             "show gaussian labels": false,
-            "peak intensity label threshold": 0.010999999940395355,
+            "peak intensity label threshold": 0.019999999552965164,
             "stick label relative threshold": 0.04600000008940697,
             "stick label absolute threshold": 0.007000000216066837,
             "peak separation threshold": 0.8,

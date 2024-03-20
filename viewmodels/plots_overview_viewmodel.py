@@ -20,12 +20,12 @@ class PlotsOverviewViewmodel:
         Labels.add_observer(self)
         Matcher.add_observer(self)
         self._callbacks = {
+            "post load update": noop,
             "update plot": noop,
             "add spectrum": noop,
             "redraw plot": noop,
             "delete sticks": noop,
             "redraw sticks": noop,
-            "set correction factor values": noop,
             "update labels": noop,
             "redraw peaks": noop,
             "add list spectrum": noop,
@@ -38,6 +38,8 @@ class PlotsOverviewViewmodel:
         self.state_plots = {}  # whole State instances, for x, y, color, etc.
         self._auto_zoom = True
         self.last_correction_factor_change_time = 0
+        self.last_action_x = noop
+        self.last_action_y = noop
 
     def update(self, event, *args):
         # print(f"Plots overview viewmodel received event: {event}")
@@ -108,12 +110,14 @@ class PlotsOverviewViewmodel:
         else:
             self._callbacks.get("update plot")(self.state_plots[state_plot.tag], mark_dragged_plot=state_plot.tag)
         self._callbacks.get("update list spec")(self.state_plots[state_plot.tag])
+        self.last_action_x = lambda direction: self.on_x_drag(self.state_plots[state_plot.tag].xshift + 10*direction, state_plot, slider=True)
 
     def on_y_drag(self, value, state_plot):
         self.state_plots[state_plot.tag].set_y_shift(value)
         self._callbacks.get("delete sticks")(state_plot.tag)
         self._callbacks.get("update plot")(self.state_plots[state_plot.tag], mark_dragged_plot=state_plot.tag)
         self._callbacks.get("update list spec")(state_plot)
+        self.last_action_y = lambda direction: self.on_y_drag(value+0.01*direction, state_plot)
 
     def resize_spectrum(self, spec_tag, direction):
         if spec_tag is not None and spec_tag in self.state_plots.keys():
@@ -121,11 +125,13 @@ class PlotsOverviewViewmodel:
             spec.resize_y_scale(direction)
             self._callbacks.get("update plot")(spec, redraw_sticks=True)
             self._callbacks.get("update list spec")(spec)
+            self.last_action_y = lambda d: self.resize_spectrum(spec_tag, d)
 
     def set_y_scale(self, value, state_plot):
         state_plot.set_y_scale(value)
         self._callbacks.get("update plot")(state_plot, redraw_sticks=True)
         self._callbacks.get("update list spec")(state_plot)
+        self.last_action_y = lambda d: self.resize_spectrum(state_plot.tag, d)
 
     def set_y_shifts(self, value):
         Labels.set(self.is_emission, 'global y shifts', value)
@@ -134,14 +140,20 @@ class PlotsOverviewViewmodel:
             self._callbacks.get("delete sticks")(state_plot.tag)
             self._callbacks.get("update plot")(state_plot, fit_y_axis=True)
             self._callbacks.get("update list spec")(state_plot)
+        self.last_action_y = lambda d: self.set_y_shifts(value+0.1*d)
 
     def resize_half_width(self, direction, relative=True):
+        print("Resize: ", direction)
+        self._callbacks.get("post load update")(half_width=True)
+        self.last_action_x = self.resize_half_width
         return SpecPlotter.change_half_width(self.is_emission, direction, relative)
 
     def change_correction_factor(self, key, value):
         self.last_correction_factor_change_time = time.time()
         self._callbacks.get("delete sticks")()
         WavenumberCorrector.set_correction_factor(self.is_emission, key, value)
+        self.last_action_x = lambda d: self.change_correction_factor(key, value+0.01*d)
+        self._callbacks.get("post load update")(x_scale=True)
 
     def set_color(self, color, state_plot):
         state_plot.set_color(color)
@@ -180,5 +192,9 @@ class PlotsOverviewViewmodel:
             self._callbacks.get("update plot")(spec, redraw_sticks=True, update_drag_lines=True)
             self._callbacks.get("update list spec")(spec)
         self._callbacks.get("hide spectrum")(tag, hide)
+
+    def match_peaks(self, match_on):
+        pass # todo
+
 
 

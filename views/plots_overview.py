@@ -1,3 +1,5 @@
+import math
+
 import dearpygui.dearpygui as dpg
 
 from models.experimental_spectrum import ExperimentalSpectrum
@@ -50,6 +52,8 @@ class PlotsOverview:
         self.mouse_plot_pos = (0, 0)
         self.dragged_peak = None
         self.vertical_slider_active = False
+        self.adjustment_factor = 1
+        self.disable_ui_update = False  # True while slider scrolls are being processed
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -57,6 +61,12 @@ class PlotsOverview:
             dpg.add_mouse_release_handler(dpg.mvMouseButton_Right, callback=self.on_right_click_release)
             dpg.add_key_down_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=True)
             dpg.add_key_release_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=False)
+            dpg.add_key_down_handler(dpg.mvKey_Shift, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=True)
+            dpg.add_key_release_handler(dpg.mvKey_Shift, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=False)
+            dpg.add_key_press_handler(dpg.mvKey_Down, callback=lambda s, a, u: self.on_arrow_press("y", -1))
+            dpg.add_key_press_handler(dpg.mvKey_Up, callback=lambda s, a, u: self.on_arrow_press("y", 1))
+            dpg.add_key_press_handler(dpg.mvKey_Left, callback=lambda s, a, u: self.on_arrow_press("x", -1))
+            dpg.add_key_press_handler(dpg.mvKey_Right, callback=lambda s, a, u: self.on_arrow_press("x", 1))
 
         with dpg.table(header_row=False, borders_innerV=True, resizable=True) as self.layout_table:
             self.plot_column = dpg.add_table_column(init_width_or_weight=4)
@@ -121,7 +131,7 @@ class PlotsOverview:
                         with dpg.group(horizontal=True):
                             dpg.add_spacer(width=6)
                             with dpg.group(horizontal=False):
-                                self.half_width_slider = dpg.add_slider_float(label="Half-width", min_value=0.1, max_value=60, callback=lambda s, a, u: self.viewmodel.resize_half_width(a, relative=False))
+                                self.half_width_slider = dpg.add_slider_float(label="Half-width", min_value=0.1, max_value=60, format="%.1f", callback=lambda s, a, u: self.viewmodel.resize_half_width(a, relative=False))
                                 self.vertical_spacing_slider = dpg.add_slider_float(label="Vertical spacing", min_value=-2, max_value=2, default_value=1.25, callback=lambda s, a, u: self.viewmodel.set_y_shifts(a))
                         dpg.add_spacer(height=16)
                         with dpg.collapsing_header(label="Anharmonic corrections", default_open=True):
@@ -155,7 +165,7 @@ class PlotsOverview:
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
-                                    dpg.add_checkbox(label="Edit peaks", default_value=False, callback=lambda s, a, u: self.enable_edit_peaks(dpg.get_value(s)))
+                                    dpg.add_checkbox(label="Edit peaks", default_value=False, callback=lambda s, a, u: self.enable_edit_peaks(a))
                                     self.peak_controls['peak prominence threshold'] = dpg.add_slider_float(label=" Min. prominence", min_value=0, max_value=0.1, default_value=ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak prominence threshold', 0.005), callback=lambda s, a, u: ExperimentalSpectrum.set(self.viewmodel.is_emission, 'peak prominence threshold', a))
                                     self.peak_controls['peak width threshold'] = dpg.add_slider_int(label=" Min. width", min_value=0, max_value=100, default_value=ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak width threshold', 2), callback=lambda s, a, u: ExperimentalSpectrum.set(self.viewmodel.is_emission, 'peak width threshold', a))
                                     dpg.add_button(label="Defaults", width=-6, callback=lambda s, a, u: ExperimentalSpectrum.reset_defaults(self.viewmodel.is_emission))
@@ -166,6 +176,7 @@ class PlotsOverview:
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
+                                    dpg.add_checkbox(label="Match peaks (to lowest spectrum)", default_value=False, callback=lambda s, a, u: self.viewmodel.match_peaks(a))
                                     self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(label=" Min. Intensity", min_value=0, max_value=0.2, default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
                                     self.match_controls['distance match threshold'] = dpg.add_slider_float(label=" Max. Distance", min_value=0, max_value=100, default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a))
                                     dpg.add_button(label="Defaults", width=-6, callback=self.restore_matcher_defaults)
@@ -177,6 +188,7 @@ class PlotsOverview:
         # TODO: React to arrow button presses by adjusting last changed control.
         # TODO: Scroll on sliders to change them
 # TODO: Preview plot fixable (ctrl+click or button on plot overview panel), in addition to hover plot
+     # todo: scroll lines not adapted to loaded x shifts
 
     def viewport_resize_update(self):
         if dpg.get_item_configuration(self.expand_plot_settings_button).get('show'):
@@ -184,6 +196,18 @@ class PlotsOverview:
             dpg.configure_item(self.expand_plot_settings_button, show=True, pos=(dpg.get_viewport_width() - 40, 45))
         for tag in self.viewmodel.state_plots.keys():
             self.draw_labels(tag)
+
+    def toggle_fine_adjustments(self, fine):
+        if fine:
+            self.adjustment_factor = 0.1
+        else:
+            self.adjustment_factor = 1
+
+    def on_arrow_press(self, dimension, direction):
+        if dimension == "x":
+            self.viewmodel.last_action_x(direction * self.adjustment_factor)
+        else:
+            self.viewmodel.last_action_y(direction * self.adjustment_factor)
 
     def on_right_click_release(self):
         point = self.hovered_peak_indicator_point
@@ -244,8 +268,11 @@ class PlotsOverview:
     def print_table(self):  # todo
         pass
 
-    def set_ui_values_from_settings(self, x_scale=False, half_width=False, y_shifts=False, labels=False, peak_detection=False, matcher=False):
-        load_all = True not in (x_scale, half_width, labels, matcher)
+    def set_ui_values_from_settings(self, x_scale=False, half_width=False, x_shifts=False, y_shifts=False, labels=False, peak_detection=False, matcher=False):
+        if self.disable_ui_update:
+            self.disable_ui_update = False
+            return
+        load_all = True not in (x_scale, half_width, x_shifts, y_shifts, labels, matcher)
 
         if load_all or x_scale:
             for i, x_scale_key in enumerate(['bends', 'H stretches', 'others']):
@@ -378,7 +405,7 @@ class PlotsOverview:
                               user_data=s,
                               callback=lambda sender, a, u: self.viewmodel.on_y_drag(dpg.get_value(sender), u),
                               parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.state.get_color())
-            dpg.add_drag_line(tag=f"drag-x-{s.tag}", vertical=True, show_label=False, default_value=s.handle_x, user_data=s,
+            dpg.add_drag_line(tag=f"drag-x-{s.tag}", vertical=True, show_label=False, default_value=s.handle_x+s.xshift, user_data=s,
                               callback=lambda sender, a, u: self.viewmodel.on_x_drag(dpg.get_value(sender), u),
                               parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.state.get_color())
         else:
@@ -490,7 +517,6 @@ class PlotsOverview:
 
     def draw_labels(self, tag):
         if self.labels and dpg.is_item_shown(tag):
-            print("draw labels...")
             plot = f"plot_{self.viewmodel.is_emission}"
             for annotation in self.annotations.get(tag, {}).values():
                 if dpg.does_item_exist(annotation):
@@ -673,11 +699,24 @@ class PlotsOverview:
             self.viewmodel.resize_spectrum(self.hovered_spectrum, direction)
         elif self.hovered_x_drag_line is not None:
             half_width = self.viewmodel.resize_half_width(direction)
-            dpg.set_value(self.half_width_slider, half_width)
         elif dpg.is_item_hovered(self.plot):
             for tag in self.viewmodel.state_plots.keys():
                 if dpg.is_item_shown(tag):
                     self.draw_labels(tag)
+        else:
+            for slider in [self.half_width_slider, self.vertical_spacing_slider, f"H stretches {self.viewmodel.is_emission} slider",
+                            f"bends {self.viewmodel.is_emission} slider", f"others {self.viewmodel.is_emission} slider",
+                            self.label_controls['peak intensity label threshold'], self.label_controls['stick label relative threshold'],
+                            self.label_controls['stick label absolute threshold'], self.label_controls['label font size'],
+                            self.peak_controls['peak prominence threshold'], self.peak_controls['peak width threshold'],
+                            self.match_controls['peak intensity match threshold'], self.match_controls['distance match threshold']]:
+                if dpg.is_item_hovered(slider):
+                    step = (dpg.get_item_configuration(slider)['max_value'] - dpg.get_item_configuration(slider)['min_value'])/20
+                    step = 10**round(math.log10(step))
+                    value = max(0, dpg.get_value(slider) + step*direction*self.adjustment_factor)
+                    dpg.set_value(slider, value)
+                    dpg.get_item_callback(slider)(slider, value, dpg.get_item_user_data(slider))
+                    self.disable_ui_update = True
 
     def show_drag_lines(self, show):
         self.show_all_drag_lines = show
