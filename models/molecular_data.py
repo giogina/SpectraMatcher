@@ -283,8 +283,8 @@ class Cluster:
         self.plot_x = 0  # own label position in the plot, dynamically updated as labels are moved
         self.plot_y = 0
 
-    def construct_label(self, gaussian: bool):
-        if self.y < Labels.settings[self.is_emission]['peak intensity label threshold']:
+    def construct_label(self, gaussian: bool, yscale=1):
+        if self.y * yscale < Labels.settings[self.is_emission]['peak intensity label threshold']:
             self.label = ""
             return ""
         threshold = Labels.settings[self.is_emission]['stick label relative threshold'] * float(self.peaks[0].intensity) + \
@@ -424,12 +424,12 @@ class FCSpectrum:
             for cluster in placeables:
 
                 # adjust horizontal spacing
-                if sum(cluster.space) <= 2*gap_width:
+                if sum(cluster.space) <= gap_width:
                     cluster.rel_x = cluster.space[1]/2 - cluster.space[0]/2  # kinda cramped; center it.
-                elif cluster.space[0] < gap_width:
-                    cluster.rel_x = gap_width - cluster.space[0]  # nudge it away from left line
-                elif cluster.space[1] < gap_width:
-                    cluster.rel_x = cluster.space[1] - gap_width  # nudge it away from right line
+                elif cluster.space[0] < gap_width/2:
+                    cluster.rel_x = gap_width/2 - cluster.space[0]  # nudge it away from left line
+                elif cluster.space[1] < gap_width/2:
+                    cluster.rel_x = cluster.space[1] - gap_width/2  # nudge it away from right line
                 else:
                     cluster.rel_x = 0  # all good, keep it there.
 
@@ -437,16 +437,14 @@ class FCSpectrum:
                 if cluster.left_neighbour is not None:
                     cluster.left_neighbour.right_neighbour = cluster.right_neighbour
                     if cluster.space[0] - abs(cluster.rel_x) < cluster.left_neighbour.width + gap_width:
-                        if cluster.left_neighbour.floor <= cluster.floor + cluster.height + gap_height:
-                            cluster.left_neighbour.floor = cluster.floor + cluster.height + gap_height
-                            cluster.left_neighbour.on_top_of.append(cluster)
+                        cluster.left_neighbour.floor = max(cluster.left_neighbour.floor, cluster.floor + cluster.height + gap_height)
+                        cluster.left_neighbour.on_top_of.append(cluster)
                         cluster.left_neighbour.rel_y = cluster.left_neighbour.floor - cluster.left_neighbour.y
                 if cluster.right_neighbour is not None:
                     cluster.right_neighbour.left_neighbour = cluster.left_neighbour
                     if cluster.space[1] - abs(cluster.rel_x) < cluster.right_neighbour.width + gap_width:
-                        if cluster.right_neighbour.floor <= cluster.floor + cluster.height + gap_height:
-                            cluster.right_neighbour.floor = cluster.floor + cluster.height + gap_height
-                            cluster.right_neighbour.on_top_of.append(cluster)
+                        cluster.right_neighbour.floor = max(cluster.right_neighbour.floor, cluster.floor + cluster.height + gap_height)
+                        cluster.right_neighbour.on_top_of.append(cluster)
                         cluster.right_neighbour.rel_y = cluster.right_neighbour.floor - cluster.right_neighbour.y
 
                 cluster.to_be_positioned = False
@@ -532,7 +530,6 @@ class FCSpectrum:
                                          SpecPlotter.get_spectrum_array, self.peaks, self.is_emission,
                                          notification="xy data ready", observers=[self])
         elif event == "xy data ready":
-            # key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
             (key, self.x_data, self.y_data, self.mul2) = args[0]
             for peak in self.peaks:
                 peak.intensity /= self.mul2
@@ -541,14 +538,5 @@ class FCSpectrum:
             self.y_data_arrays = {key: self.y_data}
             self._notify_observers(FCSpectrum.peaks_changed_notification)
             self._notify_observers(FCSpectrum.xy_data_changed_notification)
-
-
-    # def recompute_everything(self):
-    #     print(self.zero_zero_transition_energy, self.is_emission, "Recomputing...", self.vibrational_modes)
-
-
-            #AsyncManager.submit_task(f"Recompute spectrum {self.zero_zero_transition_energy} {self.is_emission}", self.recompute_everything)
-
-
 
 

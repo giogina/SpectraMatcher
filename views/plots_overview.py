@@ -512,7 +512,7 @@ class PlotsOverview:
             clusters = state_plot.spectrum.get_clusters()
 
             for cluster in clusters:
-                cluster.construct_label(self.gaussian_labels)
+                cluster.construct_label(self.gaussian_labels, state_plot.yscale)
                 text_size = dpg.get_text_size(cluster.label, font=label_font)
                 cluster.set_label_size([text_size[0]/self.pixels_per_plot_x, text_size[1]/self.pixels_per_plot_y])
             state_plot.spectrum.decide_label_positions(gap_width=font_size/self.pixels_per_plot_x, gap_height=font_size/self.pixels_per_plot_y)
@@ -528,8 +528,6 @@ class PlotsOverview:
 
                     # TODO:
                     #  Save manual relative positions (& zoom state?)
-                    #  redo labels when yscale changes significantly (and include yscale in that computation) - just the y positioning; x values and orders are all good.
-                    #  fix overlapping non-immediate neigbours bug
 
                     # TODO:
                     #  match checkbox - trigger matching with lowest shown spectrum
