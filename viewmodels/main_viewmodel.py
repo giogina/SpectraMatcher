@@ -1,6 +1,7 @@
 from models.project import ProjectObserver
 from models.project import Project
 from models.settings_manager import SettingsManager
+from utility.icons import Icons
 from viewmodels.data_files_viewmodel import DataFileViewModel
 from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel
 from viewmodels.project_setup_viewmodel import ProjectSetupViewModel
@@ -40,9 +41,6 @@ class MainViewModel(ProjectObserver):
     def get_plots_overview_viewmodel(self, is_emission):
         return PlotsOverviewViewmodel(self._project, is_emission)
 
-    def get_spectra_overview_viewmodel(self, is_emission):
-        return SpectraOverviewViewmodel(is_emission)
-
     def load_project(self):
         if self._project.check_newer_autosave():
             print(f"attempting to set message...")
@@ -55,6 +53,7 @@ class MainViewModel(ProjectObserver):
     def _load(self, auto=False):
         self._project.add_observer(self, "project_unsaved")
         self._project.add_observer(self, "progress updated")
+        self._project.add_observer(self, "Project file not found")
         self._project.load(auto)
         self._title_callback(self._assemble_window_title())
 
@@ -76,8 +75,7 @@ class MainViewModel(ProjectObserver):
                 self._project_unsaved = args[0][0]
                 self._title_callback(self._assemble_window_title())
         elif event_type == "Project file not found":
-            pass
-            #TODO> Dialog, close project / open another
+            self._message_callback("Project file not found", "This project file does not exist.", icon=Icons.x_circle, buttons=[("Ok", noop)])
         elif event_type == "progress updated":
             self._switch_tab_callback(self._project.get("progress"))
 
@@ -144,7 +142,8 @@ class MainViewModel(ProjectObserver):
         """List of recently opened paths without the current one."""
         current = self.path.replace("\\", "/")
         recents = self.get_setting("recentProjects")
-        recents.remove(current)
+        if current in recents:
+            recents.remove(current)
         return recents
 
 

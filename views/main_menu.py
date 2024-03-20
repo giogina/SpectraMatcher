@@ -1,6 +1,7 @@
 from tkinter import simpledialog
 
 from launcher import Launcher
+from utility.item_themes import ItemThemes
 from viewmodels.main_viewmodel import MainViewModel, noop
 import dearpygui.dearpygui as dpg
 from utility.icons import Icons
@@ -80,8 +81,12 @@ class MainMenu:
 
             # Some standard modal window fillings
             with dpg.child_window(show=False, tag="message and buttons"):
-                self.modal_child_window_tags.append("message and buttons")  # TODO: "warning" icon (button above the message with self.icon.(dpg.add_button(), icon=Icon.exclamation_triangle, size=32)
-                dpg.add_button(label="Message", height=300, width=-1, tag="button dialog message")  # TODO: Same with Icons.x_circle for errors! (Could even write a specialized "show error" function)
+                self.modal_child_window_tags.append("message and buttons")
+                dpg.add_spacer(height=80)
+                self.icons.insert(dpg.add_button(tag="modal icon button", height=60, width=-1), icon=Icons.exclamation_triangle, size=50)
+                dpg.bind_item_theme("modal icon button", ItemThemes.invisible_button_theme())
+                dpg.add_button(label="Message", height=100, width=-1, tag="button dialog message")
+                dpg.add_spacer(height=40)
                 with dpg.table(header_row=False, show=False, width=-1, tag="three buttons table"):
                     dpg.add_table_column()
                     dpg.add_table_column()
@@ -104,10 +109,11 @@ class MainMenu:
                         dpg.add_button(label="Button 1", width=-1, tag="Button 1/1", callback=self._on_modal_button_press, user_data=0)
         self.setup_menu_theme()
 
-    def show_dialog(self, title, message, buttons=None):  # buttons: list of ("label", callback)
+    def show_dialog(self, title, message, icon=Icons.exclamation_triangle, buttons=None):  # buttons: list of ("label", callback)
         if buttons is None:
             buttons = [("Ok", noop)]
         dpg.show_item("the one modal window")
+        self.icons.insert("modal icon button", icon=icon, size=50)
         self._show_modal_child("message and buttons")
         if len(buttons) == 1:
             dpg.show_item("one button table")

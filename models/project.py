@@ -263,6 +263,8 @@ class Project(FileObserver):
     def _save_project(self, snapshot, auto):
         if auto and not self._is_unsaved:
             return  # no use auto-saving if nothing has changed
+        if not os.path.exists(self.project_file):
+            return
         with self._project_file_lock:
             temp_file_path = ""
             if auto:

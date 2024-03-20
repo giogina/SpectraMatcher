@@ -22,17 +22,13 @@ class Labels:
     @classmethod
     def construct_labels(cls, peaks, modes, is_emission):
         if is_emission:
-            from_index = '⁰'
             first_chars = {str(i): chr(0x20a0+i) for i in range(0, 10)}
             other_chars = {str(i): chr(0x2080+i) for i in range(0, 10)}
-            to_indices = {'0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄', '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉'}
         else:
             first_chars = {str(i): chr(0x2090+i) for i in range(0, 10)}
             other_chars = {str(i): chr(0x2070+i) for i in range(0, 10)}
-            from_index = '₀'
-            to_indices = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'}
-        for peak in peaks:
 
+        for peak in peaks:
             if len(peak.transition[0]) == 1:
                 label = f"0{first_chars['0']}"
                 gaussian_label = f"0{first_chars['0']}"
