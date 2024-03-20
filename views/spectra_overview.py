@@ -54,6 +54,7 @@ class SpectraOverview:
     #  Allow adjustment of minx, maxx of exp spectra
     #  Same min, max x adjustment via horizontal drag lines visible on hover
     #  Allow color choices
+    #  Collapse / expand all sections
 
     def on_right_click_release(self):
         for tag in self.viewmodel.state_plots.keys():

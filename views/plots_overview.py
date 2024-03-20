@@ -286,8 +286,8 @@ class PlotsOverview:
             self.pixels_per_plot_y = transformed_y[1]-transformed_y[0]
             if not dpg.is_item_hovered(f"plot_{self.viewmodel.is_emission}"):
                 return
-            mouse_x_pixel_space = _helper_data["MouseX_PixelSpace"]
-            mouse_y_pixel_space = _helper_data["MouseY_PixelSpace"]
+            # mouse_x_pixel_space = _helper_data["MouseX_PixelSpace"]
+            # mouse_y_pixel_space = _helper_data["MouseY_PixelSpace"]
             self.mouse_plot_pos = (mouse_x_plot_space, mouse_y_plot_space)
             dpg.delete_item(sender, children_only=True, slot=2)
             dpg.push_container_stack(sender)
@@ -345,8 +345,6 @@ class PlotsOverview:
         return
 
     def redraw_plot(self):
-        print("Redraw plot...")
-        # dpg.delete_item(f"y_axis_{self.viewmodel.is_emission}", children_only=True)
         for tag in self.line_series:
             dpg.delete_item(tag)
         self.line_series = []
@@ -416,6 +414,7 @@ class PlotsOverview:
         self.dragged_plot = mark_dragged_plot
         dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
         if update_drag_lines:
+            dpg.set_value(f"drag-{state_plot.tag}", state_plot.yshift)
             dpg.set_value(f"drag-x-{state_plot.tag}", state_plot.handle_x + state_plot.xshift)
             self.draw_labels(state_plot.tag)
         if redraw_sticks:
@@ -525,17 +524,12 @@ class PlotsOverview:
                     self.annotations[tag][peak_pos] = annotation
                     self.label_drag_points[tag][annotation] = dpg.add_drag_point(default_value=label_pos, color=[255, 255, 0], show_label=False, show=False, user_data=annotation, callback=lambda s, a, u: self.move_label(dpg.get_value(s)[:2], u, update_drag_point=False), parent=plot)
                     self.annotation_lines[tag][annotation] = self.draw_label_line(cluster, peak_pos)
-
-                    # TODO:
-                    #  Save manual relative positions (& zoom state?)
-
                     # TODO:
                     #  match checkbox - trigger matching with lowest shown spectrum
                     #  dragging another spectrum there causes a composite spectrum (drag lines slightly offset), complete fit
-                    #  Bug: newly un-hidden drag lines are sometimes in the wrong spot
 
     def move_label(self, pos, label, state_plot=None, update_drag_point=True):
-        dpg.set_value(label, pos)
+        dpg.set_value(label, pos) # Optional: Save manual relative positions (& zoom state?)
         cluster, tag = dpg.get_item_user_data(label)
         if dpg.is_item_shown(tag):
             if state_plot is None:
@@ -620,6 +614,7 @@ class PlotsOverview:
                 self.draw_sticks(s)
         else:
             self.delete_sticks()
+            # todo> re-position labels on zoom changes
 
     def draw_sticks(self, s):
         if dpg.is_item_shown(s.tag):

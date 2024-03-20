@@ -171,16 +171,14 @@ class PlotsOverviewViewmodel:
 
     def hide_spectrum(self, tag, hide=True):
         self.state_plots[tag].state.settings["hidden"] = hide
-        shown_specs_copunter = 0
+        shown_specs_counter = 0
         global_y_shift = Labels.settings.get('global y shifts', 1.25)
         for spec in self.state_plots.values():
             if not spec.state.settings["hidden"]:
-                shown_specs_copunter += 1
-                spec.set_y_shift(shown_specs_copunter * global_y_shift)
-            self._callbacks.get("update plot")(spec)
+                shown_specs_counter += 1
+                spec.set_y_shift(shown_specs_counter * global_y_shift)
+            self._callbacks.get("update plot")(spec, redraw_sticks=True, update_drag_lines=True)
             self._callbacks.get("update list spec")(spec)
         self._callbacks.get("hide spectrum")(tag, hide)
-
-
 
 
