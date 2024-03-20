@@ -279,11 +279,9 @@ class Cluster:
         self.space = [0, 0] # space in wavenumbers to left and right to-be-positioned neighbours
         self.rel_x = 0  # shift in wavenumbers of label position w.r.t. peak position
         self.rel_y = 0
-
-        self.on_top_of = [[]]  # all adjacent clusters that should be below this one (if horizontal space is insufficient)
-        # 'lift': self.y_data[self.maxima[j]] + gap_height,
-        # 'width': max([get_label_width(c[l_key], font_size) for c in cluster]) * plot_scale[0],
-        # 'height': label_dims[font_size]['height'] * plot_scale[1],
+        self.on_top_of = []
+        self.plot_x = 0  # own label position in the plot, dynamically updated as labels are moved
+        self.plot_y = 0
 
     def construct_label(self, gaussian: bool):
         if self.y < Labels.settings[self.is_emission]['peak intensity label threshold']:
@@ -299,7 +297,23 @@ class Cluster:
         self.width = size[0]
         self.height = size[1]
 
-    # def get_width(self, font_size):
+    def get_plot_pos(self, state_plot):
+        x = self.x + state_plot.xshift
+        y = state_plot.yshift + self.y * state_plot.yscale
+        self.plot_x = x + self.rel_x
+        self.plot_y = max(y + (0.05 + self.rel_y) * state_plot.yscale, max([0]+[c.get_roof() for c in self.on_top_of]))
+        return (x, y), (self.plot_x, self.plot_y)  # should self.rel_y be adapted here?
+
+    def set_plot_pos(self, pos, state_plot):
+        (self.plot_x, self.plot_y) = pos
+        x = self.x + state_plot.xshift  # peak position
+        y = state_plot.yshift + self.y * state_plot.yscale
+        self.rel_x = self.plot_x - x
+        self.rel_y = (self.plot_y - y) / state_plot.yscale - 0.05
+        return (x, y), (self.plot_x, self.plot_y)
+
+    def get_roof(self):
+        return self.plot_y + self.height
 
 
 class FCSpectrum:
@@ -326,6 +340,7 @@ class FCSpectrum:
         self.y_data_arrays = {key: self.y_data}  # SpecPlotter key: array (save previously computed spectra)
         self.vibrational_modes = None
         self.clusters = []
+        self.clusters_in_placement_order = []
 
     def add_observer(self, observer):
         self._observers.append(observer)
@@ -379,11 +394,13 @@ class FCSpectrum:
             unpositioned_cluster.space[1] = self.x_max - unpositioned_cluster.x
 
     def decide_label_positions(self, gap_width, gap_height):
+        self.clusters_in_placement_order = []
         prev_unpositioned_cluster = None
         for cluster in self.clusters:
             cluster.rel_y = gap_height
             cluster.floor = cluster.y + cluster.rel_y
             cluster.to_be_positioned = len(cluster.label) > 0
+            cluster.on_top_of = []
             if cluster.to_be_positioned:
                 cluster.left_neighbour = prev_unpositioned_cluster
                 if prev_unpositioned_cluster is not None:
@@ -419,17 +436,21 @@ class FCSpectrum:
                 # adjust lift of neighbours
                 if cluster.left_neighbour is not None:
                     cluster.left_neighbour.right_neighbour = cluster.right_neighbour
-                    if cluster.space[0] + cluster.rel_x < cluster.left_neighbour.width / 2 + gap_width:
-                        cluster.left_neighbour.floor = max(cluster.left_neighbour.floor, cluster.floor + cluster.height + gap_height)
+                    if cluster.space[0] - abs(cluster.rel_x) < cluster.left_neighbour.width + gap_width:
+                        if cluster.left_neighbour.floor <= cluster.floor + cluster.height + gap_height:
+                            cluster.left_neighbour.floor = cluster.floor + cluster.height + gap_height
+                            cluster.left_neighbour.on_top_of.append(cluster)
                         cluster.left_neighbour.rel_y = cluster.left_neighbour.floor - cluster.left_neighbour.y
                 if cluster.right_neighbour is not None:
                     cluster.right_neighbour.left_neighbour = cluster.left_neighbour
-                    if cluster.space[1] - cluster.rel_x < cluster.right_neighbour.width / 2 + gap_width:
-                        cluster.right_neighbour.floor = max(cluster.right_neighbour.floor, cluster.floor + cluster.height + gap_height)
+                    if cluster.space[1] - abs(cluster.rel_x) < cluster.right_neighbour.width + gap_width:
+                        if cluster.right_neighbour.floor <= cluster.floor + cluster.height + gap_height:
+                            cluster.right_neighbour.floor = cluster.floor + cluster.height + gap_height
+                            cluster.right_neighbour.on_top_of.append(cluster)
                         cluster.right_neighbour.rel_y = cluster.right_neighbour.floor - cluster.right_neighbour.y
 
                 cluster.to_be_positioned = False
-                # print(cluster.label, cluster.rel_x, cluster.rel_y)
+                self.clusters_in_placement_order.append(cluster)
 
             to_be_positioned = [c for c in self.clusters if c.to_be_positioned]
 
@@ -449,9 +470,11 @@ class FCSpectrum:
         self.minima = minima
         self.maxima = maxima
 
-    def get_clusters(self):
-        self.clusters.sort(key=lambda c: c.x)
-        return self.clusters
+    def get_clusters(self, in_placement_order=False):
+        if in_placement_order:
+            return self.clusters_in_placement_order
+        else:
+            return self.clusters
 
     def determine_label_clusters(self):
         self.compute_min_max()
