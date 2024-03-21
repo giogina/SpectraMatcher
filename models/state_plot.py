@@ -137,6 +137,7 @@ class MatchPlot:
         self.hidden = True
         self._observers = []
         self.partial_y_datas = []
+        self.component_y_datas = []
         self.maxima = []
         self.super_clusters = {}
         self.matching_active = False
@@ -185,15 +186,20 @@ class MatchPlot:
         self.xdata = np.array(np.arange(start=x_min, stop=x_max, step=x_step))  # mirrors SpecPlotter x_data construction
         self.ydata = np.zeros(len(self.xdata)) + self.yshift
         self.partial_y_datas = [(self.ydata.copy(), None)]
+        self.component_y_datas = []
         for s in self.contributing_state_plots:
             start_index = min(max(0, int((s.xdata[0] - x_min)/x_step)), len(self.xdata)-1)
             stop_index = min(start_index + len(s.ydata), len(self.ydata))
-            self.ydata[start_index:stop_index] += (s._base_ydata * s.yscale)[0:stop_index-start_index]
+            spec_y_data = (s._base_ydata * s.yscale)[0:stop_index-start_index]
+            self.ydata[start_index:stop_index] += spec_y_data
             self.partial_y_datas.append((self.ydata.copy(), s.tag))
+            component_ydata = np.zeros(len(self.xdata)) + self.yshift
+            component_ydata[start_index:stop_index] += spec_y_data
+            self.component_y_datas.append((component_ydata, s.tag))
         self.compute_min_max()
         self.find_contributing_clusters()
         self.assign_peaks()
-        self._notify_observers()
+        self._notify_observers()  # todo> for y shifts, only add new yshift to base arrays; don't recompute the entire thing.
 
     def compute_min_max(self):
         """Find indices of local minima and maxima of self.ydata"""

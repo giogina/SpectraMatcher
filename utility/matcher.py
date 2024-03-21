@@ -3,7 +3,12 @@ from utility import noop
 
 class Matcher:
     _DEFAULTS = {'peak intensity match threshold': 0.03,
-                'distance match threshold': 30,
+                 'distance match threshold': 30,
+                 'match active': False,  # todo> use this instead of match_plot.match_active
+                 'show composite spectrum': True,
+                 'show component spectra': False,
+                 'show shade spectra': True,
+                 'show stick spectra': False
                  }
     settings = {True: {}, False: {}}
     notify_changed_callback = noop
@@ -31,8 +36,8 @@ class Matcher:
         cls._notify_observers(cls.match_settings_updated_notification, is_emission)
 
     @classmethod
-    def get(cls, is_emission, key):
-        return cls.settings[is_emission].get(key)
+    def get(cls, is_emission, key, default=None):
+        return cls.settings[is_emission].get(key, default)
 
     @classmethod
     def restore_defaults(cls, is_emission):

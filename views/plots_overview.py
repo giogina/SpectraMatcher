@@ -58,6 +58,7 @@ class PlotsOverview:
         self.disable_ui_update = False  # True while slider scrolls are being processed
         self.ctrl_pressed = False
         self.shade_plots = []
+        self.component_plots = []
         self.match_lines = []
         self.match_plot_dragged = False
         self.matched_spectra_checks = {}
@@ -197,6 +198,11 @@ class PlotsOverview:
                                         dpg.add_spacer(height=6)
                                     with dpg.tree_node(label="Matched spectra") as self.matched_spectra_node:
                                         self.matched_spectra_checks_spacer = dpg.add_spacer(height=6)
+                                    with dpg.tree_node(label="Display options"):
+                                        self.match_controls['show composite spectrum'] = dpg.add_checkbox(label="Composite spectrum", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show composite spectrum', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show composite spectrum', False))
+                                        self.match_controls['show component spectra'] = dpg.add_checkbox(label="Component spectra", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show component spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show component spectra', False))
+                                        self.match_controls['show shade spectra'] = dpg.add_checkbox(label="Shaded contributions", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show shade spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False))
+                                        self.match_controls['show stick spectra'] = dpg.add_checkbox(label="Stick spectra", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show stick spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show stick spectra', False))
                                     dpg.add_button(label="Save as table", callback=self.print_table, width=-6)
         self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, show=False, parent="emission tab" if self.viewmodel.is_emission else "excitation tab", callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
         self.dummy_series = dpg.add_scatter_series([0, 2000], [-0.1, 1.1], parent=f"y_axis_{self.viewmodel.is_emission}")
@@ -397,7 +403,7 @@ class PlotsOverview:
                             dpg.show_item(f"drag-x-{s.tag}")
                 if abs(dpg.get_value(self.match_plot_y_drag) - mouse_y_plot_space) < 0.02:
                     dpg.show_item(self.match_plot_y_drag)
-                elif abs(dpg.get_value(self.match_plot_y_drag) - mouse_y_plot_space) > 0.1:
+                elif (not self.show_all_drag_lines) and abs(dpg.get_value(self.match_plot_y_drag) - mouse_y_plot_space) > 0.1:
                     dpg.hide_item(self.match_plot_y_drag)
             else:
                 dpg.hide_item(self.match_plot_y_drag)
@@ -487,15 +493,16 @@ class PlotsOverview:
             with dpg.theme_component(dpg.mvLineSeries):
                 dpg.add_theme_color(dpg.mvPlotCol_Line, spec.state.get_color(), category=dpg.mvThemeCat_Plots)
             with dpg.theme_component(dpg.mvShadeSeries):
-                dpg.add_theme_color(dpg.mvPlotCol_Fill, list(spec.state.get_color())[:3]+[160], category=dpg.mvThemeCat_Plots)
+                dpg.add_theme_color(dpg.mvPlotCol_Fill, list(spec.state.get_color())[:3]+[120], category=dpg.mvThemeCat_Plots)
             with dpg.theme_component(dpg.mvCheckbox):
                 dpg.add_theme_color(dpg.mvThemeCol_CheckMark, spec.state.get_color())
         dpg.bind_item_theme(spec.tag, self.spec_theme[spec.tag])
         dpg.configure_item(f"drag-{spec.tag}", color=spec.state.get_color())
         dpg.configure_item(f"drag-x-{spec.tag}", color=spec.state.get_color())
-        tag_shades = [shade for shade in self.shade_plots if dpg.get_item_user_data(shade) == spec.tag]
-        if len(tag_shades):  # todo: do this for line series as well; also composite plot chosen color
-            dpg.bind_item_theme(tag_shades[0], self.spec_theme[spec.tag])
+        for shade in [shade for shade in self.shade_plots if dpg.get_item_user_data(shade) == spec.tag]:
+            dpg.bind_item_theme(shade, self.spec_theme[spec.tag])
+        for component in [c for c in self.component_plots if dpg.get_item_user_data(c) == spec.tag]:
+            dpg.bind_item_theme(component, self.spec_theme[spec.tag])  # todo: same for sticks
         if self.matched_spectra_checks.get(spec.tag) is not None:
             dpg.bind_item_theme(self.matched_spectra_checks.get(spec.tag), self.spec_theme[spec.tag])
 
@@ -516,28 +523,58 @@ class PlotsOverview:
             self.fit_y(dummy_series_update_only=True)
 
     def update_match_plot(self, match_plot, mark_dragging=False):
-        for shade in self.shade_plots:
-            if dpg.get_item_user_data(shade) not in [s.tag for s in match_plot.contributing_state_plots]:
-                print("delete shade", dpg.get_item_user_data(shade))
-                dpg.delete_item(shade)
-                self.shade_plots.remove(shade)
-            else:
-                dpg.configure_item(shade, show=not match_plot.hidden)
-        if not match_plot.hidden:  # todo: different options: shade, composite only, composite+parts
-            prev_y, _ = match_plot.partial_y_datas[0]  # todo> check to toggle showing these
-            for partial_y, tag in match_plot.partial_y_datas[1:]:
-                if dpg.does_item_exist(f"shade {tag}"):
-                    # print("Set shade value", tag, match_plot.xdata, partial_y, prev_y)
-                    dpg.set_value(f"shade {tag}", [match_plot.xdata, partial_y, prev_y, [], []])
-                else:
-                    print("add shade")
-                    shade = dpg.add_shade_series(match_plot.xdata, partial_y, y2=prev_y, tag=f"shade {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}")
-                    dpg.bind_item_theme(shade, self.spec_theme[tag])
-                    self.shade_plots.append(shade)
-                prev_y = partial_y
-            # dpg.bind_item_theme(self.match_plot, self.spec_theme[match_plot.contributing_state_plots[-1].tag])
 
-        dpg.set_value(self.match_plot, [match_plot.xdata, match_plot.ydata])
+        if not match_plot.hidden:  # todo: different options: shade, composite only, composite+parts
+            if Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False):
+
+                for shade in self.shade_plots:
+                    if dpg.get_item_user_data(shade) not in [s.tag for s in match_plot.contributing_state_plots]:
+                        dpg.delete_item(shade)
+                        self.shade_plots.remove(shade)
+                    else:
+                        dpg.configure_item(shade, show=True)
+
+                prev_y, _ = match_plot.partial_y_datas[0]
+                for partial_y, tag in match_plot.partial_y_datas[1:]:
+                    if dpg.does_item_exist(f"shade {tag}"):
+                        dpg.show_item(f"shade {tag}")
+                        dpg.show_item(f"shade line {tag}")
+                        dpg.set_value(f"shade {tag}", [match_plot.xdata, partial_y, prev_y, [], []])
+                        dpg.set_value(f"shade line {tag}", [match_plot.xdata, partial_y])
+                    else:
+                        shade = dpg.add_shade_series(match_plot.xdata, partial_y, y2=prev_y, tag=f"shade {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}", before=self.match_plot)
+                        shade_line = dpg.add_line_series(match_plot.xdata, partial_y, tag=f"shade line {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}", before=self.match_plot)
+                        dpg.bind_item_theme(shade, self.spec_theme[tag])
+                        dpg.bind_item_theme(shade_line, self.spec_theme[tag])
+                        self.shade_plots.append(shade)
+                        self.shade_plots.append(shade_line)
+                    prev_y = partial_y
+            # dpg.bind_item_theme(self.match_plot, self.spec_theme[match_plot.contributing_state_plots[-1].tag])
+            else:
+                for shade in self.shade_plots:
+                    dpg.delete_item(shade)
+                self.shade_plots = []
+
+            if Matcher.get(self.viewmodel.is_emission, 'show composite spectrum', False):
+                dpg.show_item(self.match_plot)
+                dpg.set_value(self.match_plot, [match_plot.xdata, match_plot.ydata])
+            else:
+                dpg.set_value(self.match_plot, [[], []])
+
+            if Matcher.get(self.viewmodel.is_emission, 'show component spectra', False):
+                for ydata, tag in match_plot.component_y_datas:
+                    if dpg.does_item_exist(f"match component {tag}"):
+                        dpg.show_item(f"match component {tag}")
+                        dpg.set_value(f"match component {tag}", [match_plot.xdata, ydata])
+                    else:
+                        line = dpg.add_line_series(match_plot.xdata, ydata, tag=f"match component {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}", before=self.match_plot)
+                        dpg.bind_item_theme(line, self.spec_theme[tag])
+                        self.component_plots.append(line)
+            else:
+                for component in self.component_plots:
+                    dpg.delete_item(component)
+                self.component_plots = []
+
         if mark_dragging:
             self.match_plot_dragged = True
         if not self.match_plot_dragged:
@@ -548,12 +585,11 @@ class PlotsOverview:
         for tag, check in self.matched_spectra_checks.items():
             dpg.set_value(check, self.viewmodel.match_plot.is_spectrum_matched(tag))
 
-        self.fit_y()
-
         # todo>
         #  persist all the changes
         #  allow sticks (color-coded) in composite spectrum - as one of the combo spec display options
         #  draw labels (state_plot.name: label list if more than one spectrum)
+        #  enable selecting experimental spectra as well? Simply only match visible exp spectra?
 
         old_lines = self.match_lines
         self.match_lines = []
@@ -609,7 +645,10 @@ class PlotsOverview:
             dpg.set_value(f"drag-{spec.tag}", spec.yshift)  # todo> needs to happen on arrow shift
             self.draw_sticks(spec)
 
-        self.match_plot_dragged = False
+        if self.match_plot_dragged:
+            # self.fit_y()
+            self.match_plot_dragged = False
+
         self.dragged_plot = None
         self.dragged_peak = None
         self.exp_hovered = False

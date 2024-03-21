@@ -78,8 +78,8 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log",
-            "hidden emission": true,
-            "y shift emission": 0.9580000042915344,
+            "hidden emission": false,
+            "y shift emission": 1.2947141736769696,
             "x shift emission": 541.8725403585552,
             "y scale emission": 0.3799999952316284,
             "color selection type": "manual"
@@ -94,11 +94,11 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log",
-            "y shift emission": 3.4580000042915344,
+            "y shift emission": 2.5894283473539392,
             "y scale emission": 1.0,
             "x shift emission": -6.14336959101081,
             "color selection type": "manual",
-            "hidden emission": true
+            "hidden emission": false
         },
         {
             "color": [
@@ -178,7 +178,7 @@
             "axis font size": 18,
             "peak intensity match threshold": 0.03,
             "distance match threshold": 30,
-            "global y shifts": 0.9580000042915344
+            "global y shifts": 1.2947141736769696
         },
         "false": {
             "show labels": false,
@@ -204,16 +204,6 @@
             "peak width threshold": 10
         }
     },
-    "matcher settings": {
-        "true": {
-            "peak intensity match threshold": 0.1599999964237213,
-            "distance match threshold": 30
-        },
-        "false": {
-            "peak intensity match threshold": 0.03,
-            "distance match threshold": 30
-        }
-    },
     "active emission plotter": [
         7.7,
         -1404,
@@ -225,5 +215,25 @@
         -1215,
         6509,
         1
-    ]
+    ],
+    "matcher settings": {
+        "true": {
+            "peak intensity match threshold": 0.03,
+            "distance match threshold": 30,
+            "match active": false,
+            "show composite spectrum": true,
+            "show component spectra": true,
+            "show shade spectra": true,
+            "show stick spectra": false
+        },
+        "false": {
+            "peak intensity match threshold": 0.03,
+            "distance match threshold": 30,
+            "match active": false,
+            "show composite spectrum": true,
+            "show component spectra": false,
+            "show shade spectra": true,
+            "show stick spectra": false
+        }
+    }
 }
