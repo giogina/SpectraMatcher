@@ -195,6 +195,7 @@ class PlotsOverview:
         self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, show=False, parent="emission tab" if self.viewmodel.is_emission else "excitation tab", callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
         self.dummy_series = dpg.add_scatter_series([0, 2000], [-0.1, 1.1], parent=f"y_axis_{self.viewmodel.is_emission}")
         self.match_plot = dpg.add_line_series([], [], show=False, parent=f"y_axis_{self.viewmodel.is_emission}")
+        self.match_plot_y_drag = dpg.add_drag_line(vertical=False, show_label=False, default_value=0, callback=lambda sender, a, u: self.viewmodel.set_y_shifts(dpg.get_value(sender)), parent=f"plot_{self.viewmodel.is_emission}", show=False, color=[200, 200, 200])
         append_viewport_resize_update_callback(self.viewport_resize_update)
         self.configure_theme()
 
@@ -467,20 +468,20 @@ class PlotsOverview:
         dpg.configure_item(f"drag-{spec.tag}", color=spec.state.get_color())
         dpg.configure_item(f"drag-x-{spec.tag}", color=spec.state.get_color())
         tag_shades = [shade for shade in self.shade_plots if dpg.get_item_user_data(shade) == spec.tag]
-        if len(tag_shades):  # todo: do this for line series as well
+        if len(tag_shades):  # todo: do this for line series as well; also composite plot chosen color
             dpg.bind_item_theme(tag_shades[0], self.spec_theme[spec.tag])
 
-    def update_plot(self, state_plot, mark_dragged_plot=None, redraw_sticks=False, update_drag_lines=False, fit_y_axis=False):
+    def update_plot(self, state_plot, mark_dragged_plot=None, update_all=False, redraw_sticks=False, update_drag_lines=False, fit_y_axis=False):
         self.dragged_plot = mark_dragged_plot
         dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
-        if update_drag_lines:
+        if update_drag_lines or update_all:
             dpg.set_value(f"drag-{state_plot.tag}", state_plot.yshift)
             dpg.set_value(f"drag-x-{state_plot.tag}", state_plot.handle_x + state_plot.xshift)
             self.draw_labels(state_plot.tag)
-        if redraw_sticks:
+        if redraw_sticks or update_all:
             AsyncManager.submit_task(f"draw sticks {state_plot.tag}", self.draw_sticks, state_plot)
         self.update_labels(state_plot.tag)
-        if fit_y_axis:
+        if fit_y_axis or update_all:
             self.vertical_slider_active = True
             self.fit_y()
         else:
@@ -509,6 +510,7 @@ class PlotsOverview:
             # dpg.bind_item_theme(self.match_plot, self.spec_theme[match_plot.contributing_state_plots[-1].tag])
 
         dpg.set_value(self.match_plot, [match_plot.xdata, match_plot.ydata])
+
         dpg.configure_item(self.match_plot, show=not match_plot.hidden)
         dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
         # todo>
@@ -551,7 +553,6 @@ class PlotsOverview:
             spec = self.viewmodel.state_plots.get(self.dragged_plot)
             if spec is not None:
                 dpg.set_value(f"drag-x-{spec.tag}", spec.handle_x + spec.xshift)
-                # AsyncManager.submit_task(f"draw sticks {self.dragged_plot}", self.draw_sticks, spec)
                 self.draw_sticks(spec)
         elif self.exp_hovered and self.peak_edit_mode_enabled:
             if self.dragged_peak is not None:
@@ -570,7 +571,7 @@ class PlotsOverview:
             self.viewmodel.toggle_match_spec_contribution(self.hovered_spectrum)
 
         for spec in self.viewmodel.state_plots.values():
-            dpg.set_value(f"drag-{spec.tag}", spec.yshift)
+            dpg.set_value(f"drag-{spec.tag}", spec.yshift)  # todo> needs to happen on arrow shift
             self.draw_sticks(spec)
         self.dragged_plot = None
         self.dragged_peak = None

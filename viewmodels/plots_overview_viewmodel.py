@@ -109,25 +109,27 @@ class PlotsOverviewViewmodel:
                 break
             time.sleep(debounce_period)
 
-    def on_x_drag(self, value, tag, slider=False):
+    def on_x_drag(self, value, tag, slider=False, update_all=False):
         if slider:
             value = value + self.state_plots[tag].handle_x
 
         self.state_plots[tag].set_x_shift(value)
         self._callbacks.get("delete sticks")(tag)
         if slider:
-            self._callbacks.get("update plot")(self.state_plots[tag], update_drag_lines=True)
+            self._callbacks.get("update plot")(self.state_plots[tag], update_drag_lines=True, update_all=update_all)
         else:
             self._callbacks.get("update plot")(self.state_plots[tag], mark_dragged_plot=tag)
         self._callbacks.get("update list spec")(self.state_plots[tag])
-        self.last_action_x = lambda direction: self.on_x_drag(self.state_plots[tag].xshift + 10*direction, tag, slider=True)
+        self.last_action_x = lambda direction: self.on_x_drag(self.state_plots[tag].xshift + 10*direction, tag, slider=True, update_all=True)
+        self.last_action_y = lambda direction: self.on_y_drag(self.state_plots[tag].yshift + 0.01 * direction, self.state_plots[tag], update_all=True)
 
-    def on_y_drag(self, value, state_plot):
+    def on_y_drag(self, value, state_plot, update_all=False):
         self.state_plots[state_plot.tag].set_y_shift(value)
         self._callbacks.get("delete sticks")(state_plot.tag)
-        self._callbacks.get("update plot")(self.state_plots[state_plot.tag], mark_dragged_plot=state_plot.tag)
+        self._callbacks.get("update plot")(self.state_plots[state_plot.tag], mark_dragged_plot=state_plot.tag, update_all=update_all)
         self._callbacks.get("update list spec")(state_plot)
-        self.last_action_y = lambda direction: self.on_y_drag(value+0.01*direction, state_plot)
+        self.last_action_x = lambda direction: self.on_x_drag(state_plot.xshift + 10*direction, state_plot.tag, slider=True, update_all=True)
+        self.last_action_y = lambda direction: self.on_y_drag(value+0.01*direction, state_plot, update_all=True)
 
     def resize_spectrum(self, spec_tag, direction):
         if spec_tag is not None and spec_tag in self.state_plots.keys():
