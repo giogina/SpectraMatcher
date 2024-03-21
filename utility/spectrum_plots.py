@@ -86,16 +86,20 @@ class SpecPlotter:
 
     @classmethod
     def change_half_width(cls, is_emission, amount, relative=True):
-        if is_emission:
-            plotter_key = cls._active_emission_plotter
-        else:
-            plotter_key = cls._active_excitation_plotter
+        plotter_key = cls.get_plotter_key(is_emission)
         if relative:
             half_width = plotter_key[0] + amount
         else:
             half_width = amount
         cls.set_active_plotter(is_emission, half_width, plotter_key[1], plotter_key[2], plotter_key[3])
         return half_width
+
+    @classmethod
+    def get_plotter_key(cls, is_emission):
+        if is_emission:
+            return cls._active_emission_plotter
+        else:
+            return cls._active_excitation_plotter
 
     @classmethod
     def get_half_width(cls, is_emission):

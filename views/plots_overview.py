@@ -76,7 +76,7 @@ class PlotsOverview:
                 with dpg.table_cell():
                     with dpg.group(horizontal=True):
                         dpg.add_spacer(width=0, tag=f"{'Emission' if self.viewmodel.is_emission else 'Excitation'} plot left spacer")
-                        with dpg.plot(label="Experimental spectra", height=-1, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}") as self.plot:
+                        with dpg.plot(height=-1, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}") as self.plot:
 
                             dpg.add_plot_axis(dpg.mvXAxis, label="wavenumber / cm⁻¹", tag=f"x_axis_{self.viewmodel.is_emission}", no_gridlines=True)
                             dpg.add_plot_axis(dpg.mvYAxis, label="relative intensity", tag=f"y_axis_{self.viewmodel.is_emission}", no_gridlines=True)
@@ -392,7 +392,7 @@ class PlotsOverview:
         s = self.viewmodel.state_plots[tag]
         if not dpg.does_item_exist(tag):
             xdata, ydata = s.get_xydata(xmin, xmax)  # truncated versions
-            dpg.add_line_series(xdata, ydata, label=s.name, show=not s.state.settings.get("hidden", False), parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  # , user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
+            dpg.add_line_series(xdata, ydata, label=s.name, show=not s.is_hidden(), parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  # , user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
             self.line_series.append(s.tag)
         else:
             self.update_plot(s)

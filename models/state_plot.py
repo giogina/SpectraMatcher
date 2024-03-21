@@ -3,6 +3,8 @@ from utility.noop import noop
 from models.molecular_data import FCSpectrum
 import numpy as np
 
+from utility.spectrum_plots import SpecPlotter
+
 
 class StatePlot:
     def __init__(self, state, is_emission: bool, state_index=0):
@@ -13,9 +15,10 @@ class StatePlot:
         self.spectrum.add_observer(self)
         self.name = state.name
         self.index = state_index
-        self.xshift = self.state.settings.get("x shift", 0)
-        self.yshift = self.state.settings.get("y shift", state_index*Labels.settings[is_emission].get('global y shifts', 1.25))
-        self.yscale = self.state.settings.get("y scale", 1)
+        self.e_key = 'emission' if is_emission else 'excitation'
+        self.xshift = self.state.settings.get(f"x shift {self.e_key}", 0)
+        self.yshift = self.state.settings.get(f"y shift {self.e_key}", state_index*Labels.settings[is_emission].get('global y shifts', 1.25))
+        self.yscale = self.state.settings.get(f"y scale {self.e_key}", 1)
         self._base_xdata = self.spectrum.x_data
         self._base_ydata = self.spectrum.y_data
         self.xdata = self._compute_x_data()
@@ -66,23 +69,23 @@ class StatePlot:
 
     def set_x_shift(self, xshift):
         self.xshift = xshift - self.handle_x
-        self.state.settings["x shift"] = self.xshift
+        self.state.settings[f"x shift {self.e_key}"] = self.xshift
         self.xdata = self._compute_x_data()
 
     def set_y_shift(self, yshift):
         self.yshift = yshift
-        self.state.settings["y shift"] = yshift
+        self.state.settings[f"y shift {self.e_key}"] = yshift
         self.ydata = self._compute_y_data()
 
     def resize_y_scale(self, direction):
         self.yscale += direction * 0.1
         self.yscale = max(0, self.yscale)
-        self.state.settings["y scale"] = self.yscale
+        self.state.settings[f"y scale {self.e_key}"] = self.yscale
         self.ydata = self._compute_y_data()
 
     def set_y_scale(self, value):
         self.yscale = value
-        self.state.settings["y scale"] = value
+        self.state.settings[f"y scale {self.e_key}"] = value
         self.ydata = self._compute_y_data()
 
     def set_color(self, color, selection_type="manual"):
@@ -102,3 +105,29 @@ class StatePlot:
             stop = len(self.xdata)
 
         return self.xdata[start:stop], self.ydata[start:stop]
+
+    def is_hidden(self):
+        return self.state.settings.get(f"hidden {self.e_key}", False)
+
+    def hide(self, hide=True):
+        self.state.settings[f"hidden {self.e_key}"] = hide
+
+
+class MatchPlot:
+    def __init__(self, is_emission: bool):
+        self.contributing_state_plots = []  # StatePlot instances
+        self.xdata = []
+        self.ydata = []
+        self.is_emission = is_emission
+        self.hidden = True
+
+    def add_state_plot(self, spec: StatePlot):
+        if spec not in self.contributing_state_plots:
+            self.contributing_state_plots.append(spec)
+        self.compute_composite_xy_data()
+
+    def compute_composite_xy_data(self):
+        _, x_min, x_max, x_step = SpecPlotter.get_plotter_key(self.is_emission)  # step size used in all xdata arrays
+        min_x = [min(s.xshift) for s in self.contributing_state_plots]
+
+
