@@ -466,6 +466,9 @@ class PlotsOverview:
         dpg.bind_item_theme(spec.tag, self.spec_theme[spec.tag])
         dpg.configure_item(f"drag-{spec.tag}", color=spec.state.get_color())
         dpg.configure_item(f"drag-x-{spec.tag}", color=spec.state.get_color())
+        tag_shades = [shade for shade in self.shade_plots if dpg.get_item_user_data(shade) == spec.tag]
+        if len(tag_shades):
+            dpg.bind_item_theme(tag_shades[0], self.spec_theme[spec.tag])
 
     def update_plot(self, state_plot, mark_dragged_plot=None, redraw_sticks=False, update_drag_lines=False, fit_y_axis=False):
         self.dragged_plot = mark_dragged_plot
@@ -493,7 +496,7 @@ class PlotsOverview:
                 dpg.configure_item(shade, show=not match_plot.hidden)
         if not match_plot.hidden:  # todo: different options: shade, composite only, composite+parts
             prev_y, _ = match_plot.partial_y_datas[0]  # todo> check to toggle showing these
-            for partial_y, tag in match_plot.partial_y_datas[1:]:  # todo: do they react to color changes?
+            for partial_y, tag in match_plot.partial_y_datas[1:]:
                 if dpg.does_item_exist(f"shade {tag}"):
                     # print("Set shade value", tag, match_plot.xdata, partial_y, prev_y)
                     dpg.set_value(f"shade {tag}", [match_plot.xdata, partial_y, prev_y, [], []])
@@ -509,7 +512,6 @@ class PlotsOverview:
         dpg.configure_item(self.match_plot, show=not match_plot.hidden)
         dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
         # todo>
-        #  redo match when peaks are edited
         #  when matching active, use vert slider to move that; introduce y drag line (color of combo plot)
         #  persist all the changes
         #  allow sticks (color-coded) in composite spectrum

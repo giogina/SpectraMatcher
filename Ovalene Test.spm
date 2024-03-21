@@ -70,9 +70,10 @@
     "state settings": [
         {
             "color": [
-                229.5,
-                199.99285714285716,
-                22.949999999999996
+                236.95384114980698,
+                132.2810858488083,
+                11.665416788309813,
+                255.0
             ],
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission\\FCHT.log",
@@ -80,13 +81,14 @@
             "hidden emission": false,
             "y shift emission": 0.9580000042915344,
             "x shift emission": 1230.0,
-            "y scale emission": 0.3799999952316284
+            "y scale emission": 0.3799999952316284,
+            "color selection type": "manual"
         },
         {
             "color": [
-                100.48568397760391,
-                229.49999392032623,
-                22.95000471174717,
+                112.47616857290268,
+                228.32307547330856,
+                42.85448044538498,
                 255.0
             ],
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log",
