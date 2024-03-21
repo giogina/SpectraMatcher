@@ -71,6 +71,7 @@ class SpectraOverview:
         self.viewmodel.on_x_drag(defaults['xshift'], state_plot, slider=True)
         self.viewmodel.set_y_scale(defaults['yscale'], state_plot)
 
+# todo> enable scroll-sliders here as well
     def add_spectrum(self, state_plot: StatePlot):
         self.spectrum_controls[state_plot.tag] = {}
         with dpg.collapsing_header(label=state_plot.name, parent=self.spectra_list_group, before=self.last_inserted_spec_tag, default_open=True) as self.spectrum_headers[state_plot.tag]:
@@ -78,7 +79,7 @@ class SpectraOverview:
             with dpg.group(horizontal=True):
                 dpg.add_spacer(width=6)
                 with dpg.group(horizontal=False):
-                    self.spectrum_controls[state_plot.tag]['xshift'] = dpg.add_slider_float(format=f"shift = %.1f - {int(state_plot.spectrum.zero_zero_transition_energy)} cm⁻¹", min_value=-1000, max_value=5000, default_value=state_plot.xshift, callback=lambda s, a, u: self.viewmodel.on_x_drag(a, u, slider=True), user_data=state_plot, width=-66)
+                    self.spectrum_controls[state_plot.tag]['xshift'] = dpg.add_slider_float(format=f"shift = %.0f - {int(state_plot.spectrum.zero_zero_transition_energy)} cm⁻¹", min_value=-1000, max_value=5000, default_value=state_plot.xshift, callback=lambda s, a, u: self.viewmodel.on_x_drag(a, u, slider=True), user_data=state_plot, width=-66)
                     self.spectrum_controls[state_plot.tag]['yscale'] = dpg.add_slider_float(format=f"scale = %.2f / {int(state_plot.spectrum.multiplicator * state_plot.spectrum.mul2)}", min_value=0, max_value=1.2, default_value=state_plot.yscale, callback=lambda s, a, u: self.viewmodel.set_y_scale(a, u), user_data=state_plot, width=-66)
                     self.spectrum_controls[state_plot.tag]['yshift'] = dpg.add_slider_float(format="y position = %.2f", min_value=0, max_value=len(self.viewmodel.state_plots)*1.2, default_value=state_plot.yshift, callback=lambda s, a, u: self.viewmodel.on_y_drag(a, u), user_data=state_plot, width=-66)
                     for tag in self.viewmodel.state_plots:

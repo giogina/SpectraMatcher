@@ -122,7 +122,6 @@ class PlotsOverviewViewmodel:
         # for s in self.state_plots.values():
         #     if abs(value - s.yshift) < 0.01:
 
-
     def resize_spectrum(self, spec_tag, direction):
         if spec_tag is not None and spec_tag in self.state_plots.keys():
             spec = self.state_plots[spec_tag]

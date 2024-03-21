@@ -126,8 +126,19 @@ class MatchPlot:
             self.contributing_state_plots.append(spec)
         self.compute_composite_xy_data()
 
-    def compute_composite_xy_data(self):
-        _, x_min, x_max, x_step = SpecPlotter.get_plotter_key(self.is_emission)  # step size used in all xdata arrays
-        min_x = [min(s.xshift) for s in self.contributing_state_plots]
+    def remove_state_plot(self, spec: StatePlot):
+        if spec in self.contributing_state_plots:
+            self.contributing_state_plots.remove(spec)
+        self.compute_composite_xy_data()
 
+    def compute_composite_xy_data(self):
+        _, _, _, x_step = SpecPlotter.get_plotter_key(self.is_emission)  # step size used in all xdata arrays
+        x_min = min([s.xdata[0] for s in self.contributing_state_plots])
+        x_max = min([s.xdata[-1] for s in self.contributing_state_plots])
+        self.xdata = np.array(np.arange(start=x_min, stop=x_max, step=x_step))  # mirrors SpecPlotter x_data construction
+        self.ydata = np.zeros(self.xdata)
+        for s in self.contributing_state_plots:
+            start_index = min(max(0, int((s.xdata[0] - x_min)/x_step)), len(self.xdata)-1)
+            stop_index = min(start_index + len(s.ydata), len(self.ydata))
+            self.ydata[start_index:stop_index] += s.ydata[0:stop_index-start_index]
 
