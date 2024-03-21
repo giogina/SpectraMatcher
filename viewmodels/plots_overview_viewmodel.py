@@ -44,6 +44,7 @@ class PlotsOverviewViewmodel:
         self.match_plot = MatchPlot(self.is_emission)
         self.match_plot.add_observer(self)
         self.vert_spacing = 1.25
+        self.temporarily_hidden_specs = []
 
     def update(self, event, *args):
         # print(f"Plots overview viewmodel received event: {event}")
@@ -167,9 +168,6 @@ class PlotsOverviewViewmodel:
         state_plot.set_color(color)
         self._callbacks.get("update spectrum color")(state_plot)
 
-    def on_spectrum_click(self, *args):
-        print(args)
-
     def set_callback(self, key, callback):
         self._callbacks[key] = callback
 
@@ -196,7 +194,7 @@ class PlotsOverviewViewmodel:
         for spec in self.state_plots.values():
             if not spec.is_hidden():
                 shown_specs_counter += 1
-                spec.set_y_shift(shown_specs_counter * global_y_shift)
+                spec.set_y_shift(shown_specs_counter * global_y_shift + (2.5 if self.match_plot.matching_active else 0.))
             self._callbacks.get("update plot")(spec, redraw_sticks=True, update_drag_lines=True)
             self._callbacks.get("update list spec")(spec)
         self._callbacks.get("hide spectrum")(tag, hide)
@@ -209,6 +207,14 @@ class PlotsOverviewViewmodel:
 
     def match_peaks(self, match_on):
         self.match_plot.activate_matching(match_on, self.vert_spacing)
+        if not match_on:
+            for tag in self.temporarily_hidden_specs:
+                self.hide_spectrum(tag, False)
+            self.temporarily_hidden_specs = []
+        else:
+            self.temporarily_hidden_specs = [s.tag for s in self.state_plots.values() if not s.is_hidden()]
+            for tag in self.temporarily_hidden_specs:
+                self.hide_spectrum(tag, True)
 
 
 

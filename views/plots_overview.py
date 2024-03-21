@@ -322,7 +322,10 @@ class PlotsOverview:
             transformed_y = app_data[2]
             self.pixels_per_plot_x = (transformed_x[1]-transformed_x[0])/1000
             self.pixels_per_plot_y = transformed_y[1]-transformed_y[0]
-            if not dpg.is_item_hovered(f"plot_{self.viewmodel.is_emission}"):
+            if dpg.is_item_hovered(f"plot_{self.viewmodel.is_emission}"):
+                dpg.show_item(f"exp_overlay_{self.viewmodel.is_emission}")
+            else:
+                dpg.hide_item(f"exp_overlay_{self.viewmodel.is_emission}")
                 return
             # mouse_x_pixel_space = _helper_data["MouseX_PixelSpace"]
             # mouse_y_pixel_space = _helper_data["MouseY_PixelSpace"]
@@ -348,11 +351,12 @@ class PlotsOverview:
                             dpg.hide_item(f"drag-x-{s_tag}")
 
                     if s.yshift - 0.02 <= mouse_y_plot_space <= s.yshift+s.yscale:
-                        hovered_spectrum = s
                         if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) < 10:
                             dpg.show_item(f"drag-x-{s_tag}")
                             self.hovered_x_drag_line = s_tag
-                        if not -0.2 < s.yshift <= 0.9 and self.viewmodel.match_plot.hidden:
+                        hovered_spectrum = s
+                        # if len(self.viewmodel.match_plot.contributing_state_plots) == 0:
+                        if not -0.2 < s.yshift <= 0.9 and not self.viewmodel.match_plot.matching_active:
                             dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [s.xdata, s.ydata - s.yshift])
                             dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
 
@@ -493,19 +497,17 @@ class PlotsOverview:
         dpg.set_value(self.match_plot, [match_plot.xdata, match_plot.ydata])
         dpg.configure_item(self.match_plot, show=not match_plot.hidden)
         dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
-        # todo> either make other spectra invisible if match is on; or fix their yshift at the same level if requested.
-        #  Fit y axis to labels of match plot, too
+        # todo>
         #  redo match when peaks are edited
         #  persist all the changes
         #  keep x drag lines active
         #  allow sticks (color-coded) in composite spectrum
         #  draw labels (state_plot.name: label list if more than one spectrum)
         #  If single spectrum visible and nothing chosen for composite: Put that one.
-# todo> hide preview spec when plot not hovered; or update it.
 
+        old_lines = self.match_lines
+        self.match_lines = []
         if not match_plot.hidden and match_plot.matching_active:
-            old_lines = self.match_lines
-            self.match_lines = []
             for peak in match_plot.exp_peaks:
                 if peak.match is not None:
                     line_start = (peak.wavenumber, peak.intensity + 10/self.pixels_per_plot_y)
@@ -517,8 +519,8 @@ class PlotsOverview:
                     dl = dpg.draw_line(elbow, line_end, thickness=0, parent=self.plot, color=[200, 200, 200, 200])
                     self.match_lines.append(vl)
                     self.match_lines.append(dl)
-            for line in old_lines:
-                dpg.delete_item(line)
+        for line in old_lines:
+            dpg.delete_item(line)
 
     def delete_sticks(self, spec_tag=None):  # None: all of them.
         if spec_tag is not None:
@@ -620,9 +622,6 @@ class PlotsOverview:
                     self.annotations[tag][peak_pos] = annotation
                     self.label_drag_points[tag][annotation] = dpg.add_drag_point(default_value=label_pos, color=[255, 255, 0], show_label=False, show=False, user_data=annotation, callback=lambda s, a, u: self.move_label(dpg.get_value(s)[:2], u, update_drag_point=False), parent=plot)
                     self.annotation_lines[tag][annotation] = self.draw_label_line(cluster, peak_pos)
-                    # TODO:
-                    #  match checkbox - trigger matching with lowest shown spectrum
-                    #  dragging another spectrum there causes a composite spectrum (drag lines slightly offset), complete fit
 
     def move_label(self, pos, label, state_plot=None, update_drag_point=True):
         dpg.set_value(label, pos) # Optional: Save manual relative positions (& zoom state?)
@@ -802,10 +801,13 @@ class PlotsOverview:
     def fit_y(self, dummy_series_update_only=False):
         ymin = -0.1
         ymax = 1.25
-        for tag, spec in self.viewmodel.state_plots.items():
-            if dpg.is_item_shown(tag):
-                ymin = min(ymin, spec.yshift - 0.25)
-                ymax = max(ymax, spec.yshift + 1.25)
+        if self.viewmodel.match_plot.matching_active:
+            ymax = dpg.get_value(self.vertical_spacing_slider) + 1.5
+        else:
+            for tag, spec in self.viewmodel.state_plots.items():
+                if dpg.is_item_shown(tag):
+                    ymin = min(ymin, spec.yshift - 0.25)
+                    ymax = max(ymax, spec.yshift + 1.25)
         y_axis = f"y_axis_{self.viewmodel.is_emission}"
         dpg.set_value(self.dummy_series, value=[[0, 0], [ymin, ymax]])
         if not dummy_series_update_only:
