@@ -525,11 +525,9 @@ class PlotsOverview:
         dpg.configure_item(self.match_plot, show=not match_plot.hidden)
         dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
         # todo>
-        #  when matching active, use vert slider to move that; introduce y drag line (color of combo plot)
         #  persist all the changes
         #  allow sticks (color-coded) in composite spectrum - as one of the combo spec display options
         #  draw labels (state_plot.name: label list if more than one spectrum)
-        #  If single spectrum visible and nothing chosen for composite: Put that one.
 
         old_lines = self.match_lines
         self.match_lines = []

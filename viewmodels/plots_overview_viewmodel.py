@@ -224,6 +224,9 @@ class PlotsOverviewViewmodel:
             self.temporarily_hidden_specs = [s.tag for s in self.state_plots.values() if not s.is_hidden()]
             for tag in self.temporarily_hidden_specs:
                 self.hide_spectrum(tag, True)
+            if len(self.match_plot.contributing_state_plots) == 0:
+                for tag in self.temporarily_hidden_specs:
+                    self.toggle_match_spec_contribution(self.state_plots[tag])
 
 
 
