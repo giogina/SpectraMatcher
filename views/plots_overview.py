@@ -189,7 +189,7 @@ class PlotsOverview:
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
                                     self.match_check = dpg.add_checkbox(label="Match peaks (to lowest spectrum)", default_value=False, callback=lambda s, a, u: self.viewmodel.match_peaks(a))
-                                    self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(label=" Min. Intensity", min_value=0, max_value=0.2, default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
+                                    self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(min_value=0, max_value=0.2, format=f"Rel. intensity > %0.2f", default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
                                     self.match_controls['distance match threshold'] = dpg.add_slider_float(label=" Max. Distance", min_value=0, max_value=100, default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a))
                                     dpg.add_button(label="Defaults", width=-6, callback=self.restore_matcher_defaults)
                                     dpg.add_button(label="Save as table", callback=self.print_table, width=-6)

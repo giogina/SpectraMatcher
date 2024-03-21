@@ -215,7 +215,7 @@ class MatchPlot:
                 jj += 1
                 if jj >= len(maxima):
                     break
-            self.maxima.append(((self.xdata[i], self.ydata[i]), (self.xdata[maxima[jj]], self.ydata[maxima[jj]]), (self.xdata[minima[ii+1]], self.ydata[minima[ii+1]])))
+            self.maxima.append(((self.xdata[i], self.ydata[i]-self.yshift), (self.xdata[maxima[jj]], self.ydata[maxima[jj]]-self.yshift), (self.xdata[minima[ii+1]], self.ydata[minima[ii+1]]-self.yshift)))
 
     def find_contributing_clusters(self):
         super_clusters = {}
@@ -257,7 +257,9 @@ class MatchPlot:
                 if int_by_dist > best_intensity_by_distance:
                     match = p1
                     best_intensity_by_distance = int_by_dist
-            if match is not None and match.intensity / y > Matcher.get(self.is_emission, 'peak intensity match threshold'):
+            if match is not None and self.is_emission:
+                print(search_wn, y, match.intensity, y/match.intensity, min(match.intensity / y, y / match.intensity), Matcher.get(self.is_emission, 'peak intensity match threshold'))
+            if match is not None and min(match.intensity / y, y / match.intensity) > Matcher.get(self.is_emission, 'peak intensity match threshold'):
                 match.match = pp
             else:
                 match_failed.append(pp)

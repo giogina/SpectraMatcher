@@ -206,7 +206,7 @@
     },
     "matcher settings": {
         "true": {
-            "peak intensity match threshold": 0.03,
+            "peak intensity match threshold": 0.07000000029802322,
             "distance match threshold": 30
         },
         "false": {
