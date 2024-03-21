@@ -276,3 +276,8 @@ class MatchPlot:
             self.compute_composite_xy_data()
         self._notify_observers()
 
+    def set_yshift(self, value):
+        self.yshift = value
+        self.compute_composite_xy_data()
+        self._notify_observers()
+

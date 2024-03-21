@@ -467,7 +467,7 @@ class PlotsOverview:
         dpg.configure_item(f"drag-{spec.tag}", color=spec.state.get_color())
         dpg.configure_item(f"drag-x-{spec.tag}", color=spec.state.get_color())
         tag_shades = [shade for shade in self.shade_plots if dpg.get_item_user_data(shade) == spec.tag]
-        if len(tag_shades):
+        if len(tag_shades):  # todo: do this for line series as well
             dpg.bind_item_theme(tag_shades[0], self.spec_theme[spec.tag])
 
     def update_plot(self, state_plot, mark_dragged_plot=None, redraw_sticks=False, update_drag_lines=False, fit_y_axis=False):
