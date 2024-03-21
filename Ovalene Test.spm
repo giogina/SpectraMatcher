@@ -77,18 +77,25 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log",
-            "hidden emission": true
+            "hidden emission": false,
+            "y shift emission": 0.9580000042915344,
+            "x shift emission": 2160.800444277283,
+            "y scale emission": 0.30000000000000016
         },
         {
             "color": [
-                81.96428571428574,
-                229.5,
-                22.949999999999996
+                100.48568397760391,
+                229.49999392032623,
+                22.95000471174717,
+                255.0
             ],
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log",
-            "y shift emission": 1.25
+            "y shift emission": 1.9160000085830688,
+            "y scale emission": 1.0,
+            "x shift emission": -6.14336959101081,
+            "color selection type": "manual"
         },
         {
             "color": [
@@ -99,8 +106,10 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\ovalene-excited-3-opt-freq-disp.log",
-            "y shift emission": 2.5,
-            "hidden emission": true
+            "y shift emission": 2.8740000128746033,
+            "hidden emission": false,
+            "x shift emission": 801.3953854708088,
+            "y scale emission": 0.30000000000000016
         },
         {
             "color": [
@@ -111,9 +120,10 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\ovalene-excited-4-opt-freq-disp.log",
-            "y shift emission": 2.5,
-            "x shift emission": -202.0,
-            "x shift excitation": 2081.60009765625
+            "y shift emission": 3.8320000171661377,
+            "x shift emission": 1473.230844825966,
+            "x shift excitation": 2081.60009765625,
+            "hidden emission": true
         },
         {
             "color": [
@@ -124,7 +134,7 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\ovalene-excited-5-opt-freq-disp.log",
-            "y shift emission": 3.75,
+            "y shift emission": 4.790000021457672,
             "hidden emission": true
         },
         {
@@ -136,7 +146,7 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\ovalene-excited-6-freq-disp.log",
-            "y shift emission": 3.75,
+            "y shift emission": 5.7480000257492065,
             "hidden emission": true
         }
     ],
@@ -165,7 +175,7 @@
             "axis font size": 18,
             "peak intensity match threshold": 0.03,
             "distance match threshold": 30,
-            "global y shifts": 1.25
+            "global y shifts": 0.9580000042915344
         },
         "false": {
             "show labels": false,
@@ -202,7 +212,7 @@
         }
     },
     "active emission plotter": [
-        10.0,
+        7.7,
         -1404,
         8457,
         1

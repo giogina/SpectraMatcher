@@ -41,7 +41,6 @@ class State:
         self.own_ground_state_energy = None
         self.ok = False
         self.errors = []
-        self.color = None
         State.sort_states_by_energy()
 
         # Load from paths, if supplied.

@@ -8,7 +8,7 @@ class Matcher:
     settings = {True: {}, False: {}}
     notify_changed_callback = noop
     _observers = []
-    label_settings_updated_notification = "Matcher settings updated"
+    match_settings_updated_notification = "Matcher settings updated"
 
     @classmethod
     def add_observer(cls, observer):
@@ -28,6 +28,11 @@ class Matcher:
         if key in cls.settings[is_emission].keys():
             cls.settings[is_emission][key] = value
         cls.notify_changed_callback()  # notify project
+        cls._notify_observers(cls.match_settings_updated_notification, is_emission)
+
+    @classmethod
+    def get(cls, is_emission, key):
+        return cls.settings[is_emission].get(key)
 
     @classmethod
     def restore_defaults(cls, is_emission):

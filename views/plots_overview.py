@@ -26,8 +26,10 @@ class PlotsOverview:
         self.viewmodel.set_callback("update labels", self.draw_labels)
         self.viewmodel.set_callback("redraw peaks", self.redraw_peak_drag_points)
         self.viewmodel.set_callback("hide spectrum", self.hide_spectrum)
+        self.viewmodel.set_callback("update match plot", self.update_match_plot)
         self.custom_series = None
         self.spec_theme = {}
+        self.hovered_spectrum_y_drag_line = None
         self.hovered_spectrum = None
         self.hovered_x_drag_line = None
         self.show_all_drag_lines = False  # show all drag lines
@@ -54,6 +56,9 @@ class PlotsOverview:
         self.vertical_slider_active = False
         self.adjustment_factor = 1
         self.disable_ui_update = False  # True while slider scrolls are being processed
+        self.ctrl_pressed = False
+        self.shade_plots = []
+        self.match_lines = []
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -63,10 +68,16 @@ class PlotsOverview:
             dpg.add_key_release_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=False)
             dpg.add_key_down_handler(dpg.mvKey_Shift, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=True)
             dpg.add_key_release_handler(dpg.mvKey_Shift, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=False)
+            dpg.add_key_down_handler(dpg.mvKey_Control, callback=lambda s, a, u: self.toggle_ctrl_flag(u), user_data=True)
+            dpg.add_key_release_handler(dpg.mvKey_Control, callback=lambda s, a, u: self.toggle_ctrl_flag(u), user_data=False)
             dpg.add_key_press_handler(dpg.mvKey_Down, callback=lambda s, a, u: self.on_arrow_press("y", -1))
             dpg.add_key_press_handler(dpg.mvKey_Up, callback=lambda s, a, u: self.on_arrow_press("y", 1))
             dpg.add_key_press_handler(dpg.mvKey_Left, callback=lambda s, a, u: self.on_arrow_press("x", -1))
             dpg.add_key_press_handler(dpg.mvKey_Right, callback=lambda s, a, u: self.on_arrow_press("x", 1))
+
+        with dpg.theme() as self.white_line_series_theme:
+            with dpg.theme_component(dpg.mvLineSeries):
+                dpg.add_theme_color(dpg.mvPlotCol_Line, [255, 255, 255], category=dpg.mvThemeCat_Plots)
 
         with dpg.table(header_row=False, borders_innerV=True, resizable=True) as self.layout_table:
             self.plot_column = dpg.add_table_column(init_width_or_weight=4)
@@ -176,13 +187,14 @@ class PlotsOverview:
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
-                                    dpg.add_checkbox(label="Match peaks (to lowest spectrum)", default_value=False, callback=lambda s, a, u: self.viewmodel.match_peaks(a))
+                                    self.match_check = dpg.add_checkbox(label="Match peaks (to lowest spectrum)", default_value=False, callback=lambda s, a, u: self.viewmodel.match_peaks(a))
                                     self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(label=" Min. Intensity", min_value=0, max_value=0.2, default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
                                     self.match_controls['distance match threshold'] = dpg.add_slider_float(label=" Max. Distance", min_value=0, max_value=100, default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a))
                                     dpg.add_button(label="Defaults", width=-6, callback=self.restore_matcher_defaults)
                                     dpg.add_button(label="Save as table", callback=self.print_table, width=-6)
         self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, show=False, parent="emission tab" if self.viewmodel.is_emission else "excitation tab", callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
         self.dummy_series = dpg.add_scatter_series([0, 2000], [-0.1, 1.1], parent=f"y_axis_{self.viewmodel.is_emission}")
+        self.match_plot = dpg.add_line_series([], [], show=False, parent=f"y_axis_{self.viewmodel.is_emission}")
         append_viewport_resize_update_callback(self.viewport_resize_update)
         self.configure_theme()
 
@@ -198,6 +210,9 @@ class PlotsOverview:
             self.adjustment_factor = 0.1
         else:
             self.adjustment_factor = 1
+
+    def toggle_ctrl_flag(self, down):
+        self.ctrl_pressed = down
 
     def on_arrow_press(self, dimension, direction):
         if dimension == "x":
@@ -316,7 +331,8 @@ class PlotsOverview:
             dpg.push_container_stack(sender)
             dpg.configure_item(sender, tooltip=False)
             dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [[], []])
-            self.hovered_spectrum = None
+            self.hovered_spectrum_y_drag_line = None
+            hovered_spectrum = None
             self.hovered_x_drag_line = None
             for s_tag, s in self.viewmodel.state_plots.items():
                 if not dpg.does_item_exist(f"drag-x-{s_tag}"):
@@ -325,17 +341,18 @@ class PlotsOverview:
                     if not self.show_all_drag_lines:
                         if abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) < 0.02:
                             dpg.show_item(f"drag-{s_tag}")
-                            self.hovered_spectrum = s_tag
+                            self.hovered_spectrum_y_drag_line = s_tag
                         elif abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) > 0.1:
                             dpg.hide_item(f"drag-{s_tag}")
                         if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) > 50:
                             dpg.hide_item(f"drag-x-{s_tag}")
 
                     if s.yshift - 0.02 <= mouse_y_plot_space <= s.yshift+s.yscale:
+                        hovered_spectrum = s
                         if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) < 10:
                             dpg.show_item(f"drag-x-{s_tag}")
                             self.hovered_x_drag_line = s_tag
-                        if not -0.2 < s.yshift <= 0.9:
+                        if not -0.2 < s.yshift <= 0.9 and self.viewmodel.match_plot.hidden:
                             dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [s.xdata, s.ydata - s.yshift])
                             dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
 
@@ -349,6 +366,7 @@ class PlotsOverview:
                                 dpg.hide_item(self.label_drag_points[s_tag][label])
                         # dpg.configure_item(sender, tooltip=True)
                         # dpg.set_value(self.tooltiptext, f"Diff: {abs(dpg.get_value(f'drag-x-{s_tag}') - mouse_x_plot_space)}")
+            self.hovered_spectrum = hovered_spectrum
 
             if self.peak_edit_mode_enabled:
                 self.hovered_peak_indicator_point = None
@@ -429,6 +447,8 @@ class PlotsOverview:
         with dpg.theme() as self.spec_theme[spec.tag]:
             with dpg.theme_component(dpg.mvLineSeries):
                 dpg.add_theme_color(dpg.mvPlotCol_Line, spec.state.get_color(), category=dpg.mvThemeCat_Plots)
+            with dpg.theme_component(dpg.mvShadeSeries):
+                dpg.add_theme_color(dpg.mvPlotCol_Fill, list(spec.state.get_color())[:3]+[160], category=dpg.mvThemeCat_Plots)
         dpg.bind_item_theme(spec.tag, self.spec_theme[spec.tag])
         dpg.configure_item(f"drag-{spec.tag}", color=spec.state.get_color())
         dpg.configure_item(f"drag-x-{spec.tag}", color=spec.state.get_color())
@@ -449,6 +469,50 @@ class PlotsOverview:
         else:
             self.fit_y(dummy_series_update_only=True)
 
+    def update_match_plot(self, match_plot):
+        # print("Replotting match plot: ", match_plot.hidden, match_plot.ydata)
+        for shade in self.shade_plots:
+            if dpg.get_item_user_data(shade) not in [s.tag for s in match_plot.contributing_state_plots]:
+                print("delete shade", dpg.get_item_user_data(shade))
+                dpg.delete_item(shade)
+                self.shade_plots.remove(shade)
+            else:
+                dpg.configure_item(shade, show=not match_plot.hidden)
+        if not match_plot.hidden:  # todo: different options: shade, composite only, composite+parts
+            prev_y, _ = match_plot.partial_y_datas[0]  # todo> check to toggle showing these
+            for partial_y, tag in match_plot.partial_y_datas[1:]:  # todo: do they react to color changes?
+                if dpg.does_item_exist(f"shade {tag}"):
+                    # print("Set shade value", tag, match_plot.xdata, partial_y, prev_y)
+                    dpg.set_value(f"shade {tag}", [match_plot.xdata, partial_y, prev_y, [], []])
+                else:
+                    print("add shade")
+                    shade = dpg.add_shade_series(match_plot.xdata, partial_y, y2=prev_y, tag=f"shade {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}")
+                    dpg.bind_item_theme(shade, self.spec_theme[tag])
+                    self.shade_plots.append(shade)
+                prev_y = partial_y
+            # dpg.bind_item_theme(self.match_plot, self.spec_theme[match_plot.contributing_state_plots[-1].tag])
+
+        dpg.set_value(self.match_plot, [match_plot.xdata, match_plot.ydata])
+        dpg.configure_item(self.match_plot, show=not match_plot.hidden)
+        dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
+
+        if not match_plot.hidden and match_plot.matching_active:
+            old_lines = self.match_lines
+            self.match_lines = []
+            for peak in match_plot.exp_peaks:
+                if peak.match is not None:
+                    line_start = (peak.wavenumber, peak.intensity + 10/self.pixels_per_plot_y)
+                    line_end = (peak.match[0], match_plot.yshift - 10/self.pixels_per_plot_y)
+                    y_offset = abs(line_end[0] - line_start[0])*self.pixels_per_plot_x/self.pixels_per_plot_y
+                    elbow = (line_start[0], line_end[1] - y_offset)
+
+                    vl = dpg.draw_line(line_start, elbow, thickness=0, parent=self.plot, color=[200, 200, 200, 200])
+                    dl = dpg.draw_line(elbow, line_end, thickness=0, parent=self.plot, color=[200, 200, 200, 200])
+                    self.match_lines.append(vl)
+                    self.match_lines.append(dl)
+            for line in old_lines:
+                dpg.delete_item(line)
+
     def delete_sticks(self, spec_tag=None):  # None: all of them.
         if spec_tag is not None:
             self.dragged_plot = spec_tag
@@ -459,6 +523,7 @@ class PlotsOverview:
                 if dpg.does_item_exist(f"sticks-{s}"):
                     dpg.delete_item(f"sticks-{s}")
             self.redraw_sticks_on_release = True
+# todo> hide preview spec when plot not hovered; or update it.
 
     def on_drag_release(self):
         if self.dragged_plot is not None:
@@ -479,6 +544,9 @@ class PlotsOverview:
                         else:
                             exp.add_peak(dpg.get_value(self.dragged_peak)[0])
                         break
+        elif self.ctrl_pressed and self.hovered_spectrum is not None:
+            self.viewmodel.toggle_match_spec_contribution(self.hovered_spectrum)
+
         for spec in self.viewmodel.state_plots.values():
             dpg.set_value(f"drag-{spec.tag}", spec.yshift)
             self.draw_sticks(spec)
@@ -583,11 +651,13 @@ class PlotsOverview:
         if anchor_offset_y * self.pixels_per_plot_y < 4:
             anchor_offset_x = 0
             anchor_offset_y = 0
-        if peak_pos[1] + 5/self.pixels_per_plot_y > cluster.plot_y - anchor_offset_y: # avoid downwards vertical lines
+        if peak_pos[1] + 5/self.pixels_per_plot_y > cluster.plot_y - anchor_offset_y:  # avoid downwards vertical lines
             x_spacing = (-5 if anchor_offset_x > 0 else 5)/self.pixels_per_plot_x
             start_pos = (peak_pos[0], peak_pos[1] + 5/self.pixels_per_plot_y)
             elbow_pos = (peak_pos[0], peak_pos[1] + 5/self.pixels_per_plot_y)
             label_pos = (peak_pos[0] + anchor_offset_x + x_spacing, peak_pos[1] + anchor_offset_y)
+            if anchor_offset_x + x_spacing < 0:
+                label_pos = elbow_pos
         else:
             start_pos = (peak_pos[0], peak_pos[1] + 5/self.pixels_per_plot_y)  # spacing
             elbow_pos = (peak_pos[0], cluster.plot_y - anchor_offset_y)
@@ -691,8 +761,8 @@ class PlotsOverview:
         dpg.bind_item_theme(self.expand_plot_settings_button, expand_button_theme)
 
     def on_scroll(self, direction):
-        if self.hovered_spectrum is not None:
-            self.viewmodel.resize_spectrum(self.hovered_spectrum, direction)
+        if self.hovered_spectrum_y_drag_line is not None:
+            self.viewmodel.resize_spectrum(self.hovered_spectrum_y_drag_line, direction)
         elif self.hovered_x_drag_line is not None:
             half_width = self.viewmodel.resize_half_width(direction)
         elif dpg.is_item_hovered(self.plot):

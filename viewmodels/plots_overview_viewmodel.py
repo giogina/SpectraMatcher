@@ -2,7 +2,7 @@ import time
 import threading
 from models.experimental_spectrum import ExperimentalSpectrum
 from models.state import State
-from models.state_plot import StatePlot
+from models.state_plot import StatePlot, MatchPlot
 from utility.labels import Labels
 from utility.matcher import Matcher
 from utility.spectrum_plots import SpecPlotter
@@ -32,6 +32,7 @@ class PlotsOverviewViewmodel:
             "update list spec": noop,
             "update spectrum color": noop,
             "hide spectrum": noop,
+            "update match plot": noop,
         }
 
         self.xydatas = []  # experimental x, y
@@ -40,6 +41,9 @@ class PlotsOverviewViewmodel:
         self.last_correction_factor_change_time = 0
         self.last_action_x = noop
         self.last_action_y = noop
+        self.match_plot = MatchPlot(self.is_emission)
+        self.match_plot.add_observer(self)
+        self.vert_spacing = 1.25
 
     def update(self, event, *args):
         # print(f"Plots overview viewmodel received event: {event}")
@@ -62,6 +66,8 @@ class PlotsOverviewViewmodel:
                 self._callbacks.get("update labels")(tag)
         elif event == ExperimentalSpectrum.peaks_changed_notification:
             self._callbacks.get("redraw peaks")()
+        elif event == MatchPlot.match_plot_changed_notification:
+            self._callbacks.get("update match plot")(args[0])
 
     def _extract_exp_x_y_data(self):
         xydatas = []
@@ -137,6 +143,7 @@ class PlotsOverviewViewmodel:
         self.last_action_y = lambda d: self.resize_spectrum(state_plot.tag, d)
 
     def set_y_shifts(self, value):
+        self.vert_spacing = value
         Labels.set(self.is_emission, 'global y shifts', value)
         for tag, state_plot in self.state_plots.items():
             state_plot.set_y_shift(state_plot.index*value)
@@ -196,8 +203,15 @@ class PlotsOverviewViewmodel:
             self._callbacks.get("update list spec")(spec)
         self._callbacks.get("hide spectrum")(tag, hide)
 
+    def toggle_match_spec_contribution(self, spec):
+        if spec not in self.match_plot.contributing_state_plots:
+            self.match_plot.add_state_plot(spec)
+        else:
+            self.match_plot.remove_state_plot(spec)
+
     def match_peaks(self, match_on):
-        pass # todo
+        self.match_plot.activate_matching(match_on, self.vert_spacing)
+
 
 
 

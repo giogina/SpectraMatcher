@@ -5,12 +5,11 @@ from utility.spectrum_plots import SpecPlotter
 from utility.noop import noop
 
 
-
 class ExpPeak:
     def __init__(self, wavenumber, intensity, index):
         self.wavenumber = wavenumber
         self.intensity = intensity
-        self.index = index  # w.r.t the xy data arrays
+        self.match = None  # used in MatchPlot.assign_peaks; key of MatchPlot.super_clusters
 
 
 class ExperimentalSpectrum:

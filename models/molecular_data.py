@@ -301,7 +301,7 @@ class Cluster:
         x = self.x + state_plot.xshift
         y = state_plot.yshift + self.y * state_plot.yscale
         self.plot_x = x + self.rel_x
-        self.plot_y = max(y + (0.05 + self.rel_y) * state_plot.yscale, gap_height+max([0]+[c.get_roof() for c in self.on_top_of]))
+        self.plot_y = max(y + 0.05 + self.rel_y * state_plot.yscale, gap_height+max([0]+[c.get_roof() for c in self.on_top_of]))
         return (x, y), (self.plot_x, self.plot_y)  # should self.rel_y be adapted here?
 
     def set_plot_pos(self, pos, state_plot):
@@ -309,7 +309,7 @@ class Cluster:
         x = self.x + state_plot.xshift  # peak position
         y = state_plot.yshift + self.y * state_plot.yscale
         self.rel_x = self.plot_x - x
-        self.rel_y = (self.plot_y - y) / state_plot.yscale - 0.05
+        self.rel_y = (self.plot_y - y - 0.05) / state_plot.yscale
         return (x, y), (self.plot_x, self.plot_y)
 
     def get_roof(self):

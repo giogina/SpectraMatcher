@@ -1,4 +1,8 @@
+from scipy import signal
+
+from models.experimental_spectrum import ExperimentalSpectrum
 from utility.labels import Labels
+from utility.matcher import Matcher
 from utility.noop import noop
 from models.molecular_data import FCSpectrum
 import numpy as np
@@ -31,6 +35,7 @@ class StatePlot:
                 self.sticks.append([peak.corrected_wavenumber, [[vib[1]*sub_stick_scale, [c*255 for c in vib[0].vibration_properties]] for vib in [(self.spectrum.vibrational_modes.get_mode(t[0]), t[1]) for t in peak.transition if len(t) == 2] if vib is not None]])
         self.spectrum_update_callback = noop
         self.sticks_update_callback = noop
+        self.match_plot = None
 
     @staticmethod
     def construct_tag(state, is_emission):
@@ -44,6 +49,7 @@ class StatePlot:
             self.ydata = self._compute_y_data()
             self.handle_x = self._base_xdata[np.where(self._base_ydata == max(self._base_ydata))[0][0]]
             self.spectrum_update_callback(self)
+            self.update_match_plot()
         if event == FCSpectrum.peaks_changed_notification:
             self.sticks = []  # stick: position, [[height, color]]
             for peak in self.spectrum.peaks:
@@ -71,22 +77,26 @@ class StatePlot:
         self.xshift = xshift - self.handle_x
         self.state.settings[f"x shift {self.e_key}"] = self.xshift
         self.xdata = self._compute_x_data()
+        self.update_match_plot()
 
     def set_y_shift(self, yshift):
         self.yshift = yshift
         self.state.settings[f"y shift {self.e_key}"] = yshift
         self.ydata = self._compute_y_data()
+        self.update_match_plot()
 
     def resize_y_scale(self, direction):
         self.yscale += direction * 0.1
         self.yscale = max(0, self.yscale)
         self.state.settings[f"y scale {self.e_key}"] = self.yscale
         self.ydata = self._compute_y_data()
+        self.update_match_plot()
 
     def set_y_scale(self, value):
         self.yscale = value
         self.state.settings[f"y scale {self.e_key}"] = value
         self.ydata = self._compute_y_data()
+        self.update_match_plot()
 
     def set_color(self, color, selection_type="manual"):
         self.state.settings["color"] = color
@@ -111,34 +121,161 @@ class StatePlot:
 
     def hide(self, hide=True):
         self.state.settings[f"hidden {self.e_key}"] = hide
+        self.update_match_plot()
+
+    def update_match_plot(self):
+        if self.match_plot is not None:
+            self.match_plot.compute_composite_xy_data()
 
 
 class MatchPlot:
+    match_plot_changed_notification = "Match plot changed"
+
     def __init__(self, is_emission: bool):
         self.contributing_state_plots = []  # StatePlot instances
         self.xdata = []
         self.ydata = []
+        self.yshift = 0
         self.is_emission = is_emission
         self.hidden = True
+        self._observers = []
+        self.partial_y_datas = []
+        self.maxima = []
+        self.super_clusters = {}
+        self.matching_active = False
+        Matcher.add_observer(self)
+        self.exp_peaks = []
+
+    def add_observer(self, obs):
+        self._observers.append(obs)
+
+    def _notify_observers(self):
+        for obs in self._observers:
+            obs.update(MatchPlot.match_plot_changed_notification, self)
+
+    def update(self, event, *args):
+        if event == Matcher.match_settings_updated_notification:
+            self.assign_peaks()
+            self._notify_observers()
 
     def add_state_plot(self, spec: StatePlot):
+        print(f"Adding: {spec.name}")
         if spec not in self.contributing_state_plots:
             self.contributing_state_plots.append(spec)
+            spec.match_plot = self
+        self.hidden = len(self.contributing_state_plots) == 0
         self.compute_composite_xy_data()
 
     def remove_state_plot(self, spec: StatePlot):
         if spec in self.contributing_state_plots:
             self.contributing_state_plots.remove(spec)
-        self.compute_composite_xy_data()
+            spec.match_plot = None
+        self.hidden = len(self.contributing_state_plots) == 0
+        if len(self.contributing_state_plots):
+            self.compute_composite_xy_data()
+        else:
+            self._notify_observers()
+
+    def reset(self):
+        self.hidden = True
+        self.yshift = 0
+        self.contributing_state_plots = []
+        self._notify_observers()
 
     def compute_composite_xy_data(self):
         _, _, _, x_step = SpecPlotter.get_plotter_key(self.is_emission)  # step size used in all xdata arrays
-        x_min = min([s.xdata[0] for s in self.contributing_state_plots])
-        x_max = min([s.xdata[-1] for s in self.contributing_state_plots])
+        x_min = min([s.xdata[0] for s in self.contributing_state_plots], default=0)
+        x_max = min([s.xdata[-1] for s in self.contributing_state_plots], default=0)
+        print(x_min, x_max)
         self.xdata = np.array(np.arange(start=x_min, stop=x_max, step=x_step))  # mirrors SpecPlotter x_data construction
-        self.ydata = np.zeros(self.xdata)
+        self.ydata = np.zeros(len(self.xdata)) + self.yshift
+        self.partial_y_datas = [(self.ydata.copy(), None)]
         for s in self.contributing_state_plots:
             start_index = min(max(0, int((s.xdata[0] - x_min)/x_step)), len(self.xdata)-1)
             stop_index = min(start_index + len(s.ydata), len(self.ydata))
-            self.ydata[start_index:stop_index] += s.ydata[0:stop_index-start_index]
+            self.ydata[start_index:stop_index] += (s._base_ydata * s.yscale)[0:stop_index-start_index]
+            self.partial_y_datas.append((self.ydata.copy(), s.tag))
+        self.compute_min_max()
+        self.find_contributing_clusters()
+        self.assign_peaks()
+        self._notify_observers()
+
+    def compute_min_max(self):
+        """Find indices of local minima and maxima of self.ydata"""
+        if len(self.ydata) == 0:
+            return
+        maxima, _ = list(signal.find_peaks(self.ydata))
+        if len(maxima) == 0:
+            return
+        mins, _ = list(signal.find_peaks([-y for y in self.ydata]))
+        minima = [0]
+        minima.extend(mins)
+        minima.append(len(self.ydata) - 1)
+
+        self.maxima = []  # list of (min_x, max_x, min_x)
+
+        jj = 0
+        for ii, i in enumerate(minima[:-1]):
+            while maxima[jj] < i:
+                jj += 1
+                if jj >= len(maxima):
+                    break
+            self.maxima.append(((self.xdata[i], self.ydata[i]), (self.xdata[maxima[jj]], self.ydata[maxima[jj]]), (self.xdata[minima[ii+1]], self.ydata[minima[ii+1]])))
+
+    def find_contributing_clusters(self):
+        self.super_clusters = {}
+        for maximum in self.maxima:
+            xmin = maximum[0][0]
+            xmax = maximum[2][0]
+            self.super_clusters[maximum[1]] = {s.tag: [] for s in self.contributing_state_plots}
+            for s in self.contributing_state_plots:
+                for cluster in s.spectrum.clusters:
+                    if xmin <= cluster.x < xmax:
+                        self.super_clusters[maximum[1]][s.tag].append(cluster)
+
+    def assign_peaks(self):
+        if not self.matching_active:
+            return
+        exp_peaks = []
+        for exp in ExperimentalSpectrum.spectra_list:
+            if exp.is_emission == self.is_emission:
+                exp_peaks.extend(exp.peaks)
+        for peak in exp_peaks:
+            peak.match = None
+
+        super_cluster_peaks = list(self.super_clusters.keys())
+        super_cluster_peaks.sort(key=lambda p: p[1], reverse=True)  # Assign in order of decreasing intensity
+        match_failed = []
+
+        for i, pp in enumerate(super_cluster_peaks):
+            (search_wn, y) = pp
+            match = None
+            best_intensity_by_distance = 0
+            for p1 in exp_peaks:
+                if p1.match is not None:
+                    continue  # p1 has already been assigned
+                dist = search_wn - p1.wavenumber
+                if abs(dist) > Matcher.get(self.is_emission, 'distance match threshold'):
+                    continue
+                int_by_dist = abs(p1.intensity / dist ** 2)
+                if int_by_dist > best_intensity_by_distance:
+                    match = p1
+                    best_intensity_by_distance = int_by_dist
+            if match is not None and match.intensity / y > Matcher.get(self.is_emission, 'peak intensity match threshold'):
+                match.match = pp
+            else:
+                match_failed.append(pp)
+        self.exp_peaks = exp_peaks
+
+    def activate_matching(self, on=True, spacing=1.25):
+        self.matching_active = on
+        if on:
+            self.assign_peaks()
+            if self.yshift < 1:
+                self.yshift = spacing
+                self.compute_composite_xy_data()
+        else:
+            self.yshift = 0
+            self.compute_composite_xy_data()
+        self._notify_observers()
 
