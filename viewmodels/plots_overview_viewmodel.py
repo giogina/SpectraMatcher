@@ -145,17 +145,19 @@ class PlotsOverviewViewmodel:
         self._callbacks.get("update list spec")(state_plot)
         self.last_action_y = lambda d: self.resize_spectrum(state_plot.tag, d)
 
-    def set_y_shifts(self, value):
+    def set_y_shifts(self, value, dragging=False):
         self.vert_spacing = value
+        Labels.set(self.is_emission, 'global y shifts', value)
         if not self.match_plot.matching_active:
-            Labels.set(self.is_emission, 'global y shifts', value)
             for tag, state_plot in self.state_plots.items():
                 state_plot.set_y_shift(state_plot.index*value)
                 self._callbacks.get("delete sticks")(state_plot.tag)
                 self._callbacks.get("update plot")(state_plot, fit_y_axis=True)
                 self._callbacks.get("update list spec")(state_plot)
         else:
-            self.match_plot.set_yshift(value)  # todo: persist as Matcher.settings['yshift']
+            self.match_plot.set_yshift(value)  # todo: persist as Matcher.settings['yshift'] rather than Labels 'global y shifts'
+            self._callbacks.get("update match plot")(self.match_plot, mark_dragging=dragging)
+            self._callbacks.get("post load update")(y_shifts=True)
         self.last_action_y = lambda d: self.set_y_shifts(value+0.1*d)
 
     def resize_half_width(self, direction, relative=True):

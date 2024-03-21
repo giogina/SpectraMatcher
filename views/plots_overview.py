@@ -59,6 +59,7 @@ class PlotsOverview:
         self.ctrl_pressed = False
         self.shade_plots = []
         self.match_lines = []
+        self.match_plot_dragged = False
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -195,7 +196,7 @@ class PlotsOverview:
         self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, show=False, parent="emission tab" if self.viewmodel.is_emission else "excitation tab", callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
         self.dummy_series = dpg.add_scatter_series([0, 2000], [-0.1, 1.1], parent=f"y_axis_{self.viewmodel.is_emission}")
         self.match_plot = dpg.add_line_series([], [], show=False, parent=f"y_axis_{self.viewmodel.is_emission}")
-        self.match_plot_y_drag = dpg.add_drag_line(vertical=False, show_label=False, default_value=0, callback=lambda sender, a, u: self.viewmodel.set_y_shifts(dpg.get_value(sender)), parent=f"plot_{self.viewmodel.is_emission}", show=False, color=[200, 200, 200])
+        self.match_plot_y_drag = dpg.add_drag_line(vertical=False, show_label=False, default_value=0, callback=lambda sender, a, u: self.viewmodel.set_y_shifts(dpg.get_value(sender), dragging=True), parent=f"plot_{self.viewmodel.is_emission}", show=False, color=[200, 200, 200])
         append_viewport_resize_update_callback(self.viewport_resize_update)
         self.configure_theme()
 
@@ -383,6 +384,13 @@ class PlotsOverview:
                     if self.viewmodel.match_plot.yshift - 0.02 <= mouse_y_plot_space <= self.viewmodel.match_plot.yshift + 1:
                         if abs(dpg.get_value(f"drag-x-{s.tag}") - mouse_x_plot_space) < 10:
                             dpg.show_item(f"drag-x-{s.tag}")
+                if abs(dpg.get_value(self.match_plot_y_drag) - mouse_y_plot_space) < 0.02:
+                    dpg.show_item(self.match_plot_y_drag)
+                    self.hovered_spectrum_y_drag_line = s_tag
+                elif abs(dpg.get_value(self.match_plot_y_drag) - mouse_y_plot_space) > 0.1:
+                    dpg.hide_item(self.match_plot_y_drag)
+            else:
+                dpg.hide_item(self.match_plot_y_drag)
 
             if self.peak_edit_mode_enabled:
                 self.hovered_peak_indicator_point = None
@@ -487,7 +495,7 @@ class PlotsOverview:
         else:
             self.fit_y(dummy_series_update_only=True)
 
-    def update_match_plot(self, match_plot):
+    def update_match_plot(self, match_plot, mark_dragging=False):
         for shade in self.shade_plots:
             if dpg.get_item_user_data(shade) not in [s.tag for s in match_plot.contributing_state_plots]:
                 print("delete shade", dpg.get_item_user_data(shade))
@@ -510,13 +518,16 @@ class PlotsOverview:
             # dpg.bind_item_theme(self.match_plot, self.spec_theme[match_plot.contributing_state_plots[-1].tag])
 
         dpg.set_value(self.match_plot, [match_plot.xdata, match_plot.ydata])
-
+        if mark_dragging:
+            self.match_plot_dragged = True
+        if not self.match_plot_dragged:
+            dpg.set_value(self.match_plot_y_drag, match_plot.yshift)
         dpg.configure_item(self.match_plot, show=not match_plot.hidden)
         dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
         # todo>
         #  when matching active, use vert slider to move that; introduce y drag line (color of combo plot)
         #  persist all the changes
-        #  allow sticks (color-coded) in composite spectrum
+        #  allow sticks (color-coded) in composite spectrum - as one of the combo spec display options
         #  draw labels (state_plot.name: label list if more than one spectrum)
         #  If single spectrum visible and nothing chosen for composite: Put that one.
 
@@ -530,8 +541,8 @@ class PlotsOverview:
                     y_offset = abs(line_end[0] - line_start[0])*self.pixels_per_plot_x/self.pixels_per_plot_y
                     elbow = (line_start[0], line_end[1] - y_offset)
 
-                    vl = dpg.draw_line(line_start, elbow, thickness=0, parent=self.plot, color=[200, 200, 200, 200])
-                    dl = dpg.draw_line(elbow, line_end, thickness=0, parent=self.plot, color=[200, 200, 200, 200])
+                    vl = dpg.draw_line(line_start, elbow, thickness=0, parent=self.plot, color=[120, 120, 200, 255])
+                    dl = dpg.draw_line(elbow, line_end, thickness=0, parent=self.plot, color=[120, 120, 200, 255])
                     self.match_lines.append(vl)
                     self.match_lines.append(dl)
         for line in old_lines:
@@ -573,6 +584,8 @@ class PlotsOverview:
         for spec in self.viewmodel.state_plots.values():
             dpg.set_value(f"drag-{spec.tag}", spec.yshift)  # todo> needs to happen on arrow shift
             self.draw_sticks(spec)
+
+        self.match_plot_dragged = False
         self.dragged_plot = None
         self.dragged_peak = None
         self.exp_hovered = False
@@ -816,6 +829,7 @@ class PlotsOverview:
             for s in self.viewmodel.match_plot.contributing_state_plots:
                 if dpg.does_item_exist(f"drag-x-{s.tag}"):
                     dpg.configure_item(f"drag-x-{s.tag}", show=show)
+            dpg.configure_item(self.match_plot_y_drag, show=show)
 
     def fit_y(self, dummy_series_update_only=False):
         ymin = -0.1
