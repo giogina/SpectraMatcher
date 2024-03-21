@@ -372,6 +372,16 @@ class PlotsOverview:
                         # dpg.set_value(self.tooltiptext, f"Diff: {abs(dpg.get_value(f'drag-x-{s_tag}') - mouse_x_plot_space)}")
             self.hovered_spectrum = hovered_spectrum
 
+            if self.viewmodel.match_plot.matching_active:
+                for s in self.viewmodel.match_plot.contributing_state_plots:
+                    if not self.show_all_drag_lines:
+                        if abs(dpg.get_value(f"drag-x-{s.tag}") - mouse_x_plot_space) > 50:
+                            dpg.hide_item(f"drag-x-{s.tag}")
+
+                    if self.viewmodel.match_plot.yshift - 0.02 <= mouse_y_plot_space <= self.viewmodel.match_plot.yshift + 1:
+                        if abs(dpg.get_value(f"drag-x-{s.tag}") - mouse_x_plot_space) < 10:
+                            dpg.show_item(f"drag-x-{s.tag}")
+
             if self.peak_edit_mode_enabled:
                 self.hovered_peak_indicator_point = None
                 for point in self.peak_indicator_points:
@@ -797,6 +807,10 @@ class PlotsOverview:
                     dpg.configure_item(f"drag-{tag}", show=show)
                 if dpg.does_item_exist(f"drag-x-{tag}"):
                     dpg.configure_item(f"drag-x-{tag}", show=show)
+        if self.viewmodel.match_plot.matching_active:
+            for s in self.viewmodel.match_plot.contributing_state_plots:
+                if dpg.does_item_exist(f"drag-x-{s.tag}"):
+                    dpg.configure_item(f"drag-x-{s.tag}", show=show)
 
     def fit_y(self, dummy_series_update_only=False):
         ymin = -0.1
