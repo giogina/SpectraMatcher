@@ -469,7 +469,6 @@ class PlotsOverview:
             self.fit_y(dummy_series_update_only=True)
 
     def update_match_plot(self, match_plot):
-        print("Replotting match plot")
         for shade in self.shade_plots:
             if dpg.get_item_user_data(shade) not in [s.tag for s in match_plot.contributing_state_plots]:
                 print("delete shade", dpg.get_item_user_data(shade))
@@ -477,7 +476,6 @@ class PlotsOverview:
                 self.shade_plots.remove(shade)
             else:
                 dpg.configure_item(shade, show=not match_plot.hidden)
-        print("shades deleted")
         if not match_plot.hidden:  # todo: different options: shade, composite only, composite+parts
             prev_y, _ = match_plot.partial_y_datas[0]  # todo> check to toggle showing these
             for partial_y, tag in match_plot.partial_y_datas[1:]:  # todo: do they react to color changes?
@@ -491,11 +489,19 @@ class PlotsOverview:
                     self.shade_plots.append(shade)
                 prev_y = partial_y
             # dpg.bind_item_theme(self.match_plot, self.spec_theme[match_plot.contributing_state_plots[-1].tag])
-        print("Shades set & created")
+
         dpg.set_value(self.match_plot, [match_plot.xdata, match_plot.ydata])
         dpg.configure_item(self.match_plot, show=not match_plot.hidden)
         dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
-        print("Line series value set")
+        # todo> either make other spectra invisible if match is on; or fix their yshift at the same level if requested.
+        #  Fit y axis to labels of match plot, too
+        #  redo match when peaks are edited
+        #  persist all the changes
+        #  keep x drag lines active
+        #  allow sticks (color-coded) in composite spectrum
+        #  draw labels (state_plot.name: label list if more than one spectrum)
+        #  If single spectrum visible and nothing chosen for composite: Put that one.
+# todo> hide preview spec when plot not hovered; or update it.
 
         if not match_plot.hidden and match_plot.matching_active:
             old_lines = self.match_lines
@@ -513,7 +519,6 @@ class PlotsOverview:
                     self.match_lines.append(dl)
             for line in old_lines:
                 dpg.delete_item(line)
-            print("match lines drawn")
 
     def delete_sticks(self, spec_tag=None):  # None: all of them.
         if spec_tag is not None:
@@ -525,7 +530,6 @@ class PlotsOverview:
                 if dpg.does_item_exist(f"sticks-{s}"):
                     dpg.delete_item(f"sticks-{s}")
             self.redraw_sticks_on_release = True
-# todo> hide preview spec when plot not hovered; or update it.
 
     def on_drag_release(self):
         if self.dragged_plot is not None:

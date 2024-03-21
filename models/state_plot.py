@@ -82,7 +82,6 @@ class StatePlot:
         self.yshift = yshift
         self.state.settings[f"y shift {self.e_key}"] = yshift
         self.ydata = self._compute_y_data()
-        self.update_match_plot()
 
     def resize_y_scale(self, direction):
         self.yscale += direction * 0.1
@@ -112,7 +111,6 @@ class StatePlot:
             stop = max(int((xmax - self.xdata[-1]) / step), -len(self.xdata)+1)
         else:
             stop = len(self.xdata)
-
         return self.xdata[start:stop], self.ydata[start:stop]
 
     def is_hidden(self):
