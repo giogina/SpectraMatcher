@@ -67,6 +67,8 @@ class PlotsOverviewViewmodel:
                 self._callbacks.get("update labels")(tag)
         elif event == ExperimentalSpectrum.peaks_changed_notification:
             self._callbacks.get("redraw peaks")()
+            if self.match_plot.matching_active:
+                self.match_plot.assign_peaks()
         elif event == MatchPlot.match_plot_changed_notification:
             self._callbacks.get("update match plot")(args[0])
 

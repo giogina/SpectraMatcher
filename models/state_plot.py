@@ -195,7 +195,6 @@ class MatchPlot:
         self.assign_peaks()
         self._notify_observers()
 
-
     def compute_min_max(self):
         """Find indices of local minima and maxima of self.ydata"""
         if len(self.ydata) == 0:
@@ -263,6 +262,7 @@ class MatchPlot:
             else:
                 match_failed.append(pp)
         self.exp_peaks = exp_peaks
+        self._notify_observers()
 
     def activate_matching(self, on=True, spacing=1.25):
         self.matching_active = on

@@ -227,6 +227,7 @@ class PlotsOverview:
             exp.delete_peak(peak)
             dpg.delete_item(point)
             self.peak_indicator_points.remove(point)
+            self.viewmodel.match_plot.assign_peaks()
 
     def enable_edit_peaks(self, enable):
         self.peak_edit_mode_enabled = enable
@@ -509,8 +510,8 @@ class PlotsOverview:
         dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
         # todo>
         #  redo match when peaks are edited
+        #  when matching active, use vert slider to move that; introduce y drag line (color of combo plot)
         #  persist all the changes
-        #  keep x drag lines active
         #  allow sticks (color-coded) in composite spectrum
         #  draw labels (state_plot.name: label list if more than one spectrum)
         #  If single spectrum visible and nothing chosen for composite: Put that one.
@@ -562,6 +563,7 @@ class PlotsOverview:
                         else:
                             exp.add_peak(dpg.get_value(self.dragged_peak)[0])
                         break
+            self.viewmodel.match_plot.assign_peaks()
         elif self.ctrl_pressed and self.hovered_spectrum is not None:
             self.viewmodel.toggle_match_spec_contribution(self.hovered_spectrum)
 
