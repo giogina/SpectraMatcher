@@ -12,7 +12,6 @@ from utility.spectrum_plots import SpecPlotter
 
 class StatePlot:
     def __init__(self, state, is_emission: bool, state_index=0):
-        print(f"Making StatePlot for {state.name}")
         self.tag = StatePlot.construct_tag(state, is_emission)
         self.state = state
         self.spectrum = state.get_spectrum(is_emission)
@@ -159,7 +158,6 @@ class MatchPlot:
             self._notify_observers()
 
     def add_state_plot(self, spec: StatePlot):
-        print(f"Adding: {spec.name}")
         if spec not in self.contributing_state_plots:
             self.contributing_state_plots.append(spec)
             spec.match_plot = self
@@ -185,8 +183,7 @@ class MatchPlot:
     def compute_composite_xy_data(self):
         _, _, _, x_step = SpecPlotter.get_plotter_key(self.is_emission)  # step size used in all xdata arrays
         x_min = min([s.xdata[0] for s in self.contributing_state_plots], default=0)
-        x_max = min([s.xdata[-1] for s in self.contributing_state_plots], default=0)
-        print(x_min, x_max)
+        x_max = max([s.xdata[-1] for s in self.contributing_state_plots], default=1)
         self.xdata = np.array(np.arange(start=x_min, stop=x_max, step=x_step))  # mirrors SpecPlotter x_data construction
         self.ydata = np.zeros(len(self.xdata)) + self.yshift
         self.partial_y_datas = [(self.ydata.copy(), None)]
@@ -199,6 +196,7 @@ class MatchPlot:
         self.find_contributing_clusters()
         self.assign_peaks()
         self._notify_observers()
+
 
     def compute_min_max(self):
         """Find indices of local minima and maxima of self.ydata"""
@@ -223,15 +221,16 @@ class MatchPlot:
             self.maxima.append(((self.xdata[i], self.ydata[i]), (self.xdata[maxima[jj]], self.ydata[maxima[jj]]), (self.xdata[minima[ii+1]], self.ydata[minima[ii+1]])))
 
     def find_contributing_clusters(self):
-        self.super_clusters = {}
+        super_clusters = {}
         for maximum in self.maxima:
             xmin = maximum[0][0]
             xmax = maximum[2][0]
-            self.super_clusters[maximum[1]] = {s.tag: [] for s in self.contributing_state_plots}
+            super_clusters[maximum[1]] = {s.tag: [] for s in self.contributing_state_plots}
             for s in self.contributing_state_plots:
                 for cluster in s.spectrum.clusters:
                     if xmin <= cluster.x < xmax:
-                        self.super_clusters[maximum[1]][s.tag].append(cluster)
+                        super_clusters[maximum[1]][s.tag].append(cluster)
+        self.super_clusters = super_clusters
 
     def assign_peaks(self):
         if not self.matching_active:

@@ -79,8 +79,8 @@
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log",
             "hidden emission": false,
             "y shift emission": 0.9580000042915344,
-            "x shift emission": 2160.800444277283,
-            "y scale emission": 0.30000000000000016
+            "x shift emission": 1230.0,
+            "y scale emission": 0.3799999952316284
         },
         {
             "color": [
@@ -95,7 +95,8 @@
             "y shift emission": 1.9160000085830688,
             "y scale emission": 1.0,
             "x shift emission": -6.14336959101081,
-            "color selection type": "manual"
+            "color selection type": "manual",
+            "hidden emission": false
         },
         {
             "color": [
@@ -106,8 +107,8 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\ovalene-excited-3-opt-freq-disp.log",
-            "y shift emission": 2.8740000128746033,
-            "hidden emission": false,
+            "y shift emission": 0.9580000042915344,
+            "hidden emission": true,
             "x shift emission": 801.3953854708088,
             "y scale emission": 0.30000000000000016
         },

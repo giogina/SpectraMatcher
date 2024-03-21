@@ -416,11 +416,10 @@ class PlotsOverview:
             self.update_plot(s)
         if not dpg.does_item_exist(f"drag-{s.tag}"):
             dpg.add_drag_line(tag=f"drag-{s.tag}", vertical=False, show_label=False, default_value=s.yshift,
-                              user_data=s,
-                              callback=lambda sender, a, u: self.viewmodel.on_y_drag(dpg.get_value(sender), u),
+                              callback=lambda sender, a, u: self.viewmodel.on_y_drag(dpg.get_value(sender), s),
                               parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.state.get_color())
-            dpg.add_drag_line(tag=f"drag-x-{s.tag}", vertical=True, show_label=False, default_value=s.handle_x+s.xshift, user_data=s,
-                              callback=lambda sender, a, u: self.viewmodel.on_x_drag(dpg.get_value(sender), u),
+            dpg.add_drag_line(tag=f"drag-x-{s.tag}", vertical=True, show_label=False, default_value=s.handle_x+s.xshift,
+                              callback=lambda sender, a, u: self.viewmodel.on_x_drag(dpg.get_value(sender), s.tag),
                               parent=f"plot_{self.viewmodel.is_emission}", show=False, color=s.state.get_color())
         else:
             dpg.set_value(f"drag-{s.tag}", s.yshift)
@@ -470,7 +469,7 @@ class PlotsOverview:
             self.fit_y(dummy_series_update_only=True)
 
     def update_match_plot(self, match_plot):
-        # print("Replotting match plot: ", match_plot.hidden, match_plot.ydata)
+        print("Replotting match plot")
         for shade in self.shade_plots:
             if dpg.get_item_user_data(shade) not in [s.tag for s in match_plot.contributing_state_plots]:
                 print("delete shade", dpg.get_item_user_data(shade))
@@ -478,6 +477,7 @@ class PlotsOverview:
                 self.shade_plots.remove(shade)
             else:
                 dpg.configure_item(shade, show=not match_plot.hidden)
+        print("shades deleted")
         if not match_plot.hidden:  # todo: different options: shade, composite only, composite+parts
             prev_y, _ = match_plot.partial_y_datas[0]  # todo> check to toggle showing these
             for partial_y, tag in match_plot.partial_y_datas[1:]:  # todo: do they react to color changes?
@@ -491,10 +491,11 @@ class PlotsOverview:
                     self.shade_plots.append(shade)
                 prev_y = partial_y
             # dpg.bind_item_theme(self.match_plot, self.spec_theme[match_plot.contributing_state_plots[-1].tag])
-
+        print("Shades set & created")
         dpg.set_value(self.match_plot, [match_plot.xdata, match_plot.ydata])
         dpg.configure_item(self.match_plot, show=not match_plot.hidden)
         dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
+        print("Line series value set")
 
         if not match_plot.hidden and match_plot.matching_active:
             old_lines = self.match_lines
@@ -512,6 +513,7 @@ class PlotsOverview:
                     self.match_lines.append(dl)
             for line in old_lines:
                 dpg.delete_item(line)
+            print("match lines drawn")
 
     def delete_sticks(self, spec_tag=None):  # None: all of them.
         if spec_tag is not None:

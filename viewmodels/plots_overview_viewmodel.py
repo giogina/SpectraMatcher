@@ -106,17 +106,18 @@ class PlotsOverviewViewmodel:
                 break
             time.sleep(debounce_period)
 
-    def on_x_drag(self, value, state_plot, slider=False):
+    def on_x_drag(self, value, tag, slider=False):
         if slider:
-            value = value + self.state_plots[state_plot.tag].handle_x
-        self.state_plots[state_plot.tag].set_x_shift(value)
-        self._callbacks.get("delete sticks")(state_plot.tag)
+            value = value + self.state_plots[tag].handle_x
+
+        self.state_plots[tag].set_x_shift(value)
+        self._callbacks.get("delete sticks")(tag)
         if slider:
-            self._callbacks.get("update plot")(self.state_plots[state_plot.tag], update_drag_lines=True)
+            self._callbacks.get("update plot")(self.state_plots[tag], update_drag_lines=True)
         else:
-            self._callbacks.get("update plot")(self.state_plots[state_plot.tag], mark_dragged_plot=state_plot.tag)
-        self._callbacks.get("update list spec")(self.state_plots[state_plot.tag])
-        self.last_action_x = lambda direction: self.on_x_drag(self.state_plots[state_plot.tag].xshift + 10*direction, state_plot, slider=True)
+            self._callbacks.get("update plot")(self.state_plots[tag], mark_dragged_plot=tag)
+        self._callbacks.get("update list spec")(self.state_plots[tag])
+        self.last_action_x = lambda direction: self.on_x_drag(self.state_plots[tag].xshift + 10*direction, tag, slider=True)
 
     def on_y_drag(self, value, state_plot):
         self.state_plots[state_plot.tag].set_y_shift(value)
@@ -124,9 +125,6 @@ class PlotsOverviewViewmodel:
         self._callbacks.get("update plot")(self.state_plots[state_plot.tag], mark_dragged_plot=state_plot.tag)
         self._callbacks.get("update list spec")(state_plot)
         self.last_action_y = lambda direction: self.on_y_drag(value+0.01*direction, state_plot)
-
-        # for s in self.state_plots.values():
-        #     if abs(value - s.yshift) < 0.01:
 
     def resize_spectrum(self, spec_tag, direction):
         if spec_tag is not None and spec_tag in self.state_plots.keys():
