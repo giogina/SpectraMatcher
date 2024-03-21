@@ -60,6 +60,7 @@ class PlotsOverview:
         self.shade_plots = []
         self.match_lines = []
         self.match_plot_dragged = False
+        self.matched_spectra_checks = {}
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -154,7 +155,7 @@ class PlotsOverview:
                                     for i, x_scale_key in enumerate(['H stretches', 'bends', 'others']):
                                         dpg.add_slider_float(label=[' H-* stretches', ' Bends', ' Others'][i], tag=f"{x_scale_key} {self.viewmodel.is_emission} slider", vertical=False, max_value=1.0, min_value=0.8, callback=lambda s, a, u: self.viewmodel.change_correction_factor(u, a), user_data=x_scale_key)  #, format=""
                                         dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {['Red', 'Blue', 'Green'][i]}")
-                                    self.show_sticks = dpg.add_checkbox(label="Show stick spectra", callback=self.toggle_sticks)
+                                    self.show_sticks = dpg.add_checkbox(label=" Show stick spectra", callback=self.toggle_sticks)
                             dpg.add_spacer(height=6)
                         dpg.add_spacer(height=6)
                         with dpg.collapsing_header(label="Label settings", default_open=True):
@@ -177,7 +178,7 @@ class PlotsOverview:
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
-                                    dpg.add_checkbox(label="Edit peaks", default_value=False, callback=lambda s, a, u: self.enable_edit_peaks(a))
+                                    dpg.add_checkbox(label=" Edit peaks", default_value=False, callback=lambda s, a, u: self.enable_edit_peaks(a))
                                     self.peak_controls['peak prominence threshold'] = dpg.add_slider_float(label=" Min. prominence", min_value=0, max_value=0.1, default_value=ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak prominence threshold', 0.005), callback=lambda s, a, u: ExperimentalSpectrum.set(self.viewmodel.is_emission, 'peak prominence threshold', a))
                                     self.peak_controls['peak width threshold'] = dpg.add_slider_int(label=" Min. width", min_value=0, max_value=100, default_value=ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak width threshold', 2), callback=lambda s, a, u: ExperimentalSpectrum.set(self.viewmodel.is_emission, 'peak width threshold', a))
                                     dpg.add_button(label="Defaults", width=-6, callback=lambda s, a, u: ExperimentalSpectrum.reset_defaults(self.viewmodel.is_emission))
@@ -187,11 +188,15 @@ class PlotsOverview:
                             # dpg.add_spacer(height=6)
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
-                                with dpg.group(horizontal=False):
-                                    self.match_check = dpg.add_checkbox(label="Match peaks (to lowest spectrum)", default_value=False, callback=lambda s, a, u: self.viewmodel.match_peaks(a))
-                                    self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(min_value=0, max_value=0.2, format=f"Rel. intensity > %0.2f", default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a))
-                                    self.match_controls['distance match threshold'] = dpg.add_slider_float(label=" Max. Distance", min_value=0, max_value=100, default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a))
-                                    dpg.add_button(label="Defaults", width=-6, callback=self.restore_matcher_defaults)
+                                with dpg.group():
+                                    self.match_check = dpg.add_checkbox(label=" Match peaks", default_value=False, callback=lambda s, a, u: self.viewmodel.match_peaks(a))
+                                    with dpg.tree_node(label="Match thresholds"):
+                                        self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(min_value=0, max_value=0.2, format=f"Rel. intensity ≥ %0.2f", default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a), width=-32)
+                                        self.match_controls['distance match threshold'] = dpg.add_slider_float(min_value=0, max_value=100, format=f"Distance ≤ %0.2f  cm⁻¹", default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a), width=-32)
+                                        dpg.add_button(label="Defaults", width=-32, callback=self.restore_matcher_defaults)
+                                        dpg.add_spacer(height=6)
+                                    with dpg.tree_node(label="Matched spectra") as self.matched_spectra_node:
+                                        self.matched_spectra_checks_spacer = dpg.add_spacer(height=6)
                                     dpg.add_button(label="Save as table", callback=self.print_table, width=-6)
         self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, show=False, parent="emission tab" if self.viewmodel.is_emission else "excitation tab", callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
         self.dummy_series = dpg.add_scatter_series([0, 2000], [-0.1, 1.1], parent=f"y_axis_{self.viewmodel.is_emission}")
@@ -230,6 +235,13 @@ class PlotsOverview:
             dpg.delete_item(point)
             self.peak_indicator_points.remove(point)
             self.viewmodel.match_plot.assign_peaks()
+        for tag, check in self.matched_spectra_checks.items():
+            if dpg.is_item_hovered(check):
+                for tag2, check2 in self.matched_spectra_checks.items():
+                    if tag2 != tag:
+                        self.viewmodel.toggle_match_spec_contribution(self.viewmodel.state_plots[tag2], False)
+                self.viewmodel.toggle_match_spec_contribution(self.viewmodel.state_plots[tag], True)
+                break
 
     def enable_edit_peaks(self, enable):
         self.peak_edit_mode_enabled = enable
@@ -358,7 +370,6 @@ class PlotsOverview:
                             dpg.show_item(f"drag-x-{s_tag}")
                             self.hovered_x_drag_line = s_tag
                         hovered_spectrum = s
-                        # if len(self.viewmodel.match_plot.contributing_state_plots) == 0:
                         if not -0.2 < s.yshift <= 0.9 and not self.viewmodel.match_plot.matching_active:
                             dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [s.xdata, s.ydata - s.yshift])
                             dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
@@ -386,7 +397,6 @@ class PlotsOverview:
                             dpg.show_item(f"drag-x-{s.tag}")
                 if abs(dpg.get_value(self.match_plot_y_drag) - mouse_y_plot_space) < 0.02:
                     dpg.show_item(self.match_plot_y_drag)
-                    self.hovered_spectrum_y_drag_line = s_tag
                 elif abs(dpg.get_value(self.match_plot_y_drag) - mouse_y_plot_space) > 0.1:
                     dpg.hide_item(self.match_plot_y_drag)
             else:
@@ -449,11 +459,17 @@ class PlotsOverview:
             dpg.set_value(f"drag-{s.tag}", s.yshift)
         self.draw_sticks(s)
         self.draw_labels(s.tag)
+        dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
+        if tag not in self.matched_spectra_checks.keys() or not dpg.does_item_exist(self.matched_spectra_checks[tag]):
+            self.matched_spectra_checks[tag] = dpg.add_checkbox(label=" "+s.name, default_value=self.viewmodel.match_plot.is_spectrum_matched(s), parent=self.matched_spectra_node, before=self.matched_spectra_checks_spacer, callback=lambda sender, a, u: self.viewmodel.toggle_match_spec_contribution(s))
+        else:
+            dpg.set_value(self.matched_spectra_checks[tag], self.viewmodel.match_plot.is_spectrum_matched(s))
+
         for spec in self.viewmodel.state_plots.values():
             self.update_spectrum_color(spec)
         self.fit_y()
-        dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
 
+# todo: make sure checks are synced (on load)
     def hide_spectrum(self, tag, hide):
         dpg.configure_item(tag, show=not hide)  # line series
         if hide:
@@ -472,12 +488,16 @@ class PlotsOverview:
                 dpg.add_theme_color(dpg.mvPlotCol_Line, spec.state.get_color(), category=dpg.mvThemeCat_Plots)
             with dpg.theme_component(dpg.mvShadeSeries):
                 dpg.add_theme_color(dpg.mvPlotCol_Fill, list(spec.state.get_color())[:3]+[160], category=dpg.mvThemeCat_Plots)
+            with dpg.theme_component(dpg.mvCheckbox):
+                dpg.add_theme_color(dpg.mvThemeCol_CheckMark, spec.state.get_color())
         dpg.bind_item_theme(spec.tag, self.spec_theme[spec.tag])
         dpg.configure_item(f"drag-{spec.tag}", color=spec.state.get_color())
         dpg.configure_item(f"drag-x-{spec.tag}", color=spec.state.get_color())
         tag_shades = [shade for shade in self.shade_plots if dpg.get_item_user_data(shade) == spec.tag]
         if len(tag_shades):  # todo: do this for line series as well; also composite plot chosen color
             dpg.bind_item_theme(tag_shades[0], self.spec_theme[spec.tag])
+        if self.matched_spectra_checks.get(spec.tag) is not None:
+            dpg.bind_item_theme(self.matched_spectra_checks.get(spec.tag), self.spec_theme[spec.tag])
 
     def update_plot(self, state_plot, mark_dragged_plot=None, update_all=False, redraw_sticks=False, update_drag_lines=False, fit_y_axis=False):
         self.dragged_plot = mark_dragged_plot
@@ -524,6 +544,12 @@ class PlotsOverview:
             dpg.set_value(self.match_plot_y_drag, match_plot.yshift)
         dpg.configure_item(self.match_plot, show=not match_plot.hidden)
         dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
+
+        for tag, check in self.matched_spectra_checks.items():
+            dpg.set_value(check, self.viewmodel.match_plot.is_spectrum_matched(tag))
+
+        self.fit_y()
+
         # todo>
         #  persist all the changes
         #  allow sticks (color-coded) in composite spectrum - as one of the combo spec display options
@@ -782,6 +808,10 @@ class PlotsOverview:
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 6, 6)
             with dpg.theme_component(dpg.mvCollapsingHeader):
                 dpg.add_theme_color(dpg.mvThemeCol_Header, [200, 200, 255, 80])
+            # with dpg.theme_component(dpg.mvTreeNode):
+            #     dpg.add_theme_color(dpg.mvThemeCol_Header, [200, 200, 255, 40])
+            #     dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [200, 200, 255, 40])
+            #     dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 8, 8)
         dpg.bind_item_theme(self.plot_settings_group, plot_settings_theme)
 
         with dpg.theme() as expand_button_theme:

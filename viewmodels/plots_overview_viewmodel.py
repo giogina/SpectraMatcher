@@ -208,8 +208,8 @@ class PlotsOverviewViewmodel:
             self._callbacks.get("update list spec")(spec)
         self._callbacks.get("hide spectrum")(tag, hide)
 
-    def toggle_match_spec_contribution(self, spec):
-        if spec not in self.match_plot.contributing_state_plots:
+    def toggle_match_spec_contribution(self, spec, on=None):
+        if on or (on is None and spec not in self.match_plot.contributing_state_plots):
             self.match_plot.add_state_plot(spec)
         else:
             self.match_plot.remove_state_plot(spec)

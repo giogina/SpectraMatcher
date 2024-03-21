@@ -257,8 +257,6 @@ class MatchPlot:
                 if int_by_dist > best_intensity_by_distance:
                     match = p1
                     best_intensity_by_distance = int_by_dist
-            if match is not None and self.is_emission:
-                print(search_wn, y, match.intensity, y/match.intensity, min(match.intensity / y, y / match.intensity), Matcher.get(self.is_emission, 'peak intensity match threshold'))
             if match is not None and min(match.intensity / y, y / match.intensity) > Matcher.get(self.is_emission, 'peak intensity match threshold'):
                 match.match = pp
             else:
@@ -282,4 +280,10 @@ class MatchPlot:
         self.yshift = value
         self.compute_composite_xy_data()
         self._notify_observers()
+
+    def is_spectrum_matched(self, spec):
+        if isinstance(spec, StatePlot):
+            return spec in self.contributing_state_plots
+        else:
+            return spec in [s.tag for s in self.contributing_state_plots]
 

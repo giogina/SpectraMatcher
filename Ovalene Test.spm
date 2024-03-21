@@ -78,9 +78,9 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log",
-            "hidden emission": false,
+            "hidden emission": true,
             "y shift emission": 0.9580000042915344,
-            "x shift emission": 1230.0,
+            "x shift emission": 541.8725403585552,
             "y scale emission": 0.3799999952316284,
             "color selection type": "manual"
         },
@@ -94,11 +94,11 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log",
-            "y shift emission": 1.9160000085830688,
+            "y shift emission": 3.4580000042915344,
             "y scale emission": 1.0,
             "x shift emission": -6.14336959101081,
             "color selection type": "manual",
-            "hidden emission": false
+            "hidden emission": true
         },
         {
             "color": [
@@ -206,7 +206,7 @@
     },
     "matcher settings": {
         "true": {
-            "peak intensity match threshold": 0.07000000029802322,
+            "peak intensity match threshold": 0.1599999964237213,
             "distance match threshold": 30
         },
         "false": {

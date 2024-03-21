@@ -18,10 +18,10 @@ class FontManager:
             # self.fonts[self.normal_font] = dpg.add_font("./fonts/SansationRegular.ttf", self.normal_font)
             with dpg.font("./fonts/SansationRegular.ttf", cls.normal_font) as cls.fonts[cls.normal_font]:
                 dpg.add_font_range(0x2070, 0x20b0, parent=cls.fonts[cls.normal_font])
-                dpg.add_font_chars([0x0394])
+                dpg.add_font_chars([0x0394, 0x2264, 0x2265])
             with dpg.font("./fonts/SansationRegular.ttf", cls.big_font) as cls.fonts[cls.big_font]:
                 dpg.add_font_range(0x2070, 0x20b0, parent=cls.fonts[cls.big_font])
-                dpg.add_font_chars([0x0394])
+                dpg.add_font_chars([0x0394, 0x2264, 0x2265])
             start = time.time()
             for i in range(12, 25):
                 cls.get(i)
@@ -36,6 +36,7 @@ class FontManager:
         if size not in cls.fonts.keys():
             with dpg.font("./fonts/SansationRegular.ttf", size, parent=cls.font_registry) as cls.fonts[size]:
                 dpg.add_font_range(0x2070, 0x20b0)
+                dpg.add_font_chars([0x0394, 0x2264, 0x2265])
         return cls.fonts[size]
 
     # self._load_fonts_async()  # Still needed or throw out? Or dynamically load fonts using font_reg?
