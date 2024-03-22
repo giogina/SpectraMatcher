@@ -1,4 +1,6 @@
 import dearpygui.dearpygui as dpg
+
+from models.experimental_spectrum import ExperimentalSpectrum
 from models.state_plot import StatePlot
 from utility.icons import Icons
 from utility.item_themes import ItemThemes
@@ -94,6 +96,9 @@ class SpectraOverview:
         self.last_inserted_spec_tag = self.spectrum_headers[state_plot.tag]
         for tag, color_edit in self.color_edits.items():
             dpg.set_value(color_edit, self.viewmodel.state_plots[tag].state.get_color())
+
+    # def add_exp_spectrum(self, exp: ExperimentalSpectrum):
+    #     with dpg.collapsing_header(label=exp.name, parent=self.spectra_list_group, default_open=True):  # as self.spectrum_headers[exp.name]:
 
     def update_spectrum(self, state_plot: StatePlot):
         dpg.set_value(self.spectrum_controls[state_plot.tag]['xshift'], state_plot.xshift)

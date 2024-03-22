@@ -58,6 +58,7 @@ class PlotsOverview:
         self.disable_ui_update = False  # True while slider scrolls are being processed
         self.ctrl_pressed = False
         self.shade_plots = []
+        self.shade_line_plots = []
         self.component_plots = []
         self.match_lines = []
         self.match_plot_dragged = False
@@ -119,7 +120,7 @@ class PlotsOverview:
                                 dpg.add_spacer(width=32)
                     dpg.bind_item_theme(self.plot_settings_action_bar, ItemThemes.action_bar_theme())
 
-                    with dpg.group(horizontal=False) as self.plot_settings_group:
+                    with dpg.child_window() as self.plot_settings_group:
                         with dpg.theme(tag=f"slider_theme_{self.viewmodel.is_emission} Red"):
                             with dpg.theme_component(0):
                                 dpg.add_theme_color(dpg.mvThemeCol_FrameBg, [160, 0, 0, 180])
@@ -196,9 +197,9 @@ class PlotsOverview:
                                         self.match_controls['distance match threshold'] = dpg.add_slider_float(min_value=0, max_value=100, format=f"Distance ≤ %0.2f  cm⁻¹", default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a), width=-32)
                                         dpg.add_button(label="Defaults", width=-32, callback=self.restore_matcher_defaults)
                                         dpg.add_spacer(height=6)
-                                    with dpg.tree_node(label="Matched spectra") as self.matched_spectra_node:
+                                    with dpg.tree_node(label="Component spectra") as self.matched_spectra_node:
                                         self.matched_spectra_checks_spacer = dpg.add_spacer(height=6)
-                                    with dpg.tree_node(label="Display options"):
+                                    with dpg.tree_node(label="Composite spectrum display options"):
                                         self.match_controls['show composite spectrum'] = dpg.add_checkbox(label="Composite spectrum", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show composite spectrum', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show composite spectrum', False))
                                         self.match_controls['show component spectra'] = dpg.add_checkbox(label="Component spectra", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show component spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show component spectra', False))
                                         self.match_controls['show shade spectra'] = dpg.add_checkbox(label="Shaded contributions", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show shade spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False))
@@ -501,6 +502,8 @@ class PlotsOverview:
         dpg.configure_item(f"drag-x-{spec.tag}", color=spec.state.get_color())
         for shade in [shade for shade in self.shade_plots if dpg.get_item_user_data(shade) == spec.tag]:
             dpg.bind_item_theme(shade, self.spec_theme[spec.tag])
+        for shade in [shade for shade in self.shade_line_plots if dpg.get_item_user_data(shade) == spec.tag]:
+            dpg.bind_item_theme(shade, self.spec_theme[spec.tag])
         for component in [c for c in self.component_plots if dpg.get_item_user_data(c) == spec.tag]:
             dpg.bind_item_theme(component, self.spec_theme[spec.tag])  # todo: same for sticks
         if self.matched_spectra_checks.get(spec.tag) is not None:
@@ -523,73 +526,107 @@ class PlotsOverview:
             self.fit_y(dummy_series_update_only=True)
 
     def update_match_plot(self, match_plot, mark_dragging=False):
+        # print([s.tag for s in match_plot.contributing_state_plots], self.shade_plots)
+        if Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False):
+            for shade in self.shade_plots:
+                print("Checking ", dpg.get_item_user_data(shade))
+                if dpg.get_item_user_data(shade) not in [s.tag for s in match_plot.contributing_state_plots]:
+                    # print("Delete")
+                    # print("before del: ", shade, self.shade_plots, dpg.does_item_exist(shade))
+                    dpg.delete_item(shade)
+                    # print("after del: ", shade, self.shade_plots, dpg.does_item_exist(shade))
+                    self.shade_plots.remove(shade)
+                    # print("after remove: ", shade, self.shade_plots, dpg.does_item_exist(shade))
+            for line in self.shade_line_plots:
+                if dpg.get_item_user_data(line) not in [s.tag for s in match_plot.contributing_state_plots]:
+                    # print("Del line", print(dpg.does_item_exist(line)))
+                    dpg.delete_item(line)
+                    # print("After del")
+                    self.shade_line_plots.remove(line)
+                    # print("after remove")
 
-        if not match_plot.hidden:  # todo: different options: shade, composite only, composite+parts
-            if Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False):
-
-                for shade in self.shade_plots:
-                    if dpg.get_item_user_data(shade) not in [s.tag for s in match_plot.contributing_state_plots]:
-                        dpg.delete_item(shade)
-                        self.shade_plots.remove(shade)
-                    else:
-                        dpg.configure_item(shade, show=True)
-
+            if len(match_plot.partial_y_datas) > 1:
                 prev_y, _ = match_plot.partial_y_datas[0]
                 for partial_y, tag in match_plot.partial_y_datas[1:]:
+                    print("shade loop: ", tag)
                     if dpg.does_item_exist(f"shade {tag}"):
-                        dpg.show_item(f"shade {tag}")
-                        dpg.show_item(f"shade line {tag}")
+                        print('adjusting shade ', tag, len(match_plot.xdata), len(partial_y), len(prev_y))
                         dpg.set_value(f"shade {tag}", [match_plot.xdata, partial_y, prev_y, [], []])
+                        print('after adjust shade')
+                    else:
+                        print("adding shade ", tag)
+                        shade = dpg.add_shade_series(match_plot.xdata, partial_y, y2=prev_y, tag=f"shade {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}", before=self.match_plot)
+                        dpg.bind_item_theme(shade, self.spec_theme[tag])
+                        if shade not in self.shade_plots:
+                            self.shade_plots.append(shade)
+                        print('after add shade')
+                    if dpg.does_item_exist(f"shade line {tag}"):
+                        print('set line value', tag)
                         dpg.set_value(f"shade line {tag}", [match_plot.xdata, partial_y])
                     else:
-                        shade = dpg.add_shade_series(match_plot.xdata, partial_y, y2=prev_y, tag=f"shade {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}", before=self.match_plot)
+                        print('add line', tag)
                         shade_line = dpg.add_line_series(match_plot.xdata, partial_y, tag=f"shade line {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}", before=self.match_plot)
-                        dpg.bind_item_theme(shade, self.spec_theme[tag])
                         dpg.bind_item_theme(shade_line, self.spec_theme[tag])
-                        self.shade_plots.append(shade)
-                        self.shade_plots.append(shade_line)
+                        if shade_line not in self.shade_line_plots:
+                            self.shade_line_plots.append(shade_line)
                     prev_y = partial_y
-            # dpg.bind_item_theme(self.match_plot, self.spec_theme[match_plot.contributing_state_plots[-1].tag])
-            else:
-                for shade in self.shade_plots:
+        else:
+            for shade in self.shade_plots:
+                if dpg.does_item_exist(shade):
                     dpg.delete_item(shade)
-                self.shade_plots = []
+            for shade in self.shade_line_plots:
+                if dpg.does_item_exist(shade):
+                    dpg.delete_item(shade)
+            self.shade_plots = []
+            self.shade_line_plots = []
 
-            if Matcher.get(self.viewmodel.is_emission, 'show composite spectrum', False):
-                dpg.show_item(self.match_plot)
-                dpg.set_value(self.match_plot, [match_plot.xdata, match_plot.ydata])
-            else:
-                dpg.set_value(self.match_plot, [[], []])
-
-            if Matcher.get(self.viewmodel.is_emission, 'show component spectra', False):
-                for ydata, tag in match_plot.component_y_datas:
-                    if dpg.does_item_exist(f"match component {tag}"):
-                        dpg.show_item(f"match component {tag}")
-                        dpg.set_value(f"match component {tag}", [match_plot.xdata, ydata])
-                    else:
-                        line = dpg.add_line_series(match_plot.xdata, ydata, tag=f"match component {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}", before=self.match_plot)
-                        dpg.bind_item_theme(line, self.spec_theme[tag])
-                        self.component_plots.append(line)
-            else:
-                for component in self.component_plots:
-                    dpg.delete_item(component)
-                self.component_plots = []
-
+        if Matcher.get(self.viewmodel.is_emission, 'show composite spectrum', False):
+            dpg.show_item(self.match_plot)
+            dpg.set_value(self.match_plot, [match_plot.xdata, match_plot.ydata])
+            dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
+        else:
+            dpg.set_value(self.match_plot, [[], []])
+        #
+        # print("Component spectra: ", Matcher.get(self.viewmodel.is_emission, 'show component spectra'))
+        # if Matcher.get(self.viewmodel.is_emission, 'show component spectra', False):
+        #
+        #     for component in self.component_plots:
+        #         if dpg.get_item_user_data(component) not in [s.tag for s in match_plot.contributing_state_plots]:
+        #             dpg.delete_item(component)
+        #             self.component_plots.remove(component)
+        #         else:
+        #             dpg.configure_item(component, show=True)
+        #
+        #     for ydata, tag in match_plot.component_y_datas:
+        #         if dpg.does_item_exist(f"match component {tag}"):
+        #             dpg.show_item(f"match component {tag}")
+        #             dpg.set_value(f"match component {tag}", [match_plot.xdata, ydata])
+        #         else:
+        #             line = dpg.add_line_series(match_plot.xdata, ydata, tag=f"match component {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}", before=self.match_plot)
+        #             dpg.bind_item_theme(line, self.spec_theme[tag])
+        #             self.component_plots.append(line)
+        # else:
+        #     for component in self.component_plots:
+        #         dpg.delete_item(component)
+        #     self.component_plots = []
+        #
         if mark_dragging:
             self.match_plot_dragged = True
         if not self.match_plot_dragged:
             dpg.set_value(self.match_plot_y_drag, match_plot.yshift)
-        dpg.configure_item(self.match_plot, show=not match_plot.hidden)
-        dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
+        #     self.fit_y()
+        #
 
         for tag, check in self.matched_spectra_checks.items():
             dpg.set_value(check, self.viewmodel.match_plot.is_spectrum_matched(tag))
 
         # todo>
         #  persist all the changes
+        #  match plot contributions: Just show/fix yshift of spec_plots. Disable individual horizontal drag lines; use match plot one instead.
         #  allow sticks (color-coded) in composite spectrum - as one of the combo spec display options
         #  draw labels (state_plot.name: label list if more than one spectrum)
         #  enable selecting experimental spectra as well? Simply only match visible exp spectra?
+        #  Re-distribute yshifts only if they are not all set to combo spec height
 
         old_lines = self.match_lines
         self.match_lines = []
@@ -731,9 +768,11 @@ class PlotsOverview:
         if line_v is not None:
             if dpg.does_item_exist(line_v):
                 dpg.delete_item(line_v)
+        if line_d is not None:
             if dpg.does_item_exist(line_d):
                 dpg.delete_item(line_d)
-            del self.annotation_lines[tag][label]
+            if line_v is not None:
+                del self.annotation_lines[tag][label]
 
     def draw_label_line(self, cluster, peak_pos):
         if abs(cluster.rel_x) > cluster.width / 2:

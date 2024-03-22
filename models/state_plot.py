@@ -168,10 +168,7 @@ class MatchPlot:
             self.contributing_state_plots.remove(spec)
             spec.match_plot = None
         self.hidden = len(self.contributing_state_plots) == 0
-        if len(self.contributing_state_plots):
-            self.compute_composite_xy_data()
-        else:
-            self._notify_observers()
+        self.compute_composite_xy_data()
 
     def reset(self):
         self.hidden = True

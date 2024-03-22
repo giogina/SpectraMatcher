@@ -70,6 +70,7 @@ class PlotsOverviewViewmodel:
             if self.match_plot.matching_active:
                 self.match_plot.assign_peaks()
         elif event == MatchPlot.match_plot_changed_notification:
+            print("match plot changed notification; call update")
             self._callbacks.get("update match plot")(args[0])
 
     def _extract_exp_x_y_data(self):
@@ -203,7 +204,7 @@ class PlotsOverviewViewmodel:
         for spec in self.state_plots.values():
             if not spec.is_hidden():
                 shown_specs_counter += 1
-                spec.set_y_shift(shown_specs_counter * global_y_shift + (2.5 if self.match_plot.matching_active else 0.))
+                spec.set_y_shift((self.vert_spacing if self.match_plot.matching_active else shown_specs_counter * global_y_shift))
             self._callbacks.get("update plot")(spec, redraw_sticks=True, update_drag_lines=True)
             self._callbacks.get("update list spec")(spec)
         self._callbacks.get("hide spectrum")(tag, hide)

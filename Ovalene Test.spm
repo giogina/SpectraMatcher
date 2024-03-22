@@ -71,31 +71,31 @@
         {
             "color": [
                 236.95384114980698,
-                132.2810858488083,
-                11.665416788309813,
+                177.32935577630997,
+                37.18352034687996,
                 255.0
             ],
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log",
             "hidden emission": false,
-            "y shift emission": 1.2947141736769696,
+            "y shift emission": 1.25,
             "x shift emission": 541.8725403585552,
-            "y scale emission": 0.3799999952316284,
+            "y scale emission": 0.17999999523162843,
             "color selection type": "manual"
         },
         {
             "color": [
-                112.47616857290268,
+                103.97700503468513,
                 228.32307547330856,
-                42.85448044538498,
+                23.183578178286552,
                 255.0
             ],
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log",
-            "y shift emission": 2.5894283473539392,
-            "y scale emission": 1.0,
+            "y shift emission": 1.101745900352243,
+            "y scale emission": 0.7000000000000001,
             "x shift emission": -6.14336959101081,
             "color selection type": "manual",
             "hidden emission": false
@@ -130,15 +130,19 @@
         },
         {
             "color": [
-                81.96428571428568,
-                22.949999999999996,
-                229.5
+                126.1455550789833,
+                92.82119885087013,
+                209.49230432510376,
+                255.0
             ],
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\ovalene-excited-5-opt-freq-disp.log",
-            "y shift emission": 4.790000021457672,
-            "hidden emission": true
+            "y shift emission": 1.25,
+            "hidden emission": true,
+            "y scale emission": 1.1,
+            "x shift emission": 523.9226159337907,
+            "color selection type": "manual"
         },
         {
             "color": [
@@ -168,11 +172,11 @@
     },
     "label settings": {
         "true": {
-            "show labels": false,
+            "show labels": true,
             "show gaussian labels": false,
-            "peak intensity label threshold": 0.1,
-            "stick label relative threshold": 0.1,
-            "stick label absolute threshold": 0.1,
+            "peak intensity label threshold": 0.050999999046325684,
+            "stick label relative threshold": 0.11699999868869781,
+            "stick label absolute threshold": 0.02199999988079071,
             "peak separation threshold": 0.8,
             "label font size": 18,
             "axis font size": 18,
@@ -196,7 +200,7 @@
     },
     "peak detection settings": {
         "true": {
-            "peak prominence threshold": 0.05,
+            "peak prominence threshold": 0.050999999046325684,
             "peak width threshold": 10
         },
         "false": {
@@ -205,7 +209,7 @@
         }
     },
     "active emission plotter": [
-        7.7,
+        11.7,
         -1404,
         8457,
         1
@@ -221,10 +225,10 @@
             "peak intensity match threshold": 0.03,
             "distance match threshold": 30,
             "match active": false,
-            "show composite spectrum": true,
-            "show component spectra": true,
+            "show composite spectrum": false,
+            "show component spectra": false,
             "show shade spectra": true,
-            "show stick spectra": false
+            "show stick spectra": true
         },
         "false": {
             "peak intensity match threshold": 0.03,
