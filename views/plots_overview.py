@@ -476,6 +476,7 @@ class PlotsOverview:
             self.update_spectrum_color(spec)
         self.fit_y()
 
+# todo> redraw (of labels at least) called wayyyy too often
 # todo: make sure checks are synced (on load)
     def hide_spectrum(self, tag, hide):
         dpg.configure_item(tag, show=not hide)  # line series
@@ -586,30 +587,7 @@ class PlotsOverview:
             dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
         else:
             dpg.set_value(self.match_plot, [[], []])
-        #
-        # print("Component spectra: ", Matcher.get(self.viewmodel.is_emission, 'show component spectra'))
-        # if Matcher.get(self.viewmodel.is_emission, 'show component spectra', False):
-        #
-        #     for component in self.component_plots:
-        #         if dpg.get_item_user_data(component) not in [s.tag for s in match_plot.contributing_state_plots]:
-        #             dpg.delete_item(component)
-        #             self.component_plots.remove(component)
-        #         else:
-        #             dpg.configure_item(component, show=True)
-        #
-        #     for ydata, tag in match_plot.component_y_datas:
-        #         if dpg.does_item_exist(f"match component {tag}"):
-        #             dpg.show_item(f"match component {tag}")
-        #             dpg.set_value(f"match component {tag}", [match_plot.xdata, ydata])
-        #         else:
-        #             line = dpg.add_line_series(match_plot.xdata, ydata, tag=f"match component {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}", before=self.match_plot)
-        #             dpg.bind_item_theme(line, self.spec_theme[tag])
-        #             self.component_plots.append(line)
-        # else:
-        #     for component in self.component_plots:
-        #         dpg.delete_item(component)
-        #     self.component_plots = []
-        #
+
         if mark_dragging:
             self.match_plot_dragged = True
         if not self.match_plot_dragged:

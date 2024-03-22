@@ -102,7 +102,7 @@ class SpectraOverview:
 
     def update_spectrum(self, state_plot: StatePlot):
         dpg.set_value(self.spectrum_controls[state_plot.tag]['xshift'], state_plot.xshift)
-        dpg.set_value(self.spectrum_controls[state_plot.tag]['yshift'], state_plot.yshift)
+        dpg.set_value(self.spectrum_controls[state_plot.tag]['yshift'], state_plot.state.settings[f"y shift {state_plot.e_key}"])
         dpg.set_value(self.spectrum_controls[state_plot.tag]['yscale'], state_plot.yscale)
         dpg.configure_item(self.spectrum_controls[state_plot.tag]['show'], show=state_plot.is_hidden())
         dpg.configure_item(self.spectrum_controls[state_plot.tag]['hide'], show=not state_plot.is_hidden())

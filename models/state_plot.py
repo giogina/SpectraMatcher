@@ -78,9 +78,15 @@ class StatePlot:
         self.xdata = self._compute_x_data()
         self.update_match_plot()
 
-    def set_y_shift(self, yshift):
-        self.yshift = yshift
-        self.state.settings[f"y shift {self.e_key}"] = yshift
+    def set_y_shift(self, yshift, temporary=False):
+        if temporary or self.match_plot is None or not self.match_plot.matching_active:
+            self.yshift = yshift
+            self.ydata = self._compute_y_data()
+        if not temporary:
+            self.state.settings[f"y shift {self.e_key}"] = yshift
+
+    def restore_y_shift(self):
+        self.yshift = self.state.settings[f"y shift {self.e_key}"]
         self.ydata = self._compute_y_data()
 
     def resize_y_scale(self, direction):
@@ -118,7 +124,7 @@ class StatePlot:
 
     def hide(self, hide=True):
         self.state.settings[f"hidden {self.e_key}"] = hide
-        self.update_match_plot()
+        # self.update_match_plot()
 
     def update_match_plot(self):
         if self.match_plot is not None:

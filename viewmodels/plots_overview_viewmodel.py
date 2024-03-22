@@ -70,7 +70,7 @@ class PlotsOverviewViewmodel:
             if self.match_plot.matching_active:
                 self.match_plot.assign_peaks()
         elif event == MatchPlot.match_plot_changed_notification:
-            print("match plot changed notification; call update")
+            self.adjust_spectrum_yshift_hide_wrt_match()
             self._callbacks.get("update match plot")(args[0])
 
     def _extract_exp_x_y_data(self):
@@ -149,14 +149,18 @@ class PlotsOverviewViewmodel:
     def set_y_shifts(self, value, dragging=False):
         self.vert_spacing = value
         Labels.set(self.is_emission, 'global y shifts', value)
+        visible_specs_counter = 0
         if not self.match_plot.matching_active:
             for tag, state_plot in self.state_plots.items():
-                state_plot.set_y_shift(state_plot.index*value)
+                if not state_plot.is_hidden():
+                    visible_specs_counter += 1
+                state_plot.set_y_shift(visible_specs_counter*value)
                 self._callbacks.get("delete sticks")(state_plot.tag)
                 self._callbacks.get("update plot")(state_plot, fit_y_axis=True)
                 self._callbacks.get("update list spec")(state_plot)
         else:
-            self.match_plot.set_yshift(value)  # todo: persist as Matcher.settings['yshift'] rather than Labels 'global y shifts'
+            Matcher.set(self.is_emission, 'combo spectrum y shift', value)
+            # self.match_plot.set_yshift(value)  # todo: persist as Matcher.settings['yshift'] rather than Labels 'global y shifts'
             self._callbacks.get("update match plot")(self.match_plot, mark_dragging=dragging)
             self._callbacks.get("post load update")(y_shifts=True)
         self.last_action_y = lambda d: self.set_y_shifts(value+0.1*d)
@@ -202,7 +206,7 @@ class PlotsOverviewViewmodel:
         shown_specs_counter = 0
         global_y_shift = Labels.settings[self.is_emission].get('global y shifts', 1.25)
         for spec in self.state_plots.values():
-            if not spec.is_hidden():
+            if not spec.is_hidden() and not self.match_plot.matching_active:
                 shown_specs_counter += 1
                 spec.set_y_shift((self.vert_spacing if self.match_plot.matching_active else shown_specs_counter * global_y_shift))
             self._callbacks.get("update plot")(spec, redraw_sticks=True, update_drag_lines=True)
@@ -218,16 +222,33 @@ class PlotsOverviewViewmodel:
     def match_peaks(self, match_on):
         self.match_plot.activate_matching(match_on, self.vert_spacing)
         if not match_on:
-            for tag in self.temporarily_hidden_specs:
-                self.hide_spectrum(tag, False)
-            self.temporarily_hidden_specs = []
+            for tag, spec in self.state_plots.items():
+                self._callbacks.get("update plot")(spec, redraw_sticks=True, update_drag_lines=True)
+            # for tag in self.temporarily_hidden_specs:  # todo: set yshift, hide from respective settings
+            #     self.hide_spectrum(tag, False)
+            # self.temporarily_hidden_specs = []
         else:
-            self.temporarily_hidden_specs = [s.tag for s in self.state_plots.values() if not s.is_hidden()]
-            for tag in self.temporarily_hidden_specs:
-                self.hide_spectrum(tag, True)
             if len(self.match_plot.contributing_state_plots) == 0:
-                for tag in self.temporarily_hidden_specs:
+                for tag in [s.tag for s in self.state_plots.values() if not s.is_hidden()]:
                     self.toggle_match_spec_contribution(self.state_plots[tag])
+        self.adjust_spectrum_yshift_hide_wrt_match()
+
+    def adjust_spectrum_yshift_hide_wrt_match(self):
+        if self.match_plot.matching_active:
+            # temporarily set all hide and yshift to be synced with match plot
+            for tag, spec in self.state_plots.items():
+                spec.set_y_shift(Matcher.get(self.is_emission, 'combo spectrum y shift', 1.25), temporary=True)
+                hide = spec not in self.match_plot.contributing_state_plots or (not Matcher.get(self.is_emission, 'show component spectra', False))
+                self._callbacks.get("hide spectrum")(tag, hide)
+                if not hide:
+                    self._callbacks.get("update plot")(spec, redraw_sticks=True)
+        else:
+            for tag, spec in self.state_plots.items():
+                spec.restore_y_shift()  # todo> hide toggles match contribution instead of hide when match is on; or does nothing
+                self._callbacks.get("hide spectrum")(tag, spec.is_hidden())
+                self._callbacks.get("update plot")(spec, update_all=True)
+
+# todo: only show line specs if check is on
 
 
 
