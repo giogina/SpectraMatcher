@@ -159,8 +159,8 @@ class PlotsOverviewViewmodel:
                 self._callbacks.get("update plot")(state_plot, fit_y_axis=True)
                 self._callbacks.get("update list spec")(state_plot)
         else:
-            Matcher.set(self.is_emission, 'combo spectrum y shift', value)
-            # self.match_plot.set_yshift(value)  # todo: persist as Matcher.settings['yshift'] rather than Labels 'global y shifts'
+            self.match_plot.set_yshift(value)  # todo: persist as Matcher.settings['yshift'] rather than Labels 'global y shifts'
+            self.adjust_spectrum_yshift_hide_wrt_match()
             self._callbacks.get("update match plot")(self.match_plot, mark_dragging=dragging)
             self._callbacks.get("post load update")(y_shifts=True)
         self.last_action_y = lambda d: self.set_y_shifts(value+0.1*d)
@@ -234,18 +234,20 @@ class PlotsOverviewViewmodel:
                 self.hide_spectrum(tag, self.temporarily_hidden_specs.get(tag, False), redistribute_y=False)
                 self._callbacks.get("update plot")(spec, update_all=True)
                 self._callbacks.get("update list spec")(spec)
-        self.match_plot.activate_matching(match_on, self.vert_spacing)
+        self.match_plot.activate_matching(match_on)
 
     def adjust_spectrum_yshift_hide_wrt_match(self):
         if self.match_plot.matching_active:
             # temporarily set all hide and yshift to be synced with match plot
             for tag, spec in self.state_plots.items():
-                spec.set_y_shift(Matcher.get(self.is_emission, 'combo spectrum y shift', 1.25), temporary=True)
+                spec.set_y_shift(self.match_plot.yshift, temporary=True)
                 hide = spec not in self.match_plot.contributing_state_plots or (not Matcher.get(self.is_emission, 'show component spectra', False))
                 self.hide_spectrum(tag, hide, redistribute_y=False)
                 if not hide:
                     self._callbacks.get("update plot")(spec, redraw_sticks=True)
                 self._callbacks.get("update list spec")(spec)
+
+                # todo: make sure the notifications aren't looping around (too much)
 
 
 

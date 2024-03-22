@@ -319,7 +319,6 @@ class PlotsOverview:
                 value = Labels.settings[self.viewmodel.is_emission].get(key)
                 dpg.set_value(item, value)
                 if not (key in ('show labels', 'show gaussian labels') and value is False and (Labels.settings[self.viewmodel.is_emission].get('show labels') or Labels.settings[self.viewmodel.is_emission].get('show gaussian labels'))):
-                    print("Callback ", key, value, dpg.get_item_callback(item))
                     if dpg.get_item_callback(item) is not None:
                         dpg.get_item_callback(item)(item, value, dpg.get_item_user_data(item))
         if load_all or peak_detection:
@@ -526,47 +525,31 @@ class PlotsOverview:
             self.fit_y()
         else:
             self.fit_y(dummy_series_update_only=True)
-
+# todo: show labels button doesn't work right after combo spectrum drag
     def update_match_plot(self, match_plot, mark_dragging=False):
-        # print([s.tag for s in match_plot.contributing_state_plots], self.shade_plots)
         if Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False):
             for shade in self.shade_plots:
-                print("Checking ", dpg.get_item_user_data(shade))
                 if dpg.get_item_user_data(shade) not in [s.tag for s in match_plot.contributing_state_plots]:
-                    # print("Delete")
-                    # print("before del: ", shade, self.shade_plots, dpg.does_item_exist(shade))
                     dpg.delete_item(shade)
-                    # print("after del: ", shade, self.shade_plots, dpg.does_item_exist(shade))
                     self.shade_plots.remove(shade)
-                    # print("after remove: ", shade, self.shade_plots, dpg.does_item_exist(shade))
             for line in self.shade_line_plots:
                 if dpg.get_item_user_data(line) not in [s.tag for s in match_plot.contributing_state_plots]:
-                    # print("Del line", print(dpg.does_item_exist(line)))
                     dpg.delete_item(line)
-                    # print("After del")
                     self.shade_line_plots.remove(line)
-                    # print("after remove")
 
             if len(match_plot.partial_y_datas) > 1:
                 prev_y, _ = match_plot.partial_y_datas[0]
                 for partial_y, tag in match_plot.partial_y_datas[1:]:
-                    print("shade loop: ", tag)
                     if dpg.does_item_exist(f"shade {tag}"):
-                        print('adjusting shade ', tag, len(match_plot.xdata), len(partial_y), len(prev_y))
                         dpg.set_value(f"shade {tag}", [match_plot.xdata, partial_y, prev_y, [], []])
-                        print('after adjust shade')
                     else:
-                        print("adding shade ", tag)
                         shade = dpg.add_shade_series(match_plot.xdata, partial_y, y2=prev_y, tag=f"shade {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}", before=self.match_plot)
                         dpg.bind_item_theme(shade, self.spec_theme[tag])
                         if shade not in self.shade_plots:
                             self.shade_plots.append(shade)
-                        print('after add shade')
                     if dpg.does_item_exist(f"shade line {tag}"):
-                        print('set line value', tag)
                         dpg.set_value(f"shade line {tag}", [match_plot.xdata, partial_y])
                     else:
-                        print('add line', tag)
                         shade_line = dpg.add_line_series(match_plot.xdata, partial_y, tag=f"shade line {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}", before=self.match_plot)
                         dpg.bind_item_theme(shade_line, self.spec_theme[tag])
                         if shade_line not in self.shade_line_plots:

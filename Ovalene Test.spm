@@ -226,7 +226,7 @@
             "distance match threshold": 30,
             "match active": false,
             "show composite spectrum": true,
-            "show component spectra": false,
+            "show component spectra": true,
             "show shade spectra": true,
             "show stick spectra": false
         },

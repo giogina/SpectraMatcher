@@ -274,18 +274,18 @@ class MatchPlot:
         self.exp_peaks = exp_peaks
         self._notify_observers()
 
-    def activate_matching(self, on=True, spacing=1.25):
+    def activate_matching(self, on=True):
         self.matching_active = on
         if on:
             self.assign_peaks()
-            if self.yshift < 1:
-                self.yshift = spacing
-                self.compute_composite_xy_data()
+            self.yshift = Matcher.get(self.is_emission, 'combo spectrum y shift', 1.25)
+            self.compute_composite_xy_data()
         else:
             self.yshift = 0
             self.compute_composite_xy_data()
 
     def set_yshift(self, value):
+        Matcher.set(self.is_emission, 'combo spectrum y shift', value)
         self.yshift = value
         self.compute_composite_xy_data()
 
