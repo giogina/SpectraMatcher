@@ -364,9 +364,10 @@ class PlotsOverview:
                     return  # drawing is currently underway
                 if dpg.is_item_shown(s.tag):  # non-hidden spectrum
                     if not self.show_all_drag_lines:
-                        if abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) < 0.02:
-                            dpg.show_item(f"drag-{s_tag}")
-                            self.hovered_spectrum_y_drag_line = s_tag
+                        if not self.viewmodel.match_plot.matching_active:
+                            if abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) < 0.02:
+                                dpg.show_item(f"drag-{s_tag}")
+                                self.hovered_spectrum_y_drag_line = s_tag
                         elif abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) > 0.1:
                             dpg.hide_item(f"drag-{s_tag}")
                         if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) > 50:
@@ -477,7 +478,7 @@ class PlotsOverview:
         self.fit_y()
 
 # todo> redraw (of labels at least) called wayyyy too often
-# todo: make sure checks are synced (on load)
+# todo: make sure checks are synced (on load) -> contributing spectra missing
     def hide_spectrum(self, tag, hide):
         dpg.configure_item(tag, show=not hide)  # line series
         if hide:

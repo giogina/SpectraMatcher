@@ -86,7 +86,7 @@ class StatePlot:
             self.state.settings[f"y shift {self.e_key}"] = yshift
 
     def restore_y_shift(self):
-        self.yshift = self.state.settings[f"y shift {self.e_key}"]
+        self.yshift = self.state.settings.get(f"y shift {self.e_key}", self.yshift)
         self.ydata = self._compute_y_data()
 
     def resize_y_scale(self, direction):
@@ -202,7 +202,8 @@ class MatchPlot:
         self.compute_min_max()
         self.find_contributing_clusters()
         self.assign_peaks()
-        self._notify_observers()  # todo> for y shifts, only add new yshift to base arrays; don't recompute the entire thing.
+        self._notify_observers()
+          # todo> for y shifts, only add new yshift to base arrays; don't recompute the entire thing.
 
     def compute_min_max(self):
         """Find indices of local minima and maxima of self.ydata"""
@@ -283,12 +284,10 @@ class MatchPlot:
         else:
             self.yshift = 0
             self.compute_composite_xy_data()
-        self._notify_observers()
 
     def set_yshift(self, value):
         self.yshift = value
         self.compute_composite_xy_data()
-        self._notify_observers()
 
     def is_spectrum_matched(self, spec):
         if isinstance(spec, StatePlot):
