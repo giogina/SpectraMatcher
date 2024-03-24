@@ -31,3 +31,8 @@ with dpg.window(label="molecule", width=550, height=550):
             with dpg.draw_node(tag="icosahedron"):
                 for face in faces:
                     dpg.draw_triangle(face[0], face[1], face[2], color=[0, 0, 0, 0], fill=[255, 255, 255*(1/3+face[0][0]/phi/3), 255*(1/3+face[0][0]/phi/3)])  #fill=[255*(2/3+face[0][0]/phi/3), 255*(2/3+face[0][0]/phi/3), 255*(2/3+face[0][0]/phi/3), 255]
+
+# todo> efficient computation of isocahedron
+#       only show sides facing the viewer
+#       shade according to direction (constant factors)
+#       limit pan range such that active faces don't need to change - or simply choose from every pair of faces only the closer one?
