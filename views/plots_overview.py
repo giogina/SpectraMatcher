@@ -62,6 +62,7 @@ class PlotsOverview:
         self.component_plots = []
         self.match_lines = []
         self.matched_spectra_checks = {}
+        self.sticks_layer = {}
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -202,7 +203,7 @@ class PlotsOverview:
                                         self.match_controls['show composite spectrum'] = dpg.add_checkbox(label="Composite spectrum", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show composite spectrum', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show composite spectrum', False))
                                         self.match_controls['show component spectra'] = dpg.add_checkbox(label="Component spectra", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show component spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show component spectra', False))
                                         self.match_controls['show shade spectra'] = dpg.add_checkbox(label="Shaded contributions", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show shade spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False))
-                                        self.match_controls['show stick spectra'] = dpg.add_checkbox(label="Stick spectra", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show stick spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show stick spectra', False))
+                                        # self.match_controls['show stick spectra'] = dpg.add_checkbox(label="Stick spectra", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show stick spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show stick spectra', False))
                                     dpg.add_button(label="Save as table", callback=self.print_table, width=-6)
         self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, show=False, parent="emission tab" if self.viewmodel.is_emission else "excitation tab", callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
         self.dummy_series = dpg.add_scatter_series([0, 2000], [-0.1, 1.1], parent=f"y_axis_{self.viewmodel.is_emission}")
@@ -591,12 +592,8 @@ class PlotsOverview:
                     dpg.configure_item(f"drag-{tag}", show=False)
 
         # todo>
-        #  persist all the changes
-        #  match plot contributions: Just show/fix yshift of spec_plots. Disable individual horizontal drag lines; use match plot one instead.
         #  allow sticks (color-coded) in composite spectrum - as one of the combo spec display options
-        #  draw labels (state_plot.name: label list if more than one spectrum)
         #  enable selecting experimental spectra as well? Simply only match visible exp spectra?
-        #  Re-distribute yshifts only if they are not all set to combo spec height
 
         old_lines = self.match_lines
         self.match_lines = []
@@ -815,18 +812,24 @@ class PlotsOverview:
             self.delete_sticks()
 
     def draw_sticks(self, s):
+        AsyncManager.submit_task(f"draw sticks {s.tag}", self.draw_sticks_inner, s)
+
+    def draw_sticks_inner(self, s):
         if dpg.is_item_shown(s.tag):
             if dpg.get_value(self.show_sticks):
-                if dpg.does_item_exist(f"sticks-{s.tag}"):
-                    dpg.delete_item(f"sticks-{s.tag}")
-                with dpg.draw_layer(tag=f"sticks-{s.tag}", parent=self.plot):
+                if s.tag in self.sticks_layer and dpg.does_item_exist(self.sticks_layer[s.tag]):
+                    dpg.delete_item(self.sticks_layer[s.tag])
+                with dpg.draw_layer(parent=self.plot) as self.sticks_layer[s.tag]:
                     for stick_stack in s.sticks:
                         if len(stick_stack):
                             x = stick_stack[0] + s.xshift
                             y = s.yshift
                             for sub_stick in stick_stack[1]:
                                 top = y+sub_stick[0]*s.yscale
-                                color = adjust_color_for_dark_theme(sub_stick[1])+[160]
+                                if self.viewmodel.match_plot.matching_active:
+                                    color = s.state.settings["color"]
+                                else:
+                                    color = adjust_color_for_dark_theme(sub_stick[1])+[160]
                                 dpg.draw_line((x, y), (x, top), color=color, thickness=0.001)
                                 y = top
 
