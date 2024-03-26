@@ -5,6 +5,7 @@ class Matcher:
     _DEFAULTS = {'peak intensity match threshold': 0.03,
                  'distance match threshold': 30,
                  'match active': False,  # todo> use this instead of match_plot.match_active
+                 'combo spectrum y shift': 1.25,
                  'show composite spectrum': True,
                  'show component spectra': False,
                  'show shade spectra': True,

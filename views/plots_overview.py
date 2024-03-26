@@ -583,6 +583,11 @@ class PlotsOverview:
         for tag, check in self.matched_spectra_checks.items():
             dpg.set_value(check, self.viewmodel.match_plot.is_spectrum_matched(tag))
 
+        for tag in self.viewmodel.state_plots.keys():
+            if dpg.is_item_shown(tag):
+                if dpg.does_item_exist(f"drag-{tag}"):
+                    dpg.configure_item(f"drag-{tag}", show=False)
+
         # todo>
         #  persist all the changes
         #  match plot contributions: Just show/fix yshift of spec_plots. Disable individual horizontal drag lines; use match plot one instead.
