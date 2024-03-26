@@ -472,7 +472,6 @@ class PlotsOverview:
         dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
         if tag not in self.matched_spectra_checks.keys() or not dpg.does_item_exist(self.matched_spectra_checks[tag]):
             self.matched_spectra_checks[tag] = dpg.add_checkbox(label=" "+s.name, default_value=s.is_matched(), parent=self.matched_spectra_node, before=self.matched_spectra_checks_spacer, callback=lambda sender, a, u: self.viewmodel.toggle_match_spec_contribution(s, a))
-            # print("check: ", tag, dpg.get_value(self.matched_spectra_checks[tag]), self.viewmodel.match_plot.contributing_state_plots)
         else:
             dpg.set_value(self.matched_spectra_checks[tag], s.is_matched())
         dpg.get_item_callback(self.matched_spectra_checks[tag])(self.matched_spectra_checks[tag], dpg.get_value(self.matched_spectra_checks[tag]), None)
@@ -485,7 +484,7 @@ class PlotsOverview:
 # todo> component spectra chekcbox not fully working
 # todo: is_hidden should be depending on hidden / True if not matched; otherwise all matched ones on
     # todo: fit_y should execute only if the new spectrum extends out of the visible frame
-    # hiding drag lines broke..
+    #  hiding drag lines broke..
 
     def hide_spectrum(self, tag, hide):
         dpg.configure_item(tag, show=not hide)  # line series

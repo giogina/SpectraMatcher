@@ -89,7 +89,7 @@ class PlotsOverviewViewmodel:
             tag = StatePlot.construct_tag(state, self.is_emission)
             if tag not in self.state_plots.keys() or self.state_plots[tag].state != state:
                 state_index = State.state_list.index(state)
-                self.state_plots[tag] = StatePlot(state, self.is_emission, state_index=state_index)
+                self.state_plots[tag] = StatePlot(state, self.is_emission, state_index=state_index, match_plot=self.match_plot)
                 if self.state_plots[tag].is_matched():# todo> wait. there's 'shown while match is active' (controlled by eye buttons) and 'is part of the combo spec' (controlled by checks). Treat them separately!
                     self.match_plot.add_state_plot(self.state_plots[tag])
                 self.state_plots[tag].set_spectrum_update_callback(self.update_plot_and_drag_lines)
@@ -205,8 +205,10 @@ class PlotsOverviewViewmodel:
         return xmin, xmax, ymin, ymax
 
     def hide_spectrum(self, tag, hide=True, redistribute_y=True):
-        print(tag, hide, self.match_plot.matching_active)
+        print("hide spec: ", tag, hide, self.match_plot.matching_active)
         self.state_plots[tag].hide(hide)
+        if self.match_plot.matching_active:
+            redistribute_y = False
         if redistribute_y:
             shown_specs_counter = 0
             global_y_shift = Labels.settings[self.is_emission].get('global y shifts', 1.25)
@@ -236,9 +238,10 @@ class PlotsOverviewViewmodel:
                 self.adjust_spectrum_hide_wrt_match()
         else:
             for tag, spec in self.state_plots.items():
+                print("Restore: ", spec.name, spec.is_hidden(during_match=False))
                 spec.restore_y_shift()
-                self.hide_spectrum(tag, spec.is_hidden(during_match=False), redistribute_y=False)
                 self._callbacks.get("update plot")(spec, update_all=True)
+                self._callbacks.get("hide spectrum")(tag, spec.is_hidden(during_match=False))
                 self._callbacks.get("update list spec")(spec)
         self._callbacks.get("post load update")(y_shifts=True)
 

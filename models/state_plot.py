@@ -11,7 +11,7 @@ from utility.spectrum_plots import SpecPlotter
 
 
 class StatePlot:
-    def __init__(self, state, is_emission: bool, state_index=0):
+    def __init__(self, state, is_emission: bool, state_index=0, match_plot=None):
         self.tag = StatePlot.construct_tag(state, is_emission)
         self.state = state
         self.spectrum = state.get_spectrum(is_emission)
@@ -21,6 +21,7 @@ class StatePlot:
         self.e_key = 'emission' if is_emission else 'excitation'
         self.xshift = self.state.settings.get(f"x shift {self.e_key}", 0)
         self.yshift = self.state.settings.get(f"y shift {self.e_key}", state_index*Labels.settings[is_emission].get('global y shifts', 1.25))
+        self.state.settings[f"y shift {self.e_key}"] = self.yshift
         self.yscale = self.state.settings.get(f"y scale {self.e_key}", 1)
         self._base_xdata = self.spectrum.x_data
         self._base_ydata = self.spectrum.y_data
@@ -34,7 +35,7 @@ class StatePlot:
                 self.sticks.append([peak.corrected_wavenumber, [[vib[1]*sub_stick_scale, [c*255 for c in vib[0].vibration_properties]] for vib in [(self.spectrum.vibrational_modes.get_mode(t[0]), t[1]) for t in peak.transition if len(t) == 2] if vib is not None]])
         self.spectrum_update_callback = noop
         self.sticks_update_callback = noop
-        self.match_plot = None
+        self.match_plot = match_plot
 
     @staticmethod
     def construct_tag(state, is_emission):
@@ -86,7 +87,7 @@ class StatePlot:
             self.state.settings[f"y shift {self.e_key}"] = yshift
 
     def restore_y_shift(self):
-        self.yshift = self.state.settings.get(f"y shift {self.e_key}", self.yshift)
+        self.yshift = self.state.settings.get(f"y shift {self.e_key}", 1.25)
         self.ydata = self._compute_y_data()
 
     def resize_y_scale(self, direction):
@@ -119,16 +120,21 @@ class StatePlot:
             stop = len(self.xdata)
         return self.xdata[start:stop], self.ydata[start:stop]
 
-    def is_hidden(self, during_match=False):
+    def is_hidden(self, during_match=None):
+        if during_match is None:
+            during_match = self.match_plot is not None and self.match_plot.matching_active
         if during_match:
             return self.state.settings.get(f"hidden during match {self.e_key}", self.is_matched())
         else:
             return self.state.settings.get(f"hidden {self.e_key}", False)
 
     def hide(self, hide=True):
+        print("In hide: ", self.match_plot)
         if self.match_plot is not None and self.match_plot.matching_active:
+            print("set hidden during match: ", self.name, hide)
             self.state.settings[f"hidden during match {self.e_key}"] = hide
         else:
+            print("set hidden: ", self.name, hide)
             self.state.settings[f"hidden {self.e_key}"] = hide
         # self.update_match_plot()
 
@@ -178,7 +184,6 @@ class MatchPlot:
         print("Add state plot: ", spec.tag)
         if spec not in self.contributing_state_plots:
             self.contributing_state_plots.append(spec)
-        spec.match_plot = self
         spec.add_to_match_spec(add=True)
         self.hidden = len(self.contributing_state_plots) == 0
         self.compute_composite_xy_data()
