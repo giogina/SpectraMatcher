@@ -480,12 +480,6 @@ class PlotsOverview:
             self.update_spectrum_color(spec)
         self.fit_y()
 
-# todo> redraw (of labels at least) called wayyyy too often
-# todo> component spectra chekcbox not fully working
-# todo: is_hidden should be depending on hidden / True if not matched; otherwise all matched ones on
-    # todo: fit_y should execute only if the new spectrum extends out of the visible frame
-    #  hiding drag lines broke..
-
     def hide_spectrum(self, tag, hide):
         dpg.configure_item(tag, show=not hide)  # line series
         if hide:
@@ -496,8 +490,8 @@ class PlotsOverview:
         else:
             self.draw_sticks(self.viewmodel.state_plots[tag])
             self.draw_labels(tag)
-        if not self.viewmodel.match_plot.matching_active:
-            self.fit_y()
+        # if not self.viewmodel.match_plot.matching_active:
+        self.fit_y()
 
     def update_spectrum_color(self, spec):
         with dpg.theme() as self.spec_theme[spec.tag]:
@@ -519,7 +513,6 @@ class PlotsOverview:
         if self.matched_spectra_checks.get(spec.tag) is not None:
             dpg.bind_item_theme(self.matched_spectra_checks.get(spec.tag), self.spec_theme[spec.tag])
 
-# todo: do y fit on toggle matching
     def update_plot(self, state_plot, mark_dragged_plot=None, update_all=False, redraw_sticks=False, update_drag_lines=False, fit_y_axis=False):
         self.dragged_plot = mark_dragged_plot
         if dpg.does_item_exist(state_plot.tag):
@@ -876,9 +869,9 @@ class PlotsOverview:
 
     def on_scroll(self, direction):
         if self.hovered_spectrum_y_drag_line is not None:
-            self.viewmodel.resize_spectrum(self.hovered_spectrum_y_drag_line, direction)
+            self.viewmodel.resize_spectrum(self.hovered_spectrum_y_drag_line, direction * self.adjustment_factor)
         elif self.hovered_x_drag_line is not None:
-            half_width = self.viewmodel.resize_half_width(direction)
+            half_width = self.viewmodel.resize_half_width(direction * self.adjustment_factor)
         elif dpg.is_item_hovered(self.plot):
             for tag in self.viewmodel.state_plots.keys():
                 if dpg.is_item_shown(tag):
