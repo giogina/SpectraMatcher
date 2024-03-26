@@ -226,6 +226,7 @@ class PlotsOverviewViewmodel:
         if match_on:
             self.temporarily_hidden_specs = {spec.tag: spec.is_hidden() for spec in self.state_plots.values()}
 
+        self.match_plot.activate_matching(match_on)
         if match_on:
             if len(self.match_plot.contributing_state_plots) == 0:
                 for tag in [s.tag for s in self.state_plots.values() if not s.is_hidden()]:
@@ -238,7 +239,7 @@ class PlotsOverviewViewmodel:
                 self.hide_spectrum(tag, self.temporarily_hidden_specs.get(tag, False), redistribute_y=False)
                 self._callbacks.get("update plot")(spec, update_all=True)
                 self._callbacks.get("update list spec")(spec)
-        self.match_plot.activate_matching(match_on)
+        self._callbacks.get("post load update")(y_shifts=True)
 
     def adjust_spectrum_yshift_wrt_match(self):
         if self.match_plot.matching_active:
@@ -250,10 +251,12 @@ class PlotsOverviewViewmodel:
                 self._callbacks.get("update list spec")(spec)
 
     def adjust_spectrum_hide_wrt_match(self):
+        print("Adjust spec hide called")
         if self.match_plot.matching_active:
             # temporarily set all hide properties to be synced with match plot
             for tag, spec in self.state_plots.items():
                 hide = spec not in self.match_plot.contributing_state_plots or (not Matcher.get(self.is_emission, 'show component spectra', False))
+                print(tag, hide)
                 self.hide_spectrum(tag, hide, redistribute_y=False)
                 if not hide:
                     self._callbacks.get("update plot")(spec, redraw_sticks=True)

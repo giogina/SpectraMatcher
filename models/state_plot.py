@@ -278,18 +278,19 @@ class MatchPlot:
     def activate_matching(self, on=True):
         self.matching_active = on
         if on:
+            self.set_yshift(Matcher.get(self.is_emission, 'combo spectrum y shift', 1.25))
             self.assign_peaks()
-            self.yshift = Matcher.get(self.is_emission, 'combo spectrum y shift', 1.25)
-            self.compute_composite_xy_data()
+            # self.yshift = Matcher.get(self.is_emission, 'combo spectrum y shift', 1.25)
+            # self.compute_composite_xy_data()
         else:
-            self.yshift = 0
-            self.compute_composite_xy_data()
+            self.set_yshift(0)
+            # self.yshift = 0
+            # self.compute_composite_xy_data()
 
     def set_yshift(self, value):
         Matcher.set(self.is_emission, 'combo spectrum y shift', value)
         delta_y_shift = value - self.yshift
         self.yshift = value
-        # self.compute_composite_xy_data()
         self.ydata += delta_y_shift
         self.partial_y_datas = [(t[0]+delta_y_shift, t[1]) for t in self.partial_y_datas]
         self._notify_observers()

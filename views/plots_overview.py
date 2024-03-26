@@ -299,6 +299,7 @@ class PlotsOverview:
 
     def print_table(self):  # todo
         pass
+    # todo: 'hovered spec' is the one with the mouse closest to one of its drag lines
 
     def set_ui_values_from_settings(self, x_scale=False, half_width=False, x_shifts=False, y_shifts=False, labels=False, peak_detection=False, matcher=False):
         if self.disable_ui_update:
@@ -312,7 +313,10 @@ class PlotsOverview:
         if load_all or half_width:
             dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
         if load_all or y_shifts:
-            dpg.set_value(self.vertical_spacing_slider, Labels.settings[self.viewmodel.is_emission].get('global y shifts', 1.25))
+            if self.viewmodel.match_plot.matching_active:
+                dpg.set_value(self.vertical_spacing_slider, Matcher.get(self.viewmodel.is_emission, 'combo spectrum y shift', self.viewmodel.match_plot.yshift))
+            else:
+                dpg.set_value(self.vertical_spacing_slider, Labels.settings[self.viewmodel.is_emission].get('global y shifts', 1.25))
         if load_all or labels:
             for key, item in self.label_controls.items():
                 value = Labels.settings[self.viewmodel.is_emission].get(key)
