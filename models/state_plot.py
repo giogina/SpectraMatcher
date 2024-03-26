@@ -204,7 +204,6 @@ class MatchPlot:
         self.find_contributing_clusters()
         self.assign_peaks()
         self._notify_observers()
-          # todo> for y shifts, only add new yshift to base arrays; don't recompute the entire thing.
 
     def compute_min_max(self):
         """Find indices of local minima and maxima of self.ydata"""
@@ -277,6 +276,7 @@ class MatchPlot:
 
     def activate_matching(self, on=True):
         self.matching_active = on
+        print(self.ydata)
         if on:
             self.set_yshift(Matcher.get(self.is_emission, 'combo spectrum y shift', 1.25))
             self.assign_peaks()
@@ -291,9 +291,12 @@ class MatchPlot:
         Matcher.set(self.is_emission, 'combo spectrum y shift', value)
         delta_y_shift = value - self.yshift
         self.yshift = value
-        self.ydata += delta_y_shift
-        self.partial_y_datas = [(t[0]+delta_y_shift, t[1]) for t in self.partial_y_datas]
-        self._notify_observers()
+        if len(self.ydata) == 0:
+            self.compute_composite_xy_data()
+        else:
+            self.ydata += delta_y_shift
+            self.partial_y_datas = [(t[0]+delta_y_shift, t[1]) for t in self.partial_y_datas]
+            self._notify_observers()
 
     def is_spectrum_matched(self, spec):
         if isinstance(spec, StatePlot):

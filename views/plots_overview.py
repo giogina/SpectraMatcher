@@ -491,7 +491,8 @@ class PlotsOverview:
         else:
             self.draw_sticks(self.viewmodel.state_plots[tag])
             self.draw_labels(tag)
-        self.fit_y()
+        if not self.viewmodel.match_plot.matching_active:
+            self.fit_y()
 
     def update_spectrum_color(self, spec):
         with dpg.theme() as self.spec_theme[spec.tag]:
@@ -529,7 +530,7 @@ class PlotsOverview:
         else:
             self.fit_y(dummy_series_update_only=True)
 # todo: show labels button doesn't work right after combo spectrum drag
-    def update_match_plot(self, match_plot, mark_dragging=False):
+    def update_match_plot(self, match_plot):
         if Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False):
             for shade in self.shade_plots:
                 if dpg.get_item_user_data(shade) not in [s.tag for s in match_plot.contributing_state_plots]:
