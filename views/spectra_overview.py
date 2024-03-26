@@ -62,8 +62,9 @@ class SpectraOverview:
         self.configure_theme()
 
     # TODO: Entries for experimental spectra
+    #  enable selecting experimental spectra; only match visible exp spectra
     #  Allow adjustment of minx, maxx of exp spectra
-    #  Same min, max x adjustment via horizontal drag lines visible on hover
+    #  Same min, max x adjustment via vertical drag lines visible on hover
     #  Allow color choices
     #  Collapse / expand all sections
 

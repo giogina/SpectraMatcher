@@ -300,7 +300,6 @@ class PlotsOverview:
 
     def print_table(self):  # todo
         pass
-    # todo: 'hovered spec' is the one with the mouse closest to one of its drag lines
 
     def set_ui_values_from_settings(self, x_scale=False, half_width=False, x_shifts=False, y_shifts=False, labels=False, peak_detection=False, matcher=False):
         if self.disable_ui_update:
@@ -361,6 +360,7 @@ class PlotsOverview:
             dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [[], []])
             self.hovered_spectrum_y_drag_line = None
             hovered_spectrum = None
+            min_hovered_drag_line_distance = 10*self.pixels_per_plot_y  # (measured in pixel space)
             self.hovered_x_drag_line = None
             for s_tag, s in self.viewmodel.state_plots.items():
                 if not dpg.does_item_exist(f"drag-x-{s_tag}"):
@@ -380,10 +380,14 @@ class PlotsOverview:
                         if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) < 10:
                             dpg.show_item(f"drag-x-{s_tag}")
                             self.hovered_x_drag_line = s_tag
-                        hovered_spectrum = s
-                        if not -0.2 < s.yshift <= 0.9 and not self.viewmodel.match_plot.matching_active:
-                            dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [s.xdata, s.ydata - s.yshift])
-                            dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
+                        drag_line_distance = min(abs(dpg.get_value(f'drag-x-{s_tag}') - mouse_x_plot_space)*self.pixels_per_plot_x, abs(dpg.get_value(f'drag-{s_tag}') - mouse_y_plot_space)*self.pixels_per_plot_y)
+
+                        if drag_line_distance < min_hovered_drag_line_distance:
+                            hovered_spectrum = s
+                            min_hovered_drag_line_distance = drag_line_distance
+                            if not -0.2 < s.yshift <= 0.9 and not self.viewmodel.match_plot.matching_active:
+                                dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [s.xdata, s.ydata - s.yshift])
+                                dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
 
                     if self.labels:
                         for label in self.annotations[s_tag].values():
@@ -510,7 +514,7 @@ class PlotsOverview:
         for shade in [shade for shade in self.shade_line_plots if dpg.get_item_user_data(shade) == spec.tag]:
             dpg.bind_item_theme(shade, self.spec_theme[spec.tag])
         for component in [c for c in self.component_plots if dpg.get_item_user_data(c) == spec.tag]:
-            dpg.bind_item_theme(component, self.spec_theme[spec.tag])  # todo: same for sticks
+            dpg.bind_item_theme(component, self.spec_theme[spec.tag])
         if self.matched_spectra_checks.get(spec.tag) is not None:
             dpg.bind_item_theme(self.matched_spectra_checks.get(spec.tag), self.spec_theme[spec.tag])
 
@@ -591,10 +595,6 @@ class PlotsOverview:
                 if dpg.does_item_exist(f"drag-{tag}"):
                     dpg.configure_item(f"drag-{tag}", show=False)
 
-        # todo>
-        #  allow sticks (color-coded) in composite spectrum - as one of the combo spec display options
-        #  enable selecting experimental spectra as well? Simply only match visible exp spectra?
-
         old_lines = self.match_lines
         self.match_lines = []
         if not match_plot.hidden and match_plot.matching_active:
@@ -646,7 +646,7 @@ class PlotsOverview:
             self.viewmodel.toggle_match_spec_contribution(self.hovered_spectrum)
 
         for spec in self.viewmodel.state_plots.values():
-            dpg.set_value(f"drag-{spec.tag}", spec.yshift)  # todo> needs to happen on arrow shift
+            dpg.set_value(f"drag-{spec.tag}", spec.yshift)
             self.draw_sticks(spec)
 
         self.viewmodel.match_plot.dragging = False
