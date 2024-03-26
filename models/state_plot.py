@@ -120,11 +120,23 @@ class StatePlot:
         return self.xdata[start:stop], self.ydata[start:stop]
 
     def is_hidden(self):
-        return self.state.settings.get(f"hidden {self.e_key}", False)
+        if self.match_plot is not None and self.match_plot.matching_active:
+            return not self.is_shown_in_match_spec()
+        else:
+            return self.state.settings.get(f"hidden {self.e_key}", False)
 
     def hide(self, hide=True):
-        self.state.settings[f"hidden {self.e_key}"] = hide
+        if self.match_plot is not None and self.match_plot.matching_active:
+            self.add_to_match_spec(add=not hide)
+        else:
+            self.state.settings[f"hidden {self.e_key}"] = hide
         # self.update_match_plot()
+
+    def add_to_match_spec(self, add=True):
+        self.state.settings[f"combo component {self.e_key}"] = add
+
+    def is_shown_in_match_spec(self):
+        return self.state.settings.get(f"combo component {self.e_key}", False)
 
     def update_match_plot(self):
         if self.match_plot is not None:
@@ -143,7 +155,6 @@ class MatchPlot:
         self.hidden = True
         self._observers = []
         self.partial_y_datas = []
-        self.component_y_datas = []
         self.maxima = []
         self.super_clusters = {}
         self.matching_active = False
@@ -167,6 +178,7 @@ class MatchPlot:
         if spec not in self.contributing_state_plots:
             self.contributing_state_plots.append(spec)
             spec.match_plot = self
+            spec.add_to_match_spec(add=True)
         self.hidden = len(self.contributing_state_plots) == 0
         self.compute_composite_xy_data()
 
@@ -174,6 +186,7 @@ class MatchPlot:
         if spec in self.contributing_state_plots:
             self.contributing_state_plots.remove(spec)
             spec.match_plot = None
+            spec.add_to_match_spec(add=False)
         self.hidden = len(self.contributing_state_plots) == 0
         self.compute_composite_xy_data()
 
@@ -190,7 +203,6 @@ class MatchPlot:
         self.xdata = np.array(np.arange(start=x_min, stop=x_max, step=x_step))  # mirrors SpecPlotter x_data construction
         self.ydata = np.zeros(len(self.xdata)) + self.yshift
         self.partial_y_datas = [(self.ydata.copy(), None)]
-        # self.component_y_datas = []
         for s in self.contributing_state_plots:
             start_index = min(max(0, int((s.xdata[0] - x_min)/x_step)), len(self.xdata)-1)
             stop_index = min(start_index + len(s.ydata), len(self.ydata))
@@ -199,7 +211,6 @@ class MatchPlot:
             self.partial_y_datas.append((self.ydata.copy(), s.tag))
             component_ydata = np.zeros(len(self.xdata)) + self.yshift
             component_ydata[start_index:stop_index] += spec_y_data
-            # self.component_y_datas.append((component_ydata, s.tag))
         self.compute_min_max()
         self.find_contributing_clusters()
         self.assign_peaks()
@@ -276,15 +287,12 @@ class MatchPlot:
 
     def activate_matching(self, on=True):
         self.matching_active = on
+        Matcher.set(self.is_emission, 'match active', on)
         if on:
             self.set_yshift(Matcher.get(self.is_emission, 'combo spectrum y shift', 1.25))
             self.assign_peaks()
-            # self.yshift = Matcher.get(self.is_emission, 'combo spectrum y shift', 1.25)
-            # self.compute_composite_xy_data()
         else:
             self.set_yshift(0)
-            # self.yshift = 0
-            # self.compute_composite_xy_data()
 
     def set_yshift(self, value):
         if self.matching_active:

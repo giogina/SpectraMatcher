@@ -190,7 +190,7 @@ class PlotsOverview:
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group():
-                                    self.match_check = dpg.add_checkbox(label=" Match peaks", default_value=False, callback=lambda s, a, u: self.viewmodel.match_peaks(a))
+                                    self.match_controls['match active'] = dpg.add_checkbox(label=" Match peaks", default_value=False, callback=lambda s, a, u: self.viewmodel.match_peaks(a))
                                     with dpg.tree_node(label="Match thresholds"):
                                         self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(min_value=0, max_value=0.2, format=f"Rel. intensity ≥ %0.2f", default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a), width=-32)
                                         self.match_controls['distance match threshold'] = dpg.add_slider_float(min_value=0, max_value=100, format=f"Distance ≤ %0.2f  cm⁻¹", default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a), width=-32)
@@ -471,7 +471,8 @@ class PlotsOverview:
         self.draw_labels(s.tag)
         dpg.set_value(self.half_width_slider, SpecPlotter.get_half_width(self.viewmodel.is_emission))
         if tag not in self.matched_spectra_checks.keys() or not dpg.does_item_exist(self.matched_spectra_checks[tag]):
-            self.matched_spectra_checks[tag] = dpg.add_checkbox(label=" "+s.name, default_value=self.viewmodel.match_plot.is_spectrum_matched(s), parent=self.matched_spectra_node, before=self.matched_spectra_checks_spacer, callback=lambda sender, a, u: self.viewmodel.toggle_match_spec_contribution(s))
+            self.matched_spectra_checks[tag] = dpg.add_checkbox(label=" "+s.name, default_value=self.viewmodel.match_plot.is_spectrum_matched(s), parent=self.matched_spectra_node, before=self.matched_spectra_checks_spacer, callback=lambda sender, a, u: self.viewmodel.toggle_match_spec_contribution(s, a))
+            dpg.get_item_callback(self.matched_spectra_checks[tag])(self.matched_spectra_checks[tag], dpg.get_value(self.matched_spectra_checks[tag]), None)
         else:
             dpg.set_value(self.matched_spectra_checks[tag], self.viewmodel.match_plot.is_spectrum_matched(s))
 
@@ -480,7 +481,7 @@ class PlotsOverview:
         self.fit_y()
 
 # todo> redraw (of labels at least) called wayyyy too often
-# todo: make sure checks are synced (on load) -> contributing spectra missing
+# todo> component spectra chekcbox
     def hide_spectrum(self, tag, hide):
         dpg.configure_item(tag, show=not hide)  # line series
         if hide:
@@ -514,22 +515,24 @@ class PlotsOverview:
         if self.matched_spectra_checks.get(spec.tag) is not None:
             dpg.bind_item_theme(self.matched_spectra_checks.get(spec.tag), self.spec_theme[spec.tag])
 
+# todo: do y fit on toggle matching
     def update_plot(self, state_plot, mark_dragged_plot=None, update_all=False, redraw_sticks=False, update_drag_lines=False, fit_y_axis=False):
         self.dragged_plot = mark_dragged_plot
-        dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
-        if update_drag_lines or update_all:
-            dpg.set_value(f"drag-{state_plot.tag}", state_plot.yshift)
-            dpg.set_value(f"drag-x-{state_plot.tag}", state_plot.handle_x + state_plot.xshift)
-            self.draw_labels(state_plot.tag)
-        if redraw_sticks or update_all:
-            AsyncManager.submit_task(f"draw sticks {state_plot.tag}", self.draw_sticks, state_plot)
-        self.update_labels(state_plot.tag)
-        if fit_y_axis or update_all:
-            self.vertical_slider_active = True
-            self.fit_y()
-        else:
-            self.fit_y(dummy_series_update_only=True)
-# todo: show labels button doesn't work right after combo spectrum drag
+        if dpg.does_item_exist(state_plot.tag):
+            dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
+            if update_drag_lines or update_all:
+                dpg.set_value(f"drag-{state_plot.tag}", state_plot.yshift)
+                dpg.set_value(f"drag-x-{state_plot.tag}", state_plot.handle_x + state_plot.xshift)
+                self.draw_labels(state_plot.tag)
+            if redraw_sticks or update_all:
+                AsyncManager.submit_task(f"draw sticks {state_plot.tag}", self.draw_sticks, state_plot)
+            self.update_labels(state_plot.tag)
+            if fit_y_axis or update_all:
+                self.vertical_slider_active = True
+                self.fit_y()
+            else:
+                self.fit_y(dummy_series_update_only=True)
+
     def update_match_plot(self, match_plot):
         if Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False):
             for shade in self.shade_plots:
@@ -548,14 +551,16 @@ class PlotsOverview:
                         dpg.set_value(f"shade {tag}", [match_plot.xdata, partial_y, prev_y, [], []])
                     else:
                         shade = dpg.add_shade_series(match_plot.xdata, partial_y, y2=prev_y, tag=f"shade {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}", before=self.match_plot)
-                        dpg.bind_item_theme(shade, self.spec_theme[tag])
+                        if tag in self.spec_theme.keys():
+                            dpg.bind_item_theme(shade, self.spec_theme[tag])
                         if shade not in self.shade_plots:
                             self.shade_plots.append(shade)
                     if dpg.does_item_exist(f"shade line {tag}"):
                         dpg.set_value(f"shade line {tag}", [match_plot.xdata, partial_y])
                     else:
                         shade_line = dpg.add_line_series(match_plot.xdata, partial_y, tag=f"shade line {tag}", user_data=tag, parent=f"y_axis_{self.viewmodel.is_emission}", before=self.match_plot)
-                        dpg.bind_item_theme(shade_line, self.spec_theme[tag])
+                        if tag in self.spec_theme.keys():
+                            dpg.bind_item_theme(shade_line, self.spec_theme[tag])
                         if shade_line not in self.shade_line_plots:
                             self.shade_line_plots.append(shade_line)
                     prev_y = partial_y
@@ -584,7 +589,7 @@ class PlotsOverview:
             dpg.set_value(check, self.viewmodel.match_plot.is_spectrum_matched(tag))
 
         for tag in self.viewmodel.state_plots.keys():
-            if dpg.is_item_shown(tag):
+            if dpg.does_item_exist(tag) and dpg.is_item_shown(tag):
                 if dpg.does_item_exist(f"drag-{tag}"):
                     dpg.configure_item(f"drag-{tag}", show=False)
 
@@ -682,7 +687,7 @@ class PlotsOverview:
         Labels.set(self.viewmodel.is_emission, 'show gaussian labels', dpg.get_value(self.label_controls['show gaussian labels']))
 
     def draw_labels(self, tag):
-        if self.labels and dpg.is_item_shown(tag):
+        if self.labels and dpg.does_item_exist(tag) and dpg.is_item_shown(tag):
             plot = f"plot_{self.viewmodel.is_emission}"
             for annotation in self.annotations.get(tag, {}).values():
                 if dpg.does_item_exist(annotation):

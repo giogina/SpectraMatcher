@@ -101,19 +101,20 @@ class SpectraOverview:
     #     with dpg.collapsing_header(label=exp.name, parent=self.spectra_list_group, default_open=True):  # as self.spectrum_headers[exp.name]:
 
     def update_spectrum(self, state_plot: StatePlot):
-        dpg.set_value(self.spectrum_controls[state_plot.tag]['xshift'], state_plot.xshift)
-        dpg.set_value(self.spectrum_controls[state_plot.tag]['yshift'], state_plot.state.settings.get(f"y shift {state_plot.e_key}", state_plot.yshift))
-        dpg.set_value(self.spectrum_controls[state_plot.tag]['yscale'], state_plot.yscale)
-        dpg.configure_item(self.spectrum_controls[state_plot.tag]['show'], show=state_plot.is_hidden())
-        dpg.configure_item(self.spectrum_controls[state_plot.tag]['hide'], show=not state_plot.is_hidden())
+        if state_plot.tag in self.spectrum_controls.keys() and dpg.does_item_exist(self.spectrum_controls[state_plot.tag].get('hide')):
+            dpg.set_value(self.spectrum_controls[state_plot.tag]['xshift'], state_plot.xshift)
+            dpg.set_value(self.spectrum_controls[state_plot.tag]['yshift'], state_plot.state.settings.get(f"y shift {state_plot.e_key}", state_plot.yshift))
+            dpg.set_value(self.spectrum_controls[state_plot.tag]['yscale'], state_plot.yscale)
+            dpg.configure_item(self.spectrum_controls[state_plot.tag]['show'], show=state_plot.is_hidden())
+            dpg.configure_item(self.spectrum_controls[state_plot.tag]['hide'], show=not state_plot.is_hidden())
 
     def hide_spectrum(self, tag, hide=True):
-        if hide:
-            dpg.show_item(self.spectrum_controls[tag]['show'])
-            dpg.hide_item(self.spectrum_controls[tag]['hide'])
-        else:
-            dpg.show_item(self.spectrum_controls[tag]['hide'])
-            dpg.hide_item(self.spectrum_controls[tag]['show'])
+        # if hide:
+        #     dpg.show_item(self.spectrum_controls[tag]['show'])
+        #     dpg.hide_item(self.spectrum_controls[tag]['hide'])
+        # else:
+        #     dpg.show_item(self.spectrum_controls[tag]['hide'])
+        #     dpg.hide_item(self.spectrum_controls[tag]['show'])
         self.viewmodel.hide_spectrum(tag, hide)
 
     def collapse_spectrum_list(self, show):
