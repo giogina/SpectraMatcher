@@ -129,12 +129,9 @@ class StatePlot:
             return self.state.settings.get(f"hidden {self.e_key}", False)
 
     def hide(self, hide=True):
-        print("In hide: ", self.match_plot)
         if self.match_plot is not None and self.match_plot.matching_active:
-            print("set hidden during match: ", self.name, hide)
             self.state.settings[f"hidden during match {self.e_key}"] = hide
         else:
-            print("set hidden: ", self.name, hide)
             self.state.settings[f"hidden {self.e_key}"] = hide
         # self.update_match_plot()
 
@@ -181,7 +178,6 @@ class MatchPlot:
             self._notify_observers()
 
     def add_state_plot(self, spec: StatePlot):
-        print("Add state plot: ", spec.tag)
         if spec not in self.contributing_state_plots:
             self.contributing_state_plots.append(spec)
         spec.add_to_match_spec(add=True)
@@ -312,7 +308,6 @@ class MatchPlot:
             self._notify_observers()
 
     def is_spectrum_matched(self, spec):
-        print("is matched: ", [s.tag for s in self.contributing_state_plots])
         if isinstance(spec, StatePlot):
             return spec in self.contributing_state_plots
         else:

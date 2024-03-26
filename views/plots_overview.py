@@ -370,8 +370,8 @@ class PlotsOverview:
                             if abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) < 0.02:
                                 dpg.show_item(f"drag-{s_tag}")
                                 self.hovered_spectrum_y_drag_line = s_tag
-                        elif abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) > 0.1:
-                            dpg.hide_item(f"drag-{s_tag}")
+                            elif abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) > 0.1:
+                                dpg.hide_item(f"drag-{s_tag}")
                         if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) > 50:
                             dpg.hide_item(f"drag-x-{s_tag}")
 

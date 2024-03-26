@@ -205,7 +205,6 @@ class PlotsOverviewViewmodel:
         return xmin, xmax, ymin, ymax
 
     def hide_spectrum(self, tag, hide=True, redistribute_y=True):
-        print("hide spec: ", tag, hide, self.match_plot.matching_active)
         self.state_plots[tag].hide(hide)
         if self.match_plot.matching_active:
             redistribute_y = False
@@ -239,7 +238,6 @@ class PlotsOverviewViewmodel:
                 self.adjust_spectrum_hide_wrt_match()
         else:
             for tag, spec in self.state_plots.items():
-                print("Restore: ", spec.name, spec.is_hidden(during_match=False))
                 spec.restore_y_shift()
                 self._callbacks.get("update plot")(spec, update_all=True)
                 self._callbacks.get("hide spectrum")(tag, spec.is_hidden(during_match=False))
