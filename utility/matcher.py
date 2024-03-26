@@ -14,6 +14,7 @@ class Matcher:
     notify_changed_callback = noop
     _observers = []
     match_settings_updated_notification = "Matcher settings updated"
+    match_display_settings_updated_notification = "Matcher display settings updated"
 
     @classmethod
     def add_observer(cls, observer):
@@ -33,7 +34,10 @@ class Matcher:
         if key in cls.settings[is_emission].keys():
             cls.settings[is_emission][key] = value
         cls.notify_changed_callback()  # notify project
-        cls._notify_observers(cls.match_settings_updated_notification, is_emission)
+        if key in ('show composite spectrum', 'show component spectra', 'show shade spectra', 'show stick spectra'):
+            cls._notify_observers(cls.match_display_settings_updated_notification, is_emission)
+        else:
+            cls._notify_observers(cls.match_settings_updated_notification, is_emission)
 
     @classmethod
     def get(cls, is_emission, key, default=None):

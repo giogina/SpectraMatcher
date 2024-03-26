@@ -47,7 +47,7 @@ class PlotsOverviewViewmodel:
         self.temporarily_hidden_specs = []
 
     def update(self, event, *args):
-        # print(f"Plots overview viewmodel received event: {event}")
+        # print(f"Plots overview viewmodel received event: {event} {args}")
         if event == "project loaded":
             self._callbacks.get("post load update")()
         elif event == ExperimentalSpectrum.spectrum_analyzed_notification:
@@ -70,8 +70,11 @@ class PlotsOverviewViewmodel:
             if self.match_plot.matching_active:
                 self.match_plot.assign_peaks()
         elif event == MatchPlot.match_plot_changed_notification:
-            self.adjust_spectrum_yshift_hide_wrt_match()
+            self.adjust_spectrum_yshift_wrt_match()
             self._callbacks.get("update match plot")(args[0])
+        elif event == Matcher.match_display_settings_updated_notification:  # composite spectrum display changed
+            self.adjust_spectrum_hide_wrt_match()
+            self._callbacks.get("update match plot")(self.match_plot)
 
     def _extract_exp_x_y_data(self):
         xydatas = []
@@ -159,14 +162,12 @@ class PlotsOverviewViewmodel:
                 self._callbacks.get("update plot")(state_plot, fit_y_axis=True)
                 self._callbacks.get("update list spec")(state_plot)
         else:
+            self.match_plot.dragging = True
             self.match_plot.set_yshift(value)  # todo: persist as Matcher.settings['yshift'] rather than Labels 'global y shifts'
-            self.adjust_spectrum_yshift_hide_wrt_match()
-            self._callbacks.get("update match plot")(self.match_plot, mark_dragging=dragging)
             self._callbacks.get("post load update")(y_shifts=True)
         self.last_action_y = lambda d: self.set_y_shifts(value+0.1*d)
 
     def resize_half_width(self, direction, relative=True):
-        print("Resize: ", direction)
         self._callbacks.get("post load update")(half_width=True)
         self.last_action_x = self.resize_half_width
         return SpecPlotter.change_half_width(self.is_emission, direction, relative)
@@ -219,6 +220,7 @@ class PlotsOverviewViewmodel:
             self.match_plot.add_state_plot(spec)
         else:
             self.match_plot.remove_state_plot(spec)
+        self.adjust_spectrum_hide_wrt_match()
 
     def match_peaks(self, match_on):
         if match_on:
@@ -228,6 +230,8 @@ class PlotsOverviewViewmodel:
             if len(self.match_plot.contributing_state_plots) == 0:
                 for tag in [s.tag for s in self.state_plots.values() if not s.is_hidden()]:
                     self.toggle_match_spec_contribution(self.state_plots[tag])
+            else:
+                self.adjust_spectrum_hide_wrt_match()
         else:
             for tag, spec in self.state_plots.items():
                 spec.restore_y_shift()
@@ -236,18 +240,24 @@ class PlotsOverviewViewmodel:
                 self._callbacks.get("update list spec")(spec)
         self.match_plot.activate_matching(match_on)
 
-    def adjust_spectrum_yshift_hide_wrt_match(self):
+    def adjust_spectrum_yshift_wrt_match(self):
         if self.match_plot.matching_active:
-            # temporarily set all hide and yshift to be synced with match plot
+            # temporarily set all y shifts to be synced with match plot
             for tag, spec in self.state_plots.items():
                 spec.set_y_shift(self.match_plot.yshift, temporary=True)
+                if not spec.is_hidden():
+                    self._callbacks.get("update plot")(spec, redraw_sticks=True)
+                self._callbacks.get("update list spec")(spec)
+
+    def adjust_spectrum_hide_wrt_match(self):
+        if self.match_plot.matching_active:
+            # temporarily set all hide properties to be synced with match plot
+            for tag, spec in self.state_plots.items():
                 hide = spec not in self.match_plot.contributing_state_plots or (not Matcher.get(self.is_emission, 'show component spectra', False))
                 self.hide_spectrum(tag, hide, redistribute_y=False)
                 if not hide:
                     self._callbacks.get("update plot")(spec, redraw_sticks=True)
                 self._callbacks.get("update list spec")(spec)
-
-                # todo: make sure the notifications aren't looping around (too much)
 
 
 

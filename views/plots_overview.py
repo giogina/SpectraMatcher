@@ -61,7 +61,6 @@ class PlotsOverview:
         self.shade_line_plots = []
         self.component_plots = []
         self.match_lines = []
-        self.match_plot_dragged = False
         self.matched_spectra_checks = {}
 
         with dpg.handler_registry() as self.mouse_handlers:
@@ -572,12 +571,9 @@ class PlotsOverview:
         else:
             dpg.set_value(self.match_plot, [[], []])
 
-        if mark_dragging:
-            self.match_plot_dragged = True
-        if not self.match_plot_dragged:
+        if not match_plot.dragging:
             dpg.set_value(self.match_plot_y_drag, match_plot.yshift)
         #     self.fit_y()
-        #
 
         for tag, check in self.matched_spectra_checks.items():
             dpg.set_value(check, self.viewmodel.match_plot.is_spectrum_matched(tag))
@@ -644,9 +640,7 @@ class PlotsOverview:
             dpg.set_value(f"drag-{spec.tag}", spec.yshift)  # todo> needs to happen on arrow shift
             self.draw_sticks(spec)
 
-        if self.match_plot_dragged:
-            # self.fit_y()
-            self.match_plot_dragged = False
+        self.viewmodel.match_plot.dragging = False
 
         self.dragged_plot = None
         self.dragged_peak = None

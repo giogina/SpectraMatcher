@@ -149,6 +149,7 @@ class MatchPlot:
         self.matching_active = False
         Matcher.add_observer(self)
         self.exp_peaks = []
+        self.dragging = False  # True if match plot drag line is currently being moved
 
     def add_observer(self, obs):
         self._observers.append(obs)
@@ -189,7 +190,7 @@ class MatchPlot:
         self.xdata = np.array(np.arange(start=x_min, stop=x_max, step=x_step))  # mirrors SpecPlotter x_data construction
         self.ydata = np.zeros(len(self.xdata)) + self.yshift
         self.partial_y_datas = [(self.ydata.copy(), None)]
-        self.component_y_datas = []
+        # self.component_y_datas = []
         for s in self.contributing_state_plots:
             start_index = min(max(0, int((s.xdata[0] - x_min)/x_step)), len(self.xdata)-1)
             stop_index = min(start_index + len(s.ydata), len(self.ydata))
@@ -198,7 +199,7 @@ class MatchPlot:
             self.partial_y_datas.append((self.ydata.copy(), s.tag))
             component_ydata = np.zeros(len(self.xdata)) + self.yshift
             component_ydata[start_index:stop_index] += spec_y_data
-            self.component_y_datas.append((component_ydata, s.tag))
+            # self.component_y_datas.append((component_ydata, s.tag))
         self.compute_min_max()
         self.find_contributing_clusters()
         self.assign_peaks()
@@ -286,8 +287,12 @@ class MatchPlot:
 
     def set_yshift(self, value):
         Matcher.set(self.is_emission, 'combo spectrum y shift', value)
+        delta_y_shift = value - self.yshift
         self.yshift = value
-        self.compute_composite_xy_data()
+        # self.compute_composite_xy_data()
+        self.ydata += delta_y_shift
+        self.partial_y_datas = [(t[0]+delta_y_shift, t[1]) for t in self.partial_y_datas]
+        self._notify_observers()
 
     def is_spectrum_matched(self, spec):
         if isinstance(spec, StatePlot):

@@ -139,7 +139,7 @@
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\ovalene-excited-5-opt-freq-disp.log",
             "y shift emission": 1.25,
-            "hidden emission": true,
+            "hidden emission": false,
             "y scale emission": 1.1,
             "x shift emission": 523.9226159337907,
             "color selection type": "manual"
