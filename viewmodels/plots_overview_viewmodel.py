@@ -90,7 +90,7 @@ class PlotsOverviewViewmodel:
             if tag not in self.state_plots.keys() or self.state_plots[tag].state != state:
                 state_index = State.state_list.index(state)
                 self.state_plots[tag] = StatePlot(state, self.is_emission, state_index=state_index, match_plot=self.match_plot)
-                if self.state_plots[tag].is_matched():# todo> wait. there's 'shown while match is active' (controlled by eye buttons) and 'is part of the combo spec' (controlled by checks). Treat them separately!
+                if self.state_plots[tag].is_matched():
                     self.match_plot.add_state_plot(self.state_plots[tag])
                 self.state_plots[tag].set_spectrum_update_callback(self.update_plot_and_drag_lines)
                 self.state_plots[tag].set_sticks_update_callback(self.update_sticks)
@@ -218,6 +218,7 @@ class PlotsOverviewViewmodel:
                     spec.set_y_shift((self.vert_spacing if self.match_plot.matching_active else shown_specs_counter * global_y_shift))
                 self._callbacks.get("update plot")(spec, redraw_sticks=True, update_drag_lines=True)
                 self._callbacks.get("update list spec")(spec)
+        self._callbacks.get("update list spec")(self.state_plots[tag])
         self._callbacks.get("hide spectrum")(tag, hide)
 
     def toggle_match_spec_contribution(self, spec, on=None):

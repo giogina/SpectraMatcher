@@ -109,12 +109,6 @@ class SpectraOverview:
             dpg.configure_item(self.spectrum_controls[state_plot.tag]['hide'], show=not state_plot.is_hidden())
 
     def hide_spectrum(self, tag, hide=True):
-        # if hide:
-        #     dpg.show_item(self.spectrum_controls[tag]['show'])
-        #     dpg.hide_item(self.spectrum_controls[tag]['hide'])
-        # else:
-        #     dpg.show_item(self.spectrum_controls[tag]['hide'])
-        #     dpg.hide_item(self.spectrum_controls[tag]['show'])
         self.viewmodel.hide_spectrum(tag, hide)
 
     def collapse_spectrum_list(self, show):
