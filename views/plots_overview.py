@@ -454,7 +454,7 @@ class PlotsOverview:
         s = self.viewmodel.state_plots[tag]
         if not dpg.does_item_exist(tag):
             xdata, ydata = s.get_xydata(xmin, xmax)  # truncated versions
-            dpg.add_line_series(xdata, ydata, label=s.name, show=not s.is_hidden(), parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag)  # , user_data=s, callback=lambda sender, a, u: self.viewmodel.on_spectrum_click(sender, a, u)
+            dpg.add_line_series(xdata, ydata, label=s.name, show=not s.is_hidden(), parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag, before=self.match_plot)
             self.line_series.append(s.tag)
         else:
             self.update_plot(s)
