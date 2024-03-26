@@ -119,24 +119,24 @@ class StatePlot:
             stop = len(self.xdata)
         return self.xdata[start:stop], self.ydata[start:stop]
 
-    def is_hidden(self):
-        if self.match_plot is not None and self.match_plot.matching_active:
-            return not self.is_shown_in_match_spec()
+    def is_hidden(self, during_match=False):
+        if during_match:
+            return self.state.settings.get(f"hidden during match {self.e_key}", self.is_matched())
         else:
             return self.state.settings.get(f"hidden {self.e_key}", False)
 
     def hide(self, hide=True):
         if self.match_plot is not None and self.match_plot.matching_active:
-            self.add_to_match_spec(add=not hide)
+            self.state.settings[f"hidden during match {self.e_key}"] = hide
         else:
             self.state.settings[f"hidden {self.e_key}"] = hide
         # self.update_match_plot()
 
     def add_to_match_spec(self, add=True):
-        self.state.settings[f"combo component {self.e_key}"] = add
+        self.state.settings[f"matched {self.e_key}"] = add
 
-    def is_shown_in_match_spec(self):
-        return self.state.settings.get(f"combo component {self.e_key}", False)
+    def is_matched(self):
+        return self.state.settings.get(f"matched {self.e_key}", False)
 
     def update_match_plot(self):
         if self.match_plot is not None:
@@ -175,18 +175,18 @@ class MatchPlot:
             self._notify_observers()
 
     def add_state_plot(self, spec: StatePlot):
+        print("Add state plot: ", spec.tag)
         if spec not in self.contributing_state_plots:
             self.contributing_state_plots.append(spec)
-            spec.match_plot = self
-            spec.add_to_match_spec(add=True)
+        spec.match_plot = self
+        spec.add_to_match_spec(add=True)
         self.hidden = len(self.contributing_state_plots) == 0
         self.compute_composite_xy_data()
 
     def remove_state_plot(self, spec: StatePlot):
         if spec in self.contributing_state_plots:
             self.contributing_state_plots.remove(spec)
-            spec.match_plot = None
-            spec.add_to_match_spec(add=False)
+        spec.add_to_match_spec(add=False)
         self.hidden = len(self.contributing_state_plots) == 0
         self.compute_composite_xy_data()
 
@@ -307,6 +307,7 @@ class MatchPlot:
             self._notify_observers()
 
     def is_spectrum_matched(self, spec):
+        print("is matched: ", [s.tag for s in self.contributing_state_plots])
         if isinstance(spec, StatePlot):
             return spec in self.contributing_state_plots
         else:
