@@ -249,9 +249,10 @@ class FCPeak:
         self.corrected_wavenumber = wavenumber
         self.transition = transition
         self.intensity = intensity
-        self.types = {}  # gaussian_name: [bend, -H, others] properties for each transition
+        self.types = []
         self.label = ""
         self.gaussian_label = ""
+        self.symmetries = []
 
     def get_label(self, gaussian: bool):
         if gaussian:
@@ -360,10 +361,22 @@ class FCSpectrum:
         for peak in self.peaks:
             peak.intensity /= self.mul2
         self.determine_label_clusters()
+        self.get_symmetries_and_types_from_modes()
         self.x_data_arrays = {key: self.x_data}
         self.y_data_arrays = {key: self.y_data}
         self._notify_observers(FCSpectrum.xy_data_changed_notification)
         self._notify_observers(FCSpectrum.peaks_changed_notification)
+
+    def get_symmetries_and_types_from_modes(self):
+        if self.vibrational_modes is not None:
+            for peak in self.peaks:
+                peak.symmetries = []
+                for t in peak.transition:
+                    mode = self.vibrational_modes.get_mode(t[0])
+                    if mode is not None:
+                        peak.symmetries.append(mode.IR)
+                        type = ["*-H stretch", "Other", "Bend"][mode.vibration_properties.index(max(mode.vibration_properties))]
+                        peak.types.append(type)
 
     def space_between_lines(self, to_be_placed, i):
         """bounds in wavenumbers (original xdata)"""

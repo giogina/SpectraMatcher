@@ -1,6 +1,7 @@
 import math
 
 import dearpygui.dearpygui as dpg
+import pyperclip
 
 from models.experimental_spectrum import ExperimentalSpectrum
 from utility.async_manager import AsyncManager
@@ -298,8 +299,8 @@ class PlotsOverview:
         Matcher.restore_defaults(self.viewmodel.is_emission)
         self.set_ui_values_from_settings(matcher=True)
 
-    def print_table(self):  # todo
-        pass
+    def print_table(self):
+       pyperclip.copy(self.viewmodel.match_plot.get_match_table(self.gaussian_labels))
 
     def set_ui_values_from_settings(self, x_scale=False, half_width=False, x_shifts=False, y_shifts=False, labels=False, peak_detection=False, matcher=False):
         if self.disable_ui_update:

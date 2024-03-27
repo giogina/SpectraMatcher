@@ -1,5 +1,4 @@
 from scipy import signal
-
 from models.experimental_spectrum import ExperimentalSpectrum
 from utility.labels import Labels
 from utility.matcher import Matcher
@@ -240,6 +239,7 @@ class MatchPlot:
             self.maxima.append(((self.xdata[i], self.ydata[i]-self.yshift), (self.xdata[maxima[jj]], self.ydata[maxima[jj]]-self.yshift), (self.xdata[minima[ii+1]], self.ydata[minima[ii+1]]-self.yshift)))
 
     def find_contributing_clusters(self):
+        print("Find contributing clusters called")
         super_clusters = {}
         for maximum in self.maxima:
             xmin = maximum[0][0]
@@ -247,7 +247,7 @@ class MatchPlot:
             super_clusters[maximum[1]] = {s.tag: [] for s in self.contributing_state_plots}
             for s in self.contributing_state_plots:
                 for cluster in s.spectrum.clusters:
-                    if xmin <= cluster.x < xmax:
+                    if xmin <= cluster.x + s.xshift < xmax:
                         super_clusters[maximum[1]][s.tag].append(cluster)
         self.super_clusters = super_clusters
 
@@ -256,7 +256,7 @@ class MatchPlot:
             return
         exp_peaks = []
         for exp in ExperimentalSpectrum.spectra_list:
-            if exp.is_emission == self.is_emission:
+            if exp.is_emission == self.is_emission and not exp.hidden:
                 exp_peaks.extend(exp.peaks)
         for peak in exp_peaks:
             peak.match = None
@@ -312,4 +312,82 @@ class MatchPlot:
             return spec in self.contributing_state_plots
         else:
             return spec in [s.tag for s in self.contributing_state_plots]
+
+    def get_match_table(self, use_gaussian_labels=False, html=True):
+        table_string = "\t".join(["experimental peak position",
+                                  "experimental peak intensity",
+                                  "computed peak position",  # comp spectrum (composite) peak wavenumber (maximum[0])
+                                  "computed peak intensity",  # comp spectrum (composite) peak intensity (maximum[1]) (?)
+
+                                  "excited state",
+                                  "wavenumber",
+                                  "corrected wavenumber",
+                                  'intensity',
+                                  'assignment',
+                                  'symmetry',
+                                  'type']) + "\r\n"
+
+        for peak in self.exp_peaks:
+            peak_data_list = [format(peak.wavenumber, ".3f"), format(peak.intensity, ".3f")]
+            line_added = False
+            if peak.match is None:
+                peak_data_list += ["", ""]
+            else:
+                peak_data_list += [format(peak.match[0], ".3f"), format(peak.match[1], ".3f")]
+                for tag in self.super_clusters[peak.match].keys():
+                    spec = ([s for s in self.contributing_state_plots if s.tag == tag]+[None])[0]
+                    peak_data_list += [spec.name]
+                    if spec is not None:
+                        for cluster in self.super_clusters[peak.match][tag]:
+                            for p, peak in enumerate(cluster.peaks):
+                                mode_data_list = [format(peak.wavenumber+spec.xshift, ".3f"),
+                                                  format(peak.corrected_wavenumber+spec.xshift, ".3f"),
+                                                  format(peak.intensity*spec.yscale, ".3f"),
+                                                  (Labels.label2html(peak.get_label(use_gaussian_labels)) if html else Labels.label2tex(peak.get_label(use_gaussian_labels))),
+                                                  peak.symmetries[0] if len(set(peak.symmetries)) == 1 else '',
+                                                  peak.types[0] if len(set(peak.types)) == 1 else '']
+                                peak_data_list += mode_data_list
+                                table_string += '\t'.join(peak_data_list) + "\r\n"
+                                line_added = True
+                                peak_data_list = ["", "", "", "", ""]
+                    peak_data_list = ["", "", "", ""]
+            if not line_added:
+                table_string += '\t'.join(peak_data_list)
+
+
+
+        # for maximum, max_clusters in self.super_clusters.items():  # super_clusters[maximum[1]][s.tag]
+        #     for tag, cluster_list in max_clusters.items():
+        #         spec = ([s for s in self.contributing_state_plots if s.tag == tag]+[None])[0]
+        #         if spec is not None:
+        #             for cluster in cluster_list:
+        #                 for p, peak in enumerate(cluster.peaks):
+        #                     print(tag, peak.__dict__)
+        #                     if p == 0:
+        #                         clusterinfolist = [format(int(maximum[0]), ">4"), format(cluster['y'], ".3f"),
+        #                                            "", ""  # needs to be the exp
+        #                                            ]
+        #                         print(clusterinfolist)
+                            #     if 'exp_peak_index' in cluster.keys():
+                            #         clusterinfolist[2] = format(int(exp_spectrum[cluster['exp_peak_index']]['wavenumber']), ">4")
+                            #         clusterinfolist[3] = format(exp_spectrum[cluster['exp_peak_index']]['intensity'], ".3f")
+                            # else:
+                            #     clusterinfolist = ["    " for c in clusterinfolist]
+                            #
+                            # clusterstring = "\t".join([str(n) for n in clusterinfolist]) + "\t"
+                            # peakstring = "\t".join([format(n, ">4") for n in [int((peak['wavenumber'] + xshift)),
+                            #                                                   # int((peak[wn_key]+xshift) * 10) / 10,
+                            #                                                   int((peak['corrected_wavenumber'] + xshift))] +
+                            #                         ([int((peak['anharmonic_wavenumber'] + xshift))] if anharm else [])] +
+                            #                        [format(peak['intensity'], ".3f")] +
+                            #                        [format(peak[label_key], ">24"),
+                            #                         format(peak['symmetries'][0] if len(set(peak['symmetries'])) == 1 else "   ",
+                            #                                "<5"),
+                            #                         peak['types'][0] if len(set(peak['types'])) == 1 else (
+                            #                             'Ring deformation' if set(peak['types']) == {'Ring deformation',
+                            #                                                                          'C-C stretch'} else "")
+                            #                         ])
+
+                            # table_file.write(" " + clusterstring + peakstring + '\n')
+        return table_string
 

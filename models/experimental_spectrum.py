@@ -61,6 +61,8 @@ class ExperimentalSpectrum:
         self.ok = False
         self.errors = []
 
+        self.hidden = False
+
         file.experiment = self
         if file.progress == "parsing done":
             self.assimilate_file_data(file)  # if not, the file will call that function upon completion.

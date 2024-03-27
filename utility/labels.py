@@ -53,6 +53,44 @@ class Labels:
         return peaks
 
     @classmethod
+    def label2html(cls, label):
+        html_label = ""
+        for char in label:
+            if ord(char) in range(0x20a0, 0x20b0):  # emission first char
+                html_label += f"<sup>0</sup><sub>{ord(char)-0x20a0}</sub>"
+            elif ord(char) in range(0x2080, 0x2090):  # emission other char
+                html_label += f"<sub>{ord(char)-0x2080}</sub>"
+            elif ord(char) in range(0x2090, 0x20a0):  # excitation first char
+                html_label += f"<sub>0</sub><sup>{ord(char)-0x2090}</sup>"
+            elif ord(char) in range(0x2070, 0x2080):  # excitation other char
+                html_label += f"<sup>{ord(char)-0x2070}</sup>"
+            else:
+                html_label += char
+
+        html_label = html_label.replace("</sub><sub>", "")
+        html_label = html_label.replace("</sup><sup>", "")
+        return html_label
+
+    @classmethod
+    def label2tex(cls, label):
+        tex_label = ""
+        for char in label:
+            if ord(char) in range(0x20a0, 0x20b0):  # emission first char
+                tex_label += "^0_{"+str(ord(char)-0x20a0)+"}"
+            elif ord(char) in range(0x2080, 0x2090):  # emission other char
+                tex_label += "_{"+str(ord(char)-0x2080)+"}"
+            elif ord(char) in range(0x2090, 0x20a0):  # excitation first char
+                tex_label += "_0^{"+str(ord(char)-0x2090)+"}"
+            elif ord(char) in range(0x2070, 0x2080):  # excitation other char
+                tex_label += "^{"+str(ord(char)-0x2070)+"}"
+            else:
+                tex_label += char
+
+        tex_label = tex_label.replace("}_{", "")
+        tex_label = tex_label.replace("}^{", "")
+        return '$'+tex_label+'$'
+
+    @classmethod
     def add_observer(cls, observer):
         cls._observers.append(observer)
 

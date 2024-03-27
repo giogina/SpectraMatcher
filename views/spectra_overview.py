@@ -1,7 +1,6 @@
 import math
 
 import dearpygui.dearpygui as dpg
-
 from models.experimental_spectrum import ExperimentalSpectrum
 from models.state_plot import StatePlot
 from utility.icons import Icons

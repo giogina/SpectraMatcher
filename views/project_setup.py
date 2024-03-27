@@ -334,7 +334,7 @@ class ProjectSetup:
 
         dpg.bind_item_theme("project setup panel", project_setup_theme)
 
-        # with dpg.theme() as action_bar_theme:  # TODO> Set up some kind of centralized theme supply? All action bars should probably look the same...
+        # with dpg.theme() as action_bar_theme:  # Set up some kind of centralized theme supply? All action bars should probably look the same...
         #     with dpg.theme_component(dpg.mvAll):
         #         dpg.add_theme_color(dpg.mvThemeCol_Button, [0, 0, 0, 0])
         #         dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 0)
