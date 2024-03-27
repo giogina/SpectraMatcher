@@ -600,7 +600,7 @@ class PlotsOverview:
             if redraw_sticks or update_all:
                 self.draw_sticks(state_plot)
             self.update_labels(state_plot.tag)
-            if fit_y_axis or update_all:
+            if fit_y_axis:
                 self.vertical_slider_active = True
                 self.fit_y()
             else:
@@ -912,7 +912,7 @@ class PlotsOverview:
                                     color = adjust_color_for_dark_theme(sub_stick[1])+[160]
                                 dpg.draw_line((x, y), (x, top), color=color, thickness=0.001)
                                 y = top
-        elif self.left_mouse_is_down:
+        elif self.left_mouse_is_down and not self.viewmodel.match_plot.matching_active:
             self.dragged_plot = s.tag
 
     def configure_theme(self):
