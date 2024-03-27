@@ -239,7 +239,6 @@ class MatchPlot:
             self.maxima.append(((self.xdata[i], self.ydata[i]-self.yshift), (self.xdata[maxima[jj]], self.ydata[maxima[jj]]-self.yshift), (self.xdata[minima[ii+1]], self.ydata[minima[ii+1]]-self.yshift)))
 
     def find_contributing_clusters(self):
-        print("Find contributing clusters called")
         super_clusters = {}
         for maximum in self.maxima:
             xmin = maximum[0][0]
@@ -313,19 +312,21 @@ class MatchPlot:
         else:
             return spec in [s.tag for s in self.contributing_state_plots]
 
-    def get_match_table(self, use_gaussian_labels=False, html=True):
+    def get_match_table(self, use_gaussian_labels=False, html=True, header_only=False):
         table = [["experimental peak position",
                                   "experimental peak intensity",
                                   "computed peak position",  # comp spectrum (composite) peak wavenumber (maximum[0])
                                   "computed peak intensity",  # comp spectrum (composite) peak intensity (maximum[1]) (?)
 
-                                  "excited state",
-                                  "wavenumber",
+                                  "state",
+                                  "mode wavenumber",
                                   "corrected wavenumber",
                                   'intensity',
-                                  'assignment',
+                                  'transition',
                                   'symmetry',
-                                  'type']]
+                                  'vibration type']]
+        if header_only:
+            return table
 
         for peak in self.exp_peaks:
             peak_data_list = [format(peak.wavenumber, ".3f"), format(peak.intensity, ".3f")]

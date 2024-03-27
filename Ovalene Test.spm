@@ -79,7 +79,7 @@
             "axis font size": 18,
             "peak intensity match threshold": 0.03,
             "distance match threshold": 30,
-            "global y shifts": 1.2139640960276792
+            "global y shifts": 0.9003203062175084
         },
         "false": {
             "show labels": false,
@@ -122,10 +122,10 @@
             "peak intensity match threshold": 0.03,
             "distance match threshold": 30,
             "match active": true,
-            "combo spectrum y shift": 1.2139640960276792,
+            "combo spectrum y shift": 0.9003203062175084,
             "show composite spectrum": true,
             "show component spectra": true,
-            "show shade spectra": true,
+            "show shade spectra": false,
             "show stick spectra": false
         },
         "false": {
@@ -173,7 +173,7 @@
             "hidden during match emission": false,
             "y shift emission": 2.4561168833099623,
             "y shift excitation": 2.5,
-            "x shift emission": -4.217579782745361
+            "x shift emission": 414.2392881040221
         },
         {
             "color": [

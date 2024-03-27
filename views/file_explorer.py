@@ -305,7 +305,7 @@ class FileExplorer:
         for directory in self._directory_nodes:
             dpg.set_value(directory, expand)
             self._toggle_directory_node_labels(directory)
-
+# todo: no_pad_outer_x or the like should solve my table alignment issues
     def _select_columns(self, s, show, i):
         self._table_columns[i][3] = show
         self.viewmodel.update_column_settings()

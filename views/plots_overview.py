@@ -1,4 +1,5 @@
 import math
+import random
 
 import dearpygui.dearpygui as dpg
 import pyperclip
@@ -216,8 +217,13 @@ class PlotsOverview:
         self.match_plot = dpg.add_line_series([], [], show=False, parent=f"y_axis_{self.viewmodel.is_emission}")
         self.match_plot_y_drag = dpg.add_drag_line(vertical=False, show_label=False, default_value=0, callback=lambda sender, a, u: self.viewmodel.set_y_shifts(dpg.get_value(sender), dragging=True), parent=f"plot_{self.viewmodel.is_emission}", show=False, color=[200, 200, 200])
         append_viewport_resize_update_callback(self.viewport_resize_update)
-        self.match_table_row = False
+        self.match_table = None
+        self.match_table_row = None
         self.match_table_shown = False
+        self.match_table_theme = None
+        self.match_entry = {}
+        self.match_rows = {}
+        self.table = []
         self.configure_theme()
 
     def viewport_resize_update(self):
@@ -273,19 +279,26 @@ class PlotsOverview:
             dpg.configure_item(self.plot_row, height=dpg.get_viewport_height()/2)
             self.match_table_shown = True
             dpg.configure_item(self.show_match_table_button, label="Hide assignment table")
+            self.match_entry = {}
+            with dpg.table_row(parent=self.plot_and_matches_table) as self.match_table_row:
+                with dpg.table_cell():
+                    with dpg.table(resizable=True, hideable=True, context_menu_in_body=True, borders_innerV=True, scrollX=True, scrollY=True, no_pad_innerX=False, no_pad_outerX=False) as self.match_table:
+                        self.table = self.viewmodel.match_plot.get_match_table(header_only=True)
+                        for header in self.table[0]:
+                            dpg.add_table_column(label=header)
+                        self.update_match_table()
+            dpg.bind_item_theme(self.match_table, self.match_table_theme)
 
-        with dpg.table_row(parent=self.plot_and_matches_table, height=500) as self.match_table_row:
-            with dpg.table_cell():
-                with dpg.table(resizable=True, context_menu_in_body=True, borders_innerV=True, scrollX=True, scrollY=True) as self.match_table:
-                    table = self.viewmodel.match_plot.get_match_table()
-                    for header in table[0]:
-                        dpg.add_table_column(label=header)
-                    for line in table[1:]:
-                        with dpg.table_row():
-                            for entry in line:
-                                dpg.add_text(entry)
-
-
+    def update_match_table(self):
+        if self.match_table_shown:
+            table = self.viewmodel.match_plot.get_match_table()
+            for row in self.match_rows.values():
+                dpg.delete_item(row)
+            self.match_rows = {}
+            for i, line in enumerate(table[1:]):
+                with dpg.table_row(parent=self.match_table) as self.match_rows[i]:
+                    for j, entry in enumerate(line):
+                        self.match_entry[(i, j)] = dpg.add_text(entry)
 
     def enable_edit_peaks(self, enable):
         self.peak_edit_mode_enabled = enable
@@ -564,7 +577,7 @@ class PlotsOverview:
                 dpg.set_value(f"drag-x-{state_plot.tag}", state_plot.handle_x + state_plot.xshift)
                 self.draw_labels(state_plot.tag)
             if redraw_sticks or update_all:
-                AsyncManager.submit_task(f"draw sticks {state_plot.tag}", self.draw_sticks, state_plot)
+                self.draw_sticks(state_plot)
             self.update_labels(state_plot.tag)
             if fit_y_axis or update_all:
                 self.vertical_slider_active = True
@@ -649,15 +662,19 @@ class PlotsOverview:
         for line in old_lines:
             dpg.delete_item(line)
 
+        if self.match_table_shown:
+            AsyncManager.submit_task("update match table", self.update_match_table, buffer=0.01)  # random number to ensure only last is executed.
+        # self.update_match_table()
+# todo: stick spectra ui check not set on load?
     def delete_sticks(self, spec_tag=None):  # None: all of them.
         if spec_tag is not None:
             self.dragged_plot = spec_tag
-            if dpg.does_item_exist(f"sticks-{spec_tag}"):
-                dpg.delete_item(f"sticks-{spec_tag}")
+            if dpg.does_item_exist(self.sticks_layer.get(spec_tag)):
+                dpg.delete_item(self.sticks_layer[spec_tag])
         else:
             for s in self.viewmodel.state_plots:
-                if dpg.does_item_exist(f"sticks-{s}"):
-                    dpg.delete_item(f"sticks-{s}")
+                if dpg.does_item_exist(self.sticks_layer.get(s)):
+                    dpg.delete_item(self.sticks_layer[s])
             self.redraw_sticks_on_release = True
 
     def on_drag_release(self):
@@ -849,7 +866,8 @@ class PlotsOverview:
             self.delete_sticks()
 
     def draw_sticks(self, s):
-        AsyncManager.submit_task(f"draw sticks {s.tag}", self.draw_sticks_inner, s)
+        if dpg.is_item_shown(s.tag) and dpg.get_value(self.show_sticks):
+            AsyncManager.submit_task(f"draw sticks {s.tag}", self.draw_sticks_inner, s)
 
     def draw_sticks_inner(self, s):
         if dpg.is_item_shown(s.tag):
@@ -906,6 +924,10 @@ class PlotsOverview:
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 2, 2)
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 0)
         dpg.bind_item_theme(self.expand_plot_settings_button, expand_button_theme)
+
+        with dpg.theme() as self.match_table_theme:
+            with dpg.theme_component(dpg.mvTable):
+                dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 6, 2)
 
     def on_scroll(self, direction):
         if self.hovered_spectrum_y_drag_line is not None:
