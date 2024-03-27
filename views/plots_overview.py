@@ -773,13 +773,12 @@ class PlotsOverview:
             for annotation in self.annotations.get(tag, {}).values():
                 if dpg.does_item_exist(annotation):
                     dpg.delete_item(annotation)
-                # self.delete_label_line(tag, annotation)
+                self.delete_label_line(tag, annotation)
             for drag_point in self.label_drag_points.get(tag, {}).values():
                 if dpg.does_item_exist(drag_point):
                     dpg.delete_item(drag_point)
             self.annotations[tag] = {}
             self.label_drag_points[tag] = {}
-            old_lines = self.annotation_lines.get(tag, {}).copy()
             self.annotation_lines[tag] = {}
 
             font_size = Labels.settings[self.viewmodel.is_emission]['label font size']
@@ -801,16 +800,8 @@ class PlotsOverview:
                     peak_pos, label_pos = cluster.get_plot_pos(state_plot, gap_height=Labels.settings[self.viewmodel.is_emission]['label font size']/self.pixels_per_plot_y)
                     annotation = dpg.add_plot_annotation(tag=str(peak_pos), label=cluster.label, default_value=label_pos, clamped=False, offset=(0, -cluster.height/2/self.pixels_per_plot_y), color=[0, 0, 0, 0], parent=plot, user_data=(cluster, state_plot.tag))  #[200, 200, 200, 0]
                     self.annotations[tag][peak_pos] = annotation
-
                     self.label_drag_points[tag][annotation] = dpg.add_drag_point(default_value=label_pos, color=[255, 255, 0], show_label=False, show=False, user_data=annotation, callback=lambda s, a, u: self.move_label(dpg.get_value(s)[:2], u, update_drag_point=False), parent=plot)
-                    if annotation in old_lines.keys():
-                        self.annotation_lines[tag][annotation] = old_lines[annotation]
-                    else:
-                        self.annotation_lines[tag][annotation] = self.draw_label_line(cluster, peak_pos)
-
-            for key, lines in old_lines.items():
-                if key not in self.annotation_lines[tag].keys():
-                    self.delete_label_line(tag, key)
+                    self.annotation_lines[tag][annotation] = self.draw_label_line(cluster, peak_pos)
 
     def move_label(self, pos, label, state_plot=None, update_drag_point=True):
         dpg.set_value(label, pos) # Optional: Save manual relative positions (& zoom state?)
