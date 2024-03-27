@@ -92,20 +92,25 @@ class PlotsOverview:
                 with dpg.table_cell():
                     with dpg.group(horizontal=True):
                         dpg.add_spacer(width=0, tag=f"{'Emission' if self.viewmodel.is_emission else 'Excitation'} plot left spacer")
-                        with dpg.plot(height=-1, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}") as self.plot:
+                        with dpg.table(height=-1, header_row=False, borders_innerH=True, resizable=True, policy=dpg.mvTable_SizingStretchProp) as self.plot_and_matches_table:
+                            dpg.add_table_column()
+                            with dpg.table_row() as self.plot_row:
+                                with dpg.table_cell():
+                                    with dpg.plot(height=-1, width=-1, anti_aliased=True, tag=f"plot_{self.viewmodel.is_emission}") as self.plot:
 
-                            dpg.add_plot_axis(dpg.mvXAxis, label="wavenumber / cm⁻¹", tag=f"x_axis_{self.viewmodel.is_emission}", no_gridlines=True)
-                            dpg.add_plot_axis(dpg.mvYAxis, label="relative intensity", tag=f"y_axis_{self.viewmodel.is_emission}", no_gridlines=True)
+                                        dpg.add_plot_axis(dpg.mvXAxis, label="wavenumber / cm⁻¹", tag=f"x_axis_{self.viewmodel.is_emission}", no_gridlines=True)
+                                        dpg.add_plot_axis(dpg.mvYAxis, label="relative intensity", tag=f"y_axis_{self.viewmodel.is_emission}", no_gridlines=True)
 
-                            # dpg.set_axis_limits_auto(f"x_axis_{self.viewmodel.is_emission}")
-                            # dpg.set_axis_limits_auto(f"y_axis_{self.viewmodel.is_emission}")
+                                        # dpg.set_axis_limits_auto(f"x_axis_{self.viewmodel.is_emission}")
+                                        # dpg.set_axis_limits_auto(f"y_axis_{self.viewmodel.is_emission}")
 
-                            with dpg.custom_series([0.0, 1000.0], [1.0, 0.0], 2,
-                                                   parent=f"y_axis_{self.viewmodel.is_emission}",
-                                                   callback=self._custom_series_callback) as self.custom_series:
-                                self.tooltiptext = dpg.add_text("Current Point: ")
+                                        with dpg.custom_series([0.0, 1000.0], [1.0, 0.0], 2,
+                                                               parent=f"y_axis_{self.viewmodel.is_emission}",
+                                                               callback=self._custom_series_callback) as self.custom_series:
+                                            # self.tooltiptext = dpg.add_text("Current Point: ")
+                                            pass
 
-                            dpg.add_line_series([], [], parent=f"y_axis_{self.viewmodel.is_emission}", tag=f"exp_overlay_{self.viewmodel.is_emission}")
+                                        dpg.add_line_series([], [], parent=f"y_axis_{self.viewmodel.is_emission}", tag=f"exp_overlay_{self.viewmodel.is_emission}")
                 with dpg.table_cell():
                     with dpg.child_window(width=-1, height=32) as self.plot_settings_action_bar:
                         with dpg.table(header_row=False):
@@ -205,12 +210,14 @@ class PlotsOverview:
                                         self.match_controls['show component spectra'] = dpg.add_checkbox(label="Component spectra", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show component spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show component spectra', False))
                                         self.match_controls['show shade spectra'] = dpg.add_checkbox(label="Shaded contributions", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show shade spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False))
                                         # self.match_controls['show stick spectra'] = dpg.add_checkbox(label="Stick spectra", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show stick spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show stick spectra', False))
-                                    dpg.add_button(label="Save as table", callback=self.print_table, width=-6)
+                                    self.show_match_table_button = dpg.add_button(label="Show assignment table", callback=self.show_match_table, width=-6)
         self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, show=False, parent="emission tab" if self.viewmodel.is_emission else "excitation tab", callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
         self.dummy_series = dpg.add_scatter_series([0, 2000], [-0.1, 1.1], parent=f"y_axis_{self.viewmodel.is_emission}")
         self.match_plot = dpg.add_line_series([], [], show=False, parent=f"y_axis_{self.viewmodel.is_emission}")
         self.match_plot_y_drag = dpg.add_drag_line(vertical=False, show_label=False, default_value=0, callback=lambda sender, a, u: self.viewmodel.set_y_shifts(dpg.get_value(sender), dragging=True), parent=f"plot_{self.viewmodel.is_emission}", show=False, color=[200, 200, 200])
         append_viewport_resize_update_callback(self.viewport_resize_update)
+        self.match_table_row = False
+        self.match_table_shown = False
         self.configure_theme()
 
     def viewport_resize_update(self):
@@ -219,6 +226,9 @@ class PlotsOverview:
             dpg.configure_item(self.expand_plot_settings_button, show=True, pos=(dpg.get_viewport_width() - 40, 45))
         for tag in self.viewmodel.state_plots.keys():
             self.draw_labels(tag)
+        if self.match_table_shown:
+            dpg.configure_item(self.plot, height=dpg.get_viewport_height()/2)
+            dpg.configure_item(self.plot_row, height=dpg.get_viewport_height()/2)
 
     def toggle_fine_adjustments(self, fine):
         if fine:
@@ -250,6 +260,32 @@ class PlotsOverview:
                         self.viewmodel.toggle_match_spec_contribution(self.viewmodel.state_plots[tag2], False)
                 self.viewmodel.toggle_match_spec_contribution(self.viewmodel.state_plots[tag], True)
                 break
+
+    def show_match_table(self):
+        if self.match_table_shown:
+            dpg.delete_item(self.match_table_row)
+            dpg.configure_item(self.plot, height=-1)
+            dpg.configure_item(self.plot_row, height=0)
+            self.match_table_shown = False
+            dpg.configure_item(self.show_match_table_button, label="Show assignment table")
+        else:
+            dpg.configure_item(self.plot, height=dpg.get_viewport_height()/2)
+            dpg.configure_item(self.plot_row, height=dpg.get_viewport_height()/2)
+            self.match_table_shown = True
+            dpg.configure_item(self.show_match_table_button, label="Hide assignment table")
+
+        with dpg.table_row(parent=self.plot_and_matches_table, height=500) as self.match_table_row:
+            with dpg.table_cell():
+                with dpg.table(resizable=True, context_menu_in_body=True, borders_innerV=True, scrollX=True, scrollY=True) as self.match_table:
+                    table = self.viewmodel.match_plot.get_match_table()
+                    for header in table[0]:
+                        dpg.add_table_column(label=header)
+                    for line in table[1:]:
+                        with dpg.table_row():
+                            for entry in line:
+                                dpg.add_text(entry)
+
+
 
     def enable_edit_peaks(self, enable):
         self.peak_edit_mode_enabled = enable

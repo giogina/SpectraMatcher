@@ -314,7 +314,7 @@ class MatchPlot:
             return spec in [s.tag for s in self.contributing_state_plots]
 
     def get_match_table(self, use_gaussian_labels=False, html=True):
-        table_string = "\t".join(["experimental peak position",
+        table = [["experimental peak position",
                                   "experimental peak intensity",
                                   "computed peak position",  # comp spectrum (composite) peak wavenumber (maximum[0])
                                   "computed peak intensity",  # comp spectrum (composite) peak intensity (maximum[1]) (?)
@@ -325,7 +325,7 @@ class MatchPlot:
                                   'intensity',
                                   'assignment',
                                   'symmetry',
-                                  'type']) + "\r\n"
+                                  'type']]
 
         for peak in self.exp_peaks:
             peak_data_list = [format(peak.wavenumber, ".3f"), format(peak.intensity, ".3f")]
@@ -343,16 +343,17 @@ class MatchPlot:
                                 mode_data_list = [format(peak.wavenumber+spec.xshift, ".3f"),
                                                   format(peak.corrected_wavenumber+spec.xshift, ".3f"),
                                                   format(peak.intensity*spec.yscale, ".3f"),
-                                                  (Labels.label2html(peak.get_label(use_gaussian_labels)) if html else Labels.label2tex(peak.get_label(use_gaussian_labels))),
+                                                  # (Labels.label2html(peak.get_label(use_gaussian_labels)) if html else Labels.label2tex(peak.get_label(use_gaussian_labels))),
+                                                  peak.get_label(use_gaussian_labels),
                                                   peak.symmetries[0] if len(set(peak.symmetries)) == 1 else '',
                                                   peak.types[0] if len(set(peak.types)) == 1 else '']
                                 peak_data_list += mode_data_list
-                                table_string += '\t'.join(peak_data_list) + "\r\n"
+                                table.append(peak_data_list)
                                 line_added = True
                                 peak_data_list = ["", "", "", "", ""]
                     peak_data_list = ["", "", "", ""]
             if not line_added:
-                table_string += '\t'.join(peak_data_list)
+                table.append(peak_data_list)
 
 
 
@@ -389,5 +390,5 @@ class MatchPlot:
                             #                         ])
 
                             # table_file.write(" " + clusterstring + peakstring + '\n')
-        return table_string
+        return table
 

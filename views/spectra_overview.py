@@ -130,7 +130,7 @@ class SpectraOverview:
             dpg.configure_item(self.layout_table, resizable=True, policy=dpg.mvTable_SizingStretchProp)
             dpg.configure_item(f"{'Emission' if self.viewmodel.is_emission else 'Excitation'} plot left spacer", width=0)
         else:
-            # dpg.configure_item(f"{'Emission' if self.viewmodel.is_emission else 'Excitation'} plot left spacer", width=20)
+            dpg.configure_item(f"{'Emission' if self.viewmodel.is_emission else 'Excitation'} plot left spacer", width=20)
             dpg.configure_item(self.layout_table, resizable=False, policy=dpg.mvTable_SizingFixedFit)
             dpg.configure_item(self.spectra_column, width_stretch=False, width=10)
             dpg.configure_item(self.plots_column, width_stretch=True)
