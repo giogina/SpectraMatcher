@@ -62,11 +62,12 @@ class PlotsOverview:
         self.shade_plots = []
         self.shade_line_plots = []
         self.component_plots = []
-        self.match_lines = []
+        self.match_lines = {}
         self.matched_spectra_checks = {}
         self.sticks_layer = {}
         self.redraw_sticks_on_release = False
         self.left_mouse_is_down = False
+        self.last_match_y = 0
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -669,7 +670,7 @@ class PlotsOverview:
                     dpg.configure_item(f"drag-{tag}", show=False)
 
         old_lines = self.match_lines
-        self.match_lines = []
+        self.match_lines = {}
         if not match_plot.hidden and match_plot.matching_active:
             for peak in match_plot.exp_peaks:
                 if peak.match is not None:
@@ -677,15 +678,22 @@ class PlotsOverview:
                     line_end = (peak.match[0], match_plot.yshift - 10/self.pixels_per_plot_y)
                     y_offset = abs(line_end[0] - line_start[0])*self.pixels_per_plot_x/self.pixels_per_plot_y
                     elbow = (line_start[0], line_end[1] - y_offset)
+                    if (line_start, elbow) in old_lines.keys():
+                        self.match_lines[(line_start, elbow)] = old_lines[(line_start, elbow)]  # no change to vertical line
+                    else:
+                        self.match_lines[(line_start, elbow)] = dpg.draw_line(line_start, elbow, thickness=0, parent=self.plot, color=[120, 120, 200, 255])
+                    if (elbow, line_end) in old_lines.keys():
+                        self.match_lines[(elbow, line_end)] = old_lines[(elbow, line_end)]
+                    else:
+                        self.match_lines[(elbow, line_end)] = dpg.draw_line(elbow, line_end, thickness=0, parent=self.plot, color=[120, 120, 200, 255])
 
-                    vl = dpg.draw_line(line_start, elbow, thickness=0, parent=self.plot, color=[120, 120, 200, 255])
-                    dl = dpg.draw_line(elbow, line_end, thickness=0, parent=self.plot, color=[120, 120, 200, 255])
-                    self.match_lines.append(vl)
-                    self.match_lines.append(dl)
-        for line in old_lines:
-            dpg.delete_item(line)
+        for key, line in old_lines.items():
+            if key not in self.match_lines.keys():
+                dpg.delete_item(line)
 
         self.update_match_table()
+        self.last_match_y = match_plot.yshift
+
 # todo: stick spectra ui check not saved
     def delete_sticks(self, spec_tag=None):  # None: all of them.
         if spec_tag is not None:
