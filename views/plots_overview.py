@@ -170,7 +170,7 @@ class PlotsOverview:
                                         dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {['Red', 'Blue', 'Green'][i]}")
                                     self.show_sticks = dpg.add_checkbox(label=" Show stick spectra", callback=self.toggle_sticks)
                             dpg.add_spacer(height=6)
-                        dpg.add_spacer(height=6)
+                        # dpg.add_spacer(height=6)
                         with dpg.collapsing_header(label="Label settings", default_open=True):
                             # dpg.add_spacer(height=6)
                             with dpg.group(horizontal=True):
@@ -186,7 +186,7 @@ class PlotsOverview:
                                     # self.label_controls['axis font size'] = dpg.add_slider_int(label=" Axis font size", min_value=12, max_value=24, default_value=Labels.settings[self.viewmodel.is_emission].get('axis font size', 18), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'axis font size', a))
                                     dpg.add_button(label="Defaults", width=-6, callback=self.restore_label_defaults)
                             dpg.add_spacer(height=6)
-                        dpg.add_spacer(height=6)
+                        # dpg.add_spacer(height=6)
                         with dpg.collapsing_header(label="Peak detection", default_open=True):
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
@@ -196,25 +196,31 @@ class PlotsOverview:
                                     self.peak_controls['peak width threshold'] = dpg.add_slider_int(label=" Min. width", min_value=0, max_value=100, default_value=ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak width threshold', 2), callback=lambda s, a, u: ExperimentalSpectrum.set(self.viewmodel.is_emission, 'peak width threshold', a))
                                     dpg.add_button(label="Defaults", width=-6, callback=lambda s, a, u: ExperimentalSpectrum.reset_defaults(self.viewmodel.is_emission))
                                     dpg.add_button(label="Reset manual selection", width=-6, callback=lambda s, a, u: ExperimentalSpectrum.reset_manual_peaks(self.viewmodel.is_emission))
-                        dpg.add_spacer(height=6)
+                                    dpg.add_spacer(height=6)
+                        with dpg.collapsing_header(label="Composite spectrum", default_open=False):
+                            # dpg.add_spacer(height=6)
+                            with dpg.group(horizontal=True):
+                                dpg.add_spacer(width=6)
+                                with dpg.group():
+                                    with dpg.tree_node(label="Component spectra", default_open=True) as self.matched_spectra_node:
+                                        self.matched_spectra_checks_spacer = dpg.add_spacer(height=6)
+                                    with dpg.tree_node(label="Composite spectrum display options", default_open=True):
+                                        self.match_controls['show composite spectrum'] = dpg.add_checkbox(label="Composite spectrum", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show composite spectrum', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show composite spectrum', False))
+                                        self.match_controls['show component spectra'] = dpg.add_checkbox(label="Component spectra", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show component spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show component spectra', False))
+                                        self.match_controls['show shade spectra'] = dpg.add_checkbox(label="Shaded contributions", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show shade spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False))
+                                        # self.match_controls['show stick spectra'] = dpg.add_checkbox(label="Stick spectra", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show stick spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show stick spectra', False))
+                                    dpg.add_spacer(height=6)
                         with dpg.collapsing_header(label="Match settings", default_open=True):
                             # dpg.add_spacer(height=6)
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group():
                                     self.match_controls['match active'] = dpg.add_checkbox(label=" Match peaks", default_value=False, callback=lambda s, a, u: self.viewmodel.match_peaks(a))
-                                    with dpg.tree_node(label="Match thresholds"):
-                                        self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(min_value=0, max_value=0.2, format=f"Rel. intensity ≥ %0.2f", default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a), width=-32)
-                                        self.match_controls['distance match threshold'] = dpg.add_slider_float(min_value=0, max_value=100, format=f"Distance ≤ %0.2f  cm⁻¹", default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a), width=-32)
-                                        dpg.add_button(label="Defaults", width=-32, callback=self.restore_matcher_defaults)
-                                        dpg.add_spacer(height=6)
-                                    with dpg.tree_node(label="Component spectra") as self.matched_spectra_node:
-                                        self.matched_spectra_checks_spacer = dpg.add_spacer(height=6)
-                                    with dpg.tree_node(label="Composite spectrum display options"):
-                                        self.match_controls['show composite spectrum'] = dpg.add_checkbox(label="Composite spectrum", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show composite spectrum', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show composite spectrum', False))
-                                        self.match_controls['show component spectra'] = dpg.add_checkbox(label="Component spectra", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show component spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show component spectra', False))
-                                        self.match_controls['show shade spectra'] = dpg.add_checkbox(label="Shaded contributions", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show shade spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False))
-                                        # self.match_controls['show stick spectra'] = dpg.add_checkbox(label="Stick spectra", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show stick spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show stick spectra', False))
+                                    # with dpg.tree_node(label="Match thresholds"):
+                                    self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(min_value=0, max_value=0.2, format=f"Rel. intensity ≥ %0.2f", default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a), width=-6)
+                                    self.match_controls['distance match threshold'] = dpg.add_slider_float(min_value=0, max_value=100, format=f"Distance ≤ %0.2f  cm⁻¹", default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a), width=-6)
+                                    dpg.add_button(label="Defaults", width=-6, callback=self.restore_matcher_defaults)
+                                    dpg.add_spacer(height=6)
                                     self.show_match_table_button = dpg.add_button(label="Show assignment table", callback=self.show_match_table, width=-6)
         self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, show=False, parent="emission tab" if self.viewmodel.is_emission else "excitation tab", callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
         self.dummy_series = dpg.add_scatter_series([0, 2000], [-0.1, 1.1], parent=f"y_axis_{self.viewmodel.is_emission}")
