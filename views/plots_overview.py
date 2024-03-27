@@ -292,7 +292,7 @@ class PlotsOverview:
     def update_match_table(self):
         if self.match_table_shown:
             table = self.viewmodel.match_plot.get_match_table()
-            if len(table) > 1 and sum([len(line) for line in table]) >= len(list(self.match_rows.keys())):  # sum([len(line) for line in self.table]):
+            if len(table) > 1 and sum([len(line) for line in table]) >= len(list(self.match_rows.keys())):
                 for i, line in enumerate(table[1:]):
                     if i not in self.match_rows.keys():
                         self.match_rows[i] = dpg.add_table_row(parent=self.match_table)
@@ -584,7 +584,8 @@ class PlotsOverview:
             dpg.bind_item_theme(self.matched_spectra_checks.get(spec.tag), self.spec_theme[spec.tag])
 
     def update_plot(self, state_plot, mark_dragged_plot=None, update_all=False, redraw_sticks=False, update_drag_lines=False, fit_y_axis=False):
-        self.dragged_plot = mark_dragged_plot
+        if mark_dragged_plot is not None:
+            self.dragged_plot = mark_dragged_plot
         if dpg.does_item_exist(state_plot.tag):
             dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
             if update_drag_lines or update_all:
@@ -650,6 +651,8 @@ class PlotsOverview:
 
         if not match_plot.dragging:
             dpg.set_value(self.match_plot_y_drag, match_plot.yshift)
+        else:
+            self.delete_sticks()
         #     self.fit_y()
 
         for tag, check in self.matched_spectra_checks.items():
@@ -695,6 +698,11 @@ class PlotsOverview:
             spec = self.viewmodel.state_plots.get(self.dragged_plot)
             if spec is not None:
                 dpg.set_value(f"drag-x-{spec.tag}", spec.handle_x + spec.xshift)
+                self.dragged_plot = None  # necessary to have the draw_sticks execute
+                self.draw_sticks(spec)
+        elif self.viewmodel.match_plot.dragging:
+            self.viewmodel.match_plot.dragging = False
+            for spec in self.viewmodel.state_plots.values():
                 self.draw_sticks(spec)
         elif self.exp_hovered and self.peak_edit_mode_enabled:
             if self.dragged_peak is not None:
@@ -716,7 +724,6 @@ class PlotsOverview:
             dpg.set_value(f"drag-{spec.tag}", spec.yshift)
             self.draw_sticks(spec)
 
-        self.viewmodel.match_plot.dragging = False
 
         self.dragged_plot = None
         self.dragged_peak = None
@@ -879,11 +886,11 @@ class PlotsOverview:
             self.delete_sticks()
 
     def draw_sticks(self, s):
-        if dpg.is_item_shown(s.tag) and dpg.get_value(self.show_sticks):
-            AsyncManager.submit_task(f"draw sticks {s.tag}", self.draw_sticks_inner, s)
-
-    def draw_sticks_inner(self, s):
-        if dpg.is_item_shown(s.tag):
+        if dpg.is_item_shown(s.tag) and dpg.get_value(self.show_sticks) and not self.dragged_plot == s.tag and not self.viewmodel.match_plot.dragging:
+    #         AsyncManager.submit_task(f"draw sticks {s.tag}", self.draw_sticks_inner, s)
+    #
+    # def draw_sticks_inner(self, s):
+    #     if dpg.is_item_shown(s.tag):
             if dpg.get_value(self.show_sticks):
                 if s.tag in self.sticks_layer and dpg.does_item_exist(self.sticks_layer[s.tag]):
                     dpg.delete_item(self.sticks_layer[s.tag])
