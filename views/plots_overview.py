@@ -773,12 +773,13 @@ class PlotsOverview:
             for annotation in self.annotations.get(tag, {}).values():
                 if dpg.does_item_exist(annotation):
                     dpg.delete_item(annotation)
-                self.delete_label_line(tag, annotation)
+                # self.delete_label_line(tag, annotation)
             for drag_point in self.label_drag_points.get(tag, {}).values():
                 if dpg.does_item_exist(drag_point):
                     dpg.delete_item(drag_point)
             self.annotations[tag] = {}
             self.label_drag_points[tag] = {}
+            old_lines = self.annotation_lines.get(tag, {}).copy()
             self.annotation_lines[tag] = {}
 
             font_size = Labels.settings[self.viewmodel.is_emission]['label font size']
@@ -798,10 +799,18 @@ class PlotsOverview:
             for cluster in clusters:
                 if len(cluster.label):
                     peak_pos, label_pos = cluster.get_plot_pos(state_plot, gap_height=Labels.settings[self.viewmodel.is_emission]['label font size']/self.pixels_per_plot_y)
-                    annotation = dpg.add_plot_annotation(label=cluster.label, default_value=label_pos, clamped=False, offset=(0, -cluster.height/2/self.pixels_per_plot_y), color=[0, 0, 0, 0], parent=plot, user_data=(cluster, state_plot.tag))  #[200, 200, 200, 0]
+                    annotation = dpg.add_plot_annotation(tag=str(peak_pos), label=cluster.label, default_value=label_pos, clamped=False, offset=(0, -cluster.height/2/self.pixels_per_plot_y), color=[0, 0, 0, 0], parent=plot, user_data=(cluster, state_plot.tag))  #[200, 200, 200, 0]
                     self.annotations[tag][peak_pos] = annotation
+
                     self.label_drag_points[tag][annotation] = dpg.add_drag_point(default_value=label_pos, color=[255, 255, 0], show_label=False, show=False, user_data=annotation, callback=lambda s, a, u: self.move_label(dpg.get_value(s)[:2], u, update_drag_point=False), parent=plot)
-                    self.annotation_lines[tag][annotation] = self.draw_label_line(cluster, peak_pos)
+                    if annotation in old_lines.keys():
+                        self.annotation_lines[tag][annotation] = old_lines[annotation]
+                    else:
+                        self.annotation_lines[tag][annotation] = self.draw_label_line(cluster, peak_pos)
+
+            for key, lines in old_lines.items():
+                if key not in self.annotation_lines[tag].keys():
+                    self.delete_label_line(tag, key)
 
     def move_label(self, pos, label, state_plot=None, update_drag_point=True):
         dpg.set_value(label, pos) # Optional: Save manual relative positions (& zoom state?)
@@ -826,7 +835,7 @@ class PlotsOverview:
             if line_v is not None:
                 del self.annotation_lines[tag][label]
 
-    def draw_label_line(self, cluster, peak_pos):
+    def draw_label_line(self, cluster, peak_pos, pos_only=False):
         if abs(cluster.rel_x) > cluster.width / 2:
             if cluster.rel_x < 0:
                 anchor_offset_x = cluster.rel_x + cluster.width / 2
@@ -849,24 +858,38 @@ class PlotsOverview:
             start_pos = (peak_pos[0], peak_pos[1] + 5/self.pixels_per_plot_y)  # spacing
             elbow_pos = (peak_pos[0], cluster.plot_y - anchor_offset_y)
             label_pos = (peak_pos[0] + anchor_offset_x, cluster.plot_y)
-        line_v = dpg.draw_line(start_pos, elbow_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=[200, 200, 255, 200])
-        line_d = dpg.draw_line(elbow_pos, label_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=[200, 200, 255, 200])
-        return line_v, line_d
+        if pos_only:
+            return start_pos, elbow_pos, label_pos
+        else:
+            line_v = dpg.draw_line(start_pos, elbow_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=[200, 200, 255, 200])
+            line_d = dpg.draw_line(elbow_pos, label_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=[200, 200, 255, 200])
+            return line_v, line_d
 
     def update_labels(self, tag):
         if self.labels and dpg.is_item_shown(tag):
             state_plot = self.viewmodel.state_plots.get(tag)
             for label in self.annotations.get(tag, {}).values():
-                self.delete_label_line(tag, label)
+                # self.delete_label_line(tag, label)
                 cluster, _ = dpg.get_item_user_data(label)
                 if cluster.y * state_plot.yscale < Labels.settings[self.viewmodel.is_emission]['peak intensity label threshold']:
                     dpg.hide_item(label)
+                    self.delete_label_line(tag, label)
                 else:
                     dpg.show_item(label)
                     peak_pos, label_pos = cluster.get_plot_pos(state_plot, gap_height=Labels.settings[self.viewmodel.is_emission]['label font size']/self.pixels_per_plot_y)
                     dpg.set_value(label, label_pos)
                     dpg.set_value(self.label_drag_points[tag][label], label_pos)
-                    self.annotation_lines[tag][label] = self.draw_label_line(cluster, peak_pos)
+                    line_done = False
+                    if label in self.annotation_lines.get(tag, {}).keys():
+                        v, d = self.annotation_lines[tag][label]
+                        start, elbow, end = self.draw_label_line(cluster, peak_pos, pos_only=True)
+                        if dpg.does_item_exist(v) and dpg.does_item_exist(d):
+                            dpg.configure_item(v, p1=start, p2=elbow)
+                            dpg.configure_item(d, p1=elbow, p2=end)
+                            line_done = True
+                    if not line_done:
+                        self.delete_label_line(tag, label)
+                        self.annotation_lines[tag][label] = self.draw_label_line(cluster, peak_pos)
 
     def delete_labels(self, spec_tag=None):
         if spec_tag is None:
