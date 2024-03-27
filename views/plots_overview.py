@@ -65,6 +65,7 @@ class PlotsOverview:
         self.match_lines = []
         self.matched_spectra_checks = {}
         self.sticks_layer = {}
+        self.redraw_sticks_on_release = False
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -283,8 +284,7 @@ class PlotsOverview:
             with dpg.table_row(parent=self.plot_and_matches_table) as self.match_table_row:
                 with dpg.table_cell():
                     with dpg.table(resizable=True, hideable=True, context_menu_in_body=True, borders_innerV=True, scrollX=True, scrollY=True, no_pad_innerX=False, no_pad_outerX=False) as self.match_table:
-                        self.table = self.viewmodel.match_plot.get_match_table(header_only=True)
-                        for header in self.table[0]:
+                        for header in self.viewmodel.match_plot.get_match_table(header_only=True)[0]:
                             dpg.add_table_column(label=header)
                         self.update_match_table()
             dpg.bind_item_theme(self.match_table, self.match_table_theme)
@@ -292,13 +292,28 @@ class PlotsOverview:
     def update_match_table(self):
         if self.match_table_shown:
             table = self.viewmodel.match_plot.get_match_table()
-            for row in self.match_rows.values():
-                dpg.delete_item(row)
-            self.match_rows = {}
-            for i, line in enumerate(table[1:]):
-                with dpg.table_row(parent=self.match_table) as self.match_rows[i]:
+            if len(table) > 1 and sum([len(line) for line in table]) >= len(list(self.match_rows.keys())):  # sum([len(line) for line in self.table]):
+                for i, line in enumerate(table[1:]):
+                    if i not in self.match_rows.keys():
+                        self.match_rows[i] = dpg.add_table_row(parent=self.match_table)
                     for j, entry in enumerate(line):
-                        self.match_entry[(i, j)] = dpg.add_text(entry)
+                        if dpg.does_item_exist(self.match_entry.get((i, j))):
+                            dpg.set_value(self.match_entry[(i, j)], entry)
+                        else:
+                            self.match_entry[(i, j)] = dpg.add_text(entry, parent=self.match_rows[i])
+            else:
+                # AsyncManager.submit_task("re-draw match table", self.reconstruct_match_table, table, buffer=0.01)
+                self.reconstruct_match_table(table)
+            self.table = table
+
+    def reconstruct_match_table(self, table):
+        for row in self.match_rows.values():
+            dpg.delete_item(row)
+        self.match_rows = {}
+        for i, line in enumerate(table[1:]):
+            with dpg.table_row(parent=self.match_table) as self.match_rows[i]:
+                for j, entry in enumerate(line):
+                    self.match_entry[(i, j)] = dpg.add_text(entry)
 
     def enable_edit_peaks(self, enable):
         self.peak_edit_mode_enabled = enable
@@ -662,10 +677,8 @@ class PlotsOverview:
         for line in old_lines:
             dpg.delete_item(line)
 
-        if self.match_table_shown:
-            AsyncManager.submit_task("update match table", self.update_match_table, buffer=0.01)  # random number to ensure only last is executed.
-        # self.update_match_table()
-# todo: stick spectra ui check not set on load?
+        self.update_match_table()
+# todo: stick spectra ui check not saved
     def delete_sticks(self, spec_tag=None):  # None: all of them.
         if spec_tag is not None:
             self.dragged_plot = spec_tag
