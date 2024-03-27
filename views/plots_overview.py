@@ -66,9 +66,11 @@ class PlotsOverview:
         self.matched_spectra_checks = {}
         self.sticks_layer = {}
         self.redraw_sticks_on_release = False
+        self.left_mouse_is_down = False
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
+            dpg.add_mouse_down_handler(dpg.mvMouseButton_Left, callback=self.on_left_mouse_down)
             dpg.add_mouse_release_handler(dpg.mvMouseButton_Left, callback=self.on_drag_release)
             dpg.add_mouse_release_handler(dpg.mvMouseButton_Right, callback=self.on_right_click_release)
             dpg.add_key_down_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=True)
@@ -251,6 +253,9 @@ class PlotsOverview:
             self.viewmodel.last_action_x(direction * self.adjustment_factor)
         else:
             self.viewmodel.last_action_y(direction * self.adjustment_factor)
+
+    def on_left_mouse_down(self):
+        self.left_mouse_is_down = True
 
     def on_right_click_release(self):
         point = self.hovered_peak_indicator_point
@@ -694,6 +699,7 @@ class PlotsOverview:
             self.redraw_sticks_on_release = True
 
     def on_drag_release(self):
+        self.left_mouse_is_down = False
         if self.dragged_plot is not None:
             spec = self.viewmodel.state_plots.get(self.dragged_plot)
             if spec is not None:
@@ -723,7 +729,6 @@ class PlotsOverview:
         for spec in self.viewmodel.state_plots.values():
             dpg.set_value(f"drag-{spec.tag}", spec.yshift)
             self.draw_sticks(spec)
-
 
         self.dragged_plot = None
         self.dragged_peak = None
@@ -886,7 +891,7 @@ class PlotsOverview:
             self.delete_sticks()
 
     def draw_sticks(self, s):
-        if dpg.is_item_shown(s.tag) and dpg.get_value(self.show_sticks) and not self.dragged_plot == s.tag and not self.viewmodel.match_plot.dragging:
+        if dpg.is_item_shown(s.tag) and dpg.get_value(self.show_sticks) and not self.left_mouse_is_down:
     #         AsyncManager.submit_task(f"draw sticks {s.tag}", self.draw_sticks_inner, s)
     #
     # def draw_sticks_inner(self, s):
@@ -907,6 +912,8 @@ class PlotsOverview:
                                     color = adjust_color_for_dark_theme(sub_stick[1])+[160]
                                 dpg.draw_line((x, y), (x, top), color=color, thickness=0.001)
                                 y = top
+        elif self.left_mouse_is_down:
+            self.dragged_plot = s.tag
 
     def configure_theme(self):
         with dpg.theme(tag=f"plot_theme_{self.viewmodel.is_emission}"):

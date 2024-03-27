@@ -1,8 +1,6 @@
 import asyncio
-import random
 import threading
 import os
-import time
 from concurrent.futures import ThreadPoolExecutor
 
 
@@ -34,32 +32,26 @@ class AsyncManager:
     @classmethod
     async def _run_tasks(cls):
         while True:
-            task_id, func, args, observers, notification, buffer = await cls._tasks.get()
+            task_id, func, args, observers, notification = await cls._tasks.get()
             if cls._stop:
                 return
-            if buffer:
-                if isinstance(buffer, float):
-                    time.sleep(buffer)
-                else:
-                    time.sleep(0.01)  # to see if a new call comes in, only then execute
-            if cls._waiting_task_map.get(task_id) == (func, *args):
+            if cls._waiting_task_map.get(task_id) == (func, args):
                 del cls._waiting_task_map[task_id]  # Remove it from the map as it's now running
-                result = await cls._loop.run_in_executor(cls._executor, func, *args[:-1])
+                result = await cls._loop.run_in_executor(cls._executor, func, *args)
                 cls.notify_observers(observers, notification, result)
 
     @classmethod
-    def submit_task(cls, task_id, func, *args, observers=None, notification="", buffer=False):
+    def submit_task(cls, task_id, func, *args, observers=None, notification=""):
         """Synchronously submit a task from the main thread."""
         if not cls._loop:
             raise RuntimeError("Event loop is not running")
-        r = random.random()
-        cls._waiting_task_map[task_id] = (func, *args, r)
-        asyncio.run_coroutine_threadsafe(cls._submit_task(task_id, func, *args, r, observers=observers, notification=notification, buffer=buffer), cls._loop)
+        cls._waiting_task_map[task_id] = (func, args)
+        asyncio.run_coroutine_threadsafe(cls._submit_task(task_id, func, *args, observers=observers, notification=notification), cls._loop)
 
     @classmethod
-    async def _submit_task(cls, task_id, func, *args, observers=None, notification="", buffer=False):
+    async def _submit_task(cls, task_id, func, *args, observers=None, notification=""):
         """Actual coroutine to handle task submission."""
-        await cls._tasks.put((task_id, func, args, observers, notification, buffer))
+        await cls._tasks.put((task_id, func, args, observers, notification))
 
     @classmethod
     def shutdown(cls):
