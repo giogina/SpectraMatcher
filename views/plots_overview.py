@@ -455,6 +455,8 @@ class PlotsOverview:
             else:
                 dpg.set_value(self.vertical_spacing_slider, Labels.settings[self.viewmodel.is_emission].get('global y shifts', 1.25))
         if load_all or labels:
+            dpg.set_value(self.show_sticks, Labels.settings[self.viewmodel.is_emission].get("show sticks", False))
+            self.toggle_sticks()
             for key, item in self.label_controls.items():
                 value = Labels.settings[self.viewmodel.is_emission].get(key)
                 dpg.set_value(item, value)
@@ -771,7 +773,6 @@ class PlotsOverview:
         self.update_match_table()
         self.last_match_y = match_plot.yshift
 
-# todo: stick spectra ui check not saved
     def delete_sticks(self, spec_tag=None):  # None: all of them.
         if spec_tag is not None:
             self.dragged_plot = spec_tag
@@ -984,17 +985,15 @@ class PlotsOverview:
 
     def toggle_sticks(self, *args):
         if dpg.get_value(self.show_sticks):
+            Labels.set(self.viewmodel.is_emission, 'show sticks', True)
             for s in self.viewmodel.state_plots.values():
                 self.draw_sticks(s)
         else:
             self.delete_sticks()
+            Labels.set(self.viewmodel.is_emission, 'show sticks', False)
 
     def draw_sticks(self, s):
         if dpg.is_item_shown(s.tag) and dpg.get_value(self.show_sticks) and not self.left_mouse_is_down:
-    #         AsyncManager.submit_task(f"draw sticks {s.tag}", self.draw_sticks_inner, s)
-    #
-    # def draw_sticks_inner(self, s):
-    #     if dpg.is_item_shown(s.tag):
             if dpg.get_value(self.show_sticks):
                 if s.tag in self.sticks_layer and dpg.does_item_exist(self.sticks_layer[s.tag]):
                     dpg.delete_item(self.sticks_layer[s.tag])
