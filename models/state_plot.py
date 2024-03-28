@@ -329,8 +329,49 @@ class MatchPlot:
         else:
             return spec in [s.tag for s in self.contributing_state_plots]
 
+    def get_match_table_html(self, use_gaussian_labels):
+        table = self.get_match_table(use_gaussian_labels=use_gaussian_labels)
+        clipboard_html = """
+        Version:0.9
+        StartHTML:00000097
+        EndHTML:{end_html}
+        StartFragment:00000133
+        EndFragment:{end_fragment}
+        <html>
+        <body>
+        <!--StartFragment-->
+        <table>""".replace("\n", "\r\n")
+
+        for line in table:
+            line[-3] = Labels.label2html(line[-3])
+            clipboard_html += "<tr><td>" + "</td><td>".join([str(entry) for entry in line]) + "</td></tr>\r\n"
+
+        clipboard_html += "</table>\r\n<!--EndFragment-->\r\n</body>\r\n</html>"
+        clipboard_html = clipboard_html.format(end_html=len(clipboard_html) + 1, end_fragment=len(clipboard_html) - 26)
+        return clipboard_html
+
+    def get_match_table_tex(self, use_gaussian_labels):
+        table = self.get_match_table(use_gaussian_labels=use_gaussian_labels)
+
+        column_alignment = "|".join(["c" for _ in range(len(table[0]))])
+        latex_table = "\\begin{tabular}{" + "|" + column_alignment + "|}\n\\hline\n"
+
+        # def latex_escape(text):
+        #     special_chars = {"&": "\\&", "%": "\\%", "$": "\\$", "#": "\\#", "_": "\\_",
+        #                      "{": "\\{", "}": "\\}", "~": "\\textasciitilde{}", "^": "\\textasciicircum{}",
+        #                      "\\": "\\textbackslash{}"}
+        #     for char, escape in special_chars.items():
+        #         text = text.replace(char, escape)
+        #     return text
+
+        for line in table:
+            line[-3] = Labels.label2tex(line[-3])
+            latex_table += " & ".join([str(entry) for entry in line]) + " \\\\\n\\hline\n"
+
+        latex_table += "\\end{tabular}"
+        return latex_table
+
     def get_match_table(self, use_gaussian_labels=False, header_only=False):
-        print("Get match table")
         table = [["experimental peak position",
                                   "experimental peak intensity",
                                   "computed peak position",  # comp spectrum (composite) peak wavenumber (maximum[0])
@@ -359,7 +400,6 @@ class MatchPlot:
                     if spec is not None:
                         for cluster in self.super_clusters[peak.match][tag]:
                             peak_list = cluster.filtered_peaks(spec.yscale) if Matcher.get(self.is_emission, "list only labeled transitions") else cluster.peaks
-                            print(Matcher.get(self.is_emission, "list only labeled transitions"), len(peak_list))
                             for p, peak in enumerate(peak_list):
                                 mode_data_list = [format(peak.wavenumber+spec.xshift, ".1f"),
                                                   format(peak.corrected_wavenumber+spec.xshift, ".1f"),

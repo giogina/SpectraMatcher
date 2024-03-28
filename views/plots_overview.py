@@ -289,10 +289,11 @@ class PlotsOverview:
                 break
 
     def copy_match_table(self, word=True):
-        self.table = self.viewmodel.match_plot.get_match_table()
-        # '\t'.join
-        # pyperclip.copy(self.table)
-        pass # todo
+        if word:
+            table_string = self.viewmodel.match_plot.get_match_table_html(use_gaussian_labels=self.gaussian_labels)
+        else:
+            table_string = self.viewmodel.match_plot.get_match_table_tex(use_gaussian_labels=self.gaussian_labels)
+        pyperclip.copy(table_string)
 
     def show_match_table(self):
         if self.match_table_shown:
@@ -323,7 +324,6 @@ class PlotsOverview:
             dpg.bind_item_theme(self.match_table, self.match_table_theme)
 
     def update_match_table(self):
-        print("update match table")
         if self.match_table_shown:
             table = self.viewmodel.match_plot.get_match_table(use_gaussian_labels=self.gaussian_labels)
             if len(table) > 1 and len(table)-1 >= len(list(self.match_rows.keys())):
@@ -340,7 +340,6 @@ class PlotsOverview:
             self.table = table
 
     def reconstruct_match_table(self):
-        print("reconstruct match table")
         self.table = self.viewmodel.match_plot.get_match_table(use_gaussian_labels=self.gaussian_labels)
         for row in self.match_rows.values():
             dpg.delete_item(row)
