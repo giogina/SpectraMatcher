@@ -154,6 +154,8 @@ class MainWindow:
         dpg.setup_dearpygui()
         dpg.set_frame_callback(1, self.startup_callback)
         dpg.set_exit_callback(self._on_viewport_close)
+        dpg.set_viewport_small_icon("resources/SpectraMatcher.ico")
+        dpg.set_viewport_large_icon("resources/SpectraMatcher.ico")
         dpg.show_viewport()
         dpg.start_dearpygui()
         dpg.destroy_context()
