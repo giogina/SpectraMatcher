@@ -3,6 +3,7 @@ import math
 import dearpygui.dearpygui as dpg
 from models.settings_manager import SettingsManager
 from utility.async_manager import AsyncManager
+from utility.icons import Icons
 from utility.spectrum_plots import SpecPlotter
 from utility.system_file_browser import *
 from screeninfo import get_monitors
@@ -35,9 +36,10 @@ class Dashboard:
         self.small_font = 13
         self.normal_font = 18
         self.title_font = 33
-        with dpg.font_registry():
+        with dpg.font_registry() as font_reg:
             for i in [self.small_font, self.normal_font, self.title_font]:
                 self.fonts[i] = dpg.add_font("./fonts/Sansation_Regular.ttf", i)
+        self.icons = Icons(font_reg)
         dpg.bind_font(self.fonts[self.normal_font])
 
         with dpg.handler_registry() as self.keyReg:
@@ -50,8 +52,6 @@ class Dashboard:
 
         AsyncManager.start()
 
-        # TODO: Why is it jumpy?
-
         Phi = 1.618033
         dash_width = 800
         dash_height = int(dash_width/Phi)
@@ -59,14 +59,15 @@ class Dashboard:
         self.wavy_height = int(dash_height-1)
         self.spec_plotter = SpecPlotter(20, 0, self.wavy_width)
         self.thickness = 4
-        self.exp_peaks = [[0.25*self.wavy_width, 0.3], [0.4*self.wavy_width, 0.7], [0.7*self.wavy_width, 0.4]]
+        # self.exp_peaks = [[0.25*self.wavy_width, 0.3], [0.4*self.wavy_width, 0.7], [0.7*self.wavy_width, 0.4]]
+        self.exp_peaks = [ [0.4*self.wavy_width, 0.7], [0.6*self.wavy_width, 0.72]]
         self.wobbles = self.determine_wobble_parameters([
-            # {"center": (0.4*self.wavy_width, 0.4), "speed": 2, "aspect_ratio": 1},
-            #  {"center": (0.3 * self.wavy_width, 0.45), "speed": 1, "aspect_ratio": 0.8},
+            {"center": (0.4*self.wavy_width, 0.4), "speed": 2, "aspect_ratio": 1},
+             {"center": (0.3 * self.wavy_width, 0.45), "speed": 1, "aspect_ratio": 0.8},
              {"center": (0.9 * self.wavy_width, 0.3), "speed": 3, "aspect_ratio": 0.6},
-             # {"center": (0.5 * self.wavy_width, 0.1), "speed": 1, "aspect_ratio": 0.3},
+             {"center": (0.5 * self.wavy_width, 0.1), "speed": 1, "aspect_ratio": 0.3},
              {"center": (0.7 * self.wavy_width, 0.2), "speed": 1, "aspect_ratio": 0.8},
-             # {"center": (0.5 * self.wavy_width, 0.5), "speed": 1, "aspect_ratio": 0.2},
+             {"center": (0.5 * self.wavy_width, 0.5), "speed": 1, "aspect_ratio": 0.2},
              ])
         # self.exp_peaks = [[-0.3*self.wavy_width, 0.3]]
         self.phase = 90
@@ -92,7 +93,9 @@ class Dashboard:
                         dpg.draw_image("exp_texture", (0, 0), (self.wavy_width, self.wavy_height))
 
                 with dpg.child_window(width=dash_width - self.wavy_width, height=-1):
-                    dpg.add_button(label="x", pos=[self.wavy_width-53, 3], width=30, tag="close-button", callback=self.on_escape)
+                    # dpg.add_button(label="x", pos=[self.wavy_width-53, 3], width=30, tag="close-button", callback=self.on_escape)
+
+                    self.icons.insert(dpg.add_button(pos=[self.wavy_width-53, 3], width=30, height=30, tag="close-button", callback=self.on_escape), icon=Icons.x, size=16)
                     dpg.bind_item_theme("close-button", close_button_theme)
                     dpg.add_spacer(height=20)
                     with dpg.group(horizontal=True):
@@ -216,17 +219,6 @@ class Dashboard:
     def empty_texture(self):
         return np.zeros((self.wavy_height, self.wavy_width, 4))
 
-    # def dynamic_peaks_array(self, ahead = 0):
-    #     """Compute numpy array for displaying a dynamic "computed" spectrum"""
-    #     color = [(math.cos((-self.phase-120)*math.pi/180)+1)/2,
-    #              (math.cos(-self.phase*math.pi/180)+1)/2,
-    #              (math.cos((-self.phase+120)*math.pi/180)+1)/2,
-    #              255]
-    #
-    #     peaks = self.get_comp_peaks()
-    #     self.last_texture = self.construct_spectrum_texture(color, peaks)
-    #     return self.last_texture.flatten().tolist()
-
     def static_peaks_array(self):
         """Compute numpy array for displaying a static "experimental" spectrum"""
         color = [140, 180, 255, 255]
@@ -271,7 +263,7 @@ class Dashboard:
                                            self.wavy_height - spec[x-1], self.wavy_height - spec[x+1], color)
         return texture_data
 
-    def draw_slice(self, texture, x, y, y0, y1, color):
+    def draw_slice(self, texture, x, y, y0, y1, color):  # todo: anti-aliasing still wonky
         y_int = int(math.floor(y+0.5))
         y_shift = int(round((y-y_int)*10))
         slope0 = y-y0  # delta x is always 1

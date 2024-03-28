@@ -266,6 +266,8 @@ class CreateProjectWindow:
 
     def show(self):
         dpg.setup_dearpygui()
+        dpg.set_viewport_small_icon("resources/SpectraMatcher.ico")
+        dpg.set_viewport_large_icon("resources/SpectraMatcher.ico")
         dpg.show_viewport()
         dpg.start_dearpygui()
         dpg.destroy_context()
