@@ -126,7 +126,8 @@
             "show composite spectrum": true,
             "show component spectra": true,
             "show shade spectra": false,
-            "show stick spectra": false
+            "show stick spectra": false,
+            "assign only labeled": true
         },
         "false": {
             "peak intensity match threshold": 0.03,
@@ -136,7 +137,8 @@
             "show composite spectrum": true,
             "show component spectra": false,
             "show shade spectra": true,
-            "show stick spectra": false
+            "show stick spectra": false,
+            "assign only labeled": false
         }
     },
     "state settings": [

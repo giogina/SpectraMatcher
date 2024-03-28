@@ -163,6 +163,7 @@ class MatchPlot:
         Matcher.add_observer(self)
         self.exp_peaks = []
         self.dragging = False  # True if match plot drag line is currently being moved
+        self.match_only_labeled_peaks = False
 
     def add_observer(self, obs):
         self._observers.append(obs)
@@ -174,7 +175,6 @@ class MatchPlot:
     def update(self, event, *args):
         if event == Matcher.match_settings_updated_notification:
             self.assign_peaks()
-            self._notify_observers()
 
     def add_state_plot(self, spec: StatePlot):
         if spec not in self.contributing_state_plots:
@@ -260,7 +260,19 @@ class MatchPlot:
         for peak in exp_peaks:
             peak.match = None
 
-        super_cluster_peaks = list(self.super_clusters.keys())
+        if not Matcher.get(self.is_emission, "assign only labeled"):
+            super_cluster_peaks = list(self.super_clusters.keys())
+        else:
+            super_cluster_peaks = []
+            for mm, tag_clusters in self.super_clusters.items():
+                include = False
+                for tag, cluster_list in tag_clusters.items():
+                    if sum([len(cluster.label.strip()) for cluster in cluster_list]) > 0:
+                        include = True
+                        break
+                if include:
+                    super_cluster_peaks.append(mm)
+
         super_cluster_peaks.sort(key=lambda p: p[1], reverse=True)  # Assign in order of decreasing intensity
         match_failed = []
 
@@ -293,6 +305,10 @@ class MatchPlot:
             self.assign_peaks()
         else:
             self.set_yshift(0)
+
+    def only_labeled_peaks(self, on):
+        self.match_only_labeled_peaks = on
+        Matcher.set(self.is_emission, 'assign only labeled', on)
 
     def set_yshift(self, value):
         if self.matching_active:
@@ -329,20 +345,20 @@ class MatchPlot:
             return table
 
         for peak in self.exp_peaks:
-            peak_data_list = [format(peak.wavenumber, ".3f"), format(peak.intensity, ".3f")]
+            peak_data_list = [format(peak.wavenumber, ".1f"), format(peak.intensity, ".3f")]
             line_added = False
             if peak.match is None:
                 peak_data_list += ["", ""]
             else:
-                peak_data_list += [format(peak.match[0], ".3f"), format(peak.match[1], ".3f")]
+                peak_data_list += [format(peak.match[0], ".1f"), format(peak.match[1], ".3f")]
                 for tag in self.super_clusters[peak.match].keys():
                     spec = ([s for s in self.contributing_state_plots if s.tag == tag]+[None])[0]
                     peak_data_list += [spec.name]
                     if spec is not None:
                         for cluster in self.super_clusters[peak.match][tag]:
                             for p, peak in enumerate(cluster.peaks):
-                                mode_data_list = [format(peak.wavenumber+spec.xshift, ".3f"),
-                                                  format(peak.corrected_wavenumber+spec.xshift, ".3f"),
+                                mode_data_list = [format(peak.wavenumber+spec.xshift, ".1f"),
+                                                  format(peak.corrected_wavenumber+spec.xshift, ".1f"),
                                                   format(peak.intensity*spec.yscale, ".3f"),
                                                   # (Labels.label2html(peak.get_label(use_gaussian_labels)) if html else Labels.label2tex(peak.get_label(use_gaussian_labels))),
                                                   peak.get_label(use_gaussian_labels),

@@ -216,12 +216,19 @@ class PlotsOverview:
                                 dpg.add_spacer(width=6)
                                 with dpg.group():
                                     self.match_controls['match active'] = dpg.add_checkbox(label=" Match peaks", default_value=False, callback=lambda s, a, u: self.viewmodel.match_peaks(a))
+                                    self.match_controls['assign only labeled'] = dpg.add_checkbox(label=" Assign only labeled peaks", default_value=False, callback=lambda s, a, u: self.viewmodel.toggle_only_labeled_peaks_matched(a))
                                     # with dpg.tree_node(label="Match thresholds"):
                                     self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(min_value=0, max_value=0.2, format=f"Rel. intensity ≥ %0.2f", default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a), width=-6)
                                     self.match_controls['distance match threshold'] = dpg.add_slider_float(min_value=0, max_value=100, format=f"Distance ≤ %0.2f  cm⁻¹", default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a), width=-6)
                                     dpg.add_button(label="Defaults", width=-6, callback=self.restore_matcher_defaults)
-                                    dpg.add_spacer(height=6)
                                     self.show_match_table_button = dpg.add_button(label="Show assignment table", callback=self.show_match_table, width=-6)
+                                    with dpg.table(header_row=False, width=-1, policy=dpg.mvTable_SizingStretchSame):
+                                        dpg.add_table_column()
+                                        dpg.add_table_column()
+                                        with dpg.table_row():
+                                            dpg.add_button(label="Copy table (Word)", width=-6, callback=lambda sender, a, u: self.copy_match_table(word=True))
+                                            dpg.add_button(label="Copy table (TeX)", width=-6, callback=lambda sender, a, u: self.copy_match_table(word=False))
+                                    dpg.add_spacer(height=6)
         self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, show=False, parent="emission tab" if self.viewmodel.is_emission else "excitation tab", callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
         self.dummy_series = dpg.add_scatter_series([0, 2000], [-0.1, 1.1], parent=f"y_axis_{self.viewmodel.is_emission}")
         self.match_plot = dpg.add_line_series([], [], show=False, parent=f"y_axis_{self.viewmodel.is_emission}")
@@ -280,12 +287,22 @@ class PlotsOverview:
                 self.viewmodel.toggle_match_spec_contribution(self.viewmodel.state_plots[tag], True)
                 break
 
+    def copy_match_table(self, word=True):
+        self.table = self.viewmodel.match_plot.get_match_table()
+        # '\t'.join
+        # pyperclip.copy(self.table)
+        pass # todo
+
     def show_match_table(self):
         if self.match_table_shown:
             dpg.delete_item(self.match_table_row)
             dpg.configure_item(self.plot, height=-1)
             dpg.configure_item(self.plot_row, height=0)
+            self.match_table = None
+            self.match_table_row = None
             self.match_table_shown = False
+            self.match_entry = {}
+            self.match_rows = {}
             dpg.configure_item(self.show_match_table_button, label="Show assignment table")
         else:
             dpg.configure_item(self.plot, height=dpg.get_viewport_height()/2)
@@ -295,10 +312,13 @@ class PlotsOverview:
             self.match_entry = {}
             with dpg.table_row(parent=self.plot_and_matches_table) as self.match_table_row:
                 with dpg.table_cell():
-                    with dpg.table(resizable=True, hideable=True, context_menu_in_body=True, borders_innerV=True, scrollX=True, scrollY=True, no_pad_innerX=False, no_pad_outerX=False) as self.match_table:
-                        for header in self.viewmodel.match_plot.get_match_table(header_only=True)[0]:
-                            dpg.add_table_column(label=header)
-                        self.update_match_table()
+                    dpg.add_spacer(height=24)
+                    with dpg.group(horizontal=True):
+                        dpg.add_spacer(width=42)
+                        with dpg.table(resizable=True, width=-42, hideable=True, context_menu_in_body=True, borders_innerV=True, scrollX=True, scrollY=True, no_pad_innerX=False, no_pad_outerX=False) as self.match_table:
+                            for header in self.viewmodel.match_plot.get_match_table(header_only=True)[0]:
+                                dpg.add_table_column(label=" "+header)
+                            self.reconstruct_match_table()
             dpg.bind_item_theme(self.match_table, self.match_table_theme)
 
     def update_match_table(self):
@@ -310,22 +330,22 @@ class PlotsOverview:
                         self.match_rows[i] = dpg.add_table_row(parent=self.match_table)
                     for j, entry in enumerate(line):
                         if dpg.does_item_exist(self.match_entry.get((i, j))):
-                            dpg.set_value(self.match_entry[(i, j)], entry)
+                            dpg.set_value(self.match_entry[(i, j)], " "+entry)
                         else:
-                            self.match_entry[(i, j)] = dpg.add_text(entry, parent=self.match_rows[i])
+                            self.match_entry[(i, j)] = dpg.add_text(" "+entry, parent=self.match_rows[i])
             else:
-                # AsyncManager.submit_task("re-draw match table", self.reconstruct_match_table, table, buffer=0.01)
-                self.reconstruct_match_table(table)
+                self.reconstruct_match_table()
             self.table = table
 
-    def reconstruct_match_table(self, table):
+    def reconstruct_match_table(self):
+        self.table = self.viewmodel.match_plot.get_match_table()
         for row in self.match_rows.values():
             dpg.delete_item(row)
         self.match_rows = {}
-        for i, line in enumerate(table[1:]):
+        for i, line in enumerate(self.table[1:]):
             with dpg.table_row(parent=self.match_table) as self.match_rows[i]:
                 for j, entry in enumerate(line):
-                    self.match_entry[(i, j)] = dpg.add_text(entry)
+                    self.match_entry[(i, j)] = dpg.add_text(" "+entry)
 
     def enable_edit_peaks(self, enable):
         self.peak_edit_mode_enabled = enable
@@ -374,9 +394,6 @@ class PlotsOverview:
     def restore_matcher_defaults(self):
         Matcher.restore_defaults(self.viewmodel.is_emission)
         self.set_ui_values_from_settings(matcher=True)
-
-    def print_table(self):
-       pyperclip.copy(self.viewmodel.match_plot.get_match_table(self.gaussian_labels))
 
     def set_ui_values_from_settings(self, x_scale=False, half_width=False, x_shifts=False, y_shifts=False, labels=False, peak_detection=False, matcher=False):
         if self.disable_ui_update:
@@ -983,6 +1000,7 @@ class PlotsOverview:
         with dpg.theme() as self.match_table_theme:
             with dpg.theme_component(dpg.mvTable):
                 dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 6, 2)
+                dpg.add_theme_color(dpg.mvThemeCol_TableHeaderBg, [60, 60, 154])
 
     def on_scroll(self, direction):
         if self.hovered_spectrum_y_drag_line is not None:
