@@ -66,7 +66,8 @@ class PlotsOverviewViewmodel:
         elif event == Labels.label_settings_updated_notification:
             for tag, s in self.state_plots.items():
                 self._callbacks.get("update labels")(tag)
-            self.match_plot.assign_peaks()
+            if Matcher.get(self.is_emission, "assign only labeled") or Matcher.get(self.is_emission, "list only labeled transitions"):
+                self.match_plot.assign_peaks()
         elif event == ExperimentalSpectrum.peaks_changed_notification:
             self._callbacks.get("redraw peaks")()
             if self.match_plot.matching_active:
@@ -228,10 +229,6 @@ class PlotsOverviewViewmodel:
         else:
             self.match_plot.remove_state_plot(spec)
         self.adjust_spectrum_hide_wrt_match()
-
-    def toggle_only_labeled_peaks_matched(self, on):
-        self.match_plot.only_labeled_peaks(on)
-        print(self.match_plot.match_only_labeled_peaks, Matcher.get(self.is_emission, "assign only labeled"))
 
     def match_peaks(self, match_on):
         self.match_plot.activate_matching(match_on)

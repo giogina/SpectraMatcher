@@ -148,7 +148,7 @@ class SpectraOverview:
     def on_scroll(self, direction):
         for tag in self.viewmodel.state_plots.keys():
             for key in ['xshift', 'yscale', 'yshift']:
-                slider = self.spectrum_controls[tag][key]
+                slider = self.spectrum_controls.get(tag, {}).get(key)
                 if dpg.does_item_exist(slider) and dpg.is_item_hovered(slider):
                     step = {'xshift': 10, 'yscale': 0.1, 'yshift': 0.1}[key]
                     value = dpg.get_value(slider) + step*direction*self.adjustment_factor

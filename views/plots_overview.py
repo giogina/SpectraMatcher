@@ -176,7 +176,7 @@ class PlotsOverview:
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
-                                    self.label_controls['show labels'] = dpg.add_checkbox(label=" Show labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False, default_value=Labels.settings[self.viewmodel.is_emission].get('show labels', False))
+                                    self.label_controls['show labels'] = dpg.add_checkbox(label=" Show Mulliken labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False, default_value=Labels.settings[self.viewmodel.is_emission].get('show labels', False))
                                     self.label_controls['show gaussian labels'] = dpg.add_checkbox(label=" Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True, default_value=Labels.settings[self.viewmodel.is_emission].get('show gaussian labels', False))
                                     self.label_controls['peak intensity label threshold'] = dpg.add_slider_float(label=" Min. Intensity", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))
                                     # self.label_controls['peak separation threshold'] = dpg.add_slider_float(label=" Min. Separation", min_value=0, max_value=100, default_value=Labels.settings[self.viewmodel.is_emission].get('peak separation threshold', 1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak separation threshold', a))  # In original, caused re-draw with higher half-width to smooth out peaks. Probably not necessary.
@@ -216,7 +216,8 @@ class PlotsOverview:
                                 dpg.add_spacer(width=6)
                                 with dpg.group():
                                     self.match_controls['match active'] = dpg.add_checkbox(label=" Match peaks", default_value=False, callback=lambda s, a, u: self.viewmodel.match_peaks(a))
-                                    self.match_controls['assign only labeled'] = dpg.add_checkbox(label=" Assign only labeled peaks", default_value=False, callback=lambda s, a, u: self.viewmodel.toggle_only_labeled_peaks_matched(a))
+                                    self.match_controls['assign only labeled'] = dpg.add_checkbox(label=" Assign only labeled peaks", default_value=False, callback=lambda s, a, u: self.viewmodel.match_plot.only_labeled_peaks(a))
+                                    self.match_controls['list only labeled transitions'] = dpg.add_checkbox(label=" List only labeled transitions", default_value=False, callback=lambda s, a, u: self.viewmodel.match_plot.list_only_labeled_transitions(a))
                                     # with dpg.tree_node(label="Match thresholds"):
                                     self.match_controls['peak intensity match threshold'] = dpg.add_slider_float(min_value=0, max_value=0.2, format=f"Rel. intensity ≥ %0.2f", default_value=Matcher.settings[self.viewmodel.is_emission].get('peak intensity match threshold', 0.03), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'peak intensity match threshold', a), width=-6)
                                     self.match_controls['distance match threshold'] = dpg.add_slider_float(min_value=0, max_value=100, format=f"Distance ≤ %0.2f  cm⁻¹", default_value=Matcher.settings[self.viewmodel.is_emission].get('distance match threshold', 30), callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'distance match threshold', a), width=-6)
@@ -315,16 +316,17 @@ class PlotsOverview:
                     dpg.add_spacer(height=24)
                     with dpg.group(horizontal=True):
                         dpg.add_spacer(width=42)
-                        with dpg.table(resizable=True, width=-42, hideable=True, context_menu_in_body=True, borders_innerV=True, scrollX=True, scrollY=True, no_pad_innerX=False, no_pad_outerX=False) as self.match_table:
+                        with dpg.table(resizable=True, freeze_rows=1, width=-42, hideable=True, context_menu_in_body=True, borders_innerV=True, scrollX=True, scrollY=True, no_pad_innerX=False, no_pad_outerX=False) as self.match_table:
                             for header in self.viewmodel.match_plot.get_match_table(header_only=True)[0]:
                                 dpg.add_table_column(label=" "+header)
                             self.reconstruct_match_table()
             dpg.bind_item_theme(self.match_table, self.match_table_theme)
 
     def update_match_table(self):
+        print("update match table")
         if self.match_table_shown:
-            table = self.viewmodel.match_plot.get_match_table()
-            if len(table) > 1 and sum([len(line) for line in table]) >= len(list(self.match_rows.keys())):
+            table = self.viewmodel.match_plot.get_match_table(use_gaussian_labels=self.gaussian_labels)
+            if len(table) > 1 and len(table)-1 >= len(list(self.match_rows.keys())):
                 for i, line in enumerate(table[1:]):
                     if i not in self.match_rows.keys():
                         self.match_rows[i] = dpg.add_table_row(parent=self.match_table)
@@ -338,7 +340,8 @@ class PlotsOverview:
             self.table = table
 
     def reconstruct_match_table(self):
-        self.table = self.viewmodel.match_plot.get_match_table()
+        print("reconstruct match table")
+        self.table = self.viewmodel.match_plot.get_match_table(use_gaussian_labels=self.gaussian_labels)
         for row in self.match_rows.values():
             dpg.delete_item(row)
         self.match_rows = {}
@@ -1003,9 +1006,9 @@ class PlotsOverview:
                 dpg.add_theme_color(dpg.mvThemeCol_TableHeaderBg, [60, 60, 154])
 
     def on_scroll(self, direction):
-        if self.hovered_spectrum_y_drag_line is not None:
+        if self.hovered_spectrum_y_drag_line is not None and dpg.is_item_hovered(self.plot):
             self.viewmodel.resize_spectrum(self.hovered_spectrum_y_drag_line, direction * self.adjustment_factor)
-        elif self.hovered_x_drag_line is not None:
+        elif self.hovered_x_drag_line is not None and dpg.is_item_hovered(self.plot):
             half_width = self.viewmodel.resize_half_width(direction * self.adjustment_factor)
         elif dpg.is_item_hovered(self.plot):
             for tag in self.viewmodel.state_plots.keys():

@@ -163,7 +163,6 @@ class MatchPlot:
         Matcher.add_observer(self)
         self.exp_peaks = []
         self.dragging = False  # True if match plot drag line is currently being moved
-        self.match_only_labeled_peaks = False
 
     def add_observer(self, obs):
         self._observers.append(obs)
@@ -307,8 +306,10 @@ class MatchPlot:
             self.set_yshift(0)
 
     def only_labeled_peaks(self, on):
-        self.match_only_labeled_peaks = on
         Matcher.set(self.is_emission, 'assign only labeled', on)
+
+    def list_only_labeled_transitions(self, on):
+        Matcher.set(self.is_emission, 'list only labeled transitions', on)
 
     def set_yshift(self, value):
         if self.matching_active:
@@ -328,7 +329,8 @@ class MatchPlot:
         else:
             return spec in [s.tag for s in self.contributing_state_plots]
 
-    def get_match_table(self, use_gaussian_labels=False, html=True, header_only=False):
+    def get_match_table(self, use_gaussian_labels=False, header_only=False):
+        print("Get match table")
         table = [["experimental peak position",
                                   "experimental peak intensity",
                                   "computed peak position",  # comp spectrum (composite) peak wavenumber (maximum[0])
@@ -356,7 +358,9 @@ class MatchPlot:
                     peak_data_list += [spec.name]
                     if spec is not None:
                         for cluster in self.super_clusters[peak.match][tag]:
-                            for p, peak in enumerate(cluster.peaks):
+                            peak_list = cluster.filtered_peaks(spec.yscale) if Matcher.get(self.is_emission, "list only labeled transitions") else cluster.peaks
+                            print(Matcher.get(self.is_emission, "list only labeled transitions"), len(peak_list))
+                            for p, peak in enumerate(peak_list):
                                 mode_data_list = [format(peak.wavenumber+spec.xshift, ".1f"),
                                                   format(peak.corrected_wavenumber+spec.xshift, ".1f"),
                                                   format(peak.intensity*spec.yscale, ".3f"),
@@ -372,6 +376,9 @@ class MatchPlot:
             if not line_added:
                 table.append(peak_data_list)
 
+        for line in table:
+            line += ["" for _ in range(len(line), len(table[0]))]
+        return table
 
 
         # for maximum, max_clusters in self.super_clusters.items():  # super_clusters[maximum[1]][s.tag]
@@ -407,5 +414,5 @@ class MatchPlot:
                             #                         ])
 
                             # table_file.write(" " + clusterstring + peakstring + '\n')
-        return table
+
 

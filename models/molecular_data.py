@@ -284,6 +284,13 @@ class Cluster:
         self.plot_x = 0  # own label position in the plot, dynamically updated as labels are moved
         self.plot_y = 0
 
+    def filtered_peaks(self, yscale):
+        if self.y * yscale < Labels.settings[self.is_emission]['peak intensity label threshold']:
+            return []
+        threshold = Labels.settings[self.is_emission]['stick label relative threshold'] * float(self.peaks[0].intensity) + \
+                    Labels.settings[self.is_emission]['stick label absolute threshold']  # Threshold for counting as contributing to the peak
+        return [p for p in self.peaks if p.intensity > threshold]
+
     def construct_label(self, gaussian: bool, yscale):
         if self.y * yscale < Labels.settings[self.is_emission]['peak intensity label threshold']:
             self.label = ""

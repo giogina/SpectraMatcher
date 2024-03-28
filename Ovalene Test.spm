@@ -69,17 +69,17 @@
     },
     "label settings": {
         "true": {
-            "show labels": true,
-            "show gaussian labels": false,
-            "peak intensity label threshold": 0.050999999046325684,
-            "stick label relative threshold": 0.11699999868869781,
-            "stick label absolute threshold": 0.02199999988079071,
+            "show labels": false,
+            "show gaussian labels": true,
+            "peak intensity label threshold": 0.01899999938905239,
+            "stick label relative threshold": 0.0729999989271164,
+            "stick label absolute threshold": 0.004999999888241291,
             "peak separation threshold": 0.8,
             "label font size": 18,
             "axis font size": 18,
             "peak intensity match threshold": 0.03,
             "distance match threshold": 30,
-            "global y shifts": 0.9003203062175084
+            "global y shifts": 1.0690849081242533
         },
         "false": {
             "show labels": false,
@@ -122,12 +122,13 @@
             "peak intensity match threshold": 0.03,
             "distance match threshold": 30,
             "match active": true,
-            "combo spectrum y shift": 0.9003203062175084,
+            "combo spectrum y shift": 1.0690849081242533,
             "show composite spectrum": true,
             "show component spectra": true,
             "show shade spectra": false,
             "show stick spectra": false,
-            "assign only labeled": true
+            "assign only labeled": true,
+            "list only labeled transitions": true
         },
         "false": {
             "peak intensity match threshold": 0.03,
@@ -138,7 +139,8 @@
             "show component spectra": false,
             "show shade spectra": true,
             "show stick spectra": false,
-            "assign only labeled": false
+            "assign only labeled": false,
+            "list only labeled transitions": false
         }
     },
     "state settings": [
