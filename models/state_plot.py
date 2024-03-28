@@ -356,14 +356,6 @@ class MatchPlot:
         column_alignment = "|".join(["c" for _ in range(len(table[0]))])
         latex_table = "\\begin{tabular}{" + "|" + column_alignment + "|}\n\\hline\n"
 
-        # def latex_escape(text):
-        #     special_chars = {"&": "\\&", "%": "\\%", "$": "\\$", "#": "\\#", "_": "\\_",
-        #                      "{": "\\{", "}": "\\}", "~": "\\textasciitilde{}", "^": "\\textasciicircum{}",
-        #                      "\\": "\\textbackslash{}"}
-        #     for char, escape in special_chars.items():
-        #         text = text.replace(char, escape)
-        #     return text
-
         for line in table:
             line[-3] = Labels.label2tex(line[-3])
             latex_table += " & ".join([str(entry) for entry in line]) + " \\\\\n\\hline\n"

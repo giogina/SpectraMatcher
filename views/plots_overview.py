@@ -85,6 +85,9 @@ class PlotsOverview:
             dpg.add_key_press_handler(dpg.mvKey_Left, callback=lambda s, a, u: self.on_arrow_press("x", -1))
             dpg.add_key_press_handler(dpg.mvKey_Right, callback=lambda s, a, u: self.on_arrow_press("x", 1))
 
+        with dpg.item_handler_registry() as self.table_hover_handlers:
+            dpg.add_item_hover_handler(callback=self.on_match_table_hovered)
+
         with dpg.theme() as self.white_line_series_theme:
             with dpg.theme_component(dpg.mvLineSeries):
                 dpg.add_theme_color(dpg.mvPlotCol_Line, [255, 255, 255], category=dpg.mvThemeCat_Plots)
@@ -241,6 +244,8 @@ class PlotsOverview:
         self.match_table_theme = None
         self.match_entry = {}
         self.match_rows = {}
+        self.red_match_lines = []
+        self.red_peak_points = []
         self.table = []
         self.configure_theme()
 
@@ -315,13 +320,14 @@ class PlotsOverview:
             with dpg.table_row(parent=self.plot_and_matches_table) as self.match_table_row:
                 with dpg.table_cell():
                     dpg.add_spacer(height=24)
-                    with dpg.group(horizontal=True):
+                    with dpg.group(horizontal=True) as table_group:
                         dpg.add_spacer(width=42)
                         with dpg.table(resizable=True, freeze_rows=1, width=-42, hideable=True, context_menu_in_body=True, borders_innerV=True, scrollX=True, scrollY=True, no_pad_innerX=False, no_pad_outerX=False) as self.match_table:
                             for header in self.viewmodel.match_plot.get_match_table(header_only=True)[0]:
                                 dpg.add_table_column(label=" "+header)
                             self.reconstruct_match_table()
             dpg.bind_item_theme(self.match_table, self.match_table_theme)
+            dpg.bind_item_handler_registry(table_group, self.table_hover_handlers)
 
     def update_match_table(self):
         if self.match_table_shown:
@@ -332,9 +338,10 @@ class PlotsOverview:
                         self.match_rows[i] = dpg.add_table_row(parent=self.match_table)
                     for j, entry in enumerate(line):
                         if dpg.does_item_exist(self.match_entry.get((i, j))):
-                            dpg.set_value(self.match_entry[(i, j)], " "+entry)
+                            dpg.configure_item(self.match_entry[(i, j)], label=" "+entry)
                         else:
-                            self.match_entry[(i, j)] = dpg.add_text(" "+entry, parent=self.match_rows[i])
+                            self.match_entry[(i, j)] = dpg.add_button(label=" "+entry, parent=self.match_rows[i], width=-1)
+                            dpg.bind_item_theme(self.match_entry[(i, j)], ItemThemes.invisible_button_theme())
             else:
                 self.reconstruct_match_table()
             self.table = table
@@ -347,7 +354,41 @@ class PlotsOverview:
         for i, line in enumerate(self.table[1:]):
             with dpg.table_row(parent=self.match_table) as self.match_rows[i]:
                 for j, entry in enumerate(line):
-                    self.match_entry[(i, j)] = dpg.add_text(" "+entry)
+                    self.match_entry[(i, j)] = dpg.add_button(label=" "+entry, width=-1)
+                    dpg.bind_item_theme(self.match_entry[(i, j)], ItemThemes.invisible_button_theme())
+
+    def on_match_table_hovered(self, *args):
+        for s_tag in self.viewmodel.state_plots.keys():
+            dpg.hide_item(f"drag-x-{s_tag}")
+        for key, entry in self.match_entry.items():
+            if dpg.does_item_exist(entry) and dpg.is_item_hovered(entry):
+                (i, j) = key
+                while self.table[i+1][0].strip() == "":
+                    i -= 1
+                exp_wn = int(float(self.table[i+1][0]))
+                for red_line in self.red_match_lines:
+                    if not int(red_line[0][0]) == exp_wn:
+                        dpg.configure_item(self.match_lines[red_line], color=[120, 120, 200, 255])
+                        self.red_match_lines.remove(red_line)
+                point_present = False
+                for point in self.red_peak_points:
+                    if int(dpg.get_value(point)[0]) != exp_wn:
+                        dpg.delete_item(point)
+                        self.red_peak_points.remove(point)
+                    else:
+                        point_present = True
+                for key2, line in self.match_lines.items():
+                    if dpg.does_item_exist(line):
+                        if int(key2[0][0]) == exp_wn:
+                            dpg.configure_item(line, color=[255, 0, 0])
+                            if not key2 in self.red_match_lines:
+                                self.red_match_lines.append(key2)
+                if not len(self.red_match_lines) and not point_present:
+                    exp_peak_wns = [int(peak.wavenumber) for peak in self.viewmodel.match_plot.exp_peaks]
+                    if exp_wn in exp_peak_wns:
+                        peak = self.viewmodel.match_plot.exp_peaks[exp_peak_wns.index(exp_wn)]
+                        dpg.add_drag_point(parent=self.plot, default_value=(peak.wavenumber, peak.intensity), color=[255, 0, 0])
+                        self.red_peak_points.append(dpg.last_item())
 
     def enable_edit_peaks(self, enable):
         self.peak_edit_mode_enabled = enable
@@ -442,6 +483,16 @@ class PlotsOverview:
             transformed_y = app_data[2]
             self.pixels_per_plot_x = (transformed_x[1]-transformed_x[0])/1000
             self.pixels_per_plot_y = transformed_y[1]-transformed_y[0]
+
+            if dpg.is_item_hovered(self.plot_settings_group) or dpg.is_item_hovered(f"plot_{self.viewmodel.is_emission}") or dpg.is_item_hovered(f"spectra list group {self.viewmodel.is_emission}"):
+                for line in self.red_match_lines:
+                    if dpg.does_item_exist(self.match_lines[line]):
+                        dpg.configure_item(self.match_lines[line], color=[120, 120, 200, 255])
+                self.red_match_lines = []
+                for point in self.red_peak_points:
+                    dpg.delete_item(point)
+                self.red_peak_points = []
+
             if dpg.is_item_hovered(f"plot_{self.viewmodel.is_emission}"):
                 dpg.show_item(f"exp_overlay_{self.viewmodel.is_emission}")
             else:
@@ -521,6 +572,7 @@ class PlotsOverview:
                         break
                 self.exp_hovered = 0 <= mouse_y_plot_space <= 1
             dpg.pop_container_stack()
+
         except Exception as e:
             print(f"Exception in custom series callback: {e}")
 

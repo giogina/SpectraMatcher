@@ -55,7 +55,7 @@ class SpectraOverview:
                                        show=True), Icons.caret_left, size=16)
         dpg.bind_item_theme(self.spectra_list_action_bar, ItemThemes.action_bar_theme())
 
-        with dpg.group() as self.spectra_list_group:
+        with dpg.group(tag=f"spectra list group {self.viewmodel.is_emission}") as self.spectra_list_group:
             self.last_inserted_spec_tag = dpg.add_spacer(height=0)  # new specs inserted before this tag
 
         self.configure_theme()
