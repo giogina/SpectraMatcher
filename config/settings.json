@@ -1,5 +1,6 @@
 {
     "projectsPath": "C:/Users/Giogina/SpectraMatcher",
+    "dataPath": "C:/Users/Giogina/",
     "recentProjects": [
         "C:/Users/Giogina/SpectraMatcher/Ovalene Test.spm",
         "C:/Users/Giogina/SpectraMatcher/Ovalene Test2.spm",
@@ -30,13 +31,13 @@
         ],
         [
             "Status",
-            60,
+            99,
             50,
             true
         ],
         [
             "State",
-            70,
+            104,
             50,
             true
         ],
@@ -72,7 +73,7 @@
         ],
         [
             "0-0 Energy / cm\u207b\u00b9",
-            142,
+            87,
             80,
             true
         ],

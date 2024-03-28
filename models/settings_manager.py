@@ -10,6 +10,7 @@ import copy
 class Settings:
     """Keys of settings"""
     PROJECTS_PATH = "projectsPath"
+    DATA_PATH = "dataPath"
     RECENT_PROJECTS = "recentProjects"
     AUTO_SAVE_INTERVAL = "autoSaveInterval"
     SHORTCUTS = "shortcuts"
@@ -19,6 +20,7 @@ class Settings:
 class SettingsManager:
     _DEFAULT_SETTINGS = {
         Settings.PROJECTS_PATH: os.path.join(os.path.expanduser("~"), "SpectraMatcher"),
+        Settings.DATA_PATH: os.path.expanduser("~"),
         Settings.RECENT_PROJECTS: [],
         Settings.AUTO_SAVE_INTERVAL: 60,  # Seconds
         Settings.SHORTCUTS: {

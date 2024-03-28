@@ -1,11 +1,9 @@
 import math
-import random
 
 import dearpygui.dearpygui as dpg
 import pyperclip
 
 from models.experimental_spectrum import ExperimentalSpectrum
-from utility.async_manager import AsyncManager
 from utility.font_manager import FontManager
 from utility.icons import Icons
 from utility.item_themes import ItemThemes

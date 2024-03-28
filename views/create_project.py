@@ -211,7 +211,7 @@ class CreateProjectWindow:
             dpg.delete_item(r[1])
 
     def on_add_data(self):
-        file = data_dir_file_dialog(self.settings.get("projectsPath", "/"))  # todo: Implement "dataPath" keyword
+        file = data_dir_file_dialog(self.settings.get("dataPath", "/"))
         if file and len(file):
             self.import_from.append(file)
             s = dpg.add_selectable(label=file, parent="selectables")

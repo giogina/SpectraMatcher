@@ -1,5 +1,4 @@
 import sys
-
 from launcher import Launcher
 from viewmodels.main_viewmodel import MainViewModel
 from views.main_menu import MainMenu
@@ -11,9 +10,7 @@ from utility.icons import Icons
 from utility.font_manager import FontManager
 import dearpygui.dearpygui as dpg
 from screeninfo import get_monitors
-import threading
 import logging
-
 
 
 class MainWindow:

@@ -2,6 +2,8 @@ import os
 from os.path import isfile, join
 import re
 from enum import Enum
+
+from models.settings_manager import SettingsManager
 from utility.experimental_spectrum_parser import ExperimentParser
 from utility.read_write_lock import PathLockManager
 from utility.async_manager import AsyncManager
@@ -39,7 +41,7 @@ class DataFileManager:
         self.top_level_directories = {}
         self.top_level_files = {}
         self._observers = {}
-        self.last_path = "/"  # Last added data path; for file dialog root dirs
+        self.last_path = SettingsManager().get("dataPath", "/")  # Last added data path; for file dialog root dirs
         # Set from parent Project instance, directly coupled to its _data:
         self.directory_toggle_states = {}  # "directory tag": bool - is dir toggled open?
         self.ignored_files_and_directories = []

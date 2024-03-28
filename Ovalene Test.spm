@@ -2,7 +2,8 @@
     "name": "Ovalene Test",
     "open data folders": [
         "C:\\Users\\Giogina\\Documents\\ovalene",
-        "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited"
+        "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited",
+        "D:\\Documents\\hbc"
     ],
     "ground state path": "C:\\Users\\Giogina\\Documents\\ovalene\\ground state\\ovalene-ground-opt-freq-disp.log",
     "directory toggle states": {
@@ -30,7 +31,8 @@
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\experiment_1": true,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ground state_1": true,
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT_1": true,
-        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT emission_1": true
+        "dir_C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT emission_1": true,
+        "dir_D:/Documents/hbc_0": true
     },
     "ignored": [
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1",
@@ -45,27 +47,10 @@
     "open data files": [],
     "files marked as emission": [],
     "files marked as excitation": [],
-    "experiment settings": [
-        {
-            "path": "C:\\Users\\Giogina\\Documents\\ovalene\\experiment\\ovalene_DF_exp.txt",
-            "chosen peaks": [],
-            "removed peaks": [],
-            "intensity column": 3,
-            "relative wavenumber column": 0,
-            "absolute wavenumber column": 1
-        },
-        {
-            "path": "C:\\Users\\Giogina\\Documents\\ovalene\\experiment\\ovalene_EX_exp.txt",
-            "chosen peaks": [],
-            "removed peaks": [],
-            "intensity column": 2,
-            "relative wavenumber column": 0,
-            "absolute wavenumber column": 1
-        }
-    ],
+    "experiment settings": [],
     "State class info": {
-        "molecule": "C\u2083\u2082H\u2081\u2084",
-        "ground state energy": -269539068.8354385
+        "molecule": "C\u2084\u2082H\u2081\u2088",
+        "ground state energy": -353663020
     },
     "label settings": {
         "true": {
