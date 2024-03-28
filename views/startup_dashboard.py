@@ -60,11 +60,11 @@ class Dashboard:
         self.spec_plotter = SpecPlotter(20, 0, self.wavy_width)
         self.thickness = 4
         self.exp_peaks = [[0.25*self.wavy_width, 0.3], [0.4*self.wavy_width, 0.7], [0.7*self.wavy_width, 0.4]]
-        self.wobbles = self.determine_wobble_parameters(
-            [{"center": (0.4*self.wavy_width, 0.4), "speed": 2, "aspect_ratio": 1},
-             {"center": (0.3 * self.wavy_width, 0.45), "speed": 1, "aspect_ratio": 0.8},
+        self.wobbles = self.determine_wobble_parameters([
+            # {"center": (0.4*self.wavy_width, 0.4), "speed": 2, "aspect_ratio": 1},
+            #  {"center": (0.3 * self.wavy_width, 0.45), "speed": 1, "aspect_ratio": 0.8},
              {"center": (0.9 * self.wavy_width, 0.3), "speed": 3, "aspect_ratio": 0.6},
-             {"center": (0.5 * self.wavy_width, 0.1), "speed": 1, "aspect_ratio": 0.3},
+             # {"center": (0.5 * self.wavy_width, 0.1), "speed": 1, "aspect_ratio": 0.3},
              {"center": (0.7 * self.wavy_width, 0.2), "speed": 1, "aspect_ratio": 0.8},
              # {"center": (0.5 * self.wavy_width, 0.5), "speed": 1, "aspect_ratio": 0.2},
              ])
