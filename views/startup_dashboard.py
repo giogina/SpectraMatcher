@@ -2,6 +2,7 @@ import math
 
 import dearpygui.dearpygui as dpg
 from models.settings_manager import SettingsManager
+from utility.async_manager import AsyncManager
 from utility.spectrum_plots import SpecPlotter
 from utility.system_file_browser import *
 from screeninfo import get_monitors
@@ -47,8 +48,9 @@ class Dashboard:
             dpg.add_mouse_move_handler(callback=self.on_recent_hover)
             dpg.add_mouse_click_handler(callback=self.on_recent_click)
 
-        # TODO: import multiprocessing for smoother generation of curves?
-        #  Also, maybe fade into the next buffer frame rather than jumping?
+        AsyncManager.start()
+
+        # TODO: Why is it jumpy?
 
         Phi = 1.618033
         dash_width = 800
@@ -71,10 +73,10 @@ class Dashboard:
         self.pixel_intensity_stamps = self.precompute_pixel_intensities()
         self.shadow = np.zeros((self.wavy_height, self.wavy_width, 4))
         self.last_texture = np.zeros((self.wavy_height, self.wavy_width, 4))
-        self.frames_per_degree = 1
+        self.frames_per_degree = 2
         self.texture_buffer = np.zeros((self.frames_per_degree*360, self.wavy_height, self.wavy_width, 4), dtype=np.uint8)
         self.texture_buffer_pointer = 0
-        self.startup_indicator = -1
+        self.startup_indicator = -self.frames_per_degree*360
         self.init_textures()
 
         dpg.create_viewport(title='SpectraMatcher', width=dash_width, height=dash_height,
@@ -141,34 +143,53 @@ class Dashboard:
             dpg.add_dynamic_texture(width=self.wavy_width, height=self.wavy_height,
                                     default_value=self.empty_texture(), tag="shadow_texture")
             dpg.add_dynamic_texture(width=self.wavy_width, height=self.wavy_height,
-                                    default_value=self.empty_texture(), tag="comp_texture")  # todo: try raw texture
+                                    default_value=self.empty_texture(), tag="comp_texture")
         self.precompute_dynamic_textures_async()
 
     def precompute_dynamic_textures_async(self):
-        self.startup_indicator -= 1
-        texture_thread1 = threading.Thread(target=self.precompute_dynamic_textures, args=(2, 0))
-        texture_thread1.daemon = True
-        texture_thread1.start()
-        texture_thread2 = threading.Thread(target=self.precompute_dynamic_textures, args=(2, 1))
-        texture_thread2.daemon = True
-        texture_thread2.start()
-        print("Started!")
+        phase = 0
+        while phase < 360:
+            AsyncManager.submit_task(f"texture pre compute {phase}", self.precompute_dynamic_texture, phase)
+            phase += 1./self.frames_per_degree
 
-    def precompute_dynamic_textures(self, step=1, shift=0):
-        for i in range(360*self.frames_per_degree):
-            phase = i/self.frames_per_degree + shift
-            color = [(math.cos((-phase - 120) * math.pi / 180) + 1) / 2 * 255,
-                     (math.cos(-phase * math.pi / 180) + 1) / 2 * 255,
-                     (math.cos((-phase + 120) * math.pi / 180) + 1) / 2 * 255,
-                     200]
-            color = np.array(color).astype(np.uint8)
-            peaks = self.get_comp_peaks(phase)
-            self.texture_buffer[i, :, :, :] = self.construct_spectrum_texture(color, peaks).astype(dtype=np.uint8)
-            i += step*self.frames_per_degree
+    # def precompute_dynamic_textures_async(self):
+    #     texture_thread1 = threading.Thread(target=self.precompute_dynamic_textures, args=(2, 0))
+    #     texture_thread1.daemon = True
+    #     texture_thread1.start()
+    #     texture_thread2 = threading.Thread(target=self.precompute_dynamic_textures, args=(2, 1))
+    #     texture_thread2.daemon = True
+    #     texture_thread2.start()
+    #     print("Started!")
+    #
+    # def precompute_dynamic_textures(self, step=1, shift=0):
+    #     for i in range(360*self.frames_per_degree):
+    #         phase = i/self.frames_per_degree + shift
+    #         color = [(math.cos((-phase - 120) * math.pi / 180) + 1) / 2 * 255,
+    #                  (math.cos(-phase * math.pi / 180) + 1) / 2 * 255,
+    #                  (math.cos((-phase + 120) * math.pi / 180) + 1) / 2 * 255,
+    #                  200]
+    #         color = np.array(color).astype(np.uint8)
+    #         peaks = self.get_comp_peaks(phase)
+    #         self.texture_buffer[i, :, :, :] = self.construct_spectrum_texture(color, peaks).astype(dtype=np.uint8)
+    #         i += step*self.frames_per_degree
+    #     self.startup_indicator += 1
+    #     if self.startup_indicator >= 0:
+    #         self.startup_indicator = 90*self.frames_per_degree
+    #     print(self.startup_indicator)
+
+    def precompute_dynamic_texture(self, phase):
+        color = [(math.cos((-phase - 120) * math.pi / 180) + 1) / 2 * 255,
+                 (math.cos(-phase * math.pi / 180) + 1) / 2 * 255,
+                 (math.cos((-phase + 120) * math.pi / 180) + 1) / 2 * 255,
+                 200]
+        color = np.array(color).astype(np.uint8)
+        peaks = self.get_comp_peaks(phase)
+        self.texture_buffer[self.get_texture_index(phase), :, :, :] = self.construct_spectrum_texture(color, peaks).astype(dtype=np.uint8)
+
         self.startup_indicator += 1
         if self.startup_indicator >= 0:
-            self.startup_indicator = 90*self.frames_per_degree
-        print(self.startup_indicator)
+            self.startup_indicator = 90
+        # print(self.startup_indicator)
 
     def _update_dynamic_textures(self):
         if self.startup_indicator < 0:
@@ -178,16 +199,19 @@ class Dashboard:
         if self.phase == 0:
             self.shadow = np.zeros((self.wavy_height, self.wavy_width, 4))
         self.shadow[:, :, :] *= 0.98
-        if self.phase % 1 == 0:
-            self.shadow = np.maximum(0.6 * self.texture_buffer[int(self.frames_per_degree*self.phase), :, :, :] / 255, self.shadow)
+        new_texture_data = self.texture_buffer[self.get_texture_index(self.phase), :, :, :] / 255.
+        if math.isclose(self.phase % 1, 0, abs_tol=1e-9):
+            self.shadow = np.maximum(0.6 * new_texture_data, self.shadow)
         new_shadow = self.shadow
-        new_texture_data = self.texture_buffer[int(self.frames_per_degree*self.phase), :, :, :] / 255.
         if self.startup_indicator > 0:
-            self.startup_indicator -= 0.5
-            new_texture_data *= (1. - self.startup_indicator/90)**1
-            new_shadow *= (1. - self.startup_indicator/90)**1
+            self.startup_indicator -= 0.5/self.frames_per_degree
+            new_texture_data *= (1. - self.startup_indicator/90)**0.5
+            new_shadow *= (1. - self.startup_indicator/90)**0.5
         dpg.set_value("shadow_texture", new_shadow)
         dpg.set_value("comp_texture", new_texture_data)
+
+    def get_texture_index(self, phase):
+        return int(self.frames_per_degree*(phase % 360))
 
     def empty_texture(self):
         return np.zeros((self.wavy_height, self.wavy_width, 4))
@@ -422,7 +446,7 @@ class Dashboard:
         # dpg.start_dearpygui()
         while dpg.is_dearpygui_running():
             if self.startup_indicator >= 0:
-                self.phase = (self.phase + 1/self.frames_per_degree) % 360
+                self.phase = (self.phase + 1./self.frames_per_degree) % 360
                 # if self.phase > 350 or self.phase < 10:
                 #     self.phase = (self.phase + 0.5) % 360
                 # else:
