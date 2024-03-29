@@ -57,7 +57,12 @@ class SettingsManager:
             self.file_lock = threading.Lock()  # Lock for file operations
 
             # self.logger = logging.getLogger(__name__)
-            self.settings_file = "./config/settings.json"
+            appdata_path = os.getenv('APPDATA')
+            spectra_matcher_path = os.path.join(appdata_path, 'SpectraMatcher')
+            config_path = os.path.join(spectra_matcher_path, 'config')
+            os.makedirs(config_path, exist_ok=True)
+            self.settings_file = os.path.join(config_path, 'settings.json')
+
             self._settings_dict = self._load_settings()
             # self.logger.info(f"Settings loaded. {self._settings_dict}")
             self._is_initialized = True
@@ -84,10 +89,6 @@ class SettingsManager:
         print(f"Creating default settings file...")
         try:
             settings = copy.deepcopy(SettingsManager._DEFAULT_SETTINGS)
-            print(settings)
-            if not os.path.exists("./config"):
-                print("mkdir")
-                os.mkdir("./config")
             with open(self.settings_file, "w") as file:
                 json.dump(self._convert_dict_keys_to_string(settings), file, indent=4)
         except (IOError, OSError) as e:

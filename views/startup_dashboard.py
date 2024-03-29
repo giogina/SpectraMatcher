@@ -1,4 +1,5 @@
 import math
+import random
 
 import dearpygui.dearpygui as dpg
 from models.settings_manager import SettingsManager
@@ -61,13 +62,21 @@ class Dashboard:
         self.thickness = 4
         self.exp_peaks = [[0.25*self.wavy_width, 0.3], [0.4*self.wavy_width, 0.7], [0.7*self.wavy_width, 0.4]]
         self.wobbles = self.determine_wobble_parameters([
-             {"center": (0.4*self.wavy_width, 0.4), "speed": 2, "aspect_ratio": 1},
-             {"center": (0.3 * self.wavy_width, 0.45), "speed": 1, "aspect_ratio": 0.8},
-             {"center": (0.9 * self.wavy_width, 0.3), "speed": 3, "aspect_ratio": 0.6},
-             {"center": (0.5 * self.wavy_width, 0.1), "speed": 1, "aspect_ratio": 0.3},
-             {"center": (0.7 * self.wavy_width, 0.2), "speed": 1, "aspect_ratio": 0.8},
-             {"center": (0.5 * self.wavy_width, 0.5), "speed": 1, "aspect_ratio": 0.2},
+             # {"center": (0.4*self.wavy_width, 0.4), "speed": 2, "aspect_ratio": 1},
+             # {"center": (0.3 * self.wavy_width, 0.45), "speed": 1, "aspect_ratio": 0.8},
+             # {"center": (0.9 * self.wavy_width, 0.3), "speed": 3, "aspect_ratio": 0.6},
+             # {"center": (0.5 * self.wavy_width, 0.1), "speed": 1, "aspect_ratio": 0.3},
+             # {"center": (0.7 * self.wavy_width, 0.2), "speed": 1, "aspect_ratio": 0.8},
+             # {"center": (0.5 * self.wavy_width, 0.5), "speed": 1, "aspect_ratio": 0.2},
+             {"center": (0.4*self.wavy_width, 0.4), "speed": random.choice(range(1, 3)), "aspect_ratio": 0.2+random.random()*0.6},
+             {"center": (0.3 * self.wavy_width, 0.45), "speed": random.choice(range(1, 3)), "aspect_ratio": 0.2+random.random()*0.6},
+             {"center": (0.9 * self.wavy_width, 0.3), "speed": random.choice(range(1, 3)), "aspect_ratio": 0.2+random.random()*0.6},
+             {"center": (0.5 * self.wavy_width, 0.1), "speed": random.choice(range(1, 3)), "aspect_ratio": 0.2+random.random()*0.6},
+             {"center": (0.7 * self.wavy_width, 0.2), "speed": random.choice(range(1, 3)), "aspect_ratio": 0.5+random.random()/2},
+             {"center": (0.5 * self.wavy_width, 0.15), "speed": random.choice(range(1, 3)), "aspect_ratio": 0.5+random.random()/2},
              ])
+        print([w["speed"] for w in self.wobbles])
+        print([w["aspect_ratio"] for w in self.wobbles])
         # self.exp_peaks = [[-0.3*self.wavy_width, 0.3]]
         self.phase = 90
         self.pixel_intensity_stamps = self.precompute_pixel_intensities()
@@ -213,7 +222,7 @@ class Dashboard:
             else:
                 wobble["ry"] = wobble["center"][1]
                 wobble["rx"] = wobble["ry"] / aspect_ratio
-                wobble["phi"] = 3/2*math.pi
+                wobble["phi"] = 3/2*math.pi / wobble["speed"]
 
             res.append(wobble)
             # print(wobble)

@@ -7,3 +7,4 @@ venv_win
 /old/
 build*/
 build.dist/
+/main.dist/
