@@ -333,6 +333,8 @@ class FCSpectrum:
         self._observers = []
         self.peaks = peaks
         self.multiplicator = multiplicator
+        self.x_min = 0
+        self.x_max = 0
         self.zero_zero_transition_energy = zero_zero_transition_energy
         self.minima = None
         self.maxima = None
@@ -340,9 +342,6 @@ class FCSpectrum:
         if len(self.x_data):
             self.x_min = min(self.x_data)
             self.x_max = max(self.x_data)
-        else:
-            self.x_min = 0
-            self.x_max = 0
         for peak in self.peaks:
             peak.intensity /= self.mul2  # scale to match self.y_data scaling
         self.determine_label_clusters()
@@ -369,6 +368,9 @@ class FCSpectrum:
         self.peaks = WavenumberCorrector.compute_corrected_wavenumbers(self.is_emission, self.peaks, self.vibrational_modes)
         self.peaks = Labels.construct_labels(self.peaks, self.vibrational_modes, self.is_emission)
         key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
+        if len(self.x_data):
+            self.x_min = min(self.x_data)
+            self.x_max = max(self.x_data)
         for peak in self.peaks:
             peak.intensity /= self.mul2
         self.determine_label_clusters()
@@ -457,6 +459,8 @@ class FCSpectrum:
                 else:
                     cluster.rel_x = 0  # all good, keep it there.
 
+                print(cluster.label, cluster.x, cluster.rel_x, self.x_min, self.x_max)
+
                 # adjust lift of neighbours
                 if cluster.left_neighbour is not None:
                     cluster.left_neighbour.right_neighbour = cluster.right_neighbour
@@ -543,6 +547,9 @@ class FCSpectrum:
                     self.y_data = self.y_data_arrays[key]
                 else:
                     _, self.x_data, self.y_data, _ = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
+                    if len(self.x_data):
+                        self.x_min = min(self.x_data)
+                        self.x_max = max(self.x_data)
                     self.x_data_arrays[key] = self.x_data
                     self.y_data_arrays[key] = self.y_data
                 self.determine_label_clusters()
@@ -553,6 +560,9 @@ class FCSpectrum:
                 AsyncManager.submit_task(f"Recompute spectrum {self.zero_zero_transition_energy} {self.is_emission}",
                                          SpecPlotter.get_spectrum_array, self.peaks, self.is_emission,
                                          notification="xy data ready", observers=[self])
+                if len(self.x_data):
+                    self.x_min = min(self.x_data)
+                    self.x_max = max(self.x_data)
         elif event == "xy data ready":
             (key, self.x_data, self.y_data, self.mul2) = args[0]
             for peak in self.peaks:
