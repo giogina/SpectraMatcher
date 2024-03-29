@@ -1,5 +1,4 @@
 import numpy as np
-import logging
 import colorsys
 
 from scipy.interpolate import interp1d
@@ -58,8 +57,8 @@ class SpecPlotter:
         self._base_peak_middle_index = int((self._base_peak.size-1)/2)  # index at which _base_peak peaks
         self.log = False
         if self.log:
-            logging.info(f"base peak length: {self._base_peak.size}, middle: {self._base_peak_middle_index}")
-            logging.info(f"base peak: {self._base_peak}")
+            print(f"base peak length: {self._base_peak.size}, middle: {self._base_peak_middle_index}")
+            print(f"base peak: {self._base_peak}")
 
     @classmethod
     def add_observer(cls, observer):

@@ -2,7 +2,7 @@ import copy
 import json
 import os
 import tempfile
-import logging
+# import logging
 import threading
 import time
 import ctypes
@@ -52,7 +52,7 @@ class Project(FileObserver):
     def __init__(self, project_file):
         self._project_file_lock = threading.Lock()
         self._data_lock = threading.Lock()
-        self._logger = logging.getLogger(__name__)
+        # self._logger = logging.getLogger(__name__)
         self._observers = {}
         self._is_unsaved = False
 
@@ -76,7 +76,7 @@ class Project(FileObserver):
             if os.path.exists(self._autosave_file + ".backup") and not os.path.exists(self._autosave_file):
                 os.rename(self._autosave_file + ".backup", self._autosave_file)
         except Exception as e:
-            logging.error("restoring .backup file failed")
+            print("restoring .backup file failed")
 
         self._data_defaults = {
             "name": "Untitled",
@@ -106,7 +106,7 @@ class Project(FileObserver):
 
     def load(self, auto=False):
         """Load project file"""
-        self._logger.info(f"file: {self.project_file}, exsits={os.path.exists(self.project_file)}")
+        print(f"file: {self.project_file}, exsits={os.path.exists(self.project_file)}")
         self._data = dict()
         with self._project_file_lock:
             self._settings.add_recent_project(self.project_file)
@@ -125,20 +125,20 @@ class Project(FileObserver):
                     self._notify_observers("state data changed")
                     self._notify_observers("experimental data changed")
                 elif os.path.exists(self._autosave_file):
-                    self._logger.warning("Project file not found. Attempting to restore autosave file...")
+                    print("Project file not found. Attempting to restore autosave file...")
                     self.load(auto=True)
                 else:
-                    self._logger.error(f"Error: Project file {self.project_file} not found.")
+                    print(f"Error: Project file {self.project_file} not found.")
                     self._notify_observers("Project file not found")
             except (IOError, OSError) as e:
-                self._logger.error(f"Error accessing project file: {e}")
+                print(f"Error accessing project file: {e}")
                 if not auto and os.path.exists(self._autosave_file):
-                    self._logger.warning("Attempting to restore autosave file...")
+                    print("Attempting to restore autosave file...")
                     self.load(auto=True)
             except json.JSONDecodeError as e:
-                self._logger.error(f"Error decoding project JSON: {e}")
+                print(f"Error decoding project JSON: {e}")
                 if not auto and os.path.exists(self._autosave_file):
-                    self._logger.warning("Attempting to restore autosave file...")
+                    print("Attempting to restore autosave file...")
                     self.load(auto=True)
         self._autosave_thread.start()
 
@@ -292,7 +292,7 @@ class Project(FileObserver):
                 if not auto:
                     self.project_unsaved(False)
             except (IOError, OSError) as e:
-                self._logger.error(f"Error saving project: {e}")
+                print(f"Error saving project: {e}")
                 if temp_file_path:
                     os.remove(temp_file_path)
 
@@ -306,7 +306,7 @@ class Project(FileObserver):
         try:
             ctypes.windll.kernel32.SetFileAttributesW(c_filepath, FILE_ATTRIBUTE_HIDDEN)
         except Exception as e:
-            self._logger.warning(f"Hiding file {file} failed: {e}")
+            print(f"Hiding file {file} failed: {e}")
 
     ############### Observers ###############
 
@@ -336,7 +336,7 @@ class Project(FileObserver):
                 lock_file.write(self.window_title)
             self._hide(self._lock_file_path)
         except Exception as e:
-            logging.warning(f"Couldn't write lock file! {e}")
+            print(f"Couldn't write lock file! {e}")
 
     def check_newer_autosave(self):
         if os.path.exists(self._autosave_file):
@@ -396,15 +396,15 @@ class Project(FileObserver):
                 return self._data[key]
             else:
                 if key in self._data_defaults.keys():
-                    self._logger.warning(f"Project data key {key} not found, using defaults.")
+                    print(f"Project data key {key} not found, using defaults.")
                     return self._data_defaults[key]
                 else:
-                    self._logger.error(f"Project data key {key} not found in get")
+                    print(f"Project data key {key} not found in get")
                     return default
 
     def set(self, key, value):
         if key not in self._data:
-            self._logger.info(f"Used an unknown project data key '{key}'. Added it anyway.")
+            print(f"Used an unknown project data key '{key}'. Added it anyway.")
         with self._data_lock:
             self._data[key] = value
         self.project_unsaved()

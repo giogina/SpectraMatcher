@@ -3,7 +3,7 @@ from viewmodels.main_viewmodel import MainViewModel, noop
 import dearpygui.dearpygui as dpg
 from utility.icons import Icons
 from utility.system_file_browser import *
-import logging
+# import logging
 from screeninfo import get_monitors
 from contextlib import contextmanager
 import webbrowser
@@ -14,7 +14,7 @@ class MainMenu:
     """Takes care of the viewport menu as well as keyboard shortcuts (combinations including Ctrl or Alt only)"""
     def __init__(self, viewmodel: MainViewModel):
         self.viewmodel = viewmodel
-        self.logger = logging.getLogger(__name__)
+        # self.logger = logging.getLogger(__name__)
         self.icons = Icons()
 
         # Helper variables for various stuff below; handle with care
@@ -255,7 +255,7 @@ class MainMenu:
         self.actions[action] = {"label": label, "callback": callback, "icon": icon}
 
     def _on_save_as(self, *args):
-        self.logger.info(f"Save as requested")
+        print(f"Save as requested")
         file = save_as_file_dialog(self.viewmodel.get_setting("projectsPath", "/"))
         if len(file):
             self.viewmodel.on_save_as(file)
@@ -264,14 +264,14 @@ class MainMenu:
         self.viewmodel.on_save()
 
     def _on_new(self, *args):
-        self.logger.info(f"New project")
+        print(f"New project")
         self.viewmodel.on_new()
 
     def _on_exit(self, *args):
         dpg.stop_dearpygui()
 
     def _on_open(self, *args):
-        self.logger.info(f"Open project")
+        print(f"Open project")
         file = open_project_file_dialog(self.viewmodel.get_setting("projectsPath", "/"))
         if file:
             self.viewmodel.on_open(file)

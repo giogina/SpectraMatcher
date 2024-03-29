@@ -10,14 +10,14 @@ from utility.icons import Icons
 from utility.font_manager import FontManager
 import dearpygui.dearpygui as dpg
 from screeninfo import get_monitors
-import logging
+# import logging
 
 
 class MainWindow:
 
     def __init__(self, path):
         self.result = 0
-        self.logger = logging.getLogger(__name__)
+        # self.logger = logging.getLogger(__name__)
         self.viewModel = MainViewModel(path)
         self.icons = Icons()
 

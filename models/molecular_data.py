@@ -340,6 +340,9 @@ class FCSpectrum:
         if len(self.x_data):
             self.x_min = min(self.x_data)
             self.x_max = max(self.x_data)
+        else:
+            self.x_min = 0
+            self.x_max = 0
         for peak in self.peaks:
             peak.intensity /= self.mul2  # scale to match self.y_data scaling
         self.determine_label_clusters()

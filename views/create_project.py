@@ -1,5 +1,5 @@
 import dearpygui.dearpygui as dpg
-import logging
+# import logging
 import os
 from screeninfo import get_monitors
 from models.settings_manager import SettingsManager
@@ -14,7 +14,7 @@ class CreateProjectWindow:
     def __init__(self, args=[]):
         self.result = None
         self.import_from = args
-        self.logger = logging.getLogger(__name__)
+        # self.logger = logging.getLogger(__name__)
         self.projectPath = ""
         self.settings = SettingsManager()
 

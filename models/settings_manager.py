@@ -2,7 +2,7 @@ import glob
 import json
 import os
 import tempfile
-import logging
+# import logging
 import threading
 import copy
 
@@ -56,7 +56,7 @@ class SettingsManager:
             self.update_lock = threading.Lock()  # Lock for updating settings in memory
             self.file_lock = threading.Lock()  # Lock for file operations
 
-            self.logger = logging.getLogger(__name__)
+            # self.logger = logging.getLogger(__name__)
             self.settings_file = "./config/settings.json"
             self._settings_dict = self._load_settings()
             # self.logger.info(f"Settings loaded. {self._settings_dict}")
@@ -68,20 +68,20 @@ class SettingsManager:
             try:
                 if os.path.exists(self.settings_file):
                     with open(self.settings_file, "r") as file:
-                        self.logger.info(f"Attempting to read{self.settings_file}...")
+                        print(f"Attempting to read{self.settings_file}...")
                         temp_settings = copy.deepcopy(SettingsManager._DEFAULT_SETTINGS)
                         temp_settings.update(self._convert_keys_to_tuple(json.load(file)))
                         return temp_settings
                 else:
                     return self._create_default_settings()
             except (IOError, OSError) as e:
-                self.logger.error(f"Error accessing settings file: {e}")
+                print(f"Error accessing settings file: {e}")
             except json.JSONDecodeError as e:
-                self.logger.error(f"Error decoding settings JSON: {e}")
+                print(f"Error decoding settings JSON: {e}")
             return self._create_default_settings()
 
     def _create_default_settings(self):
-        self.logger.info(f"Creating default settings file...")
+        print(f"Creating default settings file...")
         try:
             settings = copy.deepcopy(SettingsManager._DEFAULT_SETTINGS)
             print(settings)
@@ -91,7 +91,7 @@ class SettingsManager:
             with open(self.settings_file, "w") as file:
                 json.dump(self._convert_dict_keys_to_string(settings), file, indent=4)
         except (IOError, OSError) as e:
-            self.logger.error(f"Error creating default settings file: {e}")
+            print(f"Error creating default settings file: {e}")
         return settings
 
     def _convert_dict_keys_to_string(self, d):
@@ -153,7 +153,7 @@ class SettingsManager:
                 os.remove(backup_file)
 
             except Exception as e:
-                self.logger.error(f"Error saving settings: {e}")
+                print(f"Error saving settings: {e}")
                 if temp_file_path:
                     os.remove(temp_file_path)
 
@@ -165,15 +165,15 @@ class SettingsManager:
             self._settings_dict[key] = copy.deepcopy(SettingsManager._DEFAULT_SETTINGS[key])
             return copy.deepcopy(self._settings_dict[key])
         else:
-            self.logger.info(f"Tried to get setting {key} which did not exist.")
+            print(f"Tried to get setting {key} which did not exist.")
             return default
 
     def update_settings(self, new_settings):
         for key in new_settings:
             if key not in SettingsManager._DEFAULT_SETTINGS:
-                self.logger.info(f"Used an unknown setting '{key}' which is not in default settings")
+                print(f"Used an unknown setting '{key}' which is not in default settings")
             if key in [Settings.RECENT_PROJECTS]:
-                self.logger.warning(f"Attempted to assign protected setting '{key}'. Ignoring.")
+                print(f"Attempted to assign protected setting '{key}'. Ignoring.")
                 return
             with self.update_lock:
                 self._settings_dict[key] = copy.deepcopy(new_settings[key])

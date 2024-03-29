@@ -9,11 +9,12 @@ from views.create_project import CreateProjectWindow
 
 
 def main():
-    logging.basicConfig(level=logging.INFO, filename='spectraMatcher.log',
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    gui_handler = GuiLogHandler()  # TODO: Pass GUI element to display logs.
-    logging.getLogger().addHandler(gui_handler)
-    logging.info(f"Started with flags: {sys.argv}")
+    # # egularly remove the logger; or just turn it all off?
+    # logging.basicConfig(level=logging.INFO, filename='spectraMatcher.log',
+    #                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # gui_handler = GuiLogHandler()  # to do: Pass GUI element to display logs?
+    # logging.getLogger().addHandler(gui_handler)
+    # logging.info(f"Started with flags: {sys.argv}")
 
     flags = None
     if len(sys.argv) > 1:
@@ -34,11 +35,11 @@ def main():
     if flags:  # Restart this program with proper flags.
         Launcher.launch(*flags)
 
+
 if __name__ == "__main__":
     main()
 
-    # TODO: Installation wizard: Set path for spectraMatcher projects folder; save that to .config/settings.json .
+    # Installation wizard:
     #   To make dearpygui work on win7: Make sure # https://learn.microsoft.com/en-GB/cpp/windows/latest-supported-vc-redist?view=msvc-170
     #   is installed, and include IEShims.dll and d3dcompiler_47.dll (currently present in C:\Users\Giogina\SpectraMatcher\venv_win\Lib\site-packages\dearpygui).
-    #   pyinstaller --add-binary='path/to/dll;.' main.py
-    #   Adapt os.system(f'python {sys.argv[0]} {flags}') to only os.system(f'{sys.argv[0]} {flags}'), make sure it works with the right executable.
+    #   (The VC .dlls are automatically included in Nuitka; the other two dlls are added by inno setup.)

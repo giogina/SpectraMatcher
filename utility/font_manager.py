@@ -3,6 +3,7 @@ import time
 from utility.icons import Icons
 import dearpygui.dearpygui as dpg
 
+
 class FontManager:
 
     fonts = {}
