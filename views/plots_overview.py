@@ -493,7 +493,7 @@ class PlotsOverview:
                     dpg.delete_item(point)
                 self.red_peak_points = []
 
-            if dpg.is_item_hovered(f"plot_{self.viewmodel.is_emission}"):
+            if dpg.is_item_hovered(f"plot_{self.viewmodel.is_emission}") or self.dragged_plot is not None:
                 dpg.show_item(f"exp_overlay_{self.viewmodel.is_emission}")
             else:
                 dpg.hide_item(f"exp_overlay_{self.viewmodel.is_emission}")
@@ -532,6 +532,7 @@ class PlotsOverview:
                         if drag_line_distance < min_hovered_drag_line_distance:
                             hovered_spectrum = s
                             min_hovered_drag_line_distance = drag_line_distance
+                        if hovered_spectrum == s or self.dragged_plot == s.tag:
                             if not -0.2 < s.yshift <= 0.9 and not self.viewmodel.match_plot.matching_active:
                                 dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [s.xdata, s.ydata - s.yshift])
                                 dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[s.tag])
@@ -878,7 +879,10 @@ class PlotsOverview:
             for cluster in clusters:
                 if len(cluster.label):
                     peak_pos, label_pos = cluster.get_plot_pos(state_plot, gap_height=Labels.settings[self.viewmodel.is_emission]['label font size']/self.pixels_per_plot_y)
-                    annotation = dpg.add_plot_annotation(tag=str(peak_pos), label=cluster.label, default_value=label_pos, clamped=False, offset=(0, -cluster.height/2/self.pixels_per_plot_y), color=[0, 0, 0, 0], parent=plot, user_data=(cluster, state_plot.tag))  #[200, 200, 200, 0]
+                    if not dpg.does_item_exist(str(peak_pos)):
+                        annotation = dpg.add_plot_annotation(tag=str(peak_pos), label=cluster.label, default_value=label_pos, clamped=False, offset=(0, -cluster.height/2/self.pixels_per_plot_y), color=[0, 0, 0, 0], parent=plot, user_data=(cluster, state_plot.tag))  #[200, 200, 200, 0]
+                    else:
+                        annotation = str(peak_pos)
                     self.annotations[tag][peak_pos] = annotation
                     self.label_drag_points[tag][annotation] = dpg.add_drag_point(default_value=label_pos, color=[255, 255, 0], show_label=False, show=False, user_data=annotation, callback=lambda s, a, u: self.move_label(dpg.get_value(s)[:2], u, update_drag_point=False), parent=plot)
                     self.annotation_lines[tag][annotation] = self.draw_label_line(cluster, peak_pos)

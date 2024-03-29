@@ -420,6 +420,8 @@ class Project(FileObserver):
     def copy_state_settings(self):
         """Store paths etc of State instances into _data (necessary when new set of states is created)"""
         self._data["state settings"] = []
+        if len(State.state_list):
+            self._data["ground state path"] = State.state_list[0].settings["freq file"]
         for state in State.state_list[1:]:
             self._data["state settings"].append(state.settings)
         self.project_unsaved()

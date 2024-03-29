@@ -65,7 +65,7 @@ class State:
 
     def _notify_observers(self, message):
         for o in self._observers:
-            print(f"Updating state observers: {message}")
+            # print(f"Updating state observers: {message}")
             o.update(message, self)
 
     def get_spectrum(self, is_emission):

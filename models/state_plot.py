@@ -417,38 +417,5 @@ class MatchPlot:
         return table
 
 
-        # for maximum, max_clusters in self.super_clusters.items():  # super_clusters[maximum[1]][s.tag]
-        #     for tag, cluster_list in max_clusters.items():
-        #         spec = ([s for s in self.contributing_state_plots if s.tag == tag]+[None])[0]
-        #         if spec is not None:
-        #             for cluster in cluster_list:
-        #                 for p, peak in enumerate(cluster.peaks):
-        #                     print(tag, peak.__dict__)
-        #                     if p == 0:
-        #                         clusterinfolist = [format(int(maximum[0]), ">4"), format(cluster['y'], ".3f"),
-        #                                            "", ""  # needs to be the exp
-        #                                            ]
-        #                         print(clusterinfolist)
-                            #     if 'exp_peak_index' in cluster.keys():
-                            #         clusterinfolist[2] = format(int(exp_spectrum[cluster['exp_peak_index']]['wavenumber']), ">4")
-                            #         clusterinfolist[3] = format(exp_spectrum[cluster['exp_peak_index']]['intensity'], ".3f")
-                            # else:
-                            #     clusterinfolist = ["    " for c in clusterinfolist]
-                            #
-                            # clusterstring = "\t".join([str(n) for n in clusterinfolist]) + "\t"
-                            # peakstring = "\t".join([format(n, ">4") for n in [int((peak['wavenumber'] + xshift)),
-                            #                                                   # int((peak[wn_key]+xshift) * 10) / 10,
-                            #                                                   int((peak['corrected_wavenumber'] + xshift))] +
-                            #                         ([int((peak['anharmonic_wavenumber'] + xshift))] if anharm else [])] +
-                            #                        [format(peak['intensity'], ".3f")] +
-                            #                        [format(peak[label_key], ">24"),
-                            #                         format(peak['symmetries'][0] if len(set(peak['symmetries'])) == 1 else "   ",
-                            #                                "<5"),
-                            #                         peak['types'][0] if len(set(peak['types'])) == 1 else (
-                            #                             'Ring deformation' if set(peak['types']) == {'Ring deformation',
-                            #                                                                          'C-C stretch'} else "")
-                            #                         ])
-
-                            # table_file.write(" " + clusterstring + peakstring + '\n')
 
 

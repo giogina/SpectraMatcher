@@ -69,9 +69,6 @@ class ProjectSetupViewModel(ProjectObserver):
     def get_project_name(self):
         return self._project.get("name", "")
 
-    def print_args(self, *args):
-        print(f"project setup viewmodel got: {args}")
-
     def add_state(self):
         State()
         self._callbacks.get("update states data")()
