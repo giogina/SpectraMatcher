@@ -51,8 +51,7 @@ class ProjectSetupViewModel(ProjectObserver):
         elif event_type == ExperimentalSpectrum.new_spectrum_notification:
             self._callbacks.get("update experimental data")()
 
-    def auto_import(self):
-
+    def auto_import(self, *args):
         ExperimentalSpectrum.spectra_list = []
         for file in File.experiment_files:
             if not file.ignored and file.type in (FileType.EXPERIMENT_EMISSION, FileType.EXPERIMENT_EXCITATION):
@@ -84,10 +83,13 @@ class ProjectSetupViewModel(ProjectObserver):
         if len(dropdown_items) == 0:
             return [], None
         chosen_str = dropdown_items[0]
-        chosen_key = (State.molecule_and_method.get("molecule"), int(State.molecule_and_method.get("ground state energy", -1)))
-        if chosen_key in self.mlo_options.values():  # Previously selected entry
-            chosen_str = dropdown_items[list(self.mlo_options.values()).index(chosen_key)]
-        return dropdown_items, chosen_str
+        if State.molecule_and_method.get("ground state energy") is not None:
+            chosen_key = (State.molecule_and_method.get("molecule"), int(State.molecule_and_method.get("ground state energy", -1)))
+            if chosen_key in self.mlo_options.values():  # Previously selected entry
+                chosen_str = dropdown_items[list(self.mlo_options.values()).index(chosen_key)]
+            return dropdown_items, chosen_str
+        else:
+            return [], ""
 
     def select_mlo(self, list_str):
         """Molecule & level of theory option selected in top-level dropdown"""
@@ -126,7 +128,7 @@ class ProjectSetupViewModel(ProjectObserver):
         self._callbacks.get("update experimental data")()
         self._project.copy_experiment_settings()
 
-    def import_done(self):
+    def import_done(self, *args):
         for state in State.state_list:
             if not state.check():
                 self._callbacks.get("dialog")(title=f"Errors in data of {state.name}", message='\n'.join(state.errors))

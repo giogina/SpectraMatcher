@@ -139,19 +139,19 @@ class MainMenu:
 
         dpg.configure_item("the one modal window", no_title_bar=False, label=title)
 
-    def _on_modal_button_press(self, s, a, u):
+    def _on_modal_button_press(self, s, a, u, *args):
         dpg.hide_item("the one modal window")
         if u in [0, 1, 2]:
             self.button_callbacks[u]()
 
-    def _show_modal_child(self, tag):
+    def _show_modal_child(self, tag, *args):
         if tag not in self.modal_child_window_tags:
             return
         for t in self.modal_child_window_tags:
             dpg.hide_item(t)
         dpg.show_item(tag)
 
-    def _show_configure_shortcuts(self):
+    def _show_configure_shortcuts(self, *args):
         dpg.show_item("the one modal window")
         self._show_modal_child("configure shortcuts window")
         dpg.configure_item("the one modal window", no_title_bar=False, label="Configure keyboard shortcuts")
@@ -241,7 +241,6 @@ class MainMenu:
 
     @contextmanager
     def _actions_registry(self):
-        # Before yielding, you could also modify self.actions if needed
         yield self.actions
         self._assign_shortcuts_to_actions()
 
@@ -250,41 +249,41 @@ class MainMenu:
             label = action
         self.actions[action] = {"label": label, "callback": callback, "icon": icon}
 
-    def _on_save_as(self):
+    def _on_save_as(self, *args):
         self.logger.info(f"Save as requested")
         file = save_as_file_dialog(self.viewmodel.get_setting("projectsPath", "/"))
         if len(file):
             self.viewmodel.on_save_as(file)
 
-    def _on_save(self):
+    def _on_save(self, *args):
         self.viewmodel.on_save()
 
-    def _on_new(self):
+    def _on_new(self, *args):
         self.logger.info(f"New project")
         self.viewmodel.on_new()
 
-    def _on_exit(self):
+    def _on_exit(self, *args):
         dpg.stop_dearpygui()
 
-    def _on_open(self):
+    def _on_open(self, *args):
         self.logger.info(f"Open project")
         file = open_project_file_dialog(self.viewmodel.get_setting("projectsPath", "/"))
         if file:
             self.viewmodel.on_open(file)
 
-    def _open_recent(self, s, a, u):
+    def _open_recent(self, s, a, u, *args):
         self.viewmodel.on_open(u)
 
-    def _on_select_new_shortcut(self, s, a, u):
+    def _on_select_new_shortcut(self, s, a, u, *args):
         self._show_modal_child("input shortcut window")
         dpg.configure_item("the one modal window", no_title_bar=True)
         dpg.set_item_label("press shortcut", label=f"Press desired shortcut to {u}...")
         self.alter_shortcut_of = u
 
-    def _close_modal_window(self):
+    def _close_modal_window(self, *args):
         dpg.hide_item("the one modal window")
 
-    def _restore_default_shortcuts(self):
+    def _restore_default_shortcuts(self, *args):
         self.viewmodel.restore_default_shortcuts()
         self._repopulate_shortcuts_table()
 
@@ -324,7 +323,7 @@ class MainMenu:
     def _get_shortcut_string(self, shortcut: tuple):
         return '+'.join([self._dpg_key_to_name(key) for key in shortcut]).replace("Shift+Ctrl", "Ctrl+Shift")
 
-    def _on_key_down(self, s, a):
+    def _on_key_down(self, s, a, *args):
         if a not in self.currently_pressed:
             self.currently_pressed.append(a)
             shortcuts = self.viewmodel.get_shortcuts()
@@ -336,7 +335,7 @@ class MainMenu:
                     if callback:
                         callback()
 
-    def _on_key_released(self, s, a):
+    def _on_key_released(self, s, a, *args):
         # If "configure shortcuts" window is open, update shortcut upon release.
         if self.alter_shortcut_of:
             pressed = []

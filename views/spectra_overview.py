@@ -67,7 +67,7 @@ class SpectraOverview:
     #  Allow color choices
     #  Collapse / expand all sections
 
-    def on_right_click_release(self):
+    def on_right_click_release(self, *args):
         for tag in self.viewmodel.state_plots.keys():
             if dpg.is_item_hovered(self.spectrum_controls[tag]['hide']) or dpg.is_item_hovered(self.spectrum_controls[tag]['show']):
                 for tag2 in self.viewmodel.state_plots.keys():
@@ -75,7 +75,7 @@ class SpectraOverview:
                         self.hide_spectrum(tag2)
                 self.hide_spectrum(tag, False)
 
-    def reset_spectrum_controls(self, tag):
+    def reset_spectrum_controls(self, tag, *args):
         defaults = {'xshift': 0., 'yscale': 1.}
         state_plot = self.viewmodel.state_plots[tag]
         self.viewmodel.on_x_drag(defaults['xshift'], state_plot.tag, slider=True)
@@ -145,7 +145,7 @@ class SpectraOverview:
 
         dpg.bind_item_theme(self.spectra_list_group, spec_list_theme)
 
-    def on_scroll(self, direction):
+    def on_scroll(self, direction, *args):
         for tag in self.viewmodel.state_plots.keys():
             for key in ['xshift', 'yscale', 'yshift']:
                 slider = self.spectrum_controls.get(tag, {}).get(key)

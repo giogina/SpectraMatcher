@@ -5,3 +5,4 @@ spectraMatcher.log
 __pycache__
 venv_win
 /old/
+build*/

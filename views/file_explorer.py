@@ -169,11 +169,11 @@ class FileExplorer:
 
         self.configure_theme()
 
-    def on_drop_files(self, data):
+    def on_drop_files(self, data, *args):
         if type(data) == list:
             self.viewmodel.add_directory_or_file(data)
 
-    def _setup_filter_popup(self, filter_button):
+    def _setup_filter_popup(self, filter_button, *args):
         with dpg.popup(filter_button, tag="file filter popup", mousebutton=dpg.mvMouseButton_Left, no_move=False):
             dpg.add_button(label="Filter file types", width=200)
             dpg.bind_item_theme(dpg.last_item(), ItemThemes.invisible_button_theme())
@@ -196,13 +196,13 @@ class FileExplorer:
                              callback=self._update_filter)
             dpg.add_checkbox(label="  Emission", default_value=True, tag="check-emission", callback=self._update_filter)
 
-    def _collapse_folder(self, directory, expand):
+    def _collapse_folder(self, directory, expand, *args):
         dpg.set_value(directory.tag, expand)
         self._toggle_directory_node_labels(directory.tag)
         for subdir in directory.content_dirs.values():
             self._collapse_folder(subdir, expand)
 
-    def _remove_file(self, s, a, u):
+    def _remove_file(self, s, a, u, *args):
         self.viewmodel.remove_file(u)
         dpg.delete_item(u)
         for file in self._file_rows:
@@ -301,12 +301,12 @@ class FileExplorer:
             dpg.add_selectable(label="Show in Explorer ", user_data=file.path.replace("/", "\\"),
                                callback=lambda s, a, u: subprocess.Popen(f'explorer /select,"{u}"'))
 
-    def _collapse_all(self, s, a, expand=False):
+    def _collapse_all(self, s, a, expand=False, *args):
         for directory in self._directory_nodes:
             dpg.set_value(directory, expand)
             self._toggle_directory_node_labels(directory)
 # todo: no_pad_outer_x or the like should solve my table alignment issues
-    def _select_columns(self, s, show, i):
+    def _select_columns(self, s, show, i, *args):
         self._table_columns[i][3] = show
         self.viewmodel.update_column_settings()
         dpg.configure_item(f"table header {i}", show=show)  # header
@@ -317,7 +317,7 @@ class FileExplorer:
         for file in self._file_rows:                        # file rows
             dpg.configure_item(f"{file.tag}-c{i}", show=show)
 
-    def _update_filter(self):
+    def _update_filter(self, *args):
         for file in self._file_rows:
             if file.extension == ".log":
                 status = file.properties.get(GaussianLog.STATUS, "")
@@ -342,7 +342,7 @@ class FileExplorer:
             else:
                 dpg.configure_item(file.tag, show=dpg.get_value(f'check .*'))
 
-    def _tables_resize(self):
+    def _tables_resize(self, *args):
         column = self._resizing_column
         if column:
             delta = dpg.get_mouse_drag_delta()[0]
@@ -379,7 +379,7 @@ class FileExplorer:
             self._table_columns[self._resizing_column][1] = dpg.get_item_width(f"table header {self._resizing_column}")
             self._tables_resize()
 
-    def _on_mouse_left_release(self):
+    def _on_mouse_left_release(self, *args):
         column = self._resizing_column
         if column:
             # arrow_cursor = ctypes.windll.user32.LoadCursorW(0, 32512)
@@ -392,7 +392,7 @@ class FileExplorer:
             if is_open != dpg.get_value(node):
                 self._toggle_directory_node_labels(node)
 
-    def _toggle_directory_node_labels(self, item_tag):  # Currently simply makes sure the icon matches the target state.
+    def _toggle_directory_node_labels(self, item_tag, *args):  # Currently simply makes sure the icon matches the target state.
         label = dpg.get_item_label(item_tag)
         is_open = dpg.get_value(item_tag)
         if is_open:
@@ -405,10 +405,10 @@ class FileExplorer:
         self._directory_nodes[item_tag] = is_open
         self.viewmodel.toggle_directory(item_tag, self._directory_nodes[item_tag])
 
-    def _add_data_folder(self):
+    def _add_data_folder(self, *args):
         self.viewmodel.inquire_open_data_directory()
 
-    def _add_data_files(self):
+    def _add_data_files(self, *args):
         self.viewmodel.inquire_open_data_files()
 
     def reset_file_explorer(self, directories, files):

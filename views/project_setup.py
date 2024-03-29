@@ -205,10 +205,10 @@ class ProjectSetup:
             dpg.bind_item_theme("import done", self.big_button_theme)
             dpg.configure_item("import done", callback=self.viewmodel.import_done)
 
-    def add_state(self):
+    def add_state(self, *args):
         self.viewmodel.add_state()
 
-    def update_states(self):
+    def update_states(self, *args):
         """Re-populate all the states"""
         nr_displayed_states = self.nr_state_nodes
         for i in range(0, min(nr_displayed_states, len(State.state_list))):
@@ -222,7 +222,7 @@ class ProjectSetup:
             for i in range(nr_displayed_states, len(State.state_list)):
                 self.add_state_tree_node()
 
-    def add_experiment_row(self):
+    def add_experiment_row(self, *args):
         exp_index = self.nr_experiment_rows
         if dpg.does_item_exist(f"temp table hint input"):
             dpg.delete_item(f"temp table hint input")
@@ -279,8 +279,7 @@ class ProjectSetup:
                         for key in keys:
                             dpg.add_menu_item(label=f"{key}, {exp.columns[key][0]}, {exp.columns[key][1]}, {exp.columns[key][2]}, ...", user_data=key, callback=lambda s, a, u: exp.set_column_usage(u, "int"))
 
-
-    def update_experimental_data(self):
+    def update_experimental_data(self, *args):
         """Display all the experimental data (from scratch, in table)"""
         print(f"Updating exp data: {[e.settings for e in ExperimentalSpectrum.spectra_list]}")
         nr_displayed_experiments = self.nr_experiment_rows

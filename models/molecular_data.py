@@ -337,8 +337,9 @@ class FCSpectrum:
         self.minima = None
         self.maxima = None
         key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
-        self.x_min = min(self.x_data)
-        self.x_max = max(self.x_data)
+        if len(self.x_data):
+            self.x_min = min(self.x_data)
+            self.x_max = max(self.x_data)
         for peak in self.peaks:
             peak.intensity /= self.mul2  # scale to match self.y_data scaling
         self.determine_label_clusters()

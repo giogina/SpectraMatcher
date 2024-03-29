@@ -59,10 +59,9 @@ class Dashboard:
         self.wavy_height = int(dash_height-1)
         self.spec_plotter = SpecPlotter(20, 0, self.wavy_width)
         self.thickness = 4
-        # self.exp_peaks = [[0.25*self.wavy_width, 0.3], [0.4*self.wavy_width, 0.7], [0.7*self.wavy_width, 0.4]]
-        self.exp_peaks = [ [0.4*self.wavy_width, 0.7], [0.6*self.wavy_width, 0.72]]
+        self.exp_peaks = [[0.25*self.wavy_width, 0.3], [0.4*self.wavy_width, 0.7], [0.7*self.wavy_width, 0.4]]
         self.wobbles = self.determine_wobble_parameters([
-            {"center": (0.4*self.wavy_width, 0.4), "speed": 2, "aspect_ratio": 1},
+             {"center": (0.4*self.wavy_width, 0.4), "speed": 2, "aspect_ratio": 1},
              {"center": (0.3 * self.wavy_width, 0.45), "speed": 1, "aspect_ratio": 0.8},
              {"center": (0.9 * self.wavy_width, 0.3), "speed": 3, "aspect_ratio": 0.6},
              {"center": (0.5 * self.wavy_width, 0.1), "speed": 1, "aspect_ratio": 0.3},
@@ -154,31 +153,6 @@ class Dashboard:
         while phase < 360:
             AsyncManager.submit_task(f"texture pre compute {phase}", self.precompute_dynamic_texture, phase)
             phase += 1./self.frames_per_degree
-
-    # def precompute_dynamic_textures_async(self):
-    #     texture_thread1 = threading.Thread(target=self.precompute_dynamic_textures, args=(2, 0))
-    #     texture_thread1.daemon = True
-    #     texture_thread1.start()
-    #     texture_thread2 = threading.Thread(target=self.precompute_dynamic_textures, args=(2, 1))
-    #     texture_thread2.daemon = True
-    #     texture_thread2.start()
-    #     print("Started!")
-    #
-    # def precompute_dynamic_textures(self, step=1, shift=0):
-    #     for i in range(360*self.frames_per_degree):
-    #         phase = i/self.frames_per_degree + shift
-    #         color = [(math.cos((-phase - 120) * math.pi / 180) + 1) / 2 * 255,
-    #                  (math.cos(-phase * math.pi / 180) + 1) / 2 * 255,
-    #                  (math.cos((-phase + 120) * math.pi / 180) + 1) / 2 * 255,
-    #                  200]
-    #         color = np.array(color).astype(np.uint8)
-    #         peaks = self.get_comp_peaks(phase)
-    #         self.texture_buffer[i, :, :, :] = self.construct_spectrum_texture(color, peaks).astype(dtype=np.uint8)
-    #         i += step*self.frames_per_degree
-    #     self.startup_indicator += 1
-    #     if self.startup_indicator >= 0:
-    #         self.startup_indicator = 90*self.frames_per_degree
-    #     print(self.startup_indicator)
 
     def precompute_dynamic_texture(self, phase):
         color = [(math.cos((-phase - 120) * math.pi / 180) + 1) / 2 * 255,
@@ -368,7 +342,7 @@ class Dashboard:
             precomputed_intensities[a] = alpha_ints
         return precomputed_intensities
 
-    def adjust_theme(self):
+    def adjust_theme(self, *args):
         with dpg.theme() as global_theme:
             with dpg.theme_component(dpg.mvAll):
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4)
@@ -427,13 +401,15 @@ class Dashboard:
 
         return file_list_item_theme, file_list_item_hovered_theme, close_button_theme
 
-    def on_escape(self):
+    def on_escape(self, *args):
         self.result = None
         dpg.delete_item("dash")
         dpg.stop_dearpygui()
 
     def show(self):
         dpg.setup_dearpygui()
+        dpg.set_viewport_small_icon("resources/SpectraMatcher.ico")
+        dpg.set_viewport_large_icon("resources/SpectraMatcher.ico")
         dpg.show_viewport()
         # dpg.start_dearpygui()
         while dpg.is_dearpygui_running():
@@ -446,32 +422,28 @@ class Dashboard:
                 # print(self.phase)
                 self._update_dynamic_textures()
             dpg.render_dearpygui_frame()
+        AsyncManager.shutdown()
         dpg.destroy_context()
         return self.result
 
-    def open_project(self):
+    def open_project(self, *args):
         # Logic to open a project
         project_path = open_project_file_dialog(self.settings.get("projectsPath", "/"))
         if project_path:
             self.result = ('-open', project_path)
             dpg.stop_dearpygui()
 
-    def create_new_project(self):
+    def create_new_project(self, *args):
         self.result = ("-new", )
         dpg.stop_dearpygui()
 
-    def key_handler(self, sender, app_data):
-        if app_data == dpg.mvKey_Escape:  # Check if the Escape key was pressed
-            self.result = ("-exit", )
-            dpg.stop_dearpygui()
-
-    def on_recent_click(self, sender, app_data):
+    def on_recent_click(self, *args):
         for i, item in enumerate(self.file_item):
             if dpg.is_item_hovered(f"list item {i}"):
                 self.result = ('-open', self.recent[i])
                 dpg.stop_dearpygui()
 
-    def on_recent_hover(self, sender, app_data):
+    def on_recent_hover(self, *args):
         for i, item in enumerate(self.file_item):
             item_tag = f"list item {i}"
             if dpg.is_item_hovered(item_tag):
@@ -479,7 +451,7 @@ class Dashboard:
             else:
                 dpg.bind_item_theme(item_tag, self.file_list_item_theme)
 
-    def mark_selected_recent_item(self):
+    def mark_selected_recent_item(self, *args):
         for i, item in enumerate(self.file_item):
             item_tag = f"list item {i}"
             if i == self.selected_recent_item:
@@ -492,19 +464,19 @@ class Dashboard:
             else:
                 dpg.bind_item_theme(item_tag, self.file_list_item_theme)
 
-    def on_down(self):
+    def on_down(self, *args):
         if self.recent:
             self.selected_recent_item = (self.selected_recent_item + 1) % len(self.recent)
             self.mark_selected_recent_item()
 
-    def on_up(self):
+    def on_up(self, *args):
         if self.recent:
             if self.selected_recent_item == -1:
                 self.selected_recent_item = 0
             self.selected_recent_item = (self.selected_recent_item - 1) % len(self.recent)
             self.mark_selected_recent_item()
 
-    def on_enter(self):
+    def on_enter(self, *args):
         if self.selected_recent_item in range(len(self.recent)):
             self.result = ('-open', self.recent[self.selected_recent_item])
             dpg.stop_dearpygui()

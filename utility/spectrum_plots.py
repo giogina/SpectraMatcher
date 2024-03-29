@@ -126,7 +126,7 @@ class SpecPlotter:
             top = max(0.01, max(ydata))
             return plotter_key, cls._plotters[plotter_key].x_data, ydata / top, top
         else:
-            return None, None, [], 1
+            return None, [], [], 1
 
     def _base_lorentzian_array(self):
         """Compute 1D array of lorentzian peak values with top at (0,1) for x_data_length width scaled to 1"""

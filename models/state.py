@@ -8,7 +8,7 @@ import time
 
 class State:
     # Used for identification of matching files. Set only by select_molecule_and_ground_state_energy, or from project.
-    molecule_and_method = {"molecule": None, "ground state energy": None}  # coupled to project._data
+    molecule_and_method = {"molecule": None, "ground state energy": -1}  # coupled to project._data
     state_list = []
     _observers = []
     imported_file_changed_notification = "State file changed"

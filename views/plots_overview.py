@@ -247,7 +247,7 @@ class PlotsOverview:
         self.table = []
         self.configure_theme()
 
-    def viewport_resize_update(self):
+    def viewport_resize_update(self, *args):
         if dpg.get_item_configuration(self.expand_plot_settings_button).get('show'):
             dpg.hide_item(self.expand_plot_settings_button)
             dpg.configure_item(self.expand_plot_settings_button, show=True, pos=(dpg.get_viewport_width() - 40, 45))
@@ -257,25 +257,25 @@ class PlotsOverview:
             dpg.configure_item(self.plot, height=dpg.get_viewport_height()/2)
             dpg.configure_item(self.plot_row, height=dpg.get_viewport_height()/2)
 
-    def toggle_fine_adjustments(self, fine):
+    def toggle_fine_adjustments(self, fine, *args):
         if fine:
             self.adjustment_factor = 0.1
         else:
             self.adjustment_factor = 1
 
-    def toggle_ctrl_flag(self, down):
+    def toggle_ctrl_flag(self, down, *args):
         self.ctrl_pressed = down
 
-    def on_arrow_press(self, dimension, direction):
+    def on_arrow_press(self, dimension, direction, *args):
         if dimension == "x":
             self.viewmodel.last_action_x(direction * self.adjustment_factor)
         else:
             self.viewmodel.last_action_y(direction * self.adjustment_factor)
 
-    def on_left_mouse_down(self):
+    def on_left_mouse_down(self, *args):
         self.left_mouse_is_down = True
 
-    def on_right_click_release(self):
+    def on_right_click_release(self, *args):
         point = self.hovered_peak_indicator_point
         if point is not None:
             exp, peak = dpg.get_item_user_data(point)
@@ -291,14 +291,14 @@ class PlotsOverview:
                 self.viewmodel.toggle_match_spec_contribution(self.viewmodel.state_plots[tag], True)
                 break
 
-    def copy_match_table(self, word=True):
+    def copy_match_table(self, word=True, *args):
         if word:
             table_string = self.viewmodel.match_plot.get_match_table_html(use_gaussian_labels=self.gaussian_labels)
         else:
             table_string = self.viewmodel.match_plot.get_match_table_tex(use_gaussian_labels=self.gaussian_labels)
         pyperclip.copy(table_string)
 
-    def show_match_table(self):
+    def show_match_table(self, *args):
         if self.match_table_shown:
             dpg.delete_item(self.match_table_row)
             dpg.configure_item(self.plot, height=-1)
@@ -327,7 +327,7 @@ class PlotsOverview:
             dpg.bind_item_theme(self.match_table, self.match_table_theme)
             dpg.bind_item_handler_registry(table_group, self.table_hover_handlers)
 
-    def update_match_table(self):
+    def update_match_table(self, *args):
         if self.match_table_shown:
             table = self.viewmodel.match_plot.get_match_table(use_gaussian_labels=self.gaussian_labels)
             if len(table) > 1 and len(table)-1 >= len(list(self.match_rows.keys())):
@@ -344,7 +344,7 @@ class PlotsOverview:
                 self.reconstruct_match_table()
             self.table = table
 
-    def reconstruct_match_table(self):
+    def reconstruct_match_table(self, *args):
         self.table = self.viewmodel.match_plot.get_match_table(use_gaussian_labels=self.gaussian_labels)
         for row in self.match_rows.values():
             dpg.delete_item(row)
@@ -388,11 +388,11 @@ class PlotsOverview:
                         dpg.add_drag_point(parent=self.plot, default_value=(peak.wavenumber, peak.intensity), color=[255, 0, 0])
                         self.red_peak_points.append(dpg.last_item())
 
-    def enable_edit_peaks(self, enable):
+    def enable_edit_peaks(self, enable, *args):
         self.peak_edit_mode_enabled = enable
         self.redraw_peak_drag_points()
 
-    def redraw_peak_drag_points(self):
+    def redraw_peak_drag_points(self, *args):
         self.delete_peak_indicator_points()
         if self.peak_edit_mode_enabled:
             for exp in ExperimentalSpectrum.spectra_list:
@@ -409,13 +409,13 @@ class PlotsOverview:
                 dpg.delete_item(point)
         self.peak_indicator_points = []
 
-    def mark_peak_dragged(self, peak_point):
+    def mark_peak_dragged(self, peak_point, *args):
         self.dragged_peak = peak_point
         exp, peak = dpg.get_item_user_data(peak_point)
         index = exp.get_x_index(dpg.get_value(peak_point)[0])
         dpg.set_value(self.dragged_peak, (exp.xdata[index], exp.ydata[index]))
 
-    def collapse_plot_settings(self, show=False):
+    def collapse_plot_settings(self, show=False, *args):
         dpg.configure_item(self.plot_settings_group, show=show)
         dpg.configure_item(self.plot_settings_action_bar, show=show)
         dpg.configure_item(self.collapse_plot_settings_button, show=show)
@@ -428,11 +428,11 @@ class PlotsOverview:
         for tag in self.viewmodel.state_plots.keys():
             self.draw_labels(tag)  # redistribute those
 
-    def restore_label_defaults(self):
+    def restore_label_defaults(self, *args):
         Labels.restore_defaults(self.viewmodel.is_emission)
         self.set_ui_values_from_settings(labels=True)
 
-    def restore_matcher_defaults(self):
+    def restore_matcher_defaults(self, *args):
         Matcher.restore_defaults(self.viewmodel.is_emission)
         self.set_ui_values_from_settings(matcher=True)
 
@@ -474,7 +474,7 @@ class PlotsOverview:
                 if dpg.get_item_callback(item) is not None:
                     dpg.get_item_callback(item)(item, value, dpg.get_item_user_data(item))
 
-    def _custom_series_callback(self, sender, app_data):
+    def _custom_series_callback(self, sender, app_data, *args):
         try:
             _helper_data = app_data[0]
             mouse_x_plot_space = _helper_data["MouseX_PlotSpace"]
@@ -579,7 +579,7 @@ class PlotsOverview:
     def pixel_distance(self, plot_pos_1, plot_pos_2):
         return abs((plot_pos_1[0] - plot_pos_2[0])*self.pixels_per_plot_x), abs((plot_pos_1[1] - plot_pos_2[1])*self.pixels_per_plot_y)
 
-    def sticks_callback(self, sender, app_data):
+    def sticks_callback(self, sender, app_data, *args):
         return
 
     def redraw_plot(self):
@@ -634,6 +634,8 @@ class PlotsOverview:
         self.fit_y()
 
     def hide_spectrum(self, tag, hide):
+        if not dpg.does_item_exist(tag):
+            return
         dpg.configure_item(tag, show=not hide)  # line series
         if hide:
             self.delete_sticks(tag)
@@ -647,6 +649,8 @@ class PlotsOverview:
         self.fit_y()
 
     def update_spectrum_color(self, spec):
+        if not dpg.does_item_exist(spec.tag):
+            return
         with dpg.theme() as self.spec_theme[spec.tag]:
             with dpg.theme_component(dpg.mvLineSeries):
                 dpg.add_theme_color(dpg.mvPlotCol_Line, spec.state.get_color(), category=dpg.mvThemeCat_Plots)
@@ -782,7 +786,7 @@ class PlotsOverview:
                     dpg.delete_item(self.sticks_layer[s])
             self.redraw_sticks_on_release = True
 
-    def on_drag_release(self):
+    def on_drag_release(self, *args):
         self.left_mouse_is_down = False
         if self.dragged_plot is not None:
             spec = self.viewmodel.state_plots.get(self.dragged_plot)
@@ -819,7 +823,7 @@ class PlotsOverview:
         self.exp_hovered = False
         self.vertical_slider_active = False
 
-    def toggle_labels(self, use_Gaussian_labels):
+    def toggle_labels(self, use_Gaussian_labels, *args):
         if use_Gaussian_labels:
             if dpg.get_value(self.label_controls['show gaussian labels']):
                 self.gaussian_labels = True
@@ -843,7 +847,7 @@ class PlotsOverview:
         Labels.set(self.viewmodel.is_emission, 'show labels', dpg.get_value(self.label_controls['show labels']))
         Labels.set(self.viewmodel.is_emission, 'show gaussian labels', dpg.get_value(self.label_controls['show gaussian labels']))
 
-    def draw_labels(self, tag):
+    def draw_labels(self, tag, *args):
         if self.labels and dpg.does_item_exist(tag) and dpg.is_item_shown(tag):
             plot = f"plot_{self.viewmodel.is_emission}"
             for annotation in self.annotations.get(tag, {}).values():
@@ -933,6 +937,8 @@ class PlotsOverview:
             return line_v, line_d
 
     def update_labels(self, tag):
+        if not dpg.does_item_exist(tag):
+            return
         if self.labels and dpg.is_item_shown(tag):
             state_plot = self.viewmodel.state_plots.get(tag)
             for label in self.annotations.get(tag, {}).values():
@@ -991,6 +997,8 @@ class PlotsOverview:
             Labels.set(self.viewmodel.is_emission, 'show sticks', False)
 
     def draw_sticks(self, s):
+        if not dpg.does_item_exist(s.tag):
+            return
         if dpg.is_item_shown(s.tag) and dpg.get_value(self.show_sticks) and not self.left_mouse_is_down:
             if dpg.get_value(self.show_sticks):
                 if s.tag in self.sticks_layer and dpg.does_item_exist(self.sticks_layer[s.tag]):
@@ -1053,7 +1061,7 @@ class PlotsOverview:
                 dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 6, 2)
                 dpg.add_theme_color(dpg.mvThemeCol_TableHeaderBg, [60, 60, 154])
 
-    def on_scroll(self, direction):
+    def on_scroll(self, direction, *args):
         if self.hovered_spectrum_y_drag_line is not None and dpg.is_item_hovered(self.plot):
             self.viewmodel.resize_spectrum(self.hovered_spectrum_y_drag_line, direction * self.adjustment_factor)
         elif self.hovered_x_drag_line is not None and dpg.is_item_hovered(self.plot):
@@ -1077,7 +1085,7 @@ class PlotsOverview:
                     dpg.get_item_callback(slider)(slider, value, dpg.get_item_user_data(slider))
                     self.disable_ui_update = True
 
-    def show_drag_lines(self, show):
+    def show_drag_lines(self, show, *args):
         self.show_all_drag_lines = show
         for tag in self.viewmodel.state_plots.keys():
             if dpg.is_item_shown(tag):
@@ -1098,7 +1106,7 @@ class PlotsOverview:
             ymax = dpg.get_value(self.vertical_spacing_slider) + 1.5
         else:
             for tag, spec in self.viewmodel.state_plots.items():
-                if dpg.is_item_shown(tag):
+                if dpg.does_item_exist(tag) and dpg.is_item_shown(tag):
                     ymin = min(ymin, spec.yshift - 0.25)
                     ymax = max(ymax, spec.yshift + 1.25)
         y_axis = f"y_axis_{self.viewmodel.is_emission}"

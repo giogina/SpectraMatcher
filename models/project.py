@@ -231,7 +231,7 @@ class Project(FileObserver):
         if import_data_dirs is None:
             import_data_dirs = []
         self._data = {"name": name, "open data folders": import_data_dirs, "open data files": import_data_files}
-        self.save()
+        self.save(new_file=True)
 
     def _get_autosave_file_path(self):
         directory, filename = os.path.split(self.project_file)
@@ -245,12 +245,12 @@ class Project(FileObserver):
             time.sleep(self._autosave_interval)
             self.save(auto=True)
 
-    def save(self, auto=False):
+    def save(self, auto=False, new_file=False):
         # self.gather_extra_data()
         # Instead: Ensure all important data in sub-models is mutable variables assigned to self._data!
         with self._data_lock:
             snapshot = copy.deepcopy(self._data)
-        save_thread = threading.Thread(target=self._save_project, args=(snapshot, auto,))
+        save_thread = threading.Thread(target=self._save_project, args=(snapshot, auto, new_file))
         save_thread.start()
 
     def _assemble_window_title(self):
@@ -260,11 +260,12 @@ class Project(FileObserver):
         title += " - SpectraMatcher"
         return title
 
-    def _save_project(self, snapshot, auto):
-        if auto and not self._is_unsaved:
-            return  # no use auto-saving if nothing has changed
-        if not os.path.exists(self.project_file):
-            return
+    def _save_project(self, snapshot, auto, new_file=False):
+        if not new_file:
+            if auto and not self._is_unsaved:
+                return  # no use auto-saving if nothing has changed
+            if not os.path.exists(self.project_file):
+                return
         with self._project_file_lock:
             temp_file_path = ""
             if auto:

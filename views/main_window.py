@@ -78,13 +78,11 @@ class MainWindow:
     def append_viewport_resize_callback(self, func):  # hand this to any view that needs to react to viewport resize
         self.viewport_resize_callbacks.append(func)
 
-    def on_viewport_resize(self):
+    def on_viewport_resize(self, *args):
         for func in self.viewport_resize_callbacks:
             func()
 
-    def switch_tab(self, progress):
-        print("Switch tab", dpg.get_item_configuration("main tab bar"))
-        print(dpg.get_value("main tab bar"))
+    def switch_tab(self, progress, *args):
         if progress == "start":
             dpg.set_value("main tab bar", "import tab")
         elif progress == "import done":
@@ -143,7 +141,7 @@ class MainWindow:
 
         dpg.bind_theme(global_theme)
 
-    def startup_callback(self):
+    def startup_callback(self, *args):
         Launcher.maximize_window(dpg.get_viewport_title())
         self.viewModel.load_project()
 
@@ -158,10 +156,10 @@ class MainWindow:
         dpg.destroy_context()
         return self.result
 
-    def update_title(self, title):
+    def update_title(self, title, *args):
         dpg.set_viewport_title(title)
 
-    def _on_viewport_close(self):
+    def _on_viewport_close(self, *args):
         print("Viewport is closing. Exiting application.")
         try:
             self.viewModel.on_close()  # project lock cleanup

@@ -28,10 +28,11 @@ class StatePlot:
         self.ydata = self._compute_y_data()
         self.handle_x = self._base_xdata[np.where(self._base_ydata == max(self._base_ydata))[0][0]]
         self.sticks = []  # stick: position, [[height, color]]
-        for peak in self.spectrum.peaks:
-            if peak.transition[0] != [0]:
-                sub_stick_scale = peak.intensity/sum([t[1] for t in peak.transition])
-                self.sticks.append([peak.corrected_wavenumber, [[vib[1]*sub_stick_scale, [c*255 for c in vib[0].vibration_properties]] for vib in [(self.spectrum.vibrational_modes.get_mode(t[0]), t[1]) for t in peak.transition if len(t) == 2] if vib is not None]])
+        if self.spectrum.vibrational_modes is not None:
+            for peak in self.spectrum.peaks:
+                if peak.transition[0] != [0]:
+                    sub_stick_scale = peak.intensity/sum([t[1] for t in peak.transition])
+                    self.sticks.append([peak.corrected_wavenumber, [[vib[1]*sub_stick_scale, [c*255 for c in vib[0].vibration_properties]] for vib in [(self.spectrum.vibrational_modes.get_mode(t[0]), t[1]) for t in peak.transition if len(t) == 2] if vib is not None]])
         self.spectrum_update_callback = noop
         self.sticks_update_callback = noop
         self.match_plot = match_plot
@@ -196,7 +197,10 @@ class MatchPlot:
         self._notify_observers()
 
     def compute_composite_xy_data(self):
-        _, _, _, x_step = SpecPlotter.get_plotter_key(self.is_emission)  # step size used in all xdata arrays
+        plotter_key = SpecPlotter.get_plotter_key(self.is_emission)
+        if plotter_key is None:
+            return
+        x_step = plotter_key[-1]  # step size used in all xdata arrays
         x_min = min([s.xdata[0] for s in self.contributing_state_plots], default=0)
         x_max = max([s.xdata[-1] for s in self.contributing_state_plots], default=1)
         self.xdata = np.array(np.arange(start=x_min, stop=x_max, step=x_step))  # mirrors SpecPlotter x_data construction

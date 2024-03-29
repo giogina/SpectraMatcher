@@ -117,7 +117,7 @@ class CreateProjectWindow:
         # dpg.show_style_editor()
         dpg.set_primary_window("new project window", True)
 
-    def on_drop_callback(self, data):
+    def on_drop_callback(self, data, *args):
         if type(data) == list:
             for path in data:
                 if os.path.exists(path):
@@ -125,7 +125,7 @@ class CreateProjectWindow:
                     s = dpg.add_selectable(label=path, parent="selectables")
                     self.selectables.append((path, s))
 
-    def adjust_theme(self):
+    def adjust_theme(self, *args):
         with dpg.theme() as global_theme:
             with dpg.theme_component(dpg.mvAll):
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4)
@@ -179,7 +179,7 @@ class CreateProjectWindow:
 
         return close_button_theme, selectables_theme
 
-    def construct_savefile_name(self):
+    def construct_savefile_name(self, *args):
         if dpg.get_value('name input'):
             name = dpg.get_value('name input')+".spm"  # .replace(" ", "_")+".spm"
         else:
@@ -200,7 +200,7 @@ class CreateProjectWindow:
             i += 1
         return unique_path
 
-    def delete_items(self):
+    def delete_items(self, *args):
         remove = []
         for i, selectable in enumerate(self.selectables):
             if dpg.get_value(selectable[1]):
@@ -210,14 +210,14 @@ class CreateProjectWindow:
             self.selectables.remove(r)
             dpg.delete_item(r[1])
 
-    def on_add_data(self):
+    def on_add_data(self, *args):
         file = data_dir_file_dialog(self.settings.get("dataPath", "/"))
         if file and len(file):
             self.import_from.append(file)
             s = dpg.add_selectable(label=file, parent="selectables")
             self.selectables.append((file, s))
 
-    def on_save_as(self):
+    def on_save_as(self, *args):
         file = save_as_file_dialog(self.settings.get("projectsPath", "/"))
         if file and len(file):
             dpg.set_value("path input", file)
@@ -228,21 +228,22 @@ class CreateProjectWindow:
         if not self.path_changed:
             dpg.set_value("path input", self.construct_savefile_name())
 
-    def path_entered(self):
+    def path_entered(self, *args):
         self.path_changed = True
         self.path_from_file_dialog = False
 
-    def on_ok(self):
+    def on_ok(self, *args):
         path = dpg.get_value('path input')
         if os.path.exists(path) and not self.path_from_file_dialog:
             dpg.configure_item("modal_id", show=True)
         else:
             self.save_new_project()
 
-    def save_new_project(self):
+    def save_new_project(self, *args):
         dpg.configure_item("modal_id", show=False)
         path = dpg.get_value('path input')
         name = dpg.get_value("name input")
+        print(path, name)
         if not len(name):
             name = "Untitled"
         new_dirs = []
@@ -258,7 +259,7 @@ class CreateProjectWindow:
         self.result = ('-open', path)
         dpg.stop_dearpygui()
 
-    def on_escape(self):
+    def on_escape(self, *args):
         self.result = None
         self.on_close()
         # if dpg.is_item_visible("modal_id"):
@@ -273,5 +274,5 @@ class CreateProjectWindow:
         dpg.destroy_context()
         return self.result
 
-    def on_close(self):
+    def on_close(self, *args):
         dpg.stop_dearpygui()
