@@ -1,6 +1,3 @@
-from tkinter import simpledialog
-
-from launcher import Launcher
 from utility.item_themes import ItemThemes
 from viewmodels.main_viewmodel import MainViewModel, noop
 import dearpygui.dearpygui as dpg
@@ -9,7 +6,9 @@ from utility.system_file_browser import *
 import logging
 from screeninfo import get_monitors
 from contextlib import contextmanager
+import webbrowser
 # TODO: Implement more shortcuts & menu actions (visible panels? Switch to spectrum tab?)
+
 
 class MainMenu:
     """Takes care of the viewport menu as well as keyboard shortcuts (combinations including Ctrl or Alt only)"""
@@ -42,12 +41,14 @@ class MainMenu:
 
             self._register_action("Shortcuts", label="Configure shortcuts...", callback=self._show_configure_shortcuts,
                                   icon=Icons.keyboard)
+            self._register_action("Report bug", label="Report a bug...", callback=self._report_bug, icon=Icons.bug)
 
         # Each menu is a dict with "name": [list of items]; items can be actions, menus, or a separator line (sep).
         self.menu_items = {"Projects": ["New", "Open",
                                         {"Open Recent": [(r, self._open_recent) for r in self.viewmodel.get_recents()]},
                                         sep, "Save", "Save as", sep, "Exit"],
-                           "Tools": ["Shortcuts"]}
+                           "Tools": ["Shortcuts"],
+                           "Help": ["Report bug"]}
 
         # Construct main menu bar from self.menu_items
         # with dpg.viewport_menu_bar() as self.menu_bar:
@@ -155,6 +156,10 @@ class MainMenu:
         dpg.show_item("the one modal window")
         self._show_modal_child("configure shortcuts window")
         dpg.configure_item("the one modal window", no_title_bar=False, label="Configure keyboard shortcuts")
+
+    def _report_bug(self, *args):
+        issues_url = 'https://github.com/giogina/SpectraMatcher/issues'
+        webbrowser.open(issues_url, new=2)
 
     def _add_menu(self, menu: dict, indent=0):
         icon_column_width = 24  # Space to the left of each menu item (placeholder for icons)

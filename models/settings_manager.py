@@ -63,6 +63,7 @@ class SettingsManager:
             self._is_initialized = True
 
     def _load_settings(self):
+        print("Load settings")
         with self.file_lock:
             try:
                 if os.path.exists(self.settings_file):
@@ -80,17 +81,18 @@ class SettingsManager:
             return self._create_default_settings()
 
     def _create_default_settings(self):
-        with self.file_lock:
-            self.logger.info(f"Creating default settings file...")
-            try:
-                settings = copy.deepcopy(SettingsManager._DEFAULT_SETTINGS)
-                if not os.path.exists("./config"):
-                    os.mkdir("./config")
-                with open(self.settings_file, "w") as file:
-                    json.dump(self._convert_dict_keys_to_string(settings), file, indent=4)
-            except (IOError, OSError) as e:
-                self.logger.error(f"Error creating default settings file: {e}")
-            return settings
+        self.logger.info(f"Creating default settings file...")
+        try:
+            settings = copy.deepcopy(SettingsManager._DEFAULT_SETTINGS)
+            print(settings)
+            if not os.path.exists("./config"):
+                print("mkdir")
+                os.mkdir("./config")
+            with open(self.settings_file, "w") as file:
+                json.dump(self._convert_dict_keys_to_string(settings), file, indent=4)
+        except (IOError, OSError) as e:
+            self.logger.error(f"Error creating default settings file: {e}")
+        return settings
 
     def _convert_dict_keys_to_string(self, d):
         """Converts dictionary keys from tuples to strings."""
