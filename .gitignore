@@ -6,3 +6,4 @@ __pycache__
 venv_win
 /old/
 build*/
+build.dist/
