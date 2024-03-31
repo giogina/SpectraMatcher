@@ -12,7 +12,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{B24414A3-8D29-4EB7-B8DC-364811B9DCC9}
+AppId={{681A813C-4439-43B8-BF49-215A2172CF79}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -22,10 +22,9 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 ChangesAssociations=yes
 DisableProgramGroupPage=yes
-; Uncomment the following line to run in non administrative install mode (install for current user only.)
-;PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog
-OutputDir=C:\Users\Giogina\SpectraMatcher\inno_setup
+; Remove the following line to run in administrative install mode (install for all users.)
+PrivilegesRequired=lowest
+OutputDir=C:\Users\Giogina\SpectraMatcher\installer
 OutputBaseFilename=SpectraMatcher-setup
 SetupIconFile=C:\Users\Giogina\SpectraMatcher\resources\SpectraMatcher.ico
 Compression=lzma

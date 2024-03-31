@@ -75,8 +75,8 @@ class Dashboard:
              {"center": (0.7 * self.wavy_width, 0.2), "speed": random.choice(range(1, 3)), "aspect_ratio": 0.5+random.random()/2},
              {"center": (0.5 * self.wavy_width, 0.15), "speed": random.choice(range(1, 3)), "aspect_ratio": 0.5+random.random()/2},
              ])
-        print([w["speed"] for w in self.wobbles])
-        print([w["aspect_ratio"] for w in self.wobbles])
+        # print([w["speed"] for w in self.wobbles])
+        # print([w["aspect_ratio"] for w in self.wobbles])
         # self.exp_peaks = [[-0.3*self.wavy_width, 0.3]]
         self.phase = 90
         self.pixel_intensity_stamps = self.precompute_pixel_intensities()
