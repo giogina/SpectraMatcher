@@ -13,3 +13,9 @@ The startup dashboard allows to create or open a SpectraMatcher project file. Th
 You may use up or down arrow keys to select a recent project, and hit enter to open it. Pressing Escape closes the dashbaord.
 
 <figure><img src=".gitbook/assets/Dashboard.png" alt=""><figcaption></figcaption></figure>
+
+## Create a new project
+
+Upon choosing to create a new project, you are queried to choose the project name and file location. Optionally, you can already supply data files; either by clicking the "folder plus" icon, or by dragging & dropping files or folders into the "import data" field.
+
+<figure><img src=".gitbook/assets/Create_Project.png" alt=""><figcaption></figcaption></figure>
