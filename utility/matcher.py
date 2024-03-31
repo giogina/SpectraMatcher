@@ -7,8 +7,8 @@ class Matcher:
                  'match active': False,
                  'combo spectrum y shift': 1.25,
                  'show composite spectrum': True,
-                 'show component spectra': False,
-                 'show shade spectra': True,
+                 'show component spectra': True,
+                 'show shade spectra': False,
                  'show stick spectra': False,
                  "assign only labeled": False,
                  "list only labeled transitions": False
