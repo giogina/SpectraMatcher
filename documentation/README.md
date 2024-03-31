@@ -19,6 +19,17 @@ You may use up or down arrow keys to select a recent project, and hit enter to o
 
 ## Create a new project
 
-Upon choosing to create a new project, you are queried to choose the project name and file location. Optionally, you can already supply data files; either by clicking the "folder plus" icon, or by dragging & dropping files or folders into the "import data" field.
+Upon choosing to create a new project, you are queried to choose the project name and file location. Optionally, you can already supply data files; either by clicking the "Add folder" icon, or by dragging & dropping files or folders into the "import data" field.
 
 <figure><img src=".gitbook/assets/Create_Project.png" alt=""><figcaption></figcaption></figure>
+
+## Import Data
+
+After completing the initial project creation, you are presented by the "Import Data" tab, which gives an overview of all files available for analysis.project
+
+If you added data files or folders in the previous step, the file overview panel on the left will already be populated.
+The "Add file" or "Add folder" icons in the top right corner of the left panel open file explorer windows to include additional data. Alternatively, files and directories can be added by dragging and dropping them into the left panel.project
+
+<figure><img src=".gitbook/assets/Import_Data.png" alt=""><figcaption></figcaption></figure>
+
+The available data files are immediately scanned to detect both experimental spectra - in the form of tables, which may be supplied as tab- or comma- separated .txt, .csv or .tsv files, or in form of an excel table using one of the formats .xls, .xlsx, .xlsm, .xltx or .xltm - and computed spectra in the form of Gaussian 16 output files.
