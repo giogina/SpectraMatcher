@@ -33,8 +33,7 @@ The "Add file" or "Add folder" icons in the top right corner of the left panel o
 <figure><img src=".gitbook/assets/Import_Data.png" alt=""><figcaption></figcaption></figure>
 
 The available data files are immediately scanned to detect
- #### experimental spectra
- in the form of tables, which may be supplied as tab- or comma- separated .txt, .csv or .tsv files, or in form of an excel table using one of the formats .xls, .xlsx, .xlsm, .xltx or .xltm, and
-
- #### computed spectra
- in the form of Gaussian 16 output files.
+- **experimental spectra**
+  in the form of tables, which may be supplied as tab- or comma- separated .txt, .csv or .tsv files, or in form of an excel table using one of the formats .xls, .xlsx, .xlsm, .xltx or .xltm, and
+- **computed spectra**
+  in the form of Gaussian 16 output files.
