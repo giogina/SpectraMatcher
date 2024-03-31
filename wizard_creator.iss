@@ -4,6 +4,8 @@
 #define MyAppName "SpectraMatcher"
 #define MyAppVersion "Beta-0.9"
 #define MyAppURL "https://github.com/giogina/SpectraMatcher"
+#define MyDocURL "https://spectramatcher.gitbook.io/spectramatcher"
+#define MyBugURL "https://github.com/giogina/SpectraMatcher/issues"
 #define MyAppExeName "SpectraMatcher.exe"
 #define MyAppAssocName MyAppName + " File"
 #define MyAppAssocExt ".spm"
@@ -16,8 +18,8 @@ AppId={{681A813C-4439-43B8-BF49-215A2172CF79}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
-AppPublisherURL={#MyAppURL}
-AppSupportURL={#MyAppURL}
+AppPublisherURL={#MyDocURL}
+AppSupportURL={#MyBugURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 ChangesAssociations=yes

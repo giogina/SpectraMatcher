@@ -41,14 +41,15 @@ class MainMenu:
 
             self._register_action("Shortcuts", label="Configure shortcuts...", callback=self._show_configure_shortcuts,
                                   icon=Icons.keyboard)
-            self._register_action("Report bug", label="Report a bug...", callback=self._report_bug, icon=Icons.bug)
+            self._register_action("User Guide", label="User Guide...", callback=self._user_guide, icon=Icons.book)
+            self._register_action("Report bug", label="Report a Bug...", callback=self._report_bug, icon=Icons.bug)
 
         # Each menu is a dict with "name": [list of items]; items can be actions, menus, or a separator line (sep).
         self.menu_items = {"Projects": ["New", "Open",
                                         {"Open Recent": [(r, self._open_recent) for r in self.viewmodel.get_recents()]},
                                         sep, "Save", "Save as", sep, "Exit"],
                            "Tools": ["Shortcuts"],
-                           "Help": ["Report bug"]}
+                           "Help": ["User Guide", "Report bug"]}
 
         # Construct main menu bar from self.menu_items
         # with dpg.viewport_menu_bar() as self.menu_bar:
@@ -156,6 +157,10 @@ class MainMenu:
         dpg.show_item("the one modal window")
         self._show_modal_child("configure shortcuts window")
         dpg.configure_item("the one modal window", no_title_bar=False, label="Configure keyboard shortcuts")
+
+    def _user_guide(self, *args):
+        issues_url = 'https://spectramatcher.gitbook.io/spectramatcher'
+        webbrowser.open(issues_url, new=2)
 
     def _report_bug(self, *args):
         issues_url = 'https://github.com/giogina/SpectraMatcher/issues'
