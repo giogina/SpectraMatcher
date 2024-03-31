@@ -4,14 +4,13 @@ SpectraMatcher is a tool for displaying and analyzing experimental and computed 
 
 ## Installation
 
-A Windows installation file is available [here](../installer/SpectraMatcher-setup.exe).
-Simply download this .exe and click through the installation wizard. No special permissions are necessary.
+A Windows installation file is available [here](../installer/SpectraMatcher-setup.exe). Simply download this .exe and click through the installation wizard. No special permissions are necessary.
 
 It is recommended to keep the default installation directory.
 
 ## Startup
 
-The startup dashboard allows to create or open a SpectraMatcher project file. These files, which have the extension .spm, are by default saved in the  C:\Users\UserName\SpectraMatcher\ directory.
+The startup dashboard allows to create or open a SpectraMatcher project file. These files, which have the extension .spm, are by default saved in the C:\Users\UserName\SpectraMatcher\ directory.
 
 You may use up or down arrow keys to select a recent project, and hit enter to open it. Pressing Escape closes the dashbaord.
 
@@ -27,13 +26,14 @@ Upon choosing to create a new project, you are queried to choose the project nam
 
 After completing the initial project creation, you are presented by the "Import Data" tab, which gives an overview of all files available for analysis.project
 
-If you added data files or folders in the previous step, the file overview panel on the left will already be populated.
-The "Add file" or "Add folder" icons in the top right corner of the left panel open file explorer windows to include additional data. Alternatively, files and directories can be added by dragging and dropping them into the left panel.
+If you added data files or folders in the previous step, the file overview panel on the left will already be populated. The "Add file" or "Add folder" icons in the top right corner of the left panel open file explorer windows to include additional data. Alternatively, files and directories can be added by dragging and dropping them into the left panel.
 
 <figure><img src=".gitbook/assets/Import_Data.png" alt=""><figcaption></figcaption></figure>
 
 The available data files are immediately scanned to detect:
 
-**experimental spectra** in the form of tables, which may be supplied as tab- or comma- separated .txt, .csv or .tsv files, or in form of an excel table using one of the formats .xls, .xlsx, .xlsm, .xltx or .xltm, and
+* _**experimental spectra**_ in the form of tables, which may be supplied as tab- or comma- separated .txt, .csv or .tsv files, or in form of an excel table using one of the formats .xls, .xlsx, .xlsm, .xltx or .xltm, and
+* _**computed spectra**_ in the form of Gaussian 16 output files.
 
-**computed spectra** in the form of Gaussian 16 output files.
+
+
