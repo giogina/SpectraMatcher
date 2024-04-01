@@ -184,7 +184,7 @@ class CreateProjectWindow:
             name = dpg.get_value('name input')+".spm"  # .replace(" ", "_")+".spm"
         else:
             name = "untitled.spm"
-        directory = self.settings.get("projectsPath")
+        directory = self.settings.get("projectsPath").replace("\\", "/")
         path = directory
         if not path.endswith("/"):
             path += "/"
