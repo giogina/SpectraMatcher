@@ -33,5 +33,10 @@ If you added data files or folders in the previous step, the file overview panel
 The available data files are immediately scanned to detect experimental spectra, in the form of tables, and computed spectra, in the form of Gaussian 16 output files.
 See the [Import Data](File%20explorer.md) section for supported data formats and options.
 
+Files available in the left panel can now be imported into the project. This can be done in two ways:
+By manually dragging each file into its corresponding slot, or simply by clicking "Auto Import" on top of the right panel.
+
+The "Auto Import" button becomes active as soon as the scanning of files is complete.
+
 
 
