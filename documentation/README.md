@@ -33,10 +33,10 @@ If you added data files or folders in the previous step, the file overview panel
 The available data files are immediately scanned to detect:
 
 * _**experimental spectra**_ in the form of tables, which may be supplied
-  * as tab- or comma- separated .txt, .csv or .tsv files, or
-  * as an excel table in one of the formats .xls, .xlsx, .xlsm, .xltx or .xltm,
-  * as an Open/Libre Office *.ods table
+
 * _**computed spectra**_ in the form of Gaussian 16 output files.
+
+The available files are 
 
 
 
