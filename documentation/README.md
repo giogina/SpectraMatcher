@@ -31,7 +31,7 @@ If you added data files or folders in the previous step, the file overview panel
 <figure><img src=".gitbook/assets/Import_Data.png" alt=""><figcaption></figcaption></figure>
 
 The available data files are immediately scanned to detect experimental spectra, in the form of tables, and computed spectra, in the form of Gaussian 16 output files.
-See the [Import Data](documentation/File%20explorer.md) section for supported data formats and options.
+See the [Import Data](File%20explorer.md) section for supported data formats and options.
 
 
 
