@@ -5,7 +5,7 @@ from launcher import Launcher
 from views.main_window import MainWindow
 from views.startup_dashboard import Dashboard
 from views.create_project import CreateProjectWindow
-# -m nuitka --assume-yes-for-downloads --standalone --follow-imports --include-data-dir=C:/Users/Giogina/SpectraMatcher/fonts=fonts  --include-data-dir=C:/Users/Giogina/SpectraMatcher/resources=resources --windows-icon-from-ico=C:/Users/Giogina/SpectraMatcher/resources/SpectraMatcher.ico --enable-plugin=tk-inter --output-filename=SpectraMatcher.exe $FilePath$
+# -m nuitka --assume-yes-for-downloads --standalone --follow-imports --include-data-dir=C:/Users/Giogina/SpectraMatcher/fonts=fonts  --include-data-dir=C:/Users/Giogina/SpectraMatcher/resources=resources --windows-icon-from-ico=C:/Users/Giogina/SpectraMatcher/resources/SpectraMatcher.ico --enable-plugin=tk-inter --windows-disable-console --output-filename=SpectraMatcher.exe $FilePath$
 
 
 def main():

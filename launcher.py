@@ -1,9 +1,11 @@
 import sys
 import subprocess
-import logging
+# import logging
 import os
 import win32gui
 import win32con
+
+from models.settings_manager import SettingsManager
 
 
 class Launcher:
@@ -27,7 +29,9 @@ class Launcher:
             for a in args:
                 arg = a.strip("'").strip('"')
                 command += f' "{arg}"'
-            logging.info(f'Launching: {command}')
+            log_file = args[0]+".log" if len(args) else (SettingsManager().get("projectsPath").replace("\\", "/")+"/spec").replace("//", "/")+flag.strip()+".log"
+            command += f' >{log_file} 2>&1'
+            print(f'Launching: {command}')
             subprocess.Popen(command, shell=True)
 
     @staticmethod
