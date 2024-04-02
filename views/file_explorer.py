@@ -152,7 +152,7 @@ class FileExplorer:
             nr_prev_invisible = 0
             for i in range(1, len(self._table_columns)):
                 column = self._table_columns[i]
-                dpg.add_button(label=column[0], width=column[1]+nr_prev_invisible*7, height=24, tag=f"table header {i}", show=self._table_columns[i][3])
+                dpg.add_button(label=column[0], width=column[1]+nr_prev_invisible*2, height=24, tag=f"table header {i}", show=self._table_columns[i][3])
                 dpg.bind_item_handler_registry(dpg.add_image_button("pixel", width=1, height=24, user_data=i, tag=f"sep-button-{i}", show=self._table_columns[i][3]), self.table_handlers)
                 if column[3]:
                     nr_prev_invisible = 0
@@ -305,7 +305,7 @@ class FileExplorer:
         for directory in self._directory_nodes:
             dpg.set_value(directory, expand)
             self._toggle_directory_node_labels(directory)
-# todo: no_pad_outer_x or the like should solve my table alignment issues
+
     def _select_columns(self, s, show, i, *args):
         self._table_columns[i][3] = show
         self.viewmodel.update_column_settings()
@@ -355,7 +355,7 @@ class FileExplorer:
                         break
                     else:
                         nr_prev_invisible += 1
-                dpg.set_item_width(item, header_width + 7*nr_prev_invisible)
+                dpg.set_item_width(item, header_width + 2*nr_prev_invisible)
                 for file in self._file_rows:
                     item = f"{file.tag}-c{column}"
                     if column == 1:
@@ -364,7 +364,7 @@ class FileExplorer:
                             width -= 10  # Make up for extra spacing in front
                     else:
                         width = header_width
-                    dpg.set_item_width(item, width+7)
+                    dpg.set_item_width(item, width+6)  # table button extra width adjustment
                 self._last_delta = delta
 
             with dpg.mutex():
@@ -448,7 +448,7 @@ class FileExplorer:
                     dpg.add_spacer(width=32)
                 else:
                     dpg.add_spacer(width=22)
-                with dpg.table(width=-1, tag=tag, header_row=False, policy=dpg.mvTable_SizingFixedFit):
+                with dpg.table(width=-1, tag=tag, header_row=False, policy=dpg.mvTable_SizingFixedFit, no_pad_innerX=True, no_pad_outerX=True):
                     for column in self._table_columns:
                         dpg.add_table_column(label=column[0])
         for file_tag in files.keys():
@@ -474,7 +474,7 @@ class FileExplorer:
             # print(f"Constructing table row for {file.tag}")
             with dpg.table_row(tag=file.tag, parent=table):
                 for i, column in enumerate(self._table_columns):
-                    width = self._table_columns[i][1] + 7
+                    width = self._table_columns[i][1] + 6   # table button extra width adjustment
                     if i == 0:  # Icon, can be icon or image button
                         with dpg.group(horizontal=True):
                             dpg.add_button(width=width, tag=f"{file.tag}-c{i}")
@@ -588,6 +588,7 @@ class FileExplorer:
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, 0)
             with dpg.theme_component(dpg.mvTable):
                 dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 0, self.item_padding)
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 0, self.item_padding)
                 dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, [0, 0, 0, 0])
 
         dpg.bind_item_theme("file explorer panel", file_explorer_theme)
