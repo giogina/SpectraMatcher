@@ -249,6 +249,7 @@ class Dashboard:
     def draw_slice(self, texture, x, y, y0, y1, color):  # todo: anti-aliasing still wonky
         y_int = int(math.floor(y+0.5))
         y_shift = int(round((y-y_int)*10))
+        y_shift_exact = y-y_int
         slope0 = y-y0  # delta x is always 1
         slope1 = y1-y
 
@@ -267,11 +268,12 @@ class Dashboard:
                 bottom_slope = (y1-y0)/2
                 top_slope = min(slope0, slope1)
 
-        stamp_bottom = self.lookup_stamp(bottom_slope, y_shift, bottom=True)
-        stamp_top = self.lookup_stamp(top_slope, y_shift)
-        stamp_bottom[-1] = stamp_bottom[-1] + stamp_top[0] - 1  # in case two corners are missing from middle pixel
-        stamp = np.concatenate((stamp_bottom, stamp_top[1:]))
-        start_index = -stamp_bottom.size+1
+        # stamp_bottom = self.lookup_stamp(bottom_slope, y_shift, bottom=True)
+        # stamp_top = self.lookup_stamp(top_slope, y_shift)
+        # stamp_bottom[-1] = stamp_bottom[-1] + stamp_top[0] - 1  # in case two corners are missing from middle pixel
+        # stamp = np.concatenate((stamp_bottom, stamp_top[1:]))
+        # start_index = -stamp_bottom.size+1
+        stamp, start_index = self.assemble_stamp(top_slope, bottom_slope, y_shift_exact)
 
         start = y_int + start_index - 10
         stop = y_int + start_index + stamp.size - 10
@@ -288,9 +290,36 @@ class Dashboard:
         texture[start + clip_start:stop-clip_stop, x, 3] = stamp[clip_start:stamp.size-clip_stop]*color[3]
         return texture
 
+    def assemble_stamp(self, top_slope, bottom_slope, exact_y_shift):
+        y_shift = math.floor(exact_y_shift*10)
+        y_shift_tail = exact_y_shift*10 - y_shift  # inflated by factor 10, so in (0,1)
+
+        stamp_bottom_1 = self.lookup_stamp(bottom_slope, y_shift, bottom=True)
+        if y_shift < 5:
+            stamp_bottom_2 = self.lookup_stamp(bottom_slope, y_shift+1, bottom=True)
+            stamp_bottom = np.zeros(max(stamp_bottom_1.size, stamp_bottom_2.size))
+            stamp_bottom[stamp_bottom.size - stamp_bottom_1.size:stamp_bottom.size] = stamp_bottom_1*(1-y_shift_tail)
+            stamp_bottom[stamp_bottom.size - stamp_bottom_2.size:stamp_bottom.size] += stamp_bottom_2*y_shift_tail
+        else:
+            stamp_bottom = stamp_bottom_1
+        stamp_top_1 = self.lookup_stamp(top_slope, y_shift)
+        if y_shift < 5:
+            stamp_top_2 = self.lookup_stamp(top_slope, y_shift+1)
+            stamp_top = np.zeros(max(stamp_top_1.size, stamp_top_2.size))
+            stamp_top[0:stamp_top_1.size] = stamp_top_1*(1-y_shift_tail)
+            stamp_top[0:stamp_top_2.size] += stamp_top_2*y_shift_tail
+        else:
+            stamp_top = stamp_top_1
+
+        stamp_bottom[-1] = stamp_bottom[-1] + stamp_top[0] - 1  # in case two corners are missing from middle pixel
+        stamp = np.concatenate((stamp_bottom, stamp_top[1:]))
+        start_index = -stamp_bottom.size + 1
+        return stamp, start_index
+
     def lookup_stamp(self, slope, y_shift, bottom=False):
         """Returns top or bottom half of the pixel slice of the graph."""
         alpha = min(89, int(round(180/math.pi*math.atan(math.fabs(slope)))))
+        y_shift = min(max(-5, int(y_shift)), 5)
 
         if not bottom:
             stamp = self.pixel_intensity_stamps[alpha][y_shift]
@@ -349,6 +378,7 @@ class Dashboard:
             for shift in range(-5, 6):
                 alpha_ints[shift] = self.compute_pixel_intensities(a, shift)
             precomputed_intensities[a] = alpha_ints
+            # print(a, alpha_ints[0])
         return precomputed_intensities
 
     def adjust_theme(self, *args):
