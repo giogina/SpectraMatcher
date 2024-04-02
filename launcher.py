@@ -30,6 +30,7 @@ class Launcher:
                 arg = a.strip("'").strip('"')
                 command += f' "{arg}"'
             log_file = args[0]+".log" if len(args) else (SettingsManager().get("projectsPath").replace("\\", "/")+"/spec").replace("//", "/")+flag.strip()+".log"
+            log_file = log_file.replace(" ", "_")
             command += f' >{log_file} 2>&1'
             print(f'Launching: {command}')
             subprocess.Popen(command, shell=True)
