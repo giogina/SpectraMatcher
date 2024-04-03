@@ -41,7 +41,7 @@ If the opened data folders contain computations for more than one molecule or me
 
 Files imported into the project are automatically analyzed, and the respective spectra appear in the "Emission" and "Excitation" tabs.
 
-
+Pressing the "Done" button performs final consistency checks, updates the project progress, and opens the first of the spectra tabs.
 
 
 
