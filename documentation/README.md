@@ -36,7 +36,7 @@ See the [Import Data](File%20explorer.md) section for supported data formats and
 Files available in the left panel can now be imported into the project. This can be done in two ways:
 By manually dragging each file into its corresponding slot, or simply by clicking "Auto Import" on top of the right panel.
 
-The "Auto Import" button becomes active as soon as the scanning of files is complete.
+The "Auto Import" button becomes active as soon as the scanning of files is complete. Auto import gathers all matching files; comparing ground state energies, molecular formulas and 0-0 transition energies to ensure consistency.
 
 
 
