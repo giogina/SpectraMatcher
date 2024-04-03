@@ -37,6 +37,11 @@ Files available in the left panel can now be imported into the project. This can
 By manually dragging each file into its corresponding slot, or simply by clicking "Auto Import" on top of the right panel.
 
 The "Auto Import" button becomes active as soon as the scanning of files is complete. Auto import gathers all matching files; comparing ground state energies, molecular formulas and 0-0 transition energies to ensure consistency.
+If the opened data folders contain computations for more than one molecule or method, the relevant one may be selected using the drop down menu appearing under the project name.
+
+Files imported into the project are automatically analyzed, and the respective spectra appear in the "Emission" and "Excitation" tabs.
+
+
 
 
 
