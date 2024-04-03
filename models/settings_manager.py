@@ -65,6 +65,11 @@ class SettingsManager:
 
             self._settings_dict = self._load_settings()
             # self.logger.info(f"Settings loaded. {self._settings_dict}")
+
+            projects_path = self.get(Settings.PROJECTS_PATH)
+            if not os.path.exists(projects_path):
+                os.makedirs(projects_path, exist_ok=True)
+
             self._is_initialized = True
 
     def _load_settings(self):
