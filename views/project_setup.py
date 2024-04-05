@@ -149,7 +149,7 @@ class ProjectSetup:
                         with dpg.group(horizontal=True):
                             dpg.add_button(tag=f"delta E {state_index}", height=32)
                         with dpg.group():
-                            if not state_index == 0:
+                            if not state_index == 0:  # todo: Enable the hide/show buttons to do the same as the ones in the spectrum view
                                 self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state_index, tag=f"hide {state_index}", callback=lambda s, a, u: self.viewmodel.hide_state(u, False)), icon=Icons.eye_slash, size=16)
                                 self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state_index, tag=f"show {state_index}", callback=lambda s, a, u: self.viewmodel.hide_state(u, True)), icon=Icons.eye, size=16)
                                 self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state_index, tag=f"trash {state_index}", callback=lambda s, a, u: self.viewmodel.delete_state(u)), icon=Icons.trash, size=16, tooltip="Delete this state")
@@ -318,6 +318,7 @@ class ProjectSetup:
                 dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 48, 24)
             with dpg.theme_component(dpg.mvCollapsingHeader):
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 10)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 12, 6)
             with dpg.theme_component(dpg.mvInputText):
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 10, 6)
             with dpg.theme_component(dpg.mvButton):
