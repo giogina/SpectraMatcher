@@ -97,6 +97,7 @@ class MainWindow:
                    [100, 100, 255],  # 5
                    [131, 131, 255],  # 6
                    [180, 180, 255],  # 7
+                   [33, 33, 36*3],  # 8
                    ]
         with dpg.theme() as global_theme:
             with dpg.theme_component(dpg.mvTab):
@@ -104,9 +105,15 @@ class MainWindow:
                 dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 0, 0)
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 0)
             with dpg.theme_component(dpg.mvPlot):
-                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 6, 6)
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 12, 6)
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 6, 3)
-                dpg.add_theme_color(dpg.mvThemeCol_FrameBg, palette[1])
+                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 12, 3)
+                dpg.add_theme_color(dpg.mvThemeCol_FrameBg, palette[8])
+                dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, palette[1])
+                dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, palette[4])
+                dpg.add_theme_color(dpg.mvThemeCol_TextSelectedBg, palette[4])
+                dpg.add_theme_color(dpg.mvThemeCol_CheckMark, palette[4])
+                dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, palette[4]+[100])
             with dpg.theme_component(dpg.mvAll):
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 3, 6)
@@ -117,7 +124,7 @@ class MainWindow:
                 dpg.add_theme_style(dpg.mvStyleVar_PopupBorderSize, 0)
                 # dpg.add_theme_color(dpg.mvThemeCol_Border, palette[6])
                 dpg.add_theme_color(dpg.mvThemeCol_MenuBarBg, palette[1])
-                dpg.add_theme_color(dpg.mvThemeCol_PopupBg, palette[2])  # affects both modular window and right click menus...
+                dpg.add_theme_color(dpg.mvThemeCol_PopupBg, palette[2])
                 dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, palette[3]+[200])
                 dpg.add_theme_color(dpg.mvThemeCol_Header, palette[3]+[100])
                 dpg.add_theme_color(dpg.mvThemeCol_HeaderActive, palette[3]+[200])

@@ -64,7 +64,9 @@ Zoom into an interesting region by right-click-dragging over it. Double click th
 
 Alternatively, to set exact axis limits, right-click the axis (or the plot area and select X/Y axis), Ctrl+click the relevant min/max number, and enter the desired number.
 
-Further plot options are available in the plot context menu under Settings: 
+Further axis and plot options are available in the plot context menu under "X/Y axis" and "Settings": 
+
+<figure><img src=".gitbook/assets/Axis_right_click_menu.png" alt="">  <img src=".gitbook/assets/settings_right_click_menu.png" alt=""><figcaption></figcaption></figure>
 
 
 
