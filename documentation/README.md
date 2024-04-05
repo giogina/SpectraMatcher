@@ -49,6 +49,23 @@ The emission and excitation spectra corresponding to the experiment and all comp
 
 <figure><img src=".gitbook/assets/emission_tab.png" alt="SpectraMatcher Emission Spectra overview"><figcaption></figcaption></figure>
 
+The white, lower-most spectrum is the experimental spectrum, or a combination of the experimental spectra if multiple are supplied.
+The computed spectra are displayed above, and listed in the left side-panel. The right panel provides controls for various plot, spectrum, and matching properties.
+
+### Plot controls
+
+#### Zoom & Pan
+The plot can be zoomed with constant aspect ratio by scrolling while the mouse is hovered over a non-interactive part of the plot (more on the interactive parts below).
+To zoom only in x or y direction, hover the mouse over the corresponding axis and scroll.
+
+Equivalently, the plot can be dragged freely by clicking into the free plot area, or along one axis only by dragging the axis.
+ 
+Zoom into an interesting region by right-click-dragging over it. Double click the plot to zoom out to show all contents.
+
+Alternatively, to set exact axis limits, right-click the axis (or the plot area and select X/Y axis), Ctrl+click the relevant min/max number, and enter the desired number.
+
+Further plot options are available in the plot context menu under Settings: 
+
 
 
 

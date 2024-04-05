@@ -103,6 +103,10 @@ class MainWindow:
                 dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 0, 0)
                 dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 0, 0)
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 0)
+            with dpg.theme_component(dpg.mvPlot):
+                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 6, 6)
+                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 6, 3)
+                dpg.add_theme_color(dpg.mvThemeCol_FrameBg, palette[1])
             with dpg.theme_component(dpg.mvAll):
                 dpg.add_theme_style(dpg.mvStyleVar_FrameRounding, 4)
                 dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 3, 6)
@@ -110,9 +114,10 @@ class MainWindow:
                 dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 12, 5)
                 dpg.add_theme_style(dpg.mvStyleVar_FrameBorderSize, 0)
                 dpg.add_theme_style(dpg.mvStyleVar_ChildBorderSize, 0)
-                dpg.add_theme_style(dpg.mvStyleVar_PopupBorderSize, 1)
+                dpg.add_theme_style(dpg.mvStyleVar_PopupBorderSize, 0)
+                # dpg.add_theme_color(dpg.mvThemeCol_Border, palette[6])
                 dpg.add_theme_color(dpg.mvThemeCol_MenuBarBg, palette[1])
-                dpg.add_theme_color(dpg.mvThemeCol_PopupBg, palette[2])
+                dpg.add_theme_color(dpg.mvThemeCol_PopupBg, palette[2])  # affects both modular window and right click menus...
                 dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, palette[3]+[200])
                 dpg.add_theme_color(dpg.mvThemeCol_Header, palette[3]+[100])
                 dpg.add_theme_color(dpg.mvThemeCol_HeaderActive, palette[3]+[200])

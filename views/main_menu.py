@@ -229,6 +229,7 @@ class MainMenu:
                 dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 16, 16)
                 dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 8, 0)
                 dpg.add_theme_color(dpg.mvThemeCol_Border, [50, 50, 120])
+                dpg.add_theme_color(dpg.mvThemeCol_PopupBg, [22, 22, 72])
                 # dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, [11, 11, 36, 100])
         dpg.bind_item_theme("the one modal window", modal_child_theme)
 
