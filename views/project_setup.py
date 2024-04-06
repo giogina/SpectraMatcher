@@ -149,9 +149,9 @@ class ProjectSetup:
                         with dpg.group(horizontal=True):
                             dpg.add_button(tag=f"delta E {state_index}", height=32)
                         with dpg.group():
-                            if not state_index == 0:  # todo: Enable the hide/show buttons to do the same as the ones in the spectrum view
-                                self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state_index, tag=f"hide {state_index}", callback=lambda s, a, u: self.viewmodel.hide_state(u, False)), icon=Icons.eye_slash, size=16)
-                                self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state_index, tag=f"show {state_index}", callback=lambda s, a, u: self.viewmodel.hide_state(u, True)), icon=Icons.eye, size=16)
+                            if not state_index == 0:  # todo: Enable the hide/show buttons to do the same as the ones in the spectrum view (probably state -> state_plots -> .hide(hide))
+                                self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state_index, tag=f"hide {state_index}", callback=lambda s, a, u: self.viewmodel.hide_state(u, False), show=False), icon=Icons.eye_slash, size=16)
+                                self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state_index, tag=f"show {state_index}", callback=lambda s, a, u: self.viewmodel.hide_state(u, True), show=False), icon=Icons.eye, size=16)
                                 self.icons.insert(dpg_item=dpg.add_button(width=32, height=32, user_data=state_index, tag=f"trash {state_index}", callback=lambda s, a, u: self.viewmodel.delete_state(u)), icon=Icons.trash, size=16, tooltip="Delete this state")
 
             dpg.add_spacer(height=24)
@@ -187,15 +187,15 @@ class ProjectSetup:
                 dpg.set_value(f"Emission FC file for state {state_index}", "")
                 dpg.configure_item(f"Emission FC file for state {state_index}", hint=state.emission_hint)
                 dpg.bind_item_theme(f"Emission FC file for state {state_index}", self.empty_field_theme)
-        if dpg.does_item_exist(f"hide {state_index}"):
-            if state.settings.get("hidden", False):
-                dpg.show_item(f"hide {state_index}")
-                dpg.hide_item(f"show {state_index}")
-            else:
-                dpg.show_item(f"show {state_index}")
-                dpg.hide_item(f"hide {state_index}")
-            dpg.bind_item_theme(f"show {state_index}", self.actual_button_theme)
-            dpg.bind_item_theme(f"hide {state_index}", self.actual_button_theme)
+        # if dpg.does_item_exist(f"hide {state_index}"):
+        #     if state.settings.get("hidden", False):
+        #         dpg.show_item(f"hide {state_index}")
+        #         dpg.hide_item(f"show {state_index}")
+        #     else:
+        #         dpg.show_item(f"show {state_index}")
+        #         dpg.hide_item(f"hide {state_index}")
+        #     dpg.bind_item_theme(f"show {state_index}", self.actual_button_theme)
+        #     dpg.bind_item_theme(f"hide {state_index}", self.actual_button_theme)
         if dpg.does_item_exist(f"trash {state_index}"):
             dpg.bind_item_theme(f"trash {state_index}", self.actual_button_theme)
             if state.delta_E is not None:
