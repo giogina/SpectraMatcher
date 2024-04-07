@@ -81,9 +81,18 @@ The up and down arrows adapt the last vertical spectrum shift, spectrum scale, o
 Holding down shift while scrolling or using arrow buttons allows for finer adjustments. 
 
 
-### Vertical Spectrum Positions
+### Moving and scaling experimental spectra
 
-The experimental spectra can be moved vertically in one of three ways: The global "vertical spacing" value
+The experimental spectra can be moved horizontally and vertically, as well as scaled vertically, in three ways:
+
+#### Spectra control panel
+Each spectrum can be individually moved using its corresponding sliders in the left control panel:
+<figure><img src=".gitbook/assets/state_sliders.png" alt="Spectrum slider controls"><figcaption></figcaption></figure>
+Additionally, using the buttons in this section, one can hide the spectrum from the plot, choose its color, and reset the shift & scale parameters.
+
+
+The global "vertical spacing" slider on the top right places the spectra equidistantly. 
+Each spectrum can also be individually moved using its "y position" slider, or by directly in the plot: Hovering the mouse near the base of the spectrum reveals a drag line, which can be dragged to the desired location.  
 
 
 
