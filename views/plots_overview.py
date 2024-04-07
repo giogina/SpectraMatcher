@@ -1103,6 +1103,7 @@ class PlotsOverview:
                     dpg.configure_item(f"drag-x-{s.tag}", show=show)
             dpg.configure_item(self.match_plot_y_drag, show=show)
 
+# todo: add a button disabling plot fitting altogether.
     def fit_y(self, dummy_series_update_only=False):
         ymin = -0.1
         ymax = 1.25

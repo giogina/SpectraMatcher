@@ -1,3 +1,4 @@
+
 # Quick start guide
 
 SpectraMatcher is a tool for displaying and analyzing experimental and computed vibronic spectra.
@@ -43,7 +44,8 @@ Files imported into the project are automatically analyzed, and the respective s
 
 Pressing the "Done" button performs final consistency checks, updates the project progress, and opens the emission spectra tab.
 
-## Spectrum plots
+
+## Emission and Excitation Plots and Controls
 
 The emission and excitation spectra corresponding to the experiment and all computed excited states are shown in the "Emission Spectra" and "Excitation Spectra" tabs.
 
@@ -52,9 +54,7 @@ The emission and excitation spectra corresponding to the experiment and all comp
 The white, lower-most spectrum is the experimental spectrum, or a combination of the experimental spectra if multiple are supplied.
 The computed spectra are displayed above, and listed in the left side-panel. The right panel provides controls for various plot, spectrum, and matching properties.
 
-### Plot controls
-
-#### Zoom & Pan
+### Zoom & Pan
 The plot can be zoomed with constant aspect ratio by scrolling while the mouse is hovered over a non-interactive part of the plot (more on the interactive parts below).
 To zoom only in x or y direction, hover the mouse over the corresponding axis and scroll.
 
@@ -67,6 +67,24 @@ Alternatively, to set exact axis limits, right-click the axis (or the plot area 
 Further axis and plot options are available in the plot context menu under "X/Y axis" and "Settings": 
 
 <figure><img src=".gitbook/assets/Axis_right_click_menu.png" alt="">  <img src=".gitbook/assets/settings_right_click_menu.png" alt=""><figcaption></figcaption></figure>
+
+
+### Slider controls
+
+All sliders can be changed by dragging the handle or by scrolling the mouse wheel while hovering the mouse over the slider.
+
+Alternatively, an exact numerical value can be entered after holding Control and left-clicking the slider.
+
+Pressing an arrow button moves the last changed corresponding slider: The left and right arrows alter the last horizontal spectrum shift, half width, or anharmonic correction factor.
+The up and down arrows adapt the last vertical spectrum shift, spectrum scale, or global vertical spacing. 
+
+Holding down shift while scrolling or using arrow buttons allows for finer adjustments. 
+
+
+### Vertical Spectrum Positions
+
+The experimental spectra can be moved vertically in one of three ways: The global "vertical spacing" value
+
 
 
 
