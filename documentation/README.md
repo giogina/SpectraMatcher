@@ -90,9 +90,15 @@ Each spectrum can be individually moved using its corresponding sliders in the l
 <figure><img src=".gitbook/assets/state_sliders.png" alt="Spectrum slider controls"><figcaption></figcaption></figure>
 Additionally, using the buttons in this section, one can hide the spectrum from the plot, choose its color, and reset the shift & scale parameters.
 
+#### Plot drag lines
+Spectra can be manipulated directly in the plot, using certain drag lines which appear on hover.
+Hovering the mouse near the base of the spectrum reveals a drag line which can be used to vertically drag the spectrum. While this line is revealed, scrolling the mouse wheel causes a scaling of the corresponding spectrum:
+ 
+<figure><img src=".gitbook/assets/scroll_and_y_shift_using_drag_lines.gif" alt="Scrolling and y shifting using drag lines"><figcaption></figcaption></figure>
 
-The global "vertical spacing" slider on the top right places the spectra equidistantly. 
-Each spectrum can also be individually moved using its "y position" slider, or by directly in the plot: Hovering the mouse near the base of the spectrum reveals a drag line, which can be dragged to the desired location.  
+#### Global vertical spacing
+The global "vertical spacing" slider on the top right places the spectra equidistantly.
+  
 
 
 
