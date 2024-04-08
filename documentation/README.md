@@ -54,7 +54,7 @@ The emission and excitation spectra corresponding to the experiment and all comp
 The white, lower-most spectrum is the experimental spectrum, or a combination of the experimental spectra if multiple are supplied.
 The computed spectra are displayed above, and listed in the left side-panel. The right panel provides controls for various plot, spectrum, and matching properties.
 
-The various ways in which the plot and spectra can be manipulated, including moving, scaling and adjusting the half-width as well as the anharmonic correction scaling factors, are explained in the [Spectra Controls](spectra_controls.md) section.
+The various ways in which the plot and spectra can be manipulated, including moving, scaling and adjusting the half-width as well as the anharmonic correction scaling factors, are explained in the [Plot & Spectra Controls](spectra_controls.md) section.
 
 
 

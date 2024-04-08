@@ -2,3 +2,4 @@
 
 * [Quick start guide](README.md)
 * [Import Data](File%20explorer.md)
+* [Plot & Spectra Controls](spectra_controls.md)
