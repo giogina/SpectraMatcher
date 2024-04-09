@@ -42,5 +42,7 @@ Hovering the mouse near the base of the spectrum reveals a drag line which can b
  
 <figure><img src=".gitbook/assets/scroll_and_y_shift_using_drag_lines.gif" alt="Scrolling and y shifting using drag lines"><figcaption></figcaption></figure>
 
+Similarly, hovering the mouse at the position of the highest peak reveals a line which can be used to horizontally drag the spectrum. Scrolling while this drag line is hovered adjusts the half-width of the experimental spectra. 
+
 ### Global vertical spacing
 The global "vertical spacing" slider on the top right places the spectra equidistantly.
