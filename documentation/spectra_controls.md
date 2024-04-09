@@ -27,9 +27,9 @@ The up and down arrows adapt the last vertical spectrum shift, spectrum scale, o
 Holding down shift while scrolling or using arrow buttons allows for finer adjustments. 
 
 
-## Moving and scaling experimental spectra
+## Moving and scaling computed spectra
 
-The experimental spectra can be moved horizontally and vertically, as well as scaled vertically, in three ways:
+The computed spectra can be moved horizontally and vertically, as well as scaled vertically, in three ways:
 
 ### Spectra control panel
 Each spectrum can be individually moved using its corresponding sliders in the left control panel:
@@ -42,7 +42,12 @@ Hovering the mouse near the base of the spectrum reveals a drag line which can b
  
 <figure><img src=".gitbook/assets/scroll_and_y_shift_using_drag_lines.gif" alt="Scrolling and y shifting using drag lines"><figcaption></figcaption></figure>
 
-Similarly, hovering the mouse at the position of the highest peak reveals a line which can be used to horizontally drag the spectrum. Scrolling while this drag line is hovered adjusts the half-width of the experimental spectra. 
+Similarly, hovering the mouse at the position of the highest peak reveals a line which can be used to horizontally drag the spectrum. Scrolling while this drag line is hovered adjusts the half-width of the computed spectra. 
+Note that the half-width is a global variable applied to all computed spectra, as it should not depend on the choice of excited state.
+
+<figure><img src=".gitbook/assets/scroll_and_wavenumber_shift_using_drag_lines.gif" alt="Scrolling and x shifting using drag lines"><figcaption></figcaption></figure>
+
+As with sliders, holding down the Shift button causes a finer adjustment while scrolling.
 
 ### Global vertical spacing
-The global "vertical spacing" slider on the top right places the spectra equidistantly.
+The global "vertical spacing" slider on the top right places all visible spectra equidistantly.
