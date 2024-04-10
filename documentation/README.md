@@ -5,8 +5,12 @@ SpectraMatcher is a tool for displaying and analyzing experimental and computed 
 
 ## Installation
 
-A Windows installation file is available [here](../installer/SpectraMatcher-setup.exe). Simply download this .exe and click through the installation wizard. No special permissions are necessary.
+Download the Windows installation file from one of the links below:
 
+* Version 0.9.0: [SpectraMatcher Beta Version 0.9.0](../installer/setup-SpectraMatcher-beta-0.9.0.exe).
+* Latest Beta Release, Version 0.9.1: [SpectraMatcher Beta Version 0.9.1](../installer/setup-SpectraMatcher-beta-0.9.1.exe).
+
+Simply follow installation wizard. No special permissions are necessary.
 It is recommended to keep the default installation directory.
 
 ## Startup
