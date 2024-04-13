@@ -243,7 +243,6 @@ class CreateProjectWindow:
         dpg.configure_item("modal_id", show=False)
         path = dpg.get_value('path input')
         name = dpg.get_value("name input")
-        print(path, name)
         if not len(name):
             name = "Untitled"
         new_dirs = []

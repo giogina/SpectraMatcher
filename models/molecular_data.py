@@ -52,7 +52,6 @@ class Geometry:
         return math.sqrt(res)
 
     def get_gaussian_geometry(self):
-        print(f"Geom: {self.atoms}, {self.x}")
         res = ""
         for i, atom in enumerate(self.atoms):
             res += f" {_ELEMENT_NAMES.get(atom, str(atom))}        {format_float(self.x[i])}    {format_float(self.y[i])}    {format_float(self.z[i])}\r\n"
@@ -458,8 +457,6 @@ class FCSpectrum:
                     cluster.rel_x = cluster.space[1] - gap_width/2  # nudge it away from right line
                 else:
                     cluster.rel_x = 0  # all good, keep it there.
-
-                print(cluster.label, cluster.x, cluster.rel_x, self.x_min, self.x_max)
 
                 # adjust lift of neighbours
                 if cluster.left_neighbour is not None:
