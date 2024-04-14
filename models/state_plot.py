@@ -396,14 +396,14 @@ class MatchPlot:
                     if spec is not None:
                         for cluster in self.super_clusters[peak.match][tag]:
                             peak_list = cluster.filtered_peaks(spec.yscale) if Matcher.get(self.is_emission, "list only labeled transitions") else cluster.peaks
-                            for p, peak in enumerate(peak_list):
-                                mode_data_list = [format(peak.wavenumber+spec.xshift, ".1f"),
-                                                  format(peak.corrected_wavenumber+spec.xshift, ".1f"),
-                                                  format(peak.intensity*spec.yscale, ".3f"),
+                            for p, peak2 in enumerate(peak_list):
+                                mode_data_list = [format(peak2.wavenumber+spec.xshift, ".1f"),
+                                                  format(peak2.corrected_wavenumber+spec.xshift, ".1f"),
+                                                  format(peak2.intensity*spec.yscale, ".3f"),
                                                   # (Labels.label2html(peak.get_label(use_gaussian_labels)) if html else Labels.label2tex(peak.get_label(use_gaussian_labels))),
-                                                  peak.get_label(use_gaussian_labels),
-                                                  peak.symmetries[0] if len(set(peak.symmetries)) == 1 else '',
-                                                  peak.types[0] if len(set(peak.types)) == 1 else '']
+                                                  peak2.get_label(use_gaussian_labels),
+                                                  peak2.symmetries[0] if len(set(peak2.symmetries)) == 1 else '',
+                                                  peak2.types[0] if len(set(peak2.types)) == 1 else '']
                                 peak_data_list += mode_data_list
                                 table.append(peak_data_list)
                                 line_added = True
