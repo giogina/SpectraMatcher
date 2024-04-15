@@ -521,9 +521,9 @@ class PlotsOverview:
                             if abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) < 0.02:
                                 dpg.show_item(f"drag-{s_tag}")
                                 self.hovered_spectrum_y_drag_line = s_tag
-                            elif abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) > 0.1:
+                            elif abs(dpg.get_value(f"drag-{s_tag}") - mouse_y_plot_space) > 0.1 and self.dragged_plot != s_tag:
                                 dpg.hide_item(f"drag-{s_tag}")
-                        if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) > 50:
+                        if abs(dpg.get_value(f"drag-x-{s_tag}") - mouse_x_plot_space) > 50 and self.dragged_plot != s_tag:
                             dpg.hide_item(f"drag-x-{s_tag}")
 
                     if s.yshift - 0.02 <= mouse_y_plot_space <= s.yshift+s.yscale:
@@ -555,7 +555,7 @@ class PlotsOverview:
             if self.viewmodel.match_plot.matching_active:
                 for s in self.viewmodel.match_plot.contributing_state_plots:
                     if not self.show_all_drag_lines:
-                        if abs(dpg.get_value(f"drag-x-{s.tag}") - mouse_x_plot_space) > 50:
+                        if abs(dpg.get_value(f"drag-x-{s.tag}") - mouse_x_plot_space) > 50 and self.dragged_plot != s.tag:
                             dpg.hide_item(f"drag-x-{s.tag}")
 
                     if self.viewmodel.match_plot.yshift - 0.02 <= mouse_y_plot_space <= self.viewmodel.match_plot.yshift + 1:
