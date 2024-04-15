@@ -363,30 +363,33 @@ class PlotsOverview:
                 (i, j) = key
                 while self.table[i+1][0].strip() == "":
                     i -= 1
-                exp_wn = int(float(self.table[i+1][0]))
-                for red_line in self.red_match_lines:
-                    if not int(red_line[0][0]) == exp_wn:
-                        dpg.configure_item(self.match_lines[red_line], color=[120, 120, 200, 255])
-                        self.red_match_lines.remove(red_line)
-                point_present = False
-                for point in self.red_peak_points:
-                    if int(dpg.get_value(point)[0]) != exp_wn:
-                        dpg.delete_item(point)
-                        self.red_peak_points.remove(point)
-                    else:
-                        point_present = True
-                for key2, line in self.match_lines.items():
-                    if dpg.does_item_exist(line):
-                        if int(key2[0][0]) == exp_wn:
-                            dpg.configure_item(line, color=[255, 0, 0])
-                            if not key2 in self.red_match_lines:
-                                self.red_match_lines.append(key2)
-                if not len(self.red_match_lines) and not point_present:
-                    exp_peak_wns = [int(peak.wavenumber) for peak in self.viewmodel.match_plot.exp_peaks]
-                    if exp_wn in exp_peak_wns:
-                        peak = self.viewmodel.match_plot.exp_peaks[exp_peak_wns.index(exp_wn)]
-                        dpg.add_drag_point(parent=self.plot, default_value=(peak.wavenumber, peak.intensity), color=[255, 0, 0])
-                        self.red_peak_points.append(dpg.last_item())
+                try:
+                    exp_wn = int(float(self.table[i+1][0]))
+                    for red_line in self.red_match_lines:
+                        if not int(red_line[0][0]) == exp_wn:
+                            dpg.configure_item(self.match_lines[red_line], color=[120, 120, 200, 255])
+                            self.red_match_lines.remove(red_line)
+                    point_present = False
+                    for point in self.red_peak_points:
+                        if int(dpg.get_value(point)[0]) != exp_wn:
+                            dpg.delete_item(point)
+                            self.red_peak_points.remove(point)
+                        else:
+                            point_present = True
+                    for key2, line in self.match_lines.items():
+                        if dpg.does_item_exist(line):
+                            if int(key2[0][0]) == exp_wn:
+                                dpg.configure_item(line, color=[255, 0, 0])
+                                if not key2 in self.red_match_lines:
+                                    self.red_match_lines.append(key2)
+                    if not len(self.red_match_lines) and not point_present:
+                        exp_peak_wns = [int(peak.wavenumber) for peak in self.viewmodel.match_plot.exp_peaks]
+                        if exp_wn in exp_peak_wns:
+                            peak = self.viewmodel.match_plot.exp_peaks[exp_peak_wns.index(exp_wn)]
+                            dpg.add_drag_point(parent=self.plot, default_value=(peak.wavenumber, peak.intensity), color=[255, 0, 0])
+                            self.red_peak_points.append(dpg.last_item())
+                except Exception as e:
+                    pass
 
     def enable_edit_peaks(self, enable, *args):
         self.peak_edit_mode_enabled = enable
