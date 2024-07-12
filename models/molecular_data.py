@@ -87,7 +87,7 @@ class Geometry:
     def _detect_ortho_dim(self):
         ortho_dim = -1
         for i, dim_coords in enumerate((self.x, self.y, self.z)):
-            if max([abs(c) for c in dim_coords]) < 1:
+            if max([abs(c) for c in dim_coords]) < 2:
                 ortho_dim = i
         if ortho_dim == -1:
             print("Molecule isn't in a plane! Not detecting bends and wobbles.")
@@ -138,20 +138,25 @@ class VibrationalMode:
             return None
 
         h_stretches = []
+        h_bends = []
         other_stretches = []
         h_bonds, other_bonds = geometry.get_bonds()
         
         bend = self.molecular_bend(geometry)
         for ch in h_bonds:
-            h_stretches.append(math.fabs(self.bond_stretch(geometry, ch[0], ch[1])))
+            h_stretches.append(math.fabs(self.bond_stretch(geometry, ch[0], ch[1])))  # todo: Could this be done as a 3N vector operation (dot product with h bonds displacement somehow)?
+            h_bends.append(math.fabs(self.H_oop_bend(geometry, ch[0], ch[1])))  # Looks like you won't be a H oop bend if you're not a molecular bend (although there are mol bends that aren't very H bend heavy)
         for cc in other_bonds:
             other_stretches.append(math.fabs(self.bond_stretch(geometry, cc[0], cc[1])))
 
         self.vibration_properties = [p if p <= 1 else 1.0 for p in
                                      [max([int(c * 100) for c in h_stretches]) / 100,  # *-H stretches
                                       int(math.sqrt(sum(other_stretches) / len(other_stretches)) * 10000) / 10000,  # Other stretches
-                                      int(bend * 100) / 100]]  # Bends
+                                      # int((sum(other_stretches) / len(other_stretches)) * 10000) / 10000,  # Other stretches
+                                      int(bend * 100) / 100]]  # Molecular Bends
+                                      # max([int(c * 100) for c in h_bends]) / 100]  # H oop bends
 
+        # print(self.vibration_properties)
         if self.vibration_properties[2] > 0.9:      # out-of-plane bends
             self.vibration_type = 'bends'  # key of WavenumberCorrector.correction_factors
         elif self.vibration_properties[0] > 0.2:    # *-H stretches
@@ -159,7 +164,7 @@ class VibrationalMode:
         else:                                       # Other stretches and deformations
             self.vibration_type = 'others'
 
-    def bond_stretch(self,geometry, a, b):
+    def bond_stretch(self, geometry, a, b):
         bond_eq = [geometry.x[a] - geometry.x[b],
                    geometry.y[a] - geometry.y[b],
                    geometry.z[a] - geometry.z[b]]
@@ -175,14 +180,22 @@ class VibrationalMode:
         if dim_index < 0:  # Not in a plane, assume no bend.
             return 0
         ortho_vector = (self.vector_x, self.vector_y, self.vector_z)[dim_index]
-        ortho_geom_coord = (geometry.x, geometry.y, geometry.z)[dim_index]
+        # ortho_geom_coord = (geometry.x, geometry.y, geometry.z)[dim_index]
 
         for a, g in enumerate(geometry.atoms):
-            b += float(ortho_vector[a]-ortho_geom_coord[a]) ** 2  # amount to which the mode is leaving the plane.
+            b += float(ortho_vector[a]) ** 2  # amount to which the mode is leaving the plane.
         return b
 
-    def H_wobble(self, a, b, geometry: Geometry):
+    def H_oop_bend(self, geometry, a, b):
+        dim_index = geometry.get_ortho_dim()
+        if dim_index < 0:
+            return 0
+        bond_st = [float(self.vector_x[a] - self.vector_x[b]),
+                   float(self.vector_y[a] - self.vector_y[b]),
+                   float(self.vector_z[a] - self.vector_z[b])]
+        return math.fabs(bond_st[dim_index])
 
+    def H_wobble(self, geometry, a, b):
         dim_index = geometry.get_ortho_dim()
         if dim_index < 0:
             return 0
