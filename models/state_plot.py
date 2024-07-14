@@ -68,9 +68,15 @@ class StatePlot:
         self.sticks_update_callback = callback
 
     def _compute_x_data(self):
+        if self._base_xdata == []:
+            print("Empty xdata!")
+            return np.zeros([0])
         return self._base_xdata + self.xshift
 
     def _compute_y_data(self):
+        if self._base_ydata == []:
+            print("Empty ydata!")
+            return np.zeros([0])
         return (self._base_ydata * self.yscale) + self.yshift
 
     def set_x_shift(self, xshift):
