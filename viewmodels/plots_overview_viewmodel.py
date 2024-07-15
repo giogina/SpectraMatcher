@@ -91,6 +91,8 @@ class PlotsOverviewViewmodel:
             tag = StatePlot.construct_tag(state, self.is_emission)
             if tag not in self.state_plots.keys() or self.state_plots[tag].state != state:
                 state_index = State.state_list.index(state)
+                print(state.emission_spectrum.__dict__)  # TODO: allow for empty emission file
+                print(state.excitation_spectrum.__dict__)
                 self.state_plots[tag] = StatePlot(state, self.is_emission, state_index=state_index, match_plot=self.match_plot)
                 if self.state_plots[tag].is_matched():
                     self.match_plot.add_state_plot(self.state_plots[tag])
