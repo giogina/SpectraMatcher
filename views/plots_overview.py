@@ -1,6 +1,7 @@
 import math
 
 import dearpygui.dearpygui as dpg
+import numpy as np
 import pyperclip
 
 from models.experimental_spectrum import ExperimentalSpectrum
@@ -66,6 +67,10 @@ class PlotsOverview:
         self.redraw_sticks_on_release = False
         self.left_mouse_is_down = False
         self.last_match_y = 0
+        self.hovered_label = None
+        self.animation_scale = 1
+        self.animated_bonds = []
+        self.animation_phase = 0
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -188,6 +193,19 @@ class PlotsOverview:
                                     dpg.add_button(label="Defaults", width=-6, callback=self.restore_label_defaults)
                             dpg.add_spacer(height=6)
                         # dpg.add_spacer(height=6)
+                        with dpg.collapsing_header(label="Mode visualization", default_open=False):  # todo: open header on label click
+                            with dpg.group(horizontal=True):
+                                dpg.add_spacer(width=6)
+                                with dpg.group(horizontal=False):
+                                    self.render_hint = dpg.add_text("Click a label to render...")
+                                    with dpg.drawlist(width=400, height=300, tag=f"animation_drawlist_{self.viewmodel.is_emission}"):
+                                        self.draw_molecule()
+                                    with dpg.item_handler_registry():
+                                        dpg.add_item_visible_handler(callback=self.vibrate_molecule)
+                                    dpg.bind_item_handler_registry(f"animation_drawlist_{self.viewmodel.is_emission}", dpg.last_container())
+                                    dpg.add_button(label="Pause", width=-6, callback=lambda x: self.viewmodel.set_displayed_animation(None))
+
+                            dpg.add_spacer(height=6)
                         with dpg.collapsing_header(label="Peak detection", default_open=True):
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
@@ -256,6 +274,77 @@ class PlotsOverview:
         if self.match_table_shown:
             dpg.configure_item(self.plot, height=dpg.get_viewport_height()/2)
             dpg.configure_item(self.plot_row, height=dpg.get_viewport_height()/2)
+
+    def atomic_color(self, atom):
+        if atom == 'H':
+            return [255, 255, 255]
+        elif atom == 'C':
+            return [150, 0, 255]
+        elif atom == 'O':
+            return [255, 0, 0]
+        elif atom == 'N':
+            return [0, 0, 255]
+        else:
+            return [100, 100, 100]
+
+    def draw_molecule(self, state=None, mode_vectors=None):
+        if state is None or mode_vectors is None:
+            return
+
+        for m in mode_vectors:
+            print(m[0], m[1].__dict__)  # multiplicity, mode
+
+        from_geometry = state.excited_geometry if self.viewmodel.is_emission else state.ground_geometry
+        to_geometry = state.ground_geometry if self.viewmodel.is_emission else state.excited_geometry
+        x, y, z, self.animation_scale, mode_x, mode_y, mode_z = from_geometry.get_fitted_vectors(mode_vectors)
+        H_bonds, bonds, _ = from_geometry.get_bonds()
+        bonds.extend(H_bonds)
+        self.animated_bonds = {phase: [] for phase in range(0,360)}
+        # todo: Works, but *extremely* inefficient. Use ndarrays, shift those, save textures instead of lines.
+
+
+        if dpg.does_item_exist(f"animation_{self.viewmodel.is_emission}"):
+            dpg.delete_item(f"animation_{self.viewmodel.is_emission}")
+        with dpg.draw_layer(depth_clipping=False, cull_mode=dpg.mvCullMode_Front, perspective_divide=True, tag=f"animation_{self.viewmodel.is_emission}", parent=f"animation_drawlist_{self.viewmodel.is_emission}") as molecule_animation_layer:
+            dpg.set_clip_space(dpg.last_item(), 0, 0, 300, 300, -1.0, 1.0)
+            with dpg.draw_node() as molecule_node:
+                dpg.apply_transform(molecule_node, dpg.create_translation_matrix([1/6., 0, 0]))
+                for bond in bonds:
+                    p1 = [x[bond[0]], y[bond[0]], z[bond[0]]]
+                    p2 = [x[bond[1]], y[bond[1]], z[bond[1]]]
+                    pm = [(p2[c]+p1[c])/2 for c in [0, 1, 2]]
+                    d1 = [mode_x[bond[0]], mode_y[bond[0]], mode_z[bond[0]]]
+                    d2 = [mode_x[bond[1]], mode_y[bond[1]], mode_z[bond[1]]]
+                    dm = [(d2[c]+d1[c])/2 for c in [0, 1, 2]]
+                    for phase in range(0, 360):
+                        # todo: temp: only first mode vector
+                        displacement_scale = math.sin(phase / 2 / math.pi)
+                        pd1 = [p1[c]+d1[c]*displacement_scale for c in [0, 1, 2]]
+                        pdm = [pm[c]+dm[c]*displacement_scale for c in [0, 1, 2]]
+                        pd2 = [p2[c]+d2[c]*displacement_scale for c in [0, 1, 2]]
+                        self.animated_bonds[phase].append(dpg.draw_line(pd1, pdm, show=False, color=self.atomic_color(from_geometry.atoms[bond[0]]), user_data=[p1, pm, d1, dm, self.atomic_color(from_geometry.atoms[bond[0]])]))
+                        self.animated_bonds[phase].append(dpg.draw_line(pd2, pdm, show=False, color=self.atomic_color(from_geometry.atoms[bond[1]]), user_data=[p2, pm, d2, dm, self.atomic_color(from_geometry.atoms[bond[1]])]))
+
+                # a = 0.49
+                # dpg.draw_line([-a, -a, 10], [a, -a, 10], color=[255, 255, 0])
+                # dpg.draw_line([a, a, 20], [a, -a, 20], color=[255, 255, 0])
+                # dpg.draw_line([a, a, 30], [-a, a, 30], color=[255, 255, 0])
+                # dpg.draw_line([-a, -a, 4], [-a, a, 4], color=[255, 255, 0])
+                # dpg.draw_line([-a, -a, 4], [a, a, 4], color=[255, 255, 0])
+                # dpg.draw_line([-a, a, 4], [a, -a, 4], color=[255, 255, 0])
+
+
+    def vibrate_molecule(self):
+        if self.viewmodel.animated_peak is None:
+            return
+        old_phase = self.animation_phase
+        self.animation_phase = (self.animation_phase + 1) % 360
+        for bond in self.animated_bonds[self.animation_phase]:
+            dpg.show_item(bond)
+        for bond in self.animated_bonds[old_phase]:
+            dpg.hide_item(bond)
+
+
 
     def toggle_fine_adjustments(self, fine, *args):
         if fine:
@@ -479,6 +568,8 @@ class PlotsOverview:
 
     def _custom_series_callback(self, sender, app_data, *args):
         try:
+            if not dpg.is_item_visible(f"plot_{self.viewmodel.is_emission}"):
+                return
             _helper_data = app_data[0]
             mouse_x_plot_space = _helper_data["MouseX_PlotSpace"]
             mouse_y_plot_space = _helper_data["MouseY_PlotSpace"]
@@ -512,6 +603,7 @@ class PlotsOverview:
             hovered_spectrum = None
             min_hovered_drag_line_distance = 10*self.pixels_per_plot_y  # (measured in pixel space)
             self.hovered_x_drag_line = None
+            self.hovered_label = None
             for s_tag, s in self.viewmodel.state_plots.items():
                 if not dpg.does_item_exist(f"drag-x-{s_tag}"):
                     return  # drawing is currently underway
@@ -543,8 +635,12 @@ class PlotsOverview:
                     if self.labels:
                         for label in self.annotations[s_tag].values():
                             pos = dpg.get_value(label)
-                            dist = self.pixel_distance([mouse_x_plot_space, mouse_y_plot_space], pos)
-                            if max(dist) < 10:
+                            # dist = self.pixel_distance([mouse_x_plot_space, mouse_y_plot_space], pos)
+                            cl = dpg.get_item_user_data(label)[0]
+                            if pos[0]-cl.width/2 <= mouse_x_plot_space <= pos[0]+cl.width/2 and pos[1] <= mouse_y_plot_space <= pos[1] + cl.height:
+                                nr_label_lines = cl.label.count('\n') + 1
+                                hovered_label_line = int((1 - (mouse_y_plot_space - pos[1])/cl.height) * nr_label_lines)
+                                self.hovered_label = [label, hovered_label_line]
                                 dpg.show_item(self.label_drag_points[s_tag][label])
                             else:
                                 dpg.hide_item(self.label_drag_points[s_tag][label])
@@ -571,7 +667,7 @@ class PlotsOverview:
             if self.peak_edit_mode_enabled:
                 self.hovered_peak_indicator_point = None
                 for point in self.peak_indicator_points:
-                    if max(self.pixel_distance(dpg.get_value(point), [mouse_x_plot_space, mouse_y_plot_space])) < 6:
+                    if max([abs(d) for d in self.pixel_distance(dpg.get_value(point), [mouse_x_plot_space, mouse_y_plot_space])]) < 6:
                         self.hovered_peak_indicator_point = point
                         break
                 self.exp_hovered = 0 <= mouse_y_plot_space <= 1
@@ -581,7 +677,7 @@ class PlotsOverview:
             print(f"Exception in custom series callback: {e}")
 
     def pixel_distance(self, plot_pos_1, plot_pos_2):
-        return abs((plot_pos_1[0] - plot_pos_2[0])*self.pixels_per_plot_x), abs((plot_pos_1[1] - plot_pos_2[1])*self.pixels_per_plot_y)
+        return ((plot_pos_1[0] - plot_pos_2[0])*self.pixels_per_plot_x), ((plot_pos_1[1] - plot_pos_2[1])*self.pixels_per_plot_y)
 
     def sticks_callback(self, sender, app_data, *args):
         return
@@ -791,6 +887,8 @@ class PlotsOverview:
             self.redraw_sticks_on_release = True
 
     def on_drag_release(self, *args):
+        if not dpg.is_item_visible(f"plot_{self.viewmodel.is_emission}"):
+            return          # todo> what other functions need this check to make sure only the visible plot is updated?
         self.left_mouse_is_down = False
         if self.dragged_plot is not None:
             spec = self.viewmodel.state_plots.get(self.dragged_plot)
@@ -817,6 +915,15 @@ class PlotsOverview:
             self.viewmodel.match_plot.assign_peaks()
         elif self.ctrl_pressed and self.hovered_spectrum is not None:
             self.viewmodel.toggle_match_spec_contribution(self.hovered_spectrum)
+        elif self.hovered_label is not None and self.hovered_spectrum is not None:
+            cluster = dpg.get_item_user_data(self.hovered_label[0])[0]
+            clicked_peaks = [p for p in cluster.peaks if p.get_label(self.gaussian_labels) == cluster.label.split('\n')[self.hovered_label[1]]]
+            state = self.hovered_spectrum.state
+            if len(clicked_peaks):
+                clicked_peak = clicked_peaks[0]
+                self.draw_molecule(state, [[t[1], self.hovered_spectrum.spectrum.vibrational_modes.get_mode(t[0])] for t in clicked_peak.transition])
+                self.viewmodel.set_displayed_animation(clicked_peak)
+                dpg.set_value(self.render_hint, f"{state.name} {'emission' if self.viewmodel.is_emission else 'excitation'}, {clicked_peak.get_label(self.gaussian_labels)}")
 
         for spec in self.viewmodel.state_plots.values():
             dpg.set_value(f"drag-{spec.tag}", spec.yshift)

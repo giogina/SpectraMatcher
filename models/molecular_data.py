@@ -1,5 +1,7 @@
 import math
 from collections import Counter
+
+import numpy as np
 from scipy import signal
 
 from utility.async_manager import AsyncManager
@@ -36,6 +38,10 @@ class Geometry:
 
         self._H_bonds = None
         self._other_bonds = None
+        self._H_bond_matrix = None
+        self.Bx = None
+        self.By = None
+        self.Bz = None
 
         self._ortho_dim = None
 
@@ -60,6 +66,8 @@ class Geometry:
     def detect_bonds(self):
         self._H_bonds = []
         self._other_bonds = []
+        self._H_bond_matrix = np.zeros((len([h for h in self.atoms if h == 'H']), len(self.atoms)), dtype=int)
+        row_counter = 0
         for a, atom in enumerate(self.atoms):
             for b in range(a + 1, len(self.atoms)):
                 btom = self.atoms[b]
@@ -67,15 +75,28 @@ class Geometry:
                 if dist < 2:
                     if dist < 1.4 and atom == 'H' and btom != 'H':
                         self._H_bonds.append([b, a, dist])
+                        self._H_bond_matrix[row_counter, a] = -1
+                        self._H_bond_matrix[row_counter, b] = 1
+                        row_counter += 1
                     elif dist < 1.4 and atom != 'H' and btom == 'H':
                         self._H_bonds.append([a, b, dist])
+                        self._H_bond_matrix[row_counter, a] = 1
+                        self._H_bond_matrix[row_counter, b] = -1
+                        row_counter += 1
                     else:
                         self._other_bonds.append([a, b, dist])
+        self.Bx = np.matmul(self._H_bond_matrix, self.x)
+        self.By = np.matmul(self._H_bond_matrix, self.y)
+        self.Bz = np.matmul(self._H_bond_matrix, self.z)
+        lenBxyz = math.sqrt(np.dot(self.Bx, self.Bx) + np.dot(self.By, self.By) + np.dot(self.Bz, self.Bz))
+        self.Bx /= lenBxyz
+        self.By /= lenBxyz
+        self.Bz /= lenBxyz
 
     def get_bonds(self):
         if self._H_bonds is None:
             self.detect_bonds()
-        return self._H_bonds, self._other_bonds
+        return self._H_bonds, self._other_bonds, self._H_bond_matrix
 
     def get_ortho_dim(self):
         if self._ortho_dim is None:
@@ -116,6 +137,27 @@ class Geometry:
                 formula += '⁻'
         return formula
 
+    def get_fitted_vectors(self, mode_vectors=None):
+        """Return vectors scaled, shifted & permuted to fit into the vibration animation
+        :returns x, y, z, scale"""
+        sizes = [max(v) - min(v) for v in [self.x, self.y, self.z]]
+        scale = 0.9/max(sizes)  # Maybe include vibration scale, to fit maximally vibrated molecule?
+        vs = []
+        middle = (max(self.x) + min(self.x))/2
+        vs.append([0, [(c-middle)*scale for c in self.x]])
+        middle = (max(self.y) + min(self.y))/2
+        vs.append([1, [(c-middle)*scale for c in self.y]])
+        middle = (max(self.z) + min(self.z))/2
+        vs.append([2, [(c-middle)*scale for c in self.z]])
+        vs.sort(key=lambda v: max(v[1])-min(v[1]), reverse=True)
+        x, y, z = [v[1] for v in vs]
+        mode_x, mode_y, mode_z = None, None, None
+        if mode_vectors is not None:
+            mult, mode = mode_vectors[0]
+            mode_x, mode_y, mode_z = [[c*scale for c in [mode.vector_x, mode.vector_y, mode.vector_z][v[0]]] for v in vs]  #e.g. [2,0,1]
+
+        return x, y, z, scale, mode_x, mode_y, mode_z
+
 
 class VibrationalMode:
 
@@ -140,7 +182,7 @@ class VibrationalMode:
         h_stretches = []
         h_bends = []
         other_stretches = []
-        h_bonds, other_bonds = geometry.get_bonds()
+        h_bonds, other_bonds, H_matrix = geometry.get_bonds()
         
         bend = self.molecular_bend(geometry)
         for ch in h_bonds:
@@ -150,16 +192,21 @@ class VibrationalMode:
             other_stretches.append(math.fabs(self.bond_stretch(geometry, cc[0], cc[1])))
 
         self.vibration_properties = [p if p <= 1 else 1.0 for p in
-                                     [max([int(c * 100) for c in h_stretches]) / 100,  # *-H stretches
+                                     [
+                                      # max([int(c * 100) for c in h_stretches]) / 100,  # *-H stretches (max bond length change)
+                                      int(self.h_stretches(geometry, H_matrix)*100)/100,  # *-H stretches
                                       int(math.sqrt(sum(other_stretches) / len(other_stretches)) * 10000) / 10000,  # Other stretches
                                       # int((sum(other_stretches) / len(other_stretches)) * 10000) / 10000,  # Other stretches
                                       int(bend * 100) / 100]]  # Molecular Bends
                                       # max([int(c * 100) for c in h_bends]) / 100]  # H oop bends
 
+        # print(self.vibration_properties[0], int(self.h_stretches(geometry, H_matrix)*100)/100,
+        #       (self.vibration_properties[0] > 0.2) == (int(self.h_stretches(geometry, H_matrix)*100)/100 > 0.7))
         # print(self.vibration_properties)
+
         if self.vibration_properties[2] > 0.9:      # out-of-plane bends
             self.vibration_type = 'bends'  # key of WavenumberCorrector.correction_factors
-        elif self.vibration_properties[0] > 0.2:    # *-H stretches
+        elif self.vibration_properties[0] > 0.7:    # *-H stretches (0.2 for old algo)
             self.vibration_type = 'H stretches'
         else:                                       # Other stretches and deformations
             self.vibration_type = 'others'
@@ -172,6 +219,13 @@ class VibrationalMode:
                    float(self.vector_y[a] - self.vector_y[b]),
                    float(self.vector_z[a] - self.vector_z[b])]
         return bond_eq[0] * bond_st[0] + bond_eq[1] * bond_st[1] + bond_eq[2] * bond_st[2]
+
+    def h_stretches(self, geometry, H_matrix):
+        # print(np.absolute(geometry.By), np.dot(geometry.By, geometry.By))
+        # print(np.matmul(H_matrix, self.vector_y), np.dot(np.matmul(H_matrix, self.vector_y), np.matmul(H_matrix, self.vector_y)))
+        return np.dot(np.absolute(geometry.Bx), np.absolute(np.matmul(H_matrix, self.vector_x)))\
+         + np.dot(np.absolute(geometry.By), np.absolute(np.matmul(H_matrix, self.vector_y)))\
+         + np.dot(np.absolute(geometry.Bz), np.absolute(np.matmul(H_matrix, self.vector_z)))
 
     def molecular_bend(self, geometry: Geometry):
         b = 0

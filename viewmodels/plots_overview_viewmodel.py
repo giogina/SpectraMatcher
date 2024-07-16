@@ -44,6 +44,7 @@ class PlotsOverviewViewmodel:
         self.match_plot = MatchPlot(self.is_emission)
         self.match_plot.add_observer(self)
         self.vert_spacing = 1.25
+        self.animated_peak = None
 
     def update(self, event, *args):
         # print(f"Plots overview viewmodel received event: {event} {args}")
@@ -100,6 +101,9 @@ class PlotsOverviewViewmodel:
                 self.state_plots[tag].set_sticks_update_callback(self.update_sticks)
                 return tag
         return None
+
+    def set_displayed_animation(self, peak=None):
+        self.animated_peak = peak
 
     def update_plot_and_drag_lines(self, state_plot):
         if state_plot != self.state_plots[state_plot.tag]:
