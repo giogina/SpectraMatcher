@@ -137,11 +137,14 @@ class Geometry:
                 formula += '⁻'
         return formula
 
-    def get_fitted_vectors(self, mode_vectors=None):
+    def get_fitted_vectors(self, mode_vectors=None, inp_scale=-1):
         """Return vectors scaled, shifted & permuted to fit into the vibration animation
         :returns x, y, z, scale"""
         sizes = [max(v) - min(v) for v in [self.x, self.y, self.z]]
-        scale = 0.9/max(sizes)  # Maybe include vibration scale, to fit maximally vibrated molecule?
+        if inp_scale == -1:
+            scale = 0.9/max(sizes)  # Maybe include vibration scale, to fit maximally vibrated molecule?
+        else:
+            scale = inp_scale
         vs = []
         middle = (max(self.x) + min(self.x))/2
         vs.append([0, [(c-middle)*scale for c in self.x]])
@@ -155,8 +158,7 @@ class Geometry:
         if mode_vectors is not None:
             mult, mode = mode_vectors[0]
             mode_x, mode_y, mode_z = [[c*scale for c in [mode.vector_x, mode.vector_y, mode.vector_z][v[0]]] for v in vs]  #e.g. [2,0,1]
-
-        return x, y, z, scale, mode_x, mode_y, mode_z
+        return np.array(x), np.array(y), np.array(z), scale, np.array(mode_x), np.array(mode_y), np.array(mode_z)
 
 
 class VibrationalMode:

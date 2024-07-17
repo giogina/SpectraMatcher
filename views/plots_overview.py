@@ -1,7 +1,6 @@
 import math
 
 import dearpygui.dearpygui as dpg
-import numpy as np
 import pyperclip
 
 from models.experimental_spectrum import ExperimentalSpectrum
@@ -69,14 +68,20 @@ class PlotsOverview:
         self.last_match_y = 0
         self.hovered_label = None
         self.animation_scale = 1
-        self.animated_bonds = []
         self.animation_phase = 0
+        self.frame_node = {}
+        self.molecule_animation_clicked = False
+        self.molecule_node = None
+        self.current_rotation = dpg.create_rotation_matrix(0, [1, 0, 0])
+        self.animation_matrix = dpg.create_translation_matrix([1/6., 0, 0])
+        self.last_animation_drag_delta = [0, 0]
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
             dpg.add_mouse_down_handler(dpg.mvMouseButton_Left, callback=self.on_left_mouse_down)
             dpg.add_mouse_release_handler(dpg.mvMouseButton_Left, callback=self.on_drag_release)
             dpg.add_mouse_release_handler(dpg.mvMouseButton_Right, callback=self.on_right_click_release)
+            dpg.add_mouse_drag_handler(dpg.mvMouseButton_Left, callback=self.on_drag)
             dpg.add_key_down_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=True)
             dpg.add_key_release_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=False)
             dpg.add_key_down_handler(dpg.mvKey_Shift, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=True)
@@ -291,60 +296,59 @@ class PlotsOverview:
         if state is None or mode_vectors is None:
             return
 
-        for m in mode_vectors:
-            print(m[0], m[1].__dict__)  # multiplicity, mode
-
-        from_geometry = state.excited_geometry if self.viewmodel.is_emission else state.ground_geometry
+        # from_geometry = state.excited_geometry if self.viewmodel.is_emission else state.ground_geometry
         to_geometry = state.ground_geometry if self.viewmodel.is_emission else state.excited_geometry
-        x, y, z, self.animation_scale, mode_x, mode_y, mode_z = from_geometry.get_fitted_vectors(mode_vectors)
-        H_bonds, bonds, _ = from_geometry.get_bonds()
-        bonds.extend(H_bonds)
-        self.animated_bonds = {phase: [] for phase in range(0,360)}
-        # todo: Works, but *extremely* inefficient. Use ndarrays, shift those, save textures instead of lines.
 
+        print(to_geometry.get_ortho_dim(), mode_vectors[0][1].vibration_properties, mode_vectors[0][1].vibration_type, max(to_geometry.x), max(to_geometry.y), max(to_geometry.z), ", ", max(mode_vectors[0][1].vector_x), max(mode_vectors[0][1].vector_y), max(mode_vectors[0][1].vector_z))
+
+        x, y, z, self.animation_scale, mode_x, mode_y, mode_z = to_geometry.get_fitted_vectors(mode_vectors)  # only first mode vector
+
+        H_bonds, bonds, _ = to_geometry.get_bonds()
+        bonds.extend(H_bonds)
+        self.animated_bonds = {phase: [] for phase in range(0, 360)}
+        self.frame_node = {}
 
         if dpg.does_item_exist(f"animation_{self.viewmodel.is_emission}"):
             dpg.delete_item(f"animation_{self.viewmodel.is_emission}")
         with dpg.draw_layer(depth_clipping=False, cull_mode=dpg.mvCullMode_Front, perspective_divide=True, tag=f"animation_{self.viewmodel.is_emission}", parent=f"animation_drawlist_{self.viewmodel.is_emission}") as molecule_animation_layer:
             dpg.set_clip_space(dpg.last_item(), 0, 0, 300, 300, -1.0, 1.0)
-            with dpg.draw_node() as molecule_node:
-                dpg.apply_transform(molecule_node, dpg.create_translation_matrix([1/6., 0, 0]))
-                for bond in bonds:
-                    p1 = [x[bond[0]], y[bond[0]], z[bond[0]]]
-                    p2 = [x[bond[1]], y[bond[1]], z[bond[1]]]
-                    pm = [(p2[c]+p1[c])/2 for c in [0, 1, 2]]
-                    d1 = [mode_x[bond[0]], mode_y[bond[0]], mode_z[bond[0]]]
-                    d2 = [mode_x[bond[1]], mode_y[bond[1]], mode_z[bond[1]]]
-                    dm = [(d2[c]+d1[c])/2 for c in [0, 1, 2]]
-                    for phase in range(0, 360):
-                        # todo: temp: only first mode vector
-                        displacement_scale = math.sin(phase / 2 / math.pi)
-                        pd1 = [p1[c]+d1[c]*displacement_scale for c in [0, 1, 2]]
-                        pdm = [pm[c]+dm[c]*displacement_scale for c in [0, 1, 2]]
-                        pd2 = [p2[c]+d2[c]*displacement_scale for c in [0, 1, 2]]
-                        self.animated_bonds[phase].append(dpg.draw_line(pd1, pdm, show=False, color=self.atomic_color(from_geometry.atoms[bond[0]]), user_data=[p1, pm, d1, dm, self.atomic_color(from_geometry.atoms[bond[0]])]))
-                        self.animated_bonds[phase].append(dpg.draw_line(pd2, pdm, show=False, color=self.atomic_color(from_geometry.atoms[bond[1]]), user_data=[p2, pm, d2, dm, self.atomic_color(from_geometry.atoms[bond[1]])]))
+            with dpg.draw_node() as self.molecule_node:
+                dpg.apply_transform(self.molecule_node, self.animation_matrix)
+                for phase in range(0, 360):
+                    with dpg.draw_node(show=False) as self.frame_node[phase]:
+                        cx = x + math.sin(phase / 2 / math.pi)*mode_x
+                        cy = y + math.sin(phase / 2 / math.pi)*mode_y
+                        cz = z + math.sin(phase / 2 / math.pi)*mode_z
 
-                # a = 0.49
-                # dpg.draw_line([-a, -a, 10], [a, -a, 10], color=[255, 255, 0])
-                # dpg.draw_line([a, a, 20], [a, -a, 20], color=[255, 255, 0])
-                # dpg.draw_line([a, a, 30], [-a, a, 30], color=[255, 255, 0])
-                # dpg.draw_line([-a, -a, 4], [-a, a, 4], color=[255, 255, 0])
-                # dpg.draw_line([-a, -a, 4], [a, a, 4], color=[255, 255, 0])
-                # dpg.draw_line([-a, a, 4], [a, -a, 4], color=[255, 255, 0])
-
+                        for bond in bonds:
+                            p1 = [cx[bond[0]], cy[bond[0]], cz[bond[0]]]
+                            p2 = [cx[bond[1]], cy[bond[1]], cz[bond[1]]]
+                            if to_geometry.atoms[bond[0]] != to_geometry.atoms[bond[1]]:
+                                pm = [(p2[c]+p1[c])/2 for c in [0, 1, 2]]
+                                dpg.draw_line(p1, pm, color=self.atomic_color(to_geometry.atoms[bond[0]]), user_data=[p1, pm, self.atomic_color(to_geometry.atoms[bond[0]])])
+                                dpg.draw_line(p2, pm, color=self.atomic_color(to_geometry.atoms[bond[1]]), user_data=[p2, pm, self.atomic_color(to_geometry.atoms[bond[1]])])
+                            else:
+                                dpg.draw_line(p1, p2, color=self.atomic_color(to_geometry.atoms[bond[0]]), user_data=[p1, p2, self.atomic_color(to_geometry.atoms[bond[0]])])
+                # TODO: Experiment: animate the vibration associated with to_geom - from_geom
+                # with dpg.draw_node() as origin_molecule:
+                #     x, y, z, _, _, _, _ = from_geometry.get_fitted_vectors(inp_scale=self.animation_scale)
+                #     for bond in bonds:
+                #         p1 = [x[bond[0]], y[bond[0]], z[bond[0]]]
+                #         p2 = [x[bond[1]], y[bond[1]], z[bond[1]]]
+                #         if to_geometry.atoms[bond[0]] != to_geometry.atoms[bond[1]]:
+                #             pm = [(p2[c]+p1[c])/2 for c in [0, 1, 2]]
+                #             dpg.draw_line(p1, pm, color=self.atomic_color(to_geometry.atoms[bond[0]])+[100], user_data=[p1, pm, self.atomic_color(to_geometry.atoms[bond[0]])])
+                #             dpg.draw_line(p2, pm, color=self.atomic_color(to_geometry.atoms[bond[1]])+[100], user_data=[p2, pm, self.atomic_color(to_geometry.atoms[bond[1]])])
+                #         else:
+                #             dpg.draw_line(p1, p2, color=self.atomic_color(to_geometry.atoms[bond[0]])+[100], user_data=[p1, p2, self.atomic_color(to_geometry.atoms[bond[0]])])
 
     def vibrate_molecule(self):
         if self.viewmodel.animated_peak is None:
             return
         old_phase = self.animation_phase
         self.animation_phase = (self.animation_phase + 1) % 360
-        for bond in self.animated_bonds[self.animation_phase]:
-            dpg.show_item(bond)
-        for bond in self.animated_bonds[old_phase]:
-            dpg.hide_item(bond)
-
-
+        dpg.show_item(self.frame_node[self.animation_phase])
+        dpg.hide_item(self.frame_node[old_phase])
 
     def toggle_fine_adjustments(self, fine, *args):
         if fine:
@@ -363,6 +367,15 @@ class PlotsOverview:
 
     def on_left_mouse_down(self, *args):
         self.left_mouse_is_down = True
+        self.molecule_animation_clicked = dpg.is_item_hovered(f"animation_drawlist_{self.viewmodel.is_emission}")
+
+    def on_drag(self):
+        if self.molecule_animation_clicked:
+            if self.last_animation_drag_delta != dpg.get_mouse_drag_delta():
+                self.current_rotation = dpg.create_rotation_matrix(dpg.get_mouse_drag_delta()[1]/100, [1, 0, 0])\
+                    * dpg.create_rotation_matrix(dpg.get_mouse_drag_delta()[0]/100, [0, 0, 1])
+                dpg.apply_transform(self.molecule_node, self.animation_matrix * self.current_rotation)
+                self.last_animation_drag_delta = [0, 0]
 
     def on_right_click_release(self, *args):
         point = self.hovered_peak_indicator_point
@@ -640,7 +653,16 @@ class PlotsOverview:
                             if pos[0]-cl.width/2 <= mouse_x_plot_space <= pos[0]+cl.width/2 and pos[1] <= mouse_y_plot_space <= pos[1] + cl.height:
                                 nr_label_lines = cl.label.count('\n') + 1
                                 hovered_label_line = int((1 - (mouse_y_plot_space - pos[1])/cl.height) * nr_label_lines)
-                                self.hovered_label = [label, hovered_label_line]
+
+                                cluster = dpg.get_item_user_data(label)[0]
+                                clicked_peaks = [p for p in cluster.peaks if p.get_label(self.gaussian_labels) == cluster.label.split('\n')[hovered_label_line]]
+                                if len(clicked_peaks):
+                                    clicked_peak = clicked_peaks[0]
+                                    if len(clicked_peak.transition) == 1:
+                                        self.hovered_label = [label, clicked_peak, 0]  # [2]: index of clicked mode
+                                    else:
+                                        m = int((mouse_x_plot_space-(pos[0]-cl.width/2))/cl.width * len(clicked_peak.transition))
+                                        self.hovered_label = [label, clicked_peak, m]
                                 dpg.show_item(self.label_drag_points[s_tag][label])
                             else:
                                 dpg.hide_item(self.label_drag_points[s_tag][label])
@@ -916,14 +938,23 @@ class PlotsOverview:
         elif self.ctrl_pressed and self.hovered_spectrum is not None:
             self.viewmodel.toggle_match_spec_contribution(self.hovered_spectrum)
         elif self.hovered_label is not None and self.hovered_spectrum is not None:
-            cluster = dpg.get_item_user_data(self.hovered_label[0])[0]
-            clicked_peaks = [p for p in cluster.peaks if p.get_label(self.gaussian_labels) == cluster.label.split('\n')[self.hovered_label[1]]]
             state = self.hovered_spectrum.state
-            if len(clicked_peaks):
-                clicked_peak = clicked_peaks[0]
-                self.draw_molecule(state, [[t[1], self.hovered_spectrum.spectrum.vibrational_modes.get_mode(t[0])] for t in clicked_peak.transition])
-                self.viewmodel.set_displayed_animation(clicked_peak)
-                dpg.set_value(self.render_hint, f"{state.name} {'emission' if self.viewmodel.is_emission else 'excitation'}, {clicked_peak.get_label(self.gaussian_labels)}")
+            clicked_peak = self.hovered_label[1]
+            mode_index = self.hovered_label[2]
+            if clicked_peak.transition == [[0]]:
+                self.viewmodel.set_displayed_animation(None)
+            modes = [self.hovered_spectrum.spectrum.vibrational_modes.get_mode(t[0]) for t in clicked_peak.transition]
+            if not self.gaussian_labels:
+                modes.sort(key=lambda m: m.name)
+            mode = modes[mode_index]
+            self.draw_molecule(state, [[clicked_peak.transition[mode_index][1], mode]])
+            self.viewmodel.set_displayed_animation(clicked_peak)
+            # dpg.set_value(self.render_hint, f"{state.name} {'emission' if self.viewmodel.is_emission else 'excitation'}, {clicked_peak.get_label(self.gaussian_labels)}")
+            dpg.set_value(self.render_hint, f"{'ground state' if self.viewmodel.is_emission else state.name} mode #{mode.gaussian_name if self.gaussian_labels else mode.name}")
+        elif self.molecule_animation_clicked:
+            self.last_animation_drag_delta = dpg.get_mouse_drag_delta()
+            self.animation_matrix = self.animation_matrix * self.current_rotation
+            self.current_rotation = dpg.create_rotation_matrix(0, [1, 0, 0])
 
         for spec in self.viewmodel.state_plots.values():
             dpg.set_value(f"drag-{spec.tag}", spec.yshift)
