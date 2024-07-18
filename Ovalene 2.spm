@@ -50,7 +50,9 @@
             "y shift emission": 1.25,
             "matched emission": false,
             "y shift excitation": 1.25,
-            "matched excitation": false
+            "matched excitation": false,
+            "hidden emission": false,
+            "hidden during match emission": true
         },
         {
             "color": [
@@ -64,7 +66,10 @@
             "y shift emission": 2.5,
             "matched emission": false,
             "y shift excitation": 2.5,
-            "matched excitation": false
+            "matched excitation": false,
+            "hidden emission": false,
+            "hidden during match emission": false,
+            "y scale emission": 2.200000000000001
         },
         {
             "color": [
@@ -75,10 +80,12 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\ovalene-excited-3-opt-freq-disp.log",
-            "y shift emission": 3.75,
+            "y shift emission": 2.5,
             "matched emission": false,
             "y shift excitation": 3.75,
-            "matched excitation": false
+            "matched excitation": false,
+            "hidden emission": true,
+            "hidden during match emission": true
         },
         {
             "color": [
@@ -89,10 +96,12 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\ovalene-excited-4-opt-freq-disp.log",
-            "y shift emission": 5.0,
+            "y shift emission": 2.5,
             "matched emission": false,
             "y shift excitation": 5.0,
-            "matched excitation": false
+            "matched excitation": false,
+            "hidden emission": true,
+            "hidden during match emission": true
         },
         {
             "color": [
@@ -103,10 +112,12 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\ovalene-excited-5-opt-freq-disp.log",
-            "y shift emission": 6.25,
+            "y shift emission": 2.5,
             "matched emission": false,
             "y shift excitation": 6.25,
-            "matched excitation": false
+            "matched excitation": false,
+            "hidden emission": true,
+            "hidden during match emission": true
         },
         {
             "color": [
@@ -117,10 +128,12 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\ovalene-excited-6-freq-disp.log",
-            "y shift emission": 7.5,
+            "y shift emission": 2.5,
             "matched emission": false,
             "y shift excitation": 7.5,
-            "matched excitation": false
+            "matched excitation": false,
+            "hidden emission": true,
+            "hidden during match emission": true
         }
     ],
     "directory toggle states": {
@@ -141,18 +154,18 @@
     },
     "label settings": {
         "true": {
-            "show labels": false,
+            "show labels": true,
             "show gaussian labels": false,
-            "peak intensity label threshold": 0.1,
+            "peak intensity label threshold": 0.014000000432133675,
             "stick label relative threshold": 0.1,
-            "stick label absolute threshold": 0.1,
+            "stick label absolute threshold": 0.010999999940395355,
             "peak separation threshold": 0.8,
             "label font size": 18,
             "axis font size": 18,
             "peak intensity match threshold": 0.03,
             "distance match threshold": 30,
             "global y shifts": 1.25,
-            "show sticks": false
+            "show sticks": true
         },
         "false": {
             "show labels": false,

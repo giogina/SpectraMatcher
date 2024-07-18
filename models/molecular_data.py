@@ -175,6 +175,7 @@ class VibrationalMode:
         self.index = index
         self.gaussian_name = index+1
         self.classify(geometry)
+        self.geometry = geometry  # only needed for the animation (dimensions are switched in main geom) - maybe just save some marker for the dimensions?
 
     def classify(self, geometry: Geometry):
         if self.wavenumber is None:

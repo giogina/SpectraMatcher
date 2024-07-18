@@ -75,6 +75,7 @@ class PlotsOverview:
         self.current_rotation = dpg.create_rotation_matrix(0, [1, 0, 0])
         self.animation_matrix = dpg.create_translation_matrix([1/6., 0, 0])
         self.last_animation_drag_delta = [0, 0]
+        self.label_moving = True  # todo: temp
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -198,7 +199,7 @@ class PlotsOverview:
                                     dpg.add_button(label="Defaults", width=-6, callback=self.restore_label_defaults)
                             dpg.add_spacer(height=6)
                         # dpg.add_spacer(height=6)
-                        with dpg.collapsing_header(label="Mode visualization", default_open=False):  # todo: open header on label click
+                        with dpg.collapsing_header(label="Mode visualization", default_open=False):
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
@@ -292,14 +293,12 @@ class PlotsOverview:
         else:
             return [100, 100, 100]
 
-    def draw_molecule(self, state=None, mode_vectors=None):
-        if state is None or mode_vectors is None:
+    def draw_molecule(self, mode_vectors=None):
+        if mode_vectors is None:
             return
 
-        # from_geometry = state.excited_geometry if self.viewmodel.is_emission else state.ground_geometry
-        to_geometry = state.ground_geometry if self.viewmodel.is_emission else state.excited_geometry
-
-        print(to_geometry.get_ortho_dim(), mode_vectors[0][1].vibration_properties, mode_vectors[0][1].vibration_type, max(to_geometry.x), max(to_geometry.y), max(to_geometry.z), ", ", max(mode_vectors[0][1].vector_x), max(mode_vectors[0][1].vector_y), max(mode_vectors[0][1].vector_z))
+        # from_geometry = state.excited_geometry if self.viewmodel.is_emission else state.ground_geometry  # Different orientation!
+        to_geometry = mode_vectors[0][1].geometry  #state.ground_geometry if self.viewmodel.is_emission else state.excited_geometry
 
         x, y, z, self.animation_scale, mode_x, mode_y, mode_z = to_geometry.get_fitted_vectors(mode_vectors)  # only first mode vector
 
@@ -911,6 +910,7 @@ class PlotsOverview:
     def on_drag_release(self, *args):
         if not dpg.is_item_visible(f"plot_{self.viewmodel.is_emission}"):
             return          # todo> what other functions need this check to make sure only the visible plot is updated?
+        # print("on release: ", self.label_moving)
         self.left_mouse_is_down = False
         if self.dragged_plot is not None:
             spec = self.viewmodel.state_plots.get(self.dragged_plot)
@@ -937,20 +937,24 @@ class PlotsOverview:
             self.viewmodel.match_plot.assign_peaks()
         elif self.ctrl_pressed and self.hovered_spectrum is not None:
             self.viewmodel.toggle_match_spec_contribution(self.hovered_spectrum)
-        elif self.hovered_label is not None and self.hovered_spectrum is not None:
-            state = self.hovered_spectrum.state
+        elif self.hovered_label is not None and not self.label_moving and dpg.is_item_visible(f"animation_drawlist_{self.viewmodel.is_emission}"):
+            state_tag = dpg.get_item_user_data(self.hovered_label[0])[1]
+            state = self.viewmodel.state_plots[state_tag].state
             clicked_peak = self.hovered_label[1]
+            print(clicked_peak.__dict__)
             mode_index = self.hovered_label[2]
             if clicked_peak.transition == [[0]]:
                 self.viewmodel.set_displayed_animation(None)
-            modes = [self.hovered_spectrum.spectrum.vibrational_modes.get_mode(t[0]) for t in clicked_peak.transition]
-            if not self.gaussian_labels:
-                modes.sort(key=lambda m: m.name)
-            mode = modes[mode_index]
-            self.draw_molecule(state, [[clicked_peak.transition[mode_index][1], mode]])
-            self.viewmodel.set_displayed_animation(clicked_peak)
-            # dpg.set_value(self.render_hint, f"{state.name} {'emission' if self.viewmodel.is_emission else 'excitation'}, {clicked_peak.get_label(self.gaussian_labels)}")
-            dpg.set_value(self.render_hint, f"{'ground state' if self.viewmodel.is_emission else state.name} mode #{mode.gaussian_name if self.gaussian_labels else mode.name}")
+            else:
+                spectrum = state.emission_spectrum if self.viewmodel.is_emission else state.excitation_spectrum
+                modes = [spectrum.vibrational_modes.get_mode(t[0]) for t in clicked_peak.transition]
+                if not self.gaussian_labels and len(modes) > 1:
+                    modes.sort(key=lambda m: m.name)
+                mode = modes[mode_index]
+                self.draw_molecule([[clicked_peak.transition[mode_index][1], mode]])
+                self.viewmodel.set_displayed_animation(clicked_peak)
+                # dpg.set_value(self.render_hint, f"{state.name} {'emission' if self.viewmodel.is_emission else 'excitation'}, {clicked_peak.get_label(self.gaussian_labels)}")
+                dpg.set_value(self.render_hint, f"{'Ground state' if self.viewmodel.is_emission else state.name} mode #{mode.gaussian_name if self.gaussian_labels else mode.name}")
         elif self.molecule_animation_clicked:
             self.last_animation_drag_delta = dpg.get_mouse_drag_delta()
             self.animation_matrix = self.animation_matrix * self.current_rotation
@@ -960,6 +964,7 @@ class PlotsOverview:
             dpg.set_value(f"drag-{spec.tag}", spec.yshift)
             self.draw_sticks(spec)
 
+        self.label_moving = False
         self.dragged_plot = None
         self.dragged_peak = None
         self.exp_hovered = False
@@ -1029,6 +1034,7 @@ class PlotsOverview:
                     self.annotation_lines[tag][annotation] = self.draw_label_line(cluster, peak_pos)
 
     def move_label(self, pos, label, state_plot=None, update_drag_point=True):
+        self.label_moving = True
         dpg.set_value(label, pos) # Optional: Save manual relative positions (& zoom state?)
         cluster, tag = dpg.get_item_user_data(label)
         if dpg.is_item_shown(tag):
