@@ -8,3 +8,4 @@ venv_win
 build*/
 build.dist/
 /main.dist/
+/Ovalene
