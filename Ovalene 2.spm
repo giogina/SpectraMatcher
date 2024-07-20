@@ -63,13 +63,13 @@
             "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log",
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log",
-            "y shift emission": 2.5,
+            "y shift emission": 2.505604380049449,
             "matched emission": false,
             "y shift excitation": 2.5,
             "matched excitation": false,
             "hidden emission": false,
             "hidden during match emission": false,
-            "y scale emission": 2.200000000000001
+            "y scale emission": 1.5000000000000004
         },
         {
             "color": [
