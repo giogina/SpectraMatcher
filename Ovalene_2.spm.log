@@ -349,3 +349,4 @@ Error parsing experimental file C:\Users\Giogina\Documents\ovalene\ovalene 2nd e
 {'wavenumber': 892.3766, 'corrected_wavenumber': 888.8070936, 'transition': [[57, 1]], 'intensity': 0.9713159831701466, 'types': ['*-H stretch'], 'label': '61₡', 'gaussian_label': '57₡', 'symmetries': ['B3G']}
 {'wavenumber': 3167.6035, 'corrected_wavenumber': 3088.4134125, 'transition': [[124, 1]], 'intensity': 0.06793008221714575, 'types': ['*-H stretch'], 'label': '46₡', 'gaussian_label': '124₡', 'symmetries': ['B3G']}
 {'wavenumber': 3168.2807, 'corrected_wavenumber': 3089.0736825, 'transition': [[125, 1]], 'intensity': 0.06156689904272818, 'types': ['*-H stretch'], 'label': '3₡', 'gaussian_label': '125₡', 'symmetries': ['AG']}
+Viewport is closing. Exiting application.
