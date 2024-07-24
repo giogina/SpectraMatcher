@@ -52,7 +52,9 @@
             "y shift excitation": 1.25,
             "matched excitation": false,
             "hidden emission": false,
-            "hidden during match emission": true
+            "hidden during match emission": true,
+            "y scale emission": 0.20000000000000015,
+            "x shift emission": 1217.591788579552
         },
         {
             "color": [
@@ -69,7 +71,7 @@
             "matched excitation": false,
             "hidden emission": false,
             "hidden during match emission": false,
-            "y scale emission": 1.5000000000000004
+            "y scale emission": 1.2000000000000002
         },
         {
             "color": [
@@ -221,7 +223,7 @@
     "open data files": [],
     "experimental spectra": {},
     "active emission plotter": [
-        10.0,
+        12.0,
         -1404,
         8457,
         1

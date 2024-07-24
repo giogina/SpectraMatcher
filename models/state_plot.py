@@ -295,14 +295,17 @@ class MatchPlot:
                 dist = search_wn - p1.wavenumber
                 if abs(dist) > Matcher.get(self.is_emission, 'distance match threshold'):
                     continue
+                if min(p1.intensity / y, y / p1.intensity) <= Matcher.get(self.is_emission, 'peak intensity match threshold'):
+                    continue
                 int_by_dist = abs(p1.intensity / dist ** 2)
                 if int_by_dist > best_intensity_by_distance:
                     match = p1
                     best_intensity_by_distance = int_by_dist
-            if match is not None and min(match.intensity / y, y / match.intensity) > Matcher.get(self.is_emission, 'peak intensity match threshold'):
+            if match is not None:
                 match.match = pp
             else:
                 match_failed.append(pp)
+
         self.exp_peaks = exp_peaks
         self._notify_observers()
 
