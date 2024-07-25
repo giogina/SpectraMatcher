@@ -44,6 +44,10 @@ Source: "C:\Users\Giogina\SpectraMatcher\main.dist\{#MyAppExeName}"; DestDir: "{
 Source: "C:\Users\Giogina\SpectraMatcher\main.dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "C:\Users\Giogina\SpectraMatcher\dlls for dearpygui\d3dcompiler_47.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\Giogina\SpectraMatcher\dlls for dearpygui\IEShims.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\Giogina\SpectraMatcher\dlls for dearpygui\api-ms-win-downlevel-advapi32-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\Giogina\SpectraMatcher\dlls for dearpygui\api-ms-win-downlevel-ole32-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\Giogina\SpectraMatcher\dlls for dearpygui\api-ms-win-downlevel-shlwapi-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\Giogina\SpectraMatcher\dlls for dearpygui\vcruntime140_1.dll"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
