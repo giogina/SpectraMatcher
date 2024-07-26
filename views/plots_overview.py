@@ -252,8 +252,10 @@ class PlotsOverview:
                                         dpg.add_table_column()
                                         dpg.add_table_column()
                                         with dpg.table_row():
-                                            dpg.add_button(label="Copy table (Word)", width=-6, callback=lambda sender, a, u: self.copy_match_table(word=True))
-                                            dpg.add_button(label="Copy table (TeX)", width=-6, callback=lambda sender, a, u: self.copy_match_table(word=False))
+                                            dpg.add_combo(items=["Tab-separated", "Word", "LaTeX"], width=-6, default_value="Tab-separated")
+                                            dpg.add_button(label="Copy table", width=-6, callback=lambda sender, a, u: self.copy_match_table(word=True))
+                                            # dpg.add_button(label="Copy table (Word)", width=-6, callback=lambda sender, a, u: self.copy_match_table(word=True))
+                                            # dpg.add_button(label="Copy table (TeX)", width=-6, callback=lambda sender, a, u: self.copy_match_table(word=False))
                                     dpg.add_spacer(height=6)
         self.expand_plot_settings_button = self.icons.insert(dpg.add_button(height=20, width=20, show=False, parent="emission tab" if self.viewmodel.is_emission else "excitation tab", callback=lambda s, a, u: self.collapse_plot_settings(True)), Icons.caret_left, size=16)
         self.dummy_series = dpg.add_scatter_series([0, 2000], [-0.1, 1.1], parent=f"y_axis_{self.viewmodel.is_emission}")
