@@ -74,22 +74,21 @@ class Labels:
 
     @classmethod
     def label2tex(cls, label):
-        tex_label = ""
-        for char in label:
-            if ord(char) in range(0x20a0, 0x20b0):  # emission first char
-                tex_label += "^0_{"+str(ord(char)-0x20a0)+"}"
-            elif ord(char) in range(0x2080, 0x2090):  # emission other char
-                tex_label += "_{"+str(ord(char)-0x2080)+"}"
-            elif ord(char) in range(0x2090, 0x20a0):  # excitation first char
-                tex_label += "_0^{"+str(ord(char)-0x2090)+"}"
-            elif ord(char) in range(0x2070, 0x2080):  # excitation other char
-                tex_label += "^{"+str(ord(char)-0x2070)+"}"
-            else:
-                tex_label += char
-
-        tex_label = tex_label.replace("}_{", "")
-        tex_label = tex_label.replace("}^{", "")
+        tex_label = Labels.label2html(label)
+        tex_label = tex_label.replace("<sub>", "_{")
+        tex_label = tex_label.replace("</sub>", "}")
+        tex_label = tex_label.replace("<sup>", "^{")
+        tex_label = tex_label.replace("</sup>", "}")
         return '$'+tex_label+'$'
+
+    @classmethod
+    def label2plain(cls, label):
+        plain_label = Labels.label2html(label)
+        plain_label = plain_label.replace("<sub>", "_")
+        plain_label = plain_label.replace("</sub>", "")
+        plain_label = plain_label.replace("<sup>", "^")
+        plain_label = plain_label.replace("</sup>", "")
+        return plain_label
 
     @classmethod
     def add_observer(cls, observer):
