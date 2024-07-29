@@ -376,6 +376,17 @@ class MatchPlot:
         latex_table += "\\end{tabular}"
         return latex_table
 
+    def get_match_table_tsv(self, use_gaussian_labels):
+        table = self.get_match_table(use_gaussian_labels=use_gaussian_labels)
+
+        tsv_table = ""
+
+        for line in table:
+            line[-3] = Labels.label2plain(line[-3])
+            tsv_table += " \t ".join([str(entry) for entry in line]) + " \r\n"
+
+        return tsv_table
+
     def get_match_table(self, use_gaussian_labels=False, header_only=False):
         table = [["experimental peak position",
                                   "experimental peak intensity",

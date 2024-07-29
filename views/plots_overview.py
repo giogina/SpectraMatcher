@@ -252,8 +252,8 @@ class PlotsOverview:
                                         dpg.add_table_column()
                                         dpg.add_table_column()
                                         with dpg.table_row():
-                                            dpg.add_combo(items=["Tab-separated", "Word", "LaTeX"], width=-6, default_value="Tab-separated")
-                                            dpg.add_button(label="Copy table", width=-6, callback=lambda sender, a, u: self.copy_match_table(word=True))
+                                            self.table_format = dpg.add_combo(items=["Tab-separated", "Word", "LaTeX"], width=-6, default_value="Tab-separated")
+                                            dpg.add_button(label="Copy table", width=-6, callback=lambda sender, a, u: self.copy_match_table())
                                             # dpg.add_button(label="Copy table (Word)", width=-6, callback=lambda sender, a, u: self.copy_match_table(word=True))
                                             # dpg.add_button(label="Copy table (TeX)", width=-6, callback=lambda sender, a, u: self.copy_match_table(word=False))
                                     dpg.add_spacer(height=6)
@@ -394,11 +394,14 @@ class PlotsOverview:
                 self.viewmodel.toggle_match_spec_contribution(self.viewmodel.state_plots[tag], True)
                 break
 
-    def copy_match_table(self, word=True, *args):
-        if word:
+    def copy_match_table(self, *args):
+        format = dpg.get_value(self.table_format)
+        if format == "Word":
             table_string = self.viewmodel.match_plot.get_match_table_html(use_gaussian_labels=self.gaussian_labels)
-        else:
+        elif format == "LaTeX":
             table_string = self.viewmodel.match_plot.get_match_table_tex(use_gaussian_labels=self.gaussian_labels)
+        else:  # Default: Tab-separated
+            table_string = self.viewmodel.match_plot.get_match_table_tsv(use_gaussian_labels=self.gaussian_labels)
         pyperclip.copy(table_string)
 
     def show_match_table(self, *args):
