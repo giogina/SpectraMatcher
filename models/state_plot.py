@@ -443,7 +443,6 @@ class MatchPlot:
 
     # TODO: red hover highlight not always working
     # TODO: table not updated on label change
-    # TODO: vibration type wrong
 
 
 
