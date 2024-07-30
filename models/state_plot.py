@@ -415,7 +415,8 @@ class MatchPlot:
                     peak_data_list += [spec.name]
                     if spec is not None:
                         for cluster in self.super_clusters[peak.match][tag]:
-                            peak_list = cluster.filtered_peaks(spec.yscale) if Matcher.get(self.is_emission, "list only labeled transitions") else cluster.peaks
+                            # peak_list = cluster.filtered_peaks(spec.yscale) if Matcher.get(self.is_emission, "list only labeled transitions") else cluster.peaks
+                            peak_list = cluster.filtered_peaks(spec.yscale)
                             for p, peak2 in enumerate(peak_list):
                                 mode_data_list = [format(peak2.wavenumber+spec.xshift, ".1f"),
                                                   format(peak2.corrected_wavenumber+spec.xshift, ".1f"),
@@ -428,7 +429,11 @@ class MatchPlot:
                                 table.append(peak_data_list)
                                 line_added = True
                                 peak_data_list = ["", "", "", "", ""]
-                    peak_data_list = ["", "", "", ""]
+                    if line_added:
+                        peak_data_list = ["", "", "", ""]
+                    else:
+                        peak_data_list = peak_data_list[:4]
+
             if not line_added:
                 table.append(peak_data_list)
 
