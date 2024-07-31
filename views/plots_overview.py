@@ -470,7 +470,7 @@ class PlotsOverview:
                 while self.table[i+1][0].strip() == "":
                     i -= 1
                 try:
-                    exp_wn = int(float(self.table[i+1][0]))
+                    exp_wn = round(float(self.table[i+1][0].strip()))
                     for red_line in self.red_match_lines:
                         if not int(red_line[0][0]) == exp_wn:
                             dpg.configure_item(self.match_lines[red_line], color=[120, 120, 200, 255])
@@ -484,7 +484,7 @@ class PlotsOverview:
                             point_present = True
                     for key2, line in self.match_lines.items():
                         if dpg.does_item_exist(line):
-                            if int(key2[0][0]) == exp_wn:
+                            if round(key2[0][0]) == exp_wn:
                                 dpg.configure_item(line, color=[255, 0, 0])
                                 if not key2 in self.red_match_lines:
                                     self.red_match_lines.append(key2)
