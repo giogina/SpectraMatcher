@@ -441,7 +441,6 @@ class MatchPlot:
             line += ["" for _ in range(len(line), len(table[0]))]
         return table
 
-    # TODO: red hover highlight not always working
     # TODO: table not updated on label change
 
 
