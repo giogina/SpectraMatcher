@@ -27,6 +27,7 @@ class PlotsOverview:
         self.viewmodel.set_callback("redraw peaks", self.redraw_peak_drag_points)
         self.viewmodel.set_callback("hide spectrum", self.hide_spectrum)
         self.viewmodel.set_callback("update match plot", self.update_match_plot)
+        self.viewmodel.set_callback("update match table", self.update_match_table)
         self.custom_series = None
         self.spec_theme = {}
         self.hovered_spectrum_y_drag_line = None
@@ -1119,6 +1120,7 @@ class PlotsOverview:
                     if not line_done:
                         self.delete_label_line(tag, label)
                         self.annotation_lines[tag][label] = self.draw_label_line(cluster, peak_pos)
+
 
     def delete_labels(self, spec_tag=None):
         if spec_tag is None:

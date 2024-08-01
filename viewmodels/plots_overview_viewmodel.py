@@ -33,6 +33,7 @@ class PlotsOverviewViewmodel:
             "update spectrum color": noop,
             "hide spectrum": noop,
             "update match plot": noop,
+            "update match table": noop,
         }
 
         self.xydatas = []  # experimental x, y
@@ -65,10 +66,13 @@ class PlotsOverviewViewmodel:
                     self._callbacks.get("update match plot")(self.match_plot)
             # todo> react to already-plotted state deletion (see if it's still in State.state_list?)
         elif event == Labels.label_settings_updated_notification:
+            print("Label settings updated")
             for tag, s in self.state_plots.items():
                 self._callbacks.get("update labels")(tag)
-            if Matcher.get(self.is_emission, "assign only labeled") or Matcher.get(self.is_emission, "list only labeled transitions"):
-                self.match_plot.assign_peaks()
+            if self.match_plot.matching_active:
+                if Matcher.get(self.is_emission, "assign only labeled"):
+                    self.match_plot.assign_peaks()
+                self._callbacks.get("update match table")()
         elif event == ExperimentalSpectrum.peaks_changed_notification:
             self._callbacks.get("redraw peaks")()
             if self.match_plot.matching_active:
