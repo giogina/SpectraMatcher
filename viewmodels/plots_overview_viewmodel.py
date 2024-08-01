@@ -66,7 +66,6 @@ class PlotsOverviewViewmodel:
                     self._callbacks.get("update match plot")(self.match_plot)
             # todo> react to already-plotted state deletion (see if it's still in State.state_list?)
         elif event == Labels.label_settings_updated_notification:
-            print("Label settings updated")
             for tag, s in self.state_plots.items():
                 self._callbacks.get("update labels")(tag)
             if self.match_plot.matching_active:
