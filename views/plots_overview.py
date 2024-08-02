@@ -526,6 +526,7 @@ class PlotsOverview:
         dpg.set_value(self.dragged_peak, (exp.xdata[index], exp.ydata[index]))
 
     def collapse_plot_settings(self, show=False, *args):
+        # print("Collapse plot (plots_overview)")
         dpg.configure_item(self.plot_settings_group, show=show)
         dpg.configure_item(self.plot_settings_action_bar, show=show)
         dpg.configure_item(self.collapse_plot_settings_button, show=show)
@@ -761,6 +762,7 @@ class PlotsOverview:
         self.fit_y()
 
     def hide_spectrum(self, tag, hide):
+        # print(f"Hide spectrum {tag} (plots_overview)")
         if not dpg.does_item_exist(tag):
             return
         dpg.configure_item(tag, show=not hide)  # line series
@@ -798,6 +800,7 @@ class PlotsOverview:
             dpg.bind_item_theme(self.matched_spectra_checks.get(spec.tag), self.spec_theme[spec.tag])
 
     def update_plot(self, state_plot, mark_dragged_plot=None, update_all=False, redraw_sticks=False, update_drag_lines=False, fit_y_axis=False):
+        # print(f"Update plot {state_plot.tag} (plots_overview)")
         if mark_dragged_plot is not None:
             self.dragged_plot = mark_dragged_plot
         if dpg.does_item_exist(state_plot.tag):
@@ -1002,6 +1005,7 @@ class PlotsOverview:
 
     def draw_labels(self, tag, *args):
         if self.labels and dpg.does_item_exist(tag) and dpg.is_item_shown(tag):
+            # print(f"Draw labels {tag} (plots_overview)")
             plot = f"plot_{self.viewmodel.is_emission}"
             for annotation in self.annotations.get(tag, {}).values():
                 if dpg.does_item_exist(annotation):
@@ -1121,7 +1125,6 @@ class PlotsOverview:
                         self.delete_label_line(tag, label)
                         self.annotation_lines[tag][label] = self.draw_label_line(cluster, peak_pos)
 
-
     def delete_labels(self, spec_tag=None):
         if spec_tag is None:
             for tag in self.viewmodel.state_plots.keys():
@@ -1220,6 +1223,7 @@ class PlotsOverview:
                 dpg.add_theme_color(dpg.mvThemeCol_TableHeaderBg, [60, 60, 154])
 
     def on_scroll(self, direction, *args):
+        # print(f"On scroll (plots_overview)")
         if self.hovered_spectrum_y_drag_line is not None and dpg.is_item_hovered(self.plot):
             self.viewmodel.resize_spectrum(self.hovered_spectrum_y_drag_line, direction * self.adjustment_factor)
         elif self.hovered_x_drag_line is not None and dpg.is_item_hovered(self.plot):

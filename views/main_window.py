@@ -31,6 +31,7 @@ class MainWindow:
 
         self.viewport_resize_callbacks = []  # list of functions to be called when viewport resizes
         dpg.set_viewport_resize_callback(self.on_viewport_resize)
+        self.viewport_size = [0, 0]
 
         with dpg.window(tag="main window", label="SpectraMatcher", no_scrollbar=True):
             self.menu = MainMenu(self.viewModel)
@@ -79,8 +80,10 @@ class MainWindow:
         self.viewport_resize_callbacks.append(func)
 
     def on_viewport_resize(self, *args):
-        for func in self.viewport_resize_callbacks:
-            func()
+        if self.viewport_size != [dpg.get_viewport_width(), dpg.get_viewport_height()]:
+            for func in self.viewport_resize_callbacks:
+                func()
+        self.viewport_size = [dpg.get_viewport_width(), dpg.get_viewport_height()]
 
     def switch_tab(self, progress, *args):
         if progress == "start":

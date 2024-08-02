@@ -48,7 +48,7 @@ class PlotsOverviewViewmodel:
         self.animated_peak = None
 
     def update(self, event, *args):
-        # print(f"Plots overview viewmodel received event: {event} {args}")
+        print(f"Plots overview viewmodel received event: {event} {args}")
         if event == "project loaded":
             self._callbacks.get("post load update")()
         elif event == ExperimentalSpectrum.spectrum_analyzed_notification:
