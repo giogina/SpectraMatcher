@@ -189,9 +189,9 @@ class PlotsOverview:
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
-                                    with dpg.group(horizontal=True):
+                                    with dpg.group(horizontal=True, width=-6):
                                         self.label_controls['show labels'] = dpg.add_checkbox(label=" Show Mulliken labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False, default_value=Labels.settings[self.viewmodel.is_emission].get('show labels', False))
-                                        dpg.add_spacer(width=-56)
+                                        dpg.add_spacer(width=40)
                                         self.label_controls['edit mulliken'] = dpg.add_button(label="Edit", width=50)
                                     self.label_controls['show gaussian labels'] = dpg.add_checkbox(label=" Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True, default_value=Labels.settings[self.viewmodel.is_emission].get('show gaussian labels', False))
                                     self.label_controls['peak intensity label threshold'] = dpg.add_slider_float(label=" Min. Intensity", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))
