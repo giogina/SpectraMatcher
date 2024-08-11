@@ -192,8 +192,8 @@ class PlotsOverview:
                                     with dpg.group(horizontal=True):
                                         self.label_controls['show labels'] = dpg.add_checkbox(label=" Show Mulliken labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=False, default_value=Labels.settings[self.viewmodel.is_emission].get('show labels', False))
                                         dpg.add_text("   ")
-                                        self.label_controls['edit mulliken'] = dpg.add_button(label="Edit", width=50)
-                                    with dpg.group(horizontal=True):
+                                        self.label_controls['edit mulliken'] = dpg.add_button(label="Edit", width=50, callback=self.edit_mulliken)
+                                    with dpg.group(horizontal=True, show=False) as self.label_controls['Mulliken editor']:
                                         self.label_controls['symmetry order'] = dpg.add_listbox()
                                         with dpg.group(horizontal=False):
                                             self.icons.insert(dpg.add_button(height=24, width=24), Icons.caret_up, size=16)
@@ -291,6 +291,14 @@ class PlotsOverview:
         if self.match_table_shown:
             dpg.configure_item(self.plot, height=dpg.get_viewport_height()/2)
             dpg.configure_item(self.plot_row, height=dpg.get_viewport_height()/2)
+
+    def edit_mulliken(self):
+        if dpg.is_item_shown(self.label_controls['Mulliken editor']):
+            dpg.hide_item(self.label_controls['Mulliken editor'])
+            dpg.set_item_label(self.label_controls['edit mulliken'], "Edit")
+        else:
+            dpg.show_item(self.label_controls['Mulliken editor'])
+            dpg.set_item_label(self.label_controls['edit mulliken'], "Save")
 
     def atomic_color(self, atom):
         if atom == 'H':
