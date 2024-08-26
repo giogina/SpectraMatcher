@@ -305,6 +305,9 @@ class PlotsOverview:
     def update_symmetry_list(self, symmetries):
         dpg.configure_item(self.label_controls['symmetry order'], items=symmetries)
 
+    def move_symmetry(self, up=True):
+        pass
+
     def atomic_color(self, atom):
         if atom == 'H':
             return [255, 255, 255]
