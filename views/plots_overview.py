@@ -28,6 +28,7 @@ class PlotsOverview:
         self.viewmodel.set_callback("hide spectrum", self.hide_spectrum)
         self.viewmodel.set_callback("update match plot", self.update_match_plot)
         self.viewmodel.set_callback("update match table", self.update_match_table)
+        self.viewmodel.set_callback("update symmetry list", self.update_symmetry_list)
         self.custom_series = None
         self.spec_theme = {}
         self.hovered_spectrum_y_drag_line = None
@@ -299,6 +300,12 @@ class PlotsOverview:
         else:
             dpg.show_item(self.label_controls['Mulliken editor'])
             dpg.set_item_label(self.label_controls['edit mulliken'], "Save")
+            self.viewmodel.on_mulliken_edit()
+
+    def update_symmetry_list(self, symmetries):
+        for sym in symmetries:
+
+            print(type(sym))
 
     def atomic_color(self, atom):
         if atom == 'H':

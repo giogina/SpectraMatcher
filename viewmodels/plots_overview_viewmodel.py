@@ -3,6 +3,7 @@ import threading
 from models.experimental_spectrum import ExperimentalSpectrum
 from models.state import State
 from models.state_plot import StatePlot, MatchPlot
+from models.molecular_data import ModeList
 from utility.labels import Labels
 from utility.matcher import Matcher
 from utility.spectrum_plots import SpecPlotter
@@ -34,6 +35,7 @@ class PlotsOverviewViewmodel:
             "hide spectrum": noop,
             "update match plot": noop,
             "update match table": noop,
+            "update symmetry list": noop,
         }
 
         self.xydatas = []  # experimental x, y
@@ -273,6 +275,10 @@ class PlotsOverviewViewmodel:
                 if not hide:
                     self._callbacks.get("update plot")(spec, redraw_sticks=True)
                 self._callbacks.get("update list spec")(spec)
+
+    def on_mulliken_edit(self):
+        symmetries = ModeList.IR_order
+        self._callbacks.get("update symmetry list")(symmetries)
 
 
 
