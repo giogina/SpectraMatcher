@@ -281,7 +281,3 @@ class PlotsOverviewViewmodel:
         self._callbacks.get("update symmetry list")(symmetries)
 
 
-
-
-
-

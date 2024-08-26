@@ -303,9 +303,7 @@ class PlotsOverview:
             self.viewmodel.on_mulliken_edit()
 
     def update_symmetry_list(self, symmetries):
-        for sym in symmetries:
-
-            print(type(sym))
+        dpg.configure_item(self.label_controls['symmetry order'], items=symmetries)
 
     def atomic_color(self, atom):
         if atom == 'H':
