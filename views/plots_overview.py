@@ -197,8 +197,8 @@ class PlotsOverview:
                                     with dpg.group(horizontal=True, show=False) as self.label_controls['Mulliken editor']:
                                         self.label_controls['symmetry order'] = dpg.add_listbox()
                                         with dpg.group(horizontal=False):
-                                            self.icons.insert(dpg.add_button(height=24, width=24, callback=self.move_symmetry, user_data=True), Icons.caret_up, size=16)
-                                            self.icons.insert(dpg.add_button(height=24, width=24, callback=self.move_symmetry, user_data=False), Icons.caret_down, size=16)
+                                            self.label_controls['symmetry up'] = self.icons.insert(dpg.add_button(height=24, width=24, callback=self.move_symmetry, user_data=True), Icons.caret_up, size=16)
+                                            self.label_controls['symmetry down'] = self.icons.insert(dpg.add_button(height=24, width=24, callback=self.move_symmetry, user_data=False), Icons.caret_down, size=16)
                                     self.label_controls['show gaussian labels'] = dpg.add_checkbox(label=" Show Gaussian labels", callback=lambda s, a, u: self.toggle_labels(u), user_data=True, default_value=Labels.settings[self.viewmodel.is_emission].get('show gaussian labels', False))
                                     self.label_controls['peak intensity label threshold'] = dpg.add_slider_float(label=" Min. Intensity", min_value=0, max_value=0.2, default_value=Labels.settings[self.viewmodel.is_emission].get('peak intensity label threshold', 0.03), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak intensity label threshold', a))
                                     # self.label_controls['peak separation threshold'] = dpg.add_slider_float(label=" Min. Separation", min_value=0, max_value=100, default_value=Labels.settings[self.viewmodel.is_emission].get('peak separation threshold', 1), callback=lambda s, a, u: Labels.set(self.viewmodel.is_emission, 'peak separation threshold', a))  # In original, caused re-draw with higher half-width to smooth out peaks. Probably not necessary.
@@ -305,8 +305,11 @@ class PlotsOverview:
     def update_symmetry_list(self, symmetries):
         dpg.configure_item(self.label_controls['symmetry order'], items=symmetries)
 
-    def move_symmetry(self, up=True):
-        pass
+    def move_symmetry(self, sender, a):
+        if sender == self.label_controls['symmetry up']:
+            print("up")
+        else:
+            print("down")
 
     def atomic_color(self, atom):
         if atom == 'H':
