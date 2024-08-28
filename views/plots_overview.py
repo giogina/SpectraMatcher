@@ -306,10 +306,8 @@ class PlotsOverview:
         dpg.configure_item(self.label_controls['symmetry order'], items=symmetries)
 
     def move_symmetry(self, sender, a):
-        if sender == self.label_controls['symmetry up']:
-            print("up")
-        else:
-            print("down")
+        selected = dpg.get_value(self.label_controls['symmetry order'])
+        up = sender == self.label_controls['symmetry up']
 
     def atomic_color(self, atom):
         if atom == 'H':
