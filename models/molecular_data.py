@@ -311,6 +311,10 @@ class ModeList:
     def get_mode(self, gaussian_name: int):
         return self.modes.get(gaussian_name)
 
+    @classmethod
+    def reorder_symmemtry(cls, sym: str, up: bool):
+        pass
+
 
 class FCPeak:
     def __init__(self, wavenumber, transition, intensity):

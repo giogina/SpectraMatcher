@@ -280,4 +280,7 @@ class PlotsOverviewViewmodel:
         symmetries = ModeList.IR_order
         self._callbacks.get("update symmetry list")(symmetries)
 
+    def on_symmetry_sort(self, sym, up):
+        ModeList.reorder_symmemtry(sym, up)
+
 
