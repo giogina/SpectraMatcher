@@ -313,6 +313,8 @@ class ModeList:
 
     @classmethod
     def reorder_symmemtry(cls, sym: str, up: bool):
+        if sym not in cls.IR_order:
+            return
         pass
 
 
