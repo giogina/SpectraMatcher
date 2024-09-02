@@ -315,7 +315,10 @@ class ModeList:
     def reorder_symmemtry(cls, sym: str, up: bool):
         if sym not in cls.IR_order:
             return
-        pass
+        index = cls.IR_order.index(sym)
+        if (up and index == 0) or (not up and index == len(cls.IR_order)-1):
+            print("No move")
+            return
 
 
 class FCPeak:
