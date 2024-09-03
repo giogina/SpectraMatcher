@@ -317,8 +317,12 @@ class ModeList:
             return
         index = cls.IR_order.index(sym)
         if (up and index == 0) or (not up and index == len(cls.IR_order)-1):
-            print("No move")
             return
+        if up:
+            cls.IR_order[index], cls.IR_order[index - 1] = (cls.IR_order[index - 1], cls.IR_order[index])
+        else:
+            cls.IR_order[index], cls.IR_order[index + 1] = (cls.IR_order[index + 1], cls.IR_order[index])
+
 
 
 class FCPeak:
