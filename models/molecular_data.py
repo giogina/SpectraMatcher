@@ -314,14 +314,15 @@ class ModeList:
     @classmethod
     def reorder_symmemtry(cls, sym: str, up: bool):
         if sym not in cls.IR_order:
-            return
+            return cls.IR_order
         index = cls.IR_order.index(sym)
         if (up and index == 0) or (not up and index == len(cls.IR_order)-1):
-            return
+            return cls.IR_order
         if up:
             cls.IR_order[index], cls.IR_order[index - 1] = (cls.IR_order[index - 1], cls.IR_order[index])
         else:
             cls.IR_order[index], cls.IR_order[index + 1] = (cls.IR_order[index + 1], cls.IR_order[index])
+        return cls.IR_order
 
 
 
