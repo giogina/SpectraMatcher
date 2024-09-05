@@ -312,6 +312,10 @@ class ModeList:
         return self.modes.get(gaussian_name)
 
     @classmethod
+    def get_symmetry_order(cls):
+        return cls.IR_order.copy()
+
+    @classmethod
     def reorder_symmemtry(cls, sym: str, up: bool):
         if sym not in cls.IR_order:
             return
