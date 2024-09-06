@@ -274,10 +274,12 @@ class VibrationalMode:
 
 class ModeList:
     IR_order = ['AG', 'B1G', 'B2G', 'B3G', 'AU', 'B1U', 'B2U', 'B3U']
+    instances = []
 
     def __init__(self):
         self.IRs = {ir: [] for ir in self.IR_order}  # record of all vibrational modes by IR
         self.modes = {}
+        ModeList.instances.append(self)
 
     def add_mode(self, wavenumber, sym, x, y, z, geometry):
         mode = VibrationalMode(len(list(self.modes.keys())), wavenumber, sym, x, y, z, geometry)
@@ -326,7 +328,8 @@ class ModeList:
             cls.IR_order[index], cls.IR_order[index - 1] = (cls.IR_order[index - 1], cls.IR_order[index])
         else:
             cls.IR_order[index], cls.IR_order[index + 1] = (cls.IR_order[index + 1], cls.IR_order[index])
-
+        for mode_list in cls.instances:
+            mode_list.determine_mode_names()
 
 
 class FCPeak:
