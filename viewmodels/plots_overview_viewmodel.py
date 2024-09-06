@@ -277,12 +277,12 @@ class PlotsOverviewViewmodel:
                 self._callbacks.get("update list spec")(spec)
 
     def on_mulliken_edit(self):
-        symmetries = ModeList.IR_order
+        symmetries = ModeList.get_symmetry_order()
         self._callbacks.get("update symmetry list")(symmetries)
 
     def on_symmetry_sort(self, sym, up):
         ModeList.reorder_symmemtry(sym, up)
-        symmetries = ModeList.IR_order
+        symmetries = ModeList.get_symmetry_order()
         self._callbacks.get("update symmetry list")(symmetries)
 
 
