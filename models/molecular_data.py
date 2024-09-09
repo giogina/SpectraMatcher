@@ -298,6 +298,8 @@ class ModeList:
         for key in self.IR_order:
             if key in self.IRs.keys():
                 for mode in self.IRs[key]:
+                    # if not mode.name == name:
+                    #     print(key, mode.name, name)
                     mode.name = name
                     name += 1
 
