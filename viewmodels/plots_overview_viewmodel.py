@@ -278,13 +278,14 @@ class PlotsOverviewViewmodel:
     def on_mulliken_edit(self):
         symmetries = ModeList.get_symmetry_order()
         self._callbacks.get("update symmetry list")(symmetries)
-        for tag, s in self.state_plots.items():
-            self._callbacks.get("update labels")(tag)
-            # TODO: What else needs updating? Table?
 
     def on_symmetry_sort(self, sym, up):
         ModeList.reorder_symmemtry(sym, up)
         symmetries = ModeList.get_symmetry_order()
         self._callbacks.get("update symmetry list")(symmetries)
+        for tag, s in self.state_plots.items():
+            self._callbacks.get("update labels")(tag)
+            # TODO: What else needs updating? Table?
+            # TODO: Save & reload order
 
 

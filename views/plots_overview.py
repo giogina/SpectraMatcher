@@ -1031,7 +1031,7 @@ class PlotsOverview:
 
     def draw_labels(self, tag, *args):
         if self.labels and dpg.does_item_exist(tag) and dpg.is_item_shown(tag):
-            # print(f"Draw labels {tag} (plots_overview)")
+            print(f"Draw labels {tag} (plots_overview)")
             plot = f"plot_{self.viewmodel.is_emission}"
             for annotation in self.annotations.get(tag, {}).values():
                 if dpg.does_item_exist(annotation):
