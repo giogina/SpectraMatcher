@@ -275,6 +275,7 @@ class VibrationalMode:
 class ModeList:
     IR_order = ['AG', 'B1G', 'B2G', 'B3G', 'AU', 'B1U', 'B2U', 'B3U']
     instances = []
+    _observers = []
 
     def __init__(self):
         self.IRs = {ir: [] for ir in self.IR_order}  # record of all vibrational modes by IR
@@ -314,6 +315,10 @@ class ModeList:
 
     def get_mode(self, gaussian_name: int):
         return self.modes.get(gaussian_name)
+
+    @classmethod
+    def add_observer(cls, observer):
+        cls._observers.append(observer)
 
     @classmethod
     def get_symmetry_order(cls):
@@ -438,6 +443,7 @@ class FCSpectrum:
         self.determine_label_clusters()
         SpecPlotter.add_observer(self)
         WavenumberCorrector.add_observer(self)
+        ModeList.add_observer(self)
         self.x_data_arrays = {key: self.x_data}  # SpecPlotter key: array (save previously computed spectra)
         self.y_data_arrays = {key: self.y_data}  # SpecPlotter key: array (save previously computed spectra)
         self.vibrational_modes = None
