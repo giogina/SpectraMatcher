@@ -670,5 +670,10 @@ class FCSpectrum:
             self.y_data_arrays = {key: self.y_data}
             self._notify_observers(FCSpectrum.peaks_changed_notification)
             self._notify_observers(FCSpectrum.xy_data_changed_notification)
+        elif event == "IR order updated":
+            self.peaks = Labels.construct_labels(self.peaks, self.vibrational_modes, self.is_emission)
+            self.determine_label_clusters()
+            self._notify_observers(FCSpectrum.peaks_changed_notification)
+
 
 
