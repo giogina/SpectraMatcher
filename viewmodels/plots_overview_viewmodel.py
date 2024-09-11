@@ -280,7 +280,7 @@ class PlotsOverviewViewmodel:
         self._callbacks.get("update symmetry list")(symmetries)
 
     def on_symmetry_sort(self, sym, up):
-        ModeList.reorder_symmemtry(sym, up)
+        ModeList.reorder_symmetry(sym, up)
         symmetries = ModeList.get_symmetry_order()
         self._callbacks.get("update symmetry list")(symmetries)
         for tag, s in self.state_plots.items():

@@ -304,10 +304,6 @@ class ModeList:
                     mode.name = name
                     name += 1
 
-    def update_IR_order(self, order):
-        self.IR_order = order
-        self.determine_mode_names()
-
     def get_wavenumbers(self, nr=-1):
         mode_name_list = list(self.modes.keys())
         end = len(mode_name_list) if nr == -1 else nr + 1
@@ -321,11 +317,16 @@ class ModeList:
         cls._observers.append(observer)
 
     @classmethod
+    def _notify_observers(cls, message):
+        for obs in cls._observers:
+            obs.update(message, cls)
+
+    @classmethod
     def get_symmetry_order(cls):
         return cls.IR_order.copy()
 
     @classmethod
-    def reorder_symmemtry(cls, sym: str, up: bool):
+    def reorder_symmetry(cls, sym: str, up: bool):
         if sym not in cls.IR_order:
             return
         index = cls.IR_order.index(sym)
