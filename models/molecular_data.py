@@ -338,6 +338,7 @@ class ModeList:
             cls.IR_order[index], cls.IR_order[index + 1] = (cls.IR_order[index + 1], cls.IR_order[index])
         for mode_list in cls.instances:
             mode_list.determine_mode_names()
+        cls._notify_observers("IR order updated")
 
 
 class FCPeak:
