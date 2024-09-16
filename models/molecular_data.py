@@ -672,7 +672,6 @@ class FCSpectrum:
             self._notify_observers(FCSpectrum.xy_data_changed_notification)
         elif event == "IR order updated":
             if self.peaks is not None and self.vibrational_modes is not None:
-                # print(self.is_emission, self.vibrational_modes)
                 self.peaks = Labels.construct_labels(self.peaks, self.vibrational_modes, self.is_emission)
                 self.determine_label_clusters()
 
