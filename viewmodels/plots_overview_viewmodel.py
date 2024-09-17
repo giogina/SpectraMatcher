@@ -285,7 +285,7 @@ class PlotsOverviewViewmodel:
         self._callbacks.get("update symmetry list")(symmetries)
         for tag, s in self.state_plots.items():
             self._callbacks.get("update labels")(tag)
-            # TODO: What else needs updating? Table?
+            self._callbacks.get("update match table")()
             # TODO: Save & reload order
 
 
