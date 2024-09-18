@@ -273,7 +273,7 @@ class VibrationalMode:
 
 
 class ModeList:
-    IR_order = ['AG', 'B1G', 'B2G', 'B3G', 'AU', 'B1U', 'B2U', 'B3U']
+    IR_order = []  # coupled to project._data["IR order"]
     instances = []
     _observers = []
 

@@ -189,6 +189,9 @@ class Project(FileObserver):
             self._data["wavenumber correction factors"] = {True: self._data["wavenumber correction factors"]['true'],
                                                            False: self._data["wavenumber correction factors"]['false']}
         WavenumberCorrector.correction_factors = self._data["wavenumber correction factors"]
+        if "IR order" not in self._data.keys():
+            self._data["IR order"] = ['AG', 'B1G', 'B2G', 'B3G', 'AU', 'B1U', 'B2U', 'B3U']
+        WavenumberCorrector.correction_factors = self._data["IR order"]
         if "label settings" not in self._data.keys():
             self._data["label settings"] = {True: Labels.defaults(),
                                             False: Labels.defaults()}
