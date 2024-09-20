@@ -11,7 +11,7 @@ class Icons:
     star = 0xf005
     check = 0xf00c
     x = 0xf00d
-    folder_plus = 0xf65e  # TODO: Replace with thicker plus
+    folder_plus = 0xf65e
     folder_minus = 0xf65d
     file_arrow_up = 0xf574
     file_arrow_down = 0xf56d
