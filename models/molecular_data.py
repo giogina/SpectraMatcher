@@ -288,6 +288,7 @@ class ModeList:
         if sym in self.IRs.keys():
             self.IRs[sym] = [mode] + self.IRs[sym]
         else:
+            print(self.IR_order)
             self.IRs[sym] = [mode]
             self.IR_order.append(sym)
             print(f"Added extra IR: {sym}")
