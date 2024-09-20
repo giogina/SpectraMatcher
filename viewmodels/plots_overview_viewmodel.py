@@ -286,6 +286,5 @@ class PlotsOverviewViewmodel:
         for tag, s in self.state_plots.items():
             self._callbacks.get("update labels")(tag)
             self._callbacks.get("update match table")()
-            # TODO: Save & reload order
 
 
