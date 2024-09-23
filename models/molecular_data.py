@@ -459,7 +459,7 @@ class FCSpectrum:
         for o in self._observers:
             o.update(message, self)
 
-    def set_vibrational_modes(self, modes: ModeList):  # todo> subscribe to symmetry order updates; re-compute labels.
+    def set_vibrational_modes(self, modes: ModeList):
         self.vibrational_modes = modes
         self.peaks = WavenumberCorrector.compute_corrected_wavenumbers(self.is_emission, self.peaks, self.vibrational_modes)
         self.peaks = Labels.construct_labels(self.peaks, self.vibrational_modes, self.is_emission)
