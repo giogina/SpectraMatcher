@@ -189,7 +189,7 @@ class VibrationalMode:
         
         bend = self.molecular_bend(geometry)
         for ch in h_bonds:
-            h_stretches.append(math.fabs(self.bond_stretch(geometry, ch[0], ch[1])))  # todo: Could this be done as a 3N vector operation (dot product with h bonds displacement somehow)?
+            h_stretches.append(math.fabs(self.bond_stretch(geometry, ch[0], ch[1])))
             h_bends.append(math.fabs(self.H_oop_bend(geometry, ch[0], ch[1])))  # Looks like you won't be a H oop bend if you're not a molecular bend (although there are mol bends that aren't very H bend heavy)
         for cc in other_bonds:
             other_stretches.append(math.fabs(self.bond_stretch(geometry, cc[0], cc[1])))
@@ -202,10 +202,6 @@ class VibrationalMode:
                                       # int((sum(other_stretches) / len(other_stretches)) * 10000) / 10000,  # Other stretches
                                       int(bend * 100) / 100]]  # Molecular Bends
                                       # max([int(c * 100) for c in h_bends]) / 100]  # H oop bends
-
-        # print(self.vibration_properties[0], int(self.h_stretches(geometry, H_matrix)*100)/100,
-        #       (self.vibration_properties[0] > 0.2) == (int(self.h_stretches(geometry, H_matrix)*100)/100 > 0.7))
-        # print(self.vibration_properties)
 
         if self.vibration_properties[2] > 0.9:      # out-of-plane bends
             self.vibration_type = 'bends'  # key of WavenumberCorrector.correction_factors
