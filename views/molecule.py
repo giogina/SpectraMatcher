@@ -47,8 +47,8 @@ def prepare_icosahedron():
                     faces.append([u, v, w, normal, light_intensity])
     return faces
 
-with dpg.window(label="molecule", width=550, height=550):
 
+with dpg.window(label="molecule", width=550, height=550):
     with dpg.drawlist(width=500, height=500):
 
         with dpg.draw_layer(tag="main pass", depth_clipping=True, perspective_divide=True, cull_mode=dpg.mvCullMode_Back):
@@ -57,8 +57,3 @@ with dpg.window(label="molecule", width=550, height=550):
                 faces = prepare_icosahedron()
                 for face in faces:
                     dpg.draw_triangle(face[0], face[1], face[2], color=[0, 0, 0, 0], fill=[255, 255, 255*face[4]])
-
-# todo> efficient computation of isocahedron
-#       only show sides facing the viewer
-#       shade according to direction (constant factors)
-#       limit pan range such that active faces don't need to change - or simply choose from every pair of faces only the closer one?
