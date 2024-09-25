@@ -23,18 +23,6 @@ class ProjectSetup:
         self.icons = Icons()
         self.nr_state_nodes = 0
         self.nr_experiment_rows = 0
-        #
-        # with dpg.child_window(tag="project setup action bar", width=-1, height=32):
-        #     with dpg.table(header_row=False):
-        #         dpg.add_table_column(width_stretch=True)
-        #         dpg.add_table_column(width_fixed=True, init_width_or_weight=220)
-        #         with dpg.table_row():
-        #             with dpg.group(horizontal=True):
-        #                 self.icons.insert(dpg_item=dpg.add_button(height=32, width=32), icon=Icons.caret_right, size=16, tooltip="Auto-Import")
-        #             with dpg.group(horizontal=True):
-        #                 self.icons.insert(dpg_item=dpg.add_button(height=32, width=32),
-        #                                   icon=Icons.diamond, size=16, tooltip="placeholder")
-        #                 self.cdi.insert_separator_button(height=32)
 
         with dpg.child_window(tag="project setup panel"):
             dpg.add_spacer(height=16)
