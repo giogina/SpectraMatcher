@@ -8,7 +8,6 @@ from models.data_file_manager import FileType, File
 from utility.icons import Icons
 from utility.custom_dpg_items import CustomDpgItems
 from views.file_explorer import FileExplorer
-from utility.item_themes import ItemThemes
 
 
 class ProjectSetup:
