@@ -25,15 +25,16 @@ class ProjectSetup:
 
         with dpg.child_window(tag="project setup panel"):
             dpg.add_spacer(height=16)
-            with dpg.child_window(tag="project overview", height=140):
+            with dpg.child_window(tag="project overview", height=160):
                 dpg.add_spacer(height=16)
                 dpg.add_button(label="Project name", tag="setup panel project name", width=-1)
                 dpg.bind_item_font("setup panel project name", FontManager.fonts[FontManager.big_font])
 
                 with dpg.group(horizontal=True, tag="mlo group"):
-                    dpg.add_spacer(width=24)
+                    dpg.add_spacer(width=16)
                     dpg.add_combo(tag="mlo combo", show=False, callback=lambda s, a, u: self.viewmodel.select_mlo(a), width=-48)
                     dpg.add_button(tag="mlo button", label="", width=-48)
+                dpg.add_checkbox(label="Sanity checks", default_value=True)
 
             dpg.add_spacer(height=6)
             with dpg.table(header_row=False):
@@ -69,9 +70,8 @@ class ProjectSetup:
         self.update_states()
         self.update_experimental_data()
 
-            #  color choice buttons for each state
-
-    def update_project_data(self):  # User can choose name, molecule & ground state energy (which in turn depends on method)
+    # User can choose name, molecule & ground state energy (which in turn depends on method)
+    def update_project_data(self):
         if self.viewmodel.get_project_name() is not None:
             dpg.set_item_label("setup panel project name", self.viewmodel.get_project_name())
         molecule_and_loth_options, chosen_item = self.viewmodel.get_mlo_list()
