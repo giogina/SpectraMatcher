@@ -357,7 +357,7 @@ class PlotsOverview:
                                 dpg.draw_line(p2, pm, color=self.atomic_color(to_geometry.atoms[bond[1]]), user_data=[p2, pm, self.atomic_color(to_geometry.atoms[bond[1]])])
                             else:
                                 dpg.draw_line(p1, p2, color=self.atomic_color(to_geometry.atoms[bond[0]]), user_data=[p1, p2, self.atomic_color(to_geometry.atoms[bond[0]])])
-                # TODO: Experiment: animate the vibration associated with to_geom - from_geom
+                ### Experiment: animate the vibration associated with to_geom - from_geom
                 # with dpg.draw_node() as origin_molecule:
                 #     x, y, z, _, _, _, _ = from_geometry.get_fitted_vectors(inp_scale=self.animation_scale)
                 #     for bond in bonds:
@@ -1287,7 +1287,6 @@ class PlotsOverview:
                     dpg.configure_item(f"drag-x-{s.tag}", show=show)
             dpg.configure_item(self.match_plot_y_drag, show=show)
 
-# todo: add a button disabling plot fitting altogether.
     def fit_y(self, dummy_series_update_only=False):
         ymin = -0.1
         ymax = 1.25
