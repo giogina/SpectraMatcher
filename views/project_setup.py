@@ -25,7 +25,7 @@ class ProjectSetup:
 
         with dpg.child_window(tag="project setup panel"):
             dpg.add_spacer(height=16)
-            with dpg.child_window(tag="project overview", height=160):
+            with dpg.child_window(tag="project overview", height=140):
                 dpg.add_spacer(height=16)
                 dpg.add_button(label="Project name", tag="setup panel project name", width=-1)
                 dpg.bind_item_font("setup panel project name", FontManager.fonts[FontManager.big_font])
@@ -34,7 +34,7 @@ class ProjectSetup:
                     dpg.add_spacer(width=16)
                     dpg.add_combo(tag="mlo combo", show=False, callback=lambda s, a, u: self.viewmodel.select_mlo(a), width=-48)
                     dpg.add_button(tag="mlo button", label="", width=-48)
-                dpg.add_checkbox(label="Sanity checks", default_value=True)
+                # dpg.add_checkbox(label="Sanity checks", default_value=True)
 
             dpg.add_spacer(height=6)
             with dpg.table(header_row=False):
