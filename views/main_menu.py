@@ -189,7 +189,7 @@ class MainMenu:
                                             self.icons.insert(dpg.add_button(width=16, height=16), action["icon"], 14)
                                         else:
                                             dpg.add_spacer(width=icon_column_width)
-                                        self.selectables[action] = dpg.add_selectable(label=action["label"], span_columns=True, callback=action["callback"], user_data=items[i])
+                                        self.selectables[items[i]] = dpg.add_selectable(label=action["label"], span_columns=True, callback=action["callback"], user_data=items[i])
                                         shortcut_label = action.get("shortcut_string", "")
                                         dpg.add_button(label=shortcut_label, width=-1)
                                 i += 1
@@ -286,6 +286,8 @@ class MainMenu:
         self.viewmodel.on_open(u)
 
     def _on_toggle_sanity_checks(self, s, a, u, *args):
+        checks = self.viewmodel.toggle_sanity_checks()
+        dpg.set_item_label(self.selectables["Sanity checks"], "Turn off sanity checks")
         pass
 
     def _on_select_new_shortcut(self, s, a, u, *args):
