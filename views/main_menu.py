@@ -191,7 +191,6 @@ class MainMenu:
                                             dpg.add_spacer(width=icon_column_width)
                                         self.selectables[action] = dpg.add_selectable(label=action["label"], span_columns=True, callback=action["callback"], user_data=items[i])
                                         shortcut_label = action.get("shortcut_string", "")
-                                        # if len(shortcut_label):
                                         dpg.add_button(label=shortcut_label, width=-1)
                                 i += 1
                             i -= 1  # Undo last raise (which will be re-done at end of outer while loop)
