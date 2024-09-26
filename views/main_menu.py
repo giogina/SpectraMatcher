@@ -25,6 +25,7 @@ class MainMenu:
         # self.menu_tables = {}           # Collects the tables shown in menus (mostly for theme application)
         sep = 0                         # Placeholder representing a separator in the menu
         self.button_callbacks = [noop, noop, noop]  # functions to be executed on button clicks
+        self.selectables = {}
 
         # Registries
         with dpg.handler_registry():
@@ -188,8 +189,7 @@ class MainMenu:
                                             self.icons.insert(dpg.add_button(width=16, height=16), action["icon"], 14)
                                         else:
                                             dpg.add_spacer(width=icon_column_width)
-                                        dpg.add_selectable(label=action["label"], span_columns=True,
-                                                           callback=action["callback"], user_data=items[i])
+                                        self.selectables[action] = dpg.add_selectable(label=action["label"], span_columns=True, callback=action["callback"], user_data=items[i])
                                         shortcut_label = action.get("shortcut_string", "")
                                         # if len(shortcut_label):
                                         dpg.add_button(label=shortcut_label, width=-1)
@@ -285,6 +285,9 @@ class MainMenu:
 
     def _open_recent(self, s, a, u, *args):
         self.viewmodel.on_open(u)
+
+    def _on_toggle_sanity_checks(self, s, a, u, *args):
+        pass
 
     def _on_select_new_shortcut(self, s, a, u, *args):
         self._show_modal_child("input shortcut window")
