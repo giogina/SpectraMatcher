@@ -38,7 +38,7 @@ class MainMenu:
             self._register_action("Save", callback=self._on_save, icon=Icons.floppy)
             self._register_action("Save as", label="Save As...", callback=self._on_save_as)
             self._register_action("Exit", callback=self._on_exit, icon=Icons.power_off)
-
+            self._register_action("Sanity checks", callback=self._on_toggle_sanity_checks, icon=Icons.check_circle_o)
             self._register_action("Shortcuts", label="Configure shortcuts...", callback=self._show_configure_shortcuts,
                                   icon=Icons.keyboard)
             self._register_action("User Guide", label="User Guide...", callback=self._user_guide, icon=Icons.book)
@@ -48,6 +48,7 @@ class MainMenu:
         self.menu_items = {"Projects": ["New", "Open",
                                         {"Open Recent": [(r, self._open_recent) for r in self.viewmodel.get_recents()]},
                                         sep, "Save", "Save as", sep, "Exit"],
+                           "Settings": ["Sanity checks"],
                            "Tools": ["Shortcuts"],
                            "Help": ["User Guide", "Report bug"]}
 
