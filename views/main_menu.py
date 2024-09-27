@@ -287,7 +287,10 @@ class MainMenu:
 
     def _on_toggle_sanity_checks(self, s, a, u, *args):
         checks = self.viewmodel.toggle_sanity_checks()
-        dpg.set_item_label(self.selectables["Sanity checks"], "Turn off sanity checks")
+        if checks:
+            dpg.set_item_label(self.selectables["Sanity checks"], "Turn off sanity checks")  # todo: Put text according to settings initially
+        else:
+            dpg.set_item_label(self.selectables["Sanity checks"], "Turn on sanity checks")
         pass
 
     def _on_select_new_shortcut(self, s, a, u, *args):
