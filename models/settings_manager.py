@@ -15,6 +15,7 @@ class Settings:
     AUTO_SAVE_INTERVAL = "autoSaveInterval"
     SHORTCUTS = "shortcuts"
     FILE_EXPLORER_COLUMNS = "file explorer columns"
+    CHECKS = "sanity checks"
 
 
 class SettingsManager:
@@ -212,5 +213,9 @@ class SettingsManager:
             if project_file in self._settings_dict[Settings.RECENT_PROJECTS]:
                 self._settings_dict[Settings.RECENT_PROJECTS].remove(project_file)
             self._settings_dict[Settings.RECENT_PROJECTS].insert(0, project_file)
+        self._save_settings_async()
+
+    def set_sanity_checks(self, check: bool):
+        self._settings_dict[Settings.CHECKS] = check
         self._save_settings_async()
 
