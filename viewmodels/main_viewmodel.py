@@ -147,7 +147,6 @@ class MainViewModel(ProjectObserver):
         return recents
 
     def toggle_sanity_checks(self):
-        # self._settings.sanity_checks = not self._settings.sanity_checks  # todo
-        return True  # TODO: Temp
+        return self._settings.toggle_sanity_checks()
 
 

@@ -215,7 +215,9 @@ class SettingsManager:
             self._settings_dict[Settings.RECENT_PROJECTS].insert(0, project_file)
         self._save_settings_async()
 
-    def set_sanity_checks(self, check: bool):
-        self._settings_dict[Settings.CHECKS] = check
+    def toggle_sanity_checks(self):
+        checks = not self.get(Settings.CHECKS, True)
+        self._settings_dict[Settings.CHECKS] = checks
         self._save_settings_async()
+        return checks
 
