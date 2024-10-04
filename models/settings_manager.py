@@ -219,5 +219,6 @@ class SettingsManager:
         checks = not self.get(Settings.CHECKS, True)
         self._settings_dict[Settings.CHECKS] = checks
         self._save_settings_async()
+        print(checks)
         return checks
 
