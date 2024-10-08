@@ -595,7 +595,7 @@ class PlotsOverview:
             for key, item in self.label_controls.items():
                 value = Labels.settings[self.viewmodel.is_emission].get(key)
                 dpg.set_value(item, value)
-                if not (key in ('show labels', 'show gaussian labels') and value is False and (Labels.settings[self.viewmodel.is_emission].get('show labels') or Labels.settings[self.viewmodel.is_emission].get('show gaussian labels'))):
+                if not key in ('edit mulliken', 'symmetry up', 'symmetry down', 'Mulliken editor') and not (key in ('show labels', 'show gaussian labels') and value is False and (Labels.settings[self.viewmodel.is_emission].get('show labels') or Labels.settings[self.viewmodel.is_emission].get('show gaussian labels'))):
                     if dpg.get_item_callback(item) is not None:
                         dpg.get_item_callback(item)(item, value, dpg.get_item_user_data(item))
         if load_all or peak_detection:
