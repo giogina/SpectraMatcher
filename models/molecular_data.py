@@ -196,8 +196,8 @@ class VibrationalMode:
 
         self.vibration_properties = [p if p <= 1 else 1.0 for p in
                                      [
-                                      # max([int(c * 100) for c in h_stretches]) / 100,  # *-H stretches (max bond length change)
-                                      int(self.h_stretches(geometry, H_matrix)*100)/100,  # *-H stretches
+                                      max([int(c * 100) for c in h_stretches]) / 100,  # *-H stretches (max bond length change)
+                                      # int(self.h_stretches(geometry, H_matrix)*100)/100,  # *-H stretches
                                       int(math.sqrt(sum(other_stretches) / len(other_stretches)) * 10000) / 10000,  # Other stretches
                                       # int((sum(other_stretches) / len(other_stretches)) * 10000) / 10000,  # Other stretches
                                       int(bend * 100) / 100]]  # Molecular Bends
@@ -205,7 +205,7 @@ class VibrationalMode:
 
         if self.vibration_properties[2] > 0.9:      # out-of-plane bends
             self.vibration_type = 'bends'  # key of WavenumberCorrector.correction_factors
-        elif self.vibration_properties[0] > 0.7:    # *-H stretches (0.2 for old algo)
+        elif self.vibration_properties[0] > 0.2:    # *-H stretches (0.7 for second line algo)
             self.vibration_type = 'H stretches'
         else:                                       # Other stretches and deformations
             self.vibration_type = 'others'
