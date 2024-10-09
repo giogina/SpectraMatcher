@@ -108,7 +108,7 @@ class State:
         if self.ok:
             if not self.is_ground:
                 ground = State.state_list[0]
-                if ground.is_ground and ground.ok:
+                if ground.is_ground and ground.ok and self.emission_spectrum is not None:
                     self.emission_spectrum.set_vibrational_modes(ground.vibrational_modes)
                 self.excitation_spectrum.set_vibrational_modes(self.vibrational_modes)
             else:

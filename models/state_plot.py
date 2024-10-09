@@ -243,7 +243,9 @@ class MatchPlot:
         for ii, i in enumerate(minima[:-1]):
             while maxima[jj] < i:
                 jj += 1
-                if jj >= len(maxima):
+                if jj >= len(maxima) or ii+1 >= len(minima):
+                    break
+                if maxima[jj] >= len(self.xdata) or minima[ii+1] >= len(self.xdata):
                     break
             self.maxima.append(((self.xdata[i], self.ydata[i]-self.yshift), (self.xdata[maxima[jj]], self.ydata[maxima[jj]]-self.yshift), (self.xdata[minima[ii+1]], self.ydata[minima[ii+1]]-self.yshift)))
 
