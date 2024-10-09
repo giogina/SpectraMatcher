@@ -97,10 +97,8 @@ class State:
             self.errors.append(f"Wrong molecule: {self.own_molecular_formula} vs. global {self.molecule_and_method.get('molecule')}")
         if self.vibrational_modes is None:
             self.errors.append(f"No vibrational modes found.")
-        if not self.is_ground and self.excitation_spectrum is None:
-            self.errors.append(f"No excitation spectrum found.")
-        if not self.is_ground and self.emission_spectrum is None:
-            self.errors.append(f"No emission spectrum found.")
+        if not self.is_ground and self.excitation_spectrum is None and self.emission_spectrum is None:
+            self.errors.append(f"Neither excitation nor emission spectrum found.")
 
         self.ok = len(self.errors) == 0
         if not self.ok:
