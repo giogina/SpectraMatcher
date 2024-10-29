@@ -285,4 +285,12 @@ class PlotsOverviewViewmodel:
             self._callbacks.get("update labels")(tag)
             self._callbacks.get("update match table")()
 
+    def on_copy_spectra(self):
+        for tag in self.state_plots.keys():
+            spec = self.state_plots[tag]
+            if spec.is_matched:
+                print(spec.xdata)
+                print(spec.ydata)
+
+
 
