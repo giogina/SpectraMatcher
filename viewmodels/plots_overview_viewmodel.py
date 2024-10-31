@@ -286,12 +286,22 @@ class PlotsOverviewViewmodel:
             self._callbacks.get("update match table")()
 
     def on_copy_spectra(self):
-        print("Requested copy spectra")
-        for tag in self.state_plots.keys():
-            spec = self.state_plots[tag]
-            if spec.is_matched():
-                print(spec.xdata)
-                print(spec.ydata)
+        specs = [self.state_plots[tag] for tag in self.state_plots.keys() if self.state_plots[tag].is_matched()]
+        x_min = round(min([min(spec.xdata) for spec in specs]))
+        x_max = round(max([max(spec.xdata) for spec in specs]))
+        ydatas = [spec.ydata-spec.yshift for spec in specs]
+        res = '\t'.join(['wavenumber']+[spec.name for spec in specs])+'\r\n'
+        for x in range(x_min, x_max+1):
+            newline = f'{x}'
+            for spec in specs:
+                i = round(x-min(spec.xdata))
+                if 0 <= i < len(spec.ydata):
+                    newline += f'\t{spec.ydata[i]-spec.yshift}'
+                else:
+                    newline += '\t0.00000'
+            res += newline + '\r\n'
+        print(res)
+        return res
 
 
 
