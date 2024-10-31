@@ -71,7 +71,7 @@ class StatePlot:
         if self._base_xdata == []:
             print("Empty xdata!")
             return np.zeros([0])
-        return self._base_xdata + self.xshift
+        return self._base_xdata + round(self.xshift)
 
     def _compute_y_data(self):
         if self._base_ydata == []:
