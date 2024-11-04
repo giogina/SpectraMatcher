@@ -48,7 +48,7 @@
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log",
             "y shift emission": 1.25,
-            "matched emission": false,
+            "matched emission": true,
             "y shift excitation": 1.25,
             "matched excitation": false
         },
@@ -62,7 +62,7 @@
             "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
             "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log",
             "y shift emission": 2.5,
-            "matched emission": false,
+            "matched emission": true,
             "y shift excitation": 2.5,
             "matched excitation": false
         },

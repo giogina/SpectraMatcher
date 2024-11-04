@@ -245,7 +245,7 @@ class PlotsOverview:
                                         self.match_controls['show shade spectra'] = dpg.add_checkbox(label="Shaded contributions", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show shade spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False))
                                         # self.match_controls['show stick spectra'] = dpg.add_checkbox(label="Stick spectra", callback=lambda s, a, u: Matcher.set(self.viewmodel.is_emission, 'show stick spectra', a), default_value=Matcher.get(self.viewmodel.is_emission, 'show stick spectra', False))
                                     dpg.add_spacer(height=6)
-                                    dpg.add_button(label="Copy selected spectra", width=-6, callback=self.viewmodel.on_copy_spectra)
+                                    dpg.add_button(label="Copy selected spectra", width=-6, callback=lambda s, a, u: pyperclip.copy(self.viewmodel.on_copy_spectra()))
                         with dpg.collapsing_header(label="Match settings", default_open=True):
                             # dpg.add_spacer(height=6)
                             with dpg.group(horizontal=True):

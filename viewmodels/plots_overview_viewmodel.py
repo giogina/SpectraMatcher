@@ -294,9 +294,9 @@ class PlotsOverviewViewmodel:
         x_max = round(max([max(spec.xdata) for spec in specs]))
         ydatas = [np.concatenate((np.zeros(round(min(spec.xdata)-x_min)), spec.ydata-spec.yshift, np.zeros(round(x_max - max(spec.xdata))))) for spec in specs]
 
-        res = '\t'.join(['wavenumber']+[spec.name for spec in specs])+'\r\n'
+        res = '\t'.join(['wn']+[spec.name for spec in specs])+'\r\n'
         for i, x in enumerate(range(x_min, x_max+1)):
-            res += f'{x}\t' + '\t'.join([str(y[i]) for y in ydatas]) + '\r\n'
+            res += f'{x}\t' + '\t'.join([f'{y[i]:.15f}' for y in ydatas]) + '\r\n'
         return res
 
 
