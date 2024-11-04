@@ -1,5 +1,8 @@
 import time
 import threading
+
+import numpy as np
+
 from models.experimental_spectrum import ExperimentalSpectrum
 from models.state import State
 from models.state_plot import StatePlot, MatchPlot
@@ -289,18 +292,11 @@ class PlotsOverviewViewmodel:
         specs = [self.state_plots[tag] for tag in self.state_plots.keys() if self.state_plots[tag].is_matched()]
         x_min = round(min([min(spec.xdata) for spec in specs]))
         x_max = round(max([max(spec.xdata) for spec in specs]))
-        ydatas = [spec.ydata-spec.yshift for spec in specs]
+        ydatas = [np.concatenate((np.zeros(round(min(spec.xdata)-x_min)), spec.ydata-spec.yshift, np.zeros(round(x_max - max(spec.xdata))))) for spec in specs]
+
         res = '\t'.join(['wavenumber']+[spec.name for spec in specs])+'\r\n'
-        for x in range(x_min, x_max+1):
-            newline = f'{x}'
-            for spec in specs:
-                i = round(x-min(spec.xdata))
-                if 0 <= i < len(spec.ydata):
-                    newline += f'\t{spec.ydata[i]-spec.yshift}'
-                else:
-                    newline += '\t0.00000'
-            res += newline + '\r\n'
-        print(res)
+        for i, x in enumerate(range(x_min, x_max+1)):
+            res += f'{x}\t' + '\t'.join([str(y[i]) for y in ydatas]) + '\r\n'
         return res
 
 
