@@ -14,6 +14,7 @@ class State:
     _observers = []
     imported_file_changed_notification = "State file changed"
     imported_files_changed_notification = "State files changed"
+    state_list_changed_notification = "State list changed"
     state_ok_notification = "State ok"
 
     # Init with parsed files
@@ -231,19 +232,21 @@ class State:
         for i, state in enumerate(cls.state_list):
             if state.settings.get("color selection type") not in ("manual", ):  # todo: keywords for different color schemes
                 state.settings["color"] = hsv_to_rgb(i/len(cls.state_list), 0.9, 0.9)
-            # state.color = hsv_to_rgb(i/len(cls.state_list), 0.9, 0.9)
             if i == 0:
                 if not state.is_ground:
                     print("WARNING: 0th state somehow not ground state")
-                state.name = "Ground state"
+                name = "Ground state"
             elif i == 1:
-                state.name = "1st excited state"
+                name = "1st excited state"
             elif i == 2:
-                state.name = "2nd excited state"
+                name = "2nd excited state"
             elif i == 3:
-                state.name = "3rd excited state"
+                name = "3rd excited state"
             else:
-                state.name = f"{i}th excited state"
+                name = f"{i}th excited state"
+            if not name == state.name:
+                state.name = name
+                state._notify_observers(state.state_list_changed_notification)
 
     def wipe(self):
         """Restore a clean slate"""
