@@ -31,6 +31,7 @@ class PlotsOverviewViewmodel:
             "clear spec list": noop,
             "delete sticks": noop,
             "redraw sticks": noop,
+            "delete labels": noop,
             "update labels": noop,
             "redraw peaks": noop,
             "add list spectrum": noop,
@@ -72,11 +73,15 @@ class PlotsOverviewViewmodel:
                     self._callbacks.get("update match plot")(self.match_plot)
         elif event == State.state_list_changed_notification:
             self._callbacks.get("clear spec list")()
+            self._callbacks.get("delete sticks")()
+            self._callbacks.get("delete labels")()
+            for sp in self.state_plots.values():
+                sp.removed = True
             self.state_plots.clear()
             for state in State.state_list:
                 new_spec_tag = self._extract_state(state)
                 if new_spec_tag is not None:
-                    # print(new_spec_tag, self.state_plots.)
+                    print("reordering: ", new_spec_tag)
                     self.state_plots[new_spec_tag].set_y_shift(yshift=1.25*self.state_plots[new_spec_tag].index)
                     self._callbacks.get("add spectrum")(new_spec_tag)
                     self._callbacks.get("add list spectrum")(self.state_plots[new_spec_tag])
@@ -84,6 +89,8 @@ class PlotsOverviewViewmodel:
                         self._callbacks.get("update labels")(tag)
                     if self.match_plot.matching_active:
                         self._callbacks.get("update match plot")(self.match_plot)
+                # self._callbacks.get("redraw sticks")(self.state_plots[new_spec_tag])
+                # self._callbacks.get("update labels")(new_spec_tag)
             self._callbacks.get("redraw plot")()
         elif event == Labels.label_settings_updated_notification:
             for tag, s in self.state_plots.items():

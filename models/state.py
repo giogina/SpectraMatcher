@@ -247,7 +247,14 @@ class State:
             if state.name is None:
                 state.name = name
             elif name[0] != state.name[0]:
+                state.name = name
                 state._notify_observers(state.state_list_changed_notification)
+
+    @classmethod
+    def remove(cls, state):
+        if state in cls.state_list:
+            cls.state_list.remove(state)
+            cls.sort_states_by_energy()
 
     def wipe(self):
         """Restore a clean slate"""

@@ -36,12 +36,15 @@ class StatePlot:
         self.spectrum_update_callback = noop
         self.sticks_update_callback = noop
         self.match_plot = match_plot
+        self.removed = False
 
     @staticmethod
     def construct_tag(state, is_emission):
         return f"{state.name} - {is_emission} plot"
 
     def update(self, event, *args):
+        if self.removed:
+            return
         if event == FCSpectrum.xy_data_changed_notification:
             self._base_xdata = self.spectrum.x_data
             self._base_ydata = self.spectrum.y_data

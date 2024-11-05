@@ -23,6 +23,7 @@ class PlotsOverview:
         self.viewmodel.set_callback("delete sticks", self.delete_sticks)
         self.viewmodel.set_callback("redraw sticks", self.draw_sticks)
         self.viewmodel.set_callback("post load update", self.set_ui_values_from_settings)
+        self.viewmodel.set_callback("delete labels", self.delete_labels)
         self.viewmodel.set_callback("update labels", self.draw_labels)
         self.viewmodel.set_callback("redraw peaks", self.redraw_peak_drag_points)
         self.viewmodel.set_callback("hide spectrum", self.hide_spectrum)
@@ -1030,10 +1031,8 @@ class PlotsOverview:
         Labels.set(self.viewmodel.is_emission, 'show labels', dpg.get_value(self.label_controls['show labels']))
         Labels.set(self.viewmodel.is_emission, 'show gaussian labels', dpg.get_value(self.label_controls['show gaussian labels']))
 
-    def draw_labels(self, tag, *args):
+    def delete_labels(self, tag, *args):
         if self.labels and dpg.does_item_exist(tag) and dpg.is_item_shown(tag):
-            print(f"Draw labels {tag} (plots_overview)")
-            plot = f"plot_{self.viewmodel.is_emission}"
             for annotation in self.annotations.get(tag, {}).values():
                 if dpg.does_item_exist(annotation):
                     dpg.delete_item(annotation)
@@ -1044,6 +1043,22 @@ class PlotsOverview:
             self.annotations[tag] = {}
             self.label_drag_points[tag] = {}
             self.annotation_lines[tag] = {}
+
+    def draw_labels(self, tag, *args):
+        if self.labels and dpg.does_item_exist(tag) and dpg.is_item_shown(tag):
+            print(f"Draw labels {tag} (plots_overview)")
+            plot = f"plot_{self.viewmodel.is_emission}"
+            if self.labels and dpg.does_item_exist(tag) and dpg.is_item_shown(tag):
+                for annotation in self.annotations.get(tag, {}).values():
+                    if dpg.does_item_exist(annotation):
+                        dpg.delete_item(annotation)
+                    self.delete_label_line(tag, annotation)
+                for drag_point in self.label_drag_points.get(tag, {}).values():
+                    if dpg.does_item_exist(drag_point):
+                        dpg.delete_item(drag_point)
+                self.annotations[tag] = {}
+                self.label_drag_points[tag] = {}
+                self.annotation_lines[tag] = {}
 
             font_size = Labels.settings[self.viewmodel.is_emission]['label font size']
             label_font = FontManager.get(font_size)

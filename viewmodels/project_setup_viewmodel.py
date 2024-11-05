@@ -110,8 +110,7 @@ class ProjectSetupViewModel(ProjectObserver):
 
     def delete_state(self, state_index):
         state = State.state_list[state_index]
-        if state in State.state_list:
-            State.state_list.remove(state)
+        State.remove(state)
         self._callbacks.get("update states data")()
         self._project.copy_state_settings()
 
