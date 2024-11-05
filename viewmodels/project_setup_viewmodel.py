@@ -36,7 +36,7 @@ class ProjectSetupViewModel(ProjectObserver):
             print(f"Warning: In ProjectSetupViewModel: Attempted to set unknown callback key {key}")
 
     def update(self, event_type, *args):
-        print(f"ProjectSetupViewModel observed event: {event_type, *args}")
+        # print(f"ProjectSetupViewModel observed event: {event_type, *args}")
         if event_type == "project data changed":
             if self._project is not None:
                 self._callbacks.get("update project")()

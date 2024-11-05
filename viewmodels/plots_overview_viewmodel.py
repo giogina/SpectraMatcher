@@ -55,7 +55,7 @@ class PlotsOverviewViewmodel:
         self.animated_peak = None
 
     def update(self, event, *args):
-        print(f"Plots overview viewmodel received event: {event} {args}")
+        # print(f"Plots overview viewmodel received event: {event} {args}")
         if event == "project loaded":
             self._callbacks.get("post load update")()
         elif event == ExperimentalSpectrum.spectrum_analyzed_notification:
@@ -81,7 +81,6 @@ class PlotsOverviewViewmodel:
             for state in State.state_list:
                 new_spec_tag = self._extract_state(state)
                 if new_spec_tag is not None:
-                    print("reordering: ", new_spec_tag)
                     self.state_plots[new_spec_tag].set_y_shift(yshift=1.25*self.state_plots[new_spec_tag].index)
                     self._callbacks.get("add spectrum")(new_spec_tag)
                     self._callbacks.get("add list spectrum")(self.state_plots[new_spec_tag])
