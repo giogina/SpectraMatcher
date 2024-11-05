@@ -244,8 +244,9 @@ class State:
                 name = "3rd excited state"
             else:
                 name = f"{i}th excited state"
-            if not name == state.name:
+            if state.name is None:
                 state.name = name
+            elif name[0] != state.name[0]:
                 state._notify_observers(state.state_list_changed_notification)
 
     def wipe(self):

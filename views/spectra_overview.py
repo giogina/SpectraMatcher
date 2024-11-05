@@ -22,6 +22,7 @@ class SpectraOverview:
 
         self.viewmodel.set_callback("add list spectrum", self.add_spectrum)
         self.viewmodel.set_callback("update list spec", self.update_spectrum)
+        self.viewmodel.set_callback("clear spec list", self.clear_all)
 
         self.expand_panel_button = self.icons.insert(dpg.add_button(height=20, width=20, pos=(10, 65), show=False, parent="emission tab" if self.viewmodel.is_emission else "excitation tab", callback=lambda s, a, u: self.collapse_spectrum_list(True)), Icons.caret_right, size=16)
 
@@ -56,7 +57,8 @@ class SpectraOverview:
         dpg.bind_item_theme(self.spectra_list_action_bar, ItemThemes.action_bar_theme())
 
         with dpg.group(tag=f"spectra list group {self.viewmodel.is_emission}") as self.spectra_list_group:
-            self.last_inserted_spec_tag = dpg.add_spacer(height=0)  # new specs inserted before this tag
+            self.initial_spacer = dpg.add_spacer(height=0)  # new specs inserted before this tag
+            self.last_inserted_spec_tag = self.initial_spacer
 
         self.configure_theme()
 
@@ -135,6 +137,16 @@ class SpectraOverview:
             dpg.configure_item(self.spectra_column, width_stretch=False, width=10)
             dpg.configure_item(self.plots_column, width_stretch=True)
             dpg.bind_item_theme(self.expand_panel_button, self.expand_button_theme)
+
+    def clear_all(self):
+        for header_tag in self.spectrum_headers.values():
+            if dpg.does_item_exist(header_tag):
+                dpg.delete_item(header_tag)
+        self.last_inserted_spec_tag = self.initial_spacer
+
+        self.spectrum_controls.clear()
+        self.spectrum_headers.clear()
+        self.color_edits.clear()
 
     def configure_theme(self):
         with dpg.theme() as spec_list_theme:
