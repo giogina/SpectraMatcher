@@ -295,7 +295,8 @@ class PlotsOverview:
             dpg.configure_item(self.plot, height=dpg.get_viewport_height()/2)
             dpg.configure_item(self.plot_row, height=dpg.get_viewport_height()/2)
 
-    def edit_mulliken(self):
+    def edit_mulliken(self, *args):
+        print(f"edit_mulliken (plots_overview): Editor shown = {dpg.is_item_shown(self.label_controls['Mulliken editor'])}")
         if dpg.is_item_shown(self.label_controls['Mulliken editor']):
             dpg.hide_item(self.label_controls['Mulliken editor'])
             dpg.set_item_label(self.label_controls['edit mulliken'], "Edit")
@@ -304,15 +305,16 @@ class PlotsOverview:
             dpg.set_item_label(self.label_controls['edit mulliken'], "Save")
             self.viewmodel.on_mulliken_edit()
 
-    def update_symmetry_list(self, symmetries):
+    def update_symmetry_list(self, symmetries, *args):
+        print(f"update_symmetry_list (plots_overview), symmetries = {symmetries}")
         dpg.configure_item(self.label_controls['symmetry order'], items=symmetries)
 
-    def move_symmetry(self, sender, a):
+    def move_symmetry(self, sender, *args):
         selected = dpg.get_value(self.label_controls['symmetry order'])
         up = sender == self.label_controls['symmetry up']
         self.viewmodel.on_symmetry_sort(selected, up)
 
-    def atomic_color(self, atom):
+    def atomic_color(self, atom, *args):
         if atom == 'H':
             return [255, 255, 255]
         elif atom == 'C':
@@ -324,7 +326,8 @@ class PlotsOverview:
         else:
             return [100, 100, 100]
 
-    def draw_molecule(self, mode_vectors=None):
+    def draw_molecule(self, mode_vectors=None, *args):
+        print(f"draw_molecule (plots_overview): mode_vectors = {mode_vectors}")
         if mode_vectors is None:
             return
 
@@ -372,7 +375,8 @@ class PlotsOverview:
                 #         else:
                 #             dpg.draw_line(p1, p2, color=self.atomic_color(to_geometry.atoms[bond[0]])+[100], user_data=[p1, p2, self.atomic_color(to_geometry.atoms[bond[0]])])
 
-    def vibrate_molecule(self):
+    def vibrate_molecule(self, *args):
+        # print(f"vibrate_molecule (plots_overview) - phase = {self.animation_phase}, animated_peak = {self.viewmodel.animated_peak}")
         if self.viewmodel.animated_peak is None:
             return
         old_phase = self.animation_phase
@@ -399,7 +403,7 @@ class PlotsOverview:
         self.left_mouse_is_down = True
         self.molecule_animation_clicked = dpg.is_item_hovered(f"animation_drawlist_{self.viewmodel.is_emission}")
 
-    def on_drag(self):
+    def on_drag(self, *args):
         if self.molecule_animation_clicked:
             if self.last_animation_drag_delta != dpg.get_mouse_drag_delta():
                 self.current_rotation = dpg.create_rotation_matrix(dpg.get_mouse_drag_delta()[1]/100, [1, 0, 0])\
@@ -538,10 +542,10 @@ class PlotsOverview:
                     for peak in exp.peaks:
                         self.add_peak_drag_point(exp, peak)
 
-    def add_peak_drag_point(self, exp, peak):
+    def add_peak_drag_point(self, exp, peak, *args):
         self.peak_indicator_points.append(dpg.add_drag_point(default_value=(peak.wavenumber, peak.intensity), callback=lambda s, a, u: self.mark_peak_dragged(s), user_data=(exp, peak), parent=self.plot))
 
-    def delete_peak_indicator_points(self):
+    def delete_peak_indicator_points(self, *args):
         for point in self.peak_indicator_points:
             if dpg.does_item_exist(point):
                 dpg.delete_item(point)
@@ -575,7 +579,7 @@ class PlotsOverview:
         Matcher.restore_defaults(self.viewmodel.is_emission)
         self.set_ui_values_from_settings(matcher=True)
 
-    def set_ui_values_from_settings(self, x_scale=False, half_width=False, x_shifts=False, y_shifts=False, labels=False, peak_detection=False, matcher=False):
+    def set_ui_values_from_settings(self, x_scale=False, half_width=False, x_shifts=False, y_shifts=False, labels=False, peak_detection=False, matcher=False, *args):
         if self.disable_ui_update:
             self.disable_ui_update = False
             return
@@ -732,13 +736,13 @@ class PlotsOverview:
         except Exception as e:
             print(f"Exception in custom series callback: {e}")
 
-    def pixel_distance(self, plot_pos_1, plot_pos_2):
+    def pixel_distance(self, plot_pos_1, plot_pos_2, *args):
         return ((plot_pos_1[0] - plot_pos_2[0])*self.pixels_per_plot_x), ((plot_pos_1[1] - plot_pos_2[1])*self.pixels_per_plot_y)
 
     def sticks_callback(self, sender, app_data, *args):
         return
 
-    def redraw_plot(self):
+    def redraw_plot(self, *args):
         for tag in self.line_series:
             dpg.delete_item(tag)
         self.line_series = []
@@ -751,14 +755,14 @@ class PlotsOverview:
         for s in self.viewmodel.state_plots.keys():
             self.add_spectrum(s)
 
-    def add_experimental_spectrum(self, x_data, y_data):
+    def add_experimental_spectrum(self, x_data, y_data, *args):
         dpg.add_line_series(x_data, y_data, parent=f"y_axis_{self.viewmodel.is_emission}")
         self.line_series.append(dpg.last_item())
         if self.viewmodel.state_plots == {}:
             dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
             dpg.bind_item_theme(dpg.last_item(), f"exp_spec_theme_{self.viewmodel.is_emission}")
 
-    def add_spectrum(self, tag):
+    def add_spectrum(self, tag, *args):
         xmin, xmax, ymin, ymax = self.viewmodel.get_zoom_range()
         s = self.viewmodel.state_plots[tag]
         if not dpg.does_item_exist(tag):
@@ -789,7 +793,7 @@ class PlotsOverview:
             self.update_spectrum_color(spec)
         self.fit_y()
 
-    def hide_spectrum(self, tag, hide):
+    def hide_spectrum(self, tag, hide, *args):
         # print(f"Hide spectrum {tag} (plots_overview)")
         if not dpg.does_item_exist(tag):
             return
@@ -805,7 +809,7 @@ class PlotsOverview:
         # if not self.viewmodel.match_plot.matching_active:
         self.fit_y()
 
-    def update_spectrum_color(self, spec):
+    def update_spectrum_color(self, spec, *args):
         if not dpg.does_item_exist(spec.tag):
             return
         with dpg.theme() as self.spec_theme[spec.tag]:
@@ -827,7 +831,7 @@ class PlotsOverview:
         if self.matched_spectra_checks.get(spec.tag) is not None:
             dpg.bind_item_theme(self.matched_spectra_checks.get(spec.tag), self.spec_theme[spec.tag])
 
-    def update_plot(self, state_plot, mark_dragged_plot=None, update_all=False, redraw_sticks=False, update_drag_lines=False, fit_y_axis=False):
+    def update_plot(self, state_plot, mark_dragged_plot=None, update_all=False, redraw_sticks=False, update_drag_lines=False, fit_y_axis=False, *args):
         # print(f"Update plot {state_plot.tag} (plots_overview)")
         if mark_dragged_plot is not None:
             self.dragged_plot = mark_dragged_plot
@@ -846,7 +850,7 @@ class PlotsOverview:
             else:
                 self.fit_y(dummy_series_update_only=True)
 
-    def update_match_plot(self, match_plot):
+    def update_match_plot(self, match_plot, *args):
         if Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False):
             for shade in self.shade_plots:
                 if dpg.get_item_user_data(shade) not in [s.tag for s in match_plot.contributing_state_plots]:
@@ -933,7 +937,7 @@ class PlotsOverview:
         self.update_match_table()
         self.last_match_y = match_plot.yshift
 
-    def delete_sticks(self, spec_tag=None):  # None: all of them.
+    def delete_sticks(self, spec_tag=None, *args):  # None: all of them.
         if spec_tag is not None:
             self.dragged_plot = spec_tag
             if dpg.does_item_exist(self.sticks_layer.get(spec_tag)):
@@ -1085,7 +1089,7 @@ class PlotsOverview:
                     self.label_drag_points[tag][annotation] = dpg.add_drag_point(default_value=label_pos, color=[255, 255, 0], show_label=False, show=False, user_data=annotation, callback=lambda s, a, u: self.move_label(dpg.get_value(s)[:2], u, update_drag_point=False), parent=plot)
                     self.annotation_lines[tag][annotation] = self.draw_label_line(cluster, peak_pos)
 
-    def move_label(self, pos, label, state_plot=None, update_drag_point=True):
+    def move_label(self, pos, label, state_plot=None, update_drag_point=True, *args):
         self.label_moving = True
         dpg.set_value(label, pos) # Optional: Save manual relative positions (& zoom state?)
         cluster, tag = dpg.get_item_user_data(label)
@@ -1098,7 +1102,7 @@ class PlotsOverview:
             if update_drag_point:
                 dpg.set_value(self.label_drag_points[tag][label], pos)
 
-    def delete_label_line(self, tag, label):
+    def delete_label_line(self, tag, label, *args):
         line_v, line_d = self.annotation_lines[tag].get(label, (None, None))
         if line_v is not None:
             if dpg.does_item_exist(line_v):
@@ -1109,7 +1113,7 @@ class PlotsOverview:
             if line_v is not None:
                 del self.annotation_lines[tag][label]
 
-    def draw_label_line(self, cluster, peak_pos, pos_only=False):
+    def draw_label_line(self, cluster, peak_pos, pos_only=False, *args):
         if abs(cluster.rel_x) > cluster.width / 2:
             if cluster.rel_x < 0:
                 anchor_offset_x = cluster.rel_x + cluster.width / 2
@@ -1139,7 +1143,7 @@ class PlotsOverview:
             line_d = dpg.draw_line(elbow_pos, label_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=[200, 200, 255, 200])
             return line_v, line_d
 
-    def update_labels(self, tag):
+    def update_labels(self, tag, *args):
         if not dpg.does_item_exist(tag):
             return
         if self.labels and dpg.is_item_shown(tag):
@@ -1167,7 +1171,7 @@ class PlotsOverview:
                         self.delete_label_line(tag, label)
                         self.annotation_lines[tag][label] = self.draw_label_line(cluster, peak_pos)
 
-    def delete_labels(self, spec_tag=None):
+    def delete_labels(self, spec_tag=None, *args):
         if spec_tag is None:
             for tag in self.viewmodel.state_plots.keys():
                 for annotation in self.annotations.get(tag, {}).values():
@@ -1199,7 +1203,7 @@ class PlotsOverview:
             self.delete_sticks()
             Labels.set(self.viewmodel.is_emission, 'show sticks', False)
 
-    def draw_sticks(self, s):
+    def draw_sticks(self, s, *args):
         if not dpg.does_item_exist(s.tag):
             return
         if dpg.is_item_shown(s.tag) and dpg.get_value(self.show_sticks) and not self.left_mouse_is_down:
@@ -1222,7 +1226,7 @@ class PlotsOverview:
         elif self.left_mouse_is_down and not self.viewmodel.match_plot.matching_active:
             self.dragged_plot = s.tag
 
-    def configure_theme(self):
+    def configure_theme(self, *args):
         with dpg.theme(tag=f"plot_theme_{self.viewmodel.is_emission}"):
             with dpg.theme_component(dpg.mvScatterSeries):
                 dpg.add_theme_color(dpg.mvPlotCol_Line, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
@@ -1303,7 +1307,7 @@ class PlotsOverview:
                     dpg.configure_item(f"drag-x-{s.tag}", show=show)
             dpg.configure_item(self.match_plot_y_drag, show=show)
 
-    def fit_y(self, dummy_series_update_only=False):
+    def fit_y(self, dummy_series_update_only=False, *args):
         ymin = -0.1
         ymax = 1.25
         if self.viewmodel.match_plot.matching_active:
