@@ -21,10 +21,11 @@ All sliders can be changed by dragging the handle or by scrolling the mouse whee
 
 Alternatively, an exact numerical value can be entered after holding Control and left-clicking the slider.
 
-Pressing an arrow button moves the last changed corresponding slider: The left and right arrows alter the last horizontal spectrum shift, half width, or anharmonic correction factor.
-The up and down arrows adapt the last vertical spectrum shift, spectrum scale, or global vertical spacing. 
+The arrow keys adjust the last altered slider in the corresponding direction:
+The vertical arrow keys ↑ ↓ alter the most recently changed vertical spectrum shift, spectrum scale, or global vertical spacing.
+The horizontal arrow keys ← → adjust the most recently changed spectrum wavenumber shift, half width, or anharmonic correction factor. 
 
-Holding down shift while scrolling or using arrow buttons allows for finer adjustments. 
+Holding down Shift while scrolling or using arrow buttons allows for finer adjustments. 
 
 
 ## Moving and scaling computed spectra
@@ -52,6 +53,3 @@ As with sliders, holding down the Shift button causes a finer adjustment while s
 ### Global vertical spacing
 The global "vertical spacing" slider on the top right places all visible spectra equidistantly.
 
-### Arrow keys
-The arrow keys can be used to adjust the last altered parameter in the corresponding direction. The vertical arrow keys ↑ ↓ adjust the most recently changed vertical spectrum shift or spectrum scale. The horizontal arrow keys ← → adjust the most recently changed parameter corresponding to a spectrum wavenumber shift, peak half width, or a correction factor. 
-Holding down Shift while using arrow keys allows for finer control of the parameter.
