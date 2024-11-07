@@ -34,11 +34,11 @@ The computed spectra can be moved horizontally and vertically, as well as scaled
 ### Spectra control panel
 Each spectrum can be individually moved using its corresponding sliders in the left control panel:
 <figure><img src=".gitbook/assets/state_sliders.png" alt="Spectrum slider controls"><figcaption></figcaption></figure>
-Additionally, using the buttons in this section, one can hide the spectrum from the plot, choose its color, and reset the shift & scale parameters.
+Additionally, using the buttons on the right-hand side of this section, one can hide the spectrum from the plot, choose its color, and reset the shift & scale parameters.
 
 ### Plot drag lines
-Spectra can be manipulated directly in the plot, using certain drag lines which appear on hover.
-Hovering the mouse near the base of the spectrum reveals a drag line which can be used to vertically drag the spectrum. While this line is revealed, scrolling the mouse wheel causes a scaling of the corresponding spectrum:
+Spectra can be manipulated directly in the plot, using certain drag lines which appear when the mouse pointer is close enough. All available drag lines can be shown by holding down the Alt button.
+Hovering the mouse near the base of the spectrum reveals a drag line which can be used to vertically drag the spectrum. While this line is being hovered, scrolling the mouse wheel causes a scaling of the corresponding spectrum:
  
 <figure><img src=".gitbook/assets/scroll_and_y_shift_using_drag_lines.gif" alt="Scrolling and y shifting using drag lines"><figcaption></figcaption></figure>
 
@@ -51,3 +51,7 @@ As with sliders, holding down the Shift button causes a finer adjustment while s
 
 ### Global vertical spacing
 The global "vertical spacing" slider on the top right places all visible spectra equidistantly.
+
+### Arrow keys
+The arrow keys can be used to adjust the last altered parameter in the corresponding direction. The vertical arrow keys ↑ ↓ adjust the most recently changed vertical spectrum shift or spectrum scale. The horizontal arrow keys ← → adjust the most recently changed parameter corresponding to a spectrum wavenumber shift, peak half width, or a correction factor. 
+Holding down Shift while using arrow keys allows for finer control of the parameter.
