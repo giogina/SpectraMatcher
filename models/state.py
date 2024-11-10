@@ -96,9 +96,7 @@ class State:
             self.errors.append(f"Wrong ground state energy: {self.own_ground_state_energy} vs. global {self.molecule_and_method.get('ground state energy')}")
         if not self.molecule_and_method.get("molecule") == self.own_molecular_formula:
             self.errors.append(f"Wrong molecule: {self.own_molecular_formula} vs. global {self.molecule_and_method.get('molecule')}")
-        if self.vibrational_modes is None:
-            self.errors.append(f"No vibrational modes found.")
-        if not self.is_ground and self.excitation_spectrum is None and self.emission_spectrum is None:
+        if (self.vibrational_modes is None or self.excitation_spectrum is None) and self.emission_spectrum is None:
             self.errors.append(f"Neither excitation nor emission spectrum found.")
 
         self.ok = len(self.errors) == 0
@@ -161,6 +159,10 @@ class State:
                 self.freq_hint = "File rejected: Can't have two ground states."
                 self._notify_observers(self.imported_file_changed_notification)
                 return
+            if self.vibrational_modes is not None:
+                print("File rejected: Freq file already filled")
+                self._notify_observers(self.imported_file_changed_notification)
+                return
 
             self.settings["freq file"] = file.path
             self.own_molecular_formula = file.molecular_formula
@@ -169,6 +171,10 @@ class State:
             self.vibrational_modes = file.modes
 
         elif file.type == FileType.FREQ_EXCITED:
+            if self.vibrational_modes is not None:
+                print("File rejected: Freq file already filled")
+                self._notify_observers(self.imported_file_changed_notification)
+                return
             gse = file.ground_state_energy if file.ground_state_energy is not None else self.own_ground_state_energy
             if gse is not None:
                 delta_E = abs(file.energy - gse)
@@ -184,6 +190,10 @@ class State:
             self.own_molecular_formula = file.molecular_formula
             self.vibrational_modes = file.modes
         elif file.type == FileType.FC_EXCITATION:
+            if self.excitation_spectrum is not None:
+                print("File rejected: Excitation FC file already filled")
+                self._notify_observers(self.imported_file_changed_notification)
+                return
             if checks and self.delta_E is not None:
                 if abs(self.delta_E - file.spectrum.zero_zero_transition_energy) > 20:
                     self.excitation_hint = "File rejected: New file 0-0 transition energy doesn't match previously added files."
@@ -201,6 +211,10 @@ class State:
             self.excited_geometry = file.final_geom
             self.ground_geometry = file.initial_geom
         elif file.type == FileType.FC_EMISSION:
+            if self.emission_spectrum is not None:
+                print("File rejected: Emission FC file already filled")
+                self._notify_observers(self.imported_file_changed_notification)
+                return
             if checks and self.delta_E is not None:
                 if abs(self.delta_E - file.spectrum.zero_zero_transition_energy) > 20:
                     self.emission_hint = "File rejected: 0-0 transition energy doesn't match previously added files."
