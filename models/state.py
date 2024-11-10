@@ -94,7 +94,7 @@ class State:
             return self.ok
         if not math.isclose(self.own_ground_state_energy, self.molecule_and_method.get("ground state energy"), abs_tol=10):
             self.errors.append(f"Wrong ground state energy: {self.own_ground_state_energy} vs. global {self.molecule_and_method.get('ground state energy')}")
-        if not self.molecule_and_method.get("molecule") == self.own_molecular_formula:
+        if not self.molecule_and_method.get("molecule") == self.own_molecular_formula and self.own_molecular_formula is not None:
             self.errors.append(f"Wrong molecule: {self.own_molecular_formula} vs. global {self.molecule_and_method.get('molecule')}")
         if (self.vibrational_modes is None or self.excitation_spectrum is None) and self.emission_spectrum is None:
             self.errors.append(f"Neither excitation nor emission spectrum found.")

@@ -25,7 +25,7 @@ The arrow keys adjust the last altered slider in the corresponding direction:
 The vertical arrow keys ↑ ↓ alter the most recently changed vertical spectrum shift, spectrum scale, or global vertical spacing.
 The horizontal arrow keys ← → adjust the most recently changed spectrum wavenumber shift, half width, or anharmonic correction factor. 
 
-Holding down Shift while scrolling or using arrow buttons allows for finer adjustments. 
+Holding down Shift while scrolling or using arrow buttons allows for finer adjustments.
 
 
 ## Moving and scaling computed spectra
