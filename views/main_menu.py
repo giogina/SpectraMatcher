@@ -1,3 +1,5 @@
+import subprocess
+
 from models.settings_manager import Settings
 from utility.item_themes import ItemThemes
 from viewmodels.main_viewmodel import MainViewModel, noop
@@ -296,8 +298,12 @@ class MainMenu:
         pass
 
     def _on_show_project_log(self, s, a, u, *args):
-        print("Show project log")
-        pass  # TODO
+        path = self.viewmodel.path + '.log'
+        path = path.replace(' ', '_')
+        print(path)
+        subprocess.Popen(f'explorer /select,"{path}"')
+        # subprocess.Popen(f'explorer "{path}"')
+        # TODO
 
     def _on_select_new_shortcut(self, s, a, u, *args):
         self._show_modal_child("input shortcut window")
