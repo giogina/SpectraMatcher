@@ -41,6 +41,7 @@ class MainMenu:
             self._register_action("Save as", label="Save As...", callback=self._on_save_as)
             self._register_action("Exit", callback=self._on_exit, icon=Icons.power_off)
             self._register_action("Sanity checks", label="Turn off sanity checks" if self.viewmodel.get_setting(Settings.CHECKS) else "Turn on sanity checks", callback=self._on_toggle_sanity_checks, icon=Icons.check_circle_o)
+            self._register_action("Show log file", label="Show project log file", callback=self._on_show_project_log, icon=Icons.file_text)
             self._register_action("Shortcuts", label="Configure shortcuts...", callback=self._show_configure_shortcuts,
                                   icon=Icons.keyboard)
             self._register_action("User Guide", label="User Guide...", callback=self._user_guide, icon=Icons.book)
@@ -52,7 +53,7 @@ class MainMenu:
                                         sep, "Save", "Save as", sep, "Exit"],
                            "Settings": ["Sanity checks"],
                            "Tools": ["Shortcuts"],
-                           "Help": ["User Guide", "Report bug"]}
+                           "Help": ["User Guide", "Report bug", "Show log file"]}
 
         # Construct main menu bar from self.menu_items
         # with dpg.viewport_menu_bar() as self.menu_bar:
@@ -293,6 +294,10 @@ class MainMenu:
         else:
             dpg.set_item_label(self.selectables["Sanity checks"], "Turn on sanity checks")
         pass
+
+    def _on_show_project_log(self, s, a, u, *args):
+        print("Show project log")
+        pass  # TODO
 
     def _on_select_new_shortcut(self, s, a, u, *args):
         self._show_modal_child("input shortcut window")
