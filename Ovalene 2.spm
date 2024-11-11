@@ -43,7 +43,14 @@
                 22.949999999999996,
                 229.5,
                 229.5
-            ]
+            ],
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\ovalene-excited-4-opt-freq-disp.log",
+            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT emission\\FCHT.log",
+            "y shift emission": 1.25,
+            "matched emission": false,
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT\\FCHT.log",
+            "y shift excitation": 1.25,
+            "matched excitation": false
         }
     ],
     "directory toggle states": {

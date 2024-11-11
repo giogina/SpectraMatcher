@@ -73,6 +73,7 @@ class PlotsOverview:
         self.animation_scale = 1
         self.animation_phase = 0
         self.frame_node = {}
+        self.animated_bonds = None
         self.molecule_animation_clicked = False
         self.molecule_node = None
         self.current_rotation = dpg.create_rotation_matrix(0, [1, 0, 0])
@@ -215,6 +216,7 @@ class PlotsOverview:
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
                                     self.render_hint = dpg.add_text("Click a label to render...")
+                                    self.animation_mode_text = dpg.add_text("")
                                     with dpg.drawlist(width=400, height=300, tag=f"animation_drawlist_{self.viewmodel.is_emission}"):
                                         self.draw_molecule()
                                     with dpg.item_handler_registry():
@@ -327,7 +329,7 @@ class PlotsOverview:
             return [100, 100, 100]
 
     def draw_molecule(self, mode_vectors=None, *args):
-        print(f"draw_molecule (plots_overview): mode_vectors = {mode_vectors}")
+        # print(f"draw_molecule (plots_overview): mode_vectors = {mode_vectors}")
         if mode_vectors is None:
             return
 
@@ -950,7 +952,7 @@ class PlotsOverview:
 
     def on_drag_release(self, *args):
         if not dpg.is_item_visible(f"plot_{self.viewmodel.is_emission}"):
-            return          # todo> what other functions need this check to make sure only the visible plot is updated?
+            return
         # print("on release: ", self.label_moving)
         self.left_mouse_is_down = False
         if self.dragged_plot is not None:
@@ -982,16 +984,19 @@ class PlotsOverview:
             state_tag = dpg.get_item_user_data(self.hovered_label[0])[1]
             state = self.viewmodel.state_plots[state_tag].state
             clicked_peak = self.hovered_label[1]
-            print(clicked_peak.__dict__)
+            # print(clicked_peak.__dict__)
             mode_index = self.hovered_label[2]
             if clicked_peak.transition == [[0]]:
                 self.viewmodel.set_displayed_animation(None)
+                dpg.set_value(self.animation_mode_text, "")
             else:
                 spectrum = state.emission_spectrum if self.viewmodel.is_emission else state.excitation_spectrum
                 modes = [spectrum.vibrational_modes.get_mode(t[0]) for t in clicked_peak.transition]
                 if not self.gaussian_labels and len(modes) > 1:
                     modes.sort(key=lambda m: m.name)
                 mode = modes[mode_index]
+                # print(mode.__dict__)
+                dpg.set_value(self.animation_mode_text, f"{mode.wavenumber:.2f} cm⁻¹, {mode.IR}, {mode.vibration_type.replace('others', 'Other deformation')}")
                 self.draw_molecule([[clicked_peak.transition[mode_index][1], mode]])
                 self.viewmodel.set_displayed_animation(clicked_peak)
                 # dpg.set_value(self.render_hint, f"{state.name} {'emission' if self.viewmodel.is_emission else 'excitation'}, {clicked_peak.get_label(self.gaussian_labels)}")
