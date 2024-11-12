@@ -311,18 +311,20 @@ class Icons:
 
     _fonts_path = ""
 
-    def __new__(cls, font_reg=None):  # Make class a Singleton.
+    def __new__(cls, font_reg=None, fonts_path=""):  # Make class a Singleton.
+        print("New called", fonts_path)
         if cls._instance is None:
             cls._instance = super(Icons, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, font_reg=None):
+    def __init__(self, font_reg=None, fonts_path=""):
+        print("init called", fonts_path)
         if not self._is_initialized:
             self._fa = {}
             self._fs = {}
             self._color_themes = {}
             if font_reg:
-                self.set_font_registry(font_reg)
+                self.set_font_registry(font_reg, fonts_path)
             self._is_initialized = True
 
     def set_font_registry(self, font_reg, fonts_path):
@@ -332,7 +334,7 @@ class Icons:
 
     def get_icon(self, icon, size, solid=True):  # icon: unicode hex code (e.g. 0xf07c)
         """add icon hex to loaded special characters if necessary; then return string."""
-
+        print("Fonts path: ", self._fonts_path)
         if type(icon) == int:
             if self._font_reg is None:
                 print("Icons: Could not register font, I don't have the registry yet!")

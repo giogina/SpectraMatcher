@@ -43,7 +43,7 @@ class Dashboard:
         with dpg.font_registry() as font_reg:
             for i in [self.small_font, self.normal_font, self.title_font]:
                 self.fonts[i] = dpg.add_font(os.path.join(fonts_path, "Sansation_Regular.ttf"), i)
-        self.icons = Icons(font_reg)
+        self.icons = Icons(font_reg, fonts_path)
         dpg.bind_font(self.fonts[self.normal_font])
 
         with dpg.handler_registry() as self.keyReg:
