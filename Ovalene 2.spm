@@ -16,14 +16,6 @@
     "files marked as excitation": [],
     "experiment settings": [
         {
-            "path": "C:\\Users\\Giogina\\Documents\\ovalene\\experiment\\ovalene_DF_exp.txt",
-            "chosen peaks": [],
-            "removed peaks": [],
-            "intensity column": 3,
-            "relative wavenumber column": 0,
-            "absolute wavenumber column": 1
-        },
-        {
             "path": "C:\\Users\\Giogina\\Documents\\ovalene\\experiment\\ovalene_EX_exp.txt",
             "chosen peaks": [],
             "removed peaks": [],

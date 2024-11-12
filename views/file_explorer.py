@@ -1,9 +1,11 @@
+import os
 import re
 import subprocess
 import dearpygui.dearpygui as dpg
 import pyperclip
 
 from models.state import State
+from utility.font_manager import FontManager
 from viewmodels.data_files_viewmodel import DataFileViewModel
 from models.data_file_manager import GaussianLog, FileType, File, Directory
 from utility.icons import Icons
@@ -45,7 +47,10 @@ _file_icon_colors = {
 def _get_icon_texture(tag):
     if tag in _file_icon_textures.keys():
         color = [c/255. for c in _file_icon_colors.get(tag, [255, 255, 255, 180])]
-        width, height, channels, data = dpg.load_image(_file_icon_textures.get(tag))
+        file_name = _file_icon_textures.get(tag)
+        base_path = os.path.dirname(FontManager.find_fonts_path())
+        texture_path = os.path.join(base_path, file_name).replace('\\', '/')
+        width, height, channels, data = dpg.load_image(texture_path)
         tex = []
         for i in range(len(data)):
             tex.append(data[i] * color[i % 4])

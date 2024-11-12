@@ -1,0 +1,12 @@
+Load settings
+Attempting to read C:\Users\Giogina\AppData\Roaming\SpectraMatcher\config\settings.json...
+Asyncmanager started!
+Initiating async manager!
+Updating exp data: []
+file: C:/Users/Giogina/SpectraMatcher/test.spm, exsits=True
+Loaded project data: {'name': 'test', 'open data folders': [], 'open data files': []}
+Project data key active emission plotter not found, using defaults.
+Project data key active excitation plotter not found, using defaults.
+Opening: ([], [])
+Viewport is closing. Exiting application.
+project save inquiry dialog....

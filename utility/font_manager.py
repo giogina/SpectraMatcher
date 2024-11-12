@@ -27,8 +27,6 @@ class FontManager:
     @classmethod
     def load_fonts(cls):
         fonts_path = cls.find_fonts_path()
-        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
-            launch_log.write(f"fonts_path: {fonts_path}\n")
         with dpg.font_registry() as cls.font_registry:
             # ! Open/Closed folder icons have been added to this font !
             # Don't change it, or you will get currency signs instead. (Or add folder icons as \u00a3 and \u00a4)

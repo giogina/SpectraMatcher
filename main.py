@@ -16,17 +16,11 @@ def main():
     # logging.getLogger().addHandler(gui_handler)
     # logging.info(f"Started with flags: {sys.argv}")
 
-    with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'w') as launch_log:  # TODO: temp
-        launch_log.write(f"{sys.argv} {len(sys.argv)}\r\n")
     flags = None
     if len(sys.argv) > 1:
         if sys.argv[1] == "-open" and len(sys.argv) > 2:
-            with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
-                launch_log.write("Open "+sys.argv[2].replace("\\", "/")+"\r\n")
             MainWindow(sys.argv[2].replace("\\", "/")).show()
         elif sys.argv[1] == "-new":
-            with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
-                launch_log.write("New " + "\r\n")
             if len(sys.argv) > 2:
                 flags = CreateProjectWindow(sys.argv[2:len(sys.argv)]).show()
             else:
@@ -34,8 +28,6 @@ def main():
         else:
             return
     else:
-        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
-            launch_log.write("Dashboard" + "\r\n")
         flags = Dashboard().show()
 
     if flags:  # Restart this program with proper flags.

@@ -1,11 +1,12 @@
 ['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene 2.spm'] 3
 Open C:/Users/Giogina/SpectraMatcher/Ovalene 2.spm
-Init called
-MainViewMOdel created
-DPG context created
-App configured
-fonts_path: C:\Users\Giogina\SpectraMatcher\fonts
-Fonts loaded
-Monitors gotten: Monitor(x=0, y=0, width=2560, height=1440, width_mm=None, height_mm=None, name=None, is_primary=True)
-Viewport created
-Show called
+Menu init start
+Menu: Icons started
+Menu: Helpers done
+Menu: Init Done
+(get_file_manager_vm) <models.project.Project object at 0x0000000002A4E408>
+(get_file_manager_vm) <models.data_file_manager.DataFileManager object at 0x000000002750C888>
+(get_file_manager_vm) {'top_level_directories': {}, 'top_level_files': {}, '_observers': {'directory structure changed': [<models.project.Project object at 0x0000000002A4E408>]}, 'last_path': 'C:\\Users\\Giogina', 'directory_toggle_states': {}, 'ignored_files_and_directories': [], 'files_marked_as_excitation': [], 'files_marked_as_emission': [], 'all_files': {}}
+(get_file_manager_vm) {'_project_file_lock': <unlocked _thread.lock object at 0x0000000002A50AE0>, '_data_lock': <unlocked _thread.lock object at 0x00000000274F1B40>, '_observers': {}, '_is_unsaved': False, '_settings': <models.settings_manager.SettingsManager object at 0x000000002750C808>, 'data_file_manager': <models.data_file_manager.DataFileManager object at 0x000000002750C888>, 'project_file': 'C:/Users/Giogina/SpectraMatcher/Ovalene 2.spm', '_autosave_file': 'C:/Users/Giogina/SpectraMatcher\\Ovalene 2_autosave.spm', '_lock_file_path': 'C:/Users/Giogina/SpectraMatcher/Ovalene 2.spm.lock', '_data': None, '_autosave_interval': 60, '_autosave_thread': <Thread(Thread-1, initial daemon)>, '_data_defaults': {'name': 'Untitled', 'open data folders': [], 'open data files': [], 'experimental spectra': {}, 'ground state path': None, 'progress': 'start', 'active emission plotter': None, 'active excitation plotter': None}, 'window_title': ''}
+File explorer init start...
+File explorer icons setup done

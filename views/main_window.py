@@ -16,42 +16,25 @@ from screeninfo import get_monitors
 class MainWindow:
 
     def __init__(self, path):
-        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
-            launch_log.write(f"Init called\n")
+        # with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:
+        #     launch_log.write(f"Init called\n")
         self.result = 0
         # self.logger = logging.getLogger(__name__)
         self.viewModel = MainViewModel(path)
-
-        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
-            launch_log.write(f"MainViewMOdel created\n")
         self.icons = Icons()
 
         dpg.create_context()
 
-        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
-            launch_log.write(f"DPG context created\n")
-
         dpg.configure_app(auto_device=True)
 
-        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
-            launch_log.write(f"App configured\n")
-
         FontManager.load_fonts()
-
-        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
-            launch_log.write(f"Fonts loaded\n")
         monitor = get_monitors()[0]
-
-        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
-            launch_log.write(f"Monitors gotten: {monitor}\n")
         dpg.create_viewport(title='SpectraMatcher',
                             width=monitor.width-600, height=monitor.height-30, x_pos=600, y_pos=0)
-
-        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
-            launch_log.write(f"Viewport created\r\n")
         self.viewport_resize_callbacks = []  # list of functions to be called when viewport resizes
         dpg.set_viewport_resize_callback(self.on_viewport_resize)
         self.viewport_size = [0, 0]
+
 
         with dpg.window(tag="main window", label="SpectraMatcher", no_scrollbar=True):
             self.menu = MainMenu(self.viewModel)
@@ -62,10 +45,10 @@ class MainWindow:
                         dpg.add_table_column(label="project setup")
                         with dpg.table_row():
                             with dpg.table_cell():
-                                self.file_manager_panel = FileExplorer(self.viewModel.get_file_manager_viewmodel())
+                                vm = self.viewModel.get_file_manager_viewmodel()
+                                self.file_manager_panel = FileExplorer(vm)
                             with dpg.table_cell():
                                 self.project_setup_panel = ProjectSetup(self.viewModel.get_project_setup_viewmodel())
-
                 emission_viewmodel = self.viewModel.get_plots_overview_viewmodel(is_emission=True)
                 with dpg.tab(label=" Emission Spectra ", tag="emission tab"):
                     with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1, tag="Emission layout table"):
@@ -76,7 +59,6 @@ class MainWindow:
                                 self.project_settings_panel = SpectraOverview(emission_viewmodel)
                             with dpg.table_cell():
                                 self.emission_plots_overview_panel = PlotsOverview(emission_viewmodel, self.append_viewport_resize_callback)
-
                 excitation_viewmodel = self.viewModel.get_plots_overview_viewmodel(is_emission=False)
                 with dpg.tab(label=" Excitation Spectra ", tag="excitation tab"):
                     with dpg.table(header_row=False, borders_innerV=True, resizable=True, width=-1, tag="Excitation layout table"):
@@ -87,10 +69,8 @@ class MainWindow:
                                 self.project_settings_panel = SpectraOverview(excitation_viewmodel)
                             with dpg.table_cell():
                                 self.excitation_plots_overview_panel = PlotsOverview(excitation_viewmodel, self.append_viewport_resize_callback)
-
         self.configure_theme()
         dpg.set_primary_window("main window", True)
-
         # need to initialize view model here to be able to show messages about the project
         self.viewModel.set_title_callback(callback=self.update_title)
         self.viewModel.set_message_callback(callback=self.menu.show_dialog)
@@ -181,8 +161,6 @@ class MainWindow:
         self.viewModel.load_project()
 
     def show(self):
-        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
-            launch_log.write(f"Show called\r\n")
         dpg.setup_dearpygui()
         dpg.set_frame_callback(1, self.startup_callback)
         dpg.set_exit_callback(self._on_viewport_close)
