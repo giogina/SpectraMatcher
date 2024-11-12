@@ -16,19 +16,39 @@ from screeninfo import get_monitors
 class MainWindow:
 
     def __init__(self, path):
+        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
+            launch_log.write(f"Init called\n")
         self.result = 0
         # self.logger = logging.getLogger(__name__)
         self.viewModel = MainViewModel(path)
+
+        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
+            launch_log.write(f"MainViewMOdel created\n")
         self.icons = Icons()
 
         dpg.create_context()
+
+        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
+            launch_log.write(f"DPG context created\n")
+
         dpg.configure_app(auto_device=True)
 
+        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
+            launch_log.write(f"App configured\n")
+
         FontManager.load_fonts()
+
+        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
+            launch_log.write(f"Fonts loaded\n")
         monitor = get_monitors()[0]
+
+        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
+            launch_log.write(f"Monitors gotten: {monitor}\n")
         dpg.create_viewport(title='SpectraMatcher',
                             width=monitor.width-600, height=monitor.height-30, x_pos=600, y_pos=0)
 
+        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
+            launch_log.write(f"Viewport created\r\n")
         self.viewport_resize_callbacks = []  # list of functions to be called when viewport resizes
         dpg.set_viewport_resize_callback(self.on_viewport_resize)
         self.viewport_size = [0, 0]
@@ -161,6 +181,8 @@ class MainWindow:
         self.viewModel.load_project()
 
     def show(self):
+        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
+            launch_log.write(f"Show called\r\n")
         dpg.setup_dearpygui()
         dpg.set_frame_callback(1, self.startup_callback)
         dpg.set_exit_callback(self._on_viewport_close)

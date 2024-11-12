@@ -1,9 +1,11 @@
 import math
+import os
 import random
 
 import dearpygui.dearpygui as dpg
 from models.settings_manager import SettingsManager
 from utility.async_manager import AsyncManager
+from utility.font_manager import FontManager
 from utility.icons import Icons
 from utility.spectrum_plots import SpecPlotter
 from utility.system_file_browser import *
@@ -37,9 +39,10 @@ class Dashboard:
         self.small_font = 13
         self.normal_font = 18
         self.title_font = 33
+        fonts_path = FontManager.find_fonts_path()
         with dpg.font_registry() as font_reg:
             for i in [self.small_font, self.normal_font, self.title_font]:
-                self.fonts[i] = dpg.add_font("./fonts/Sansation_Regular.ttf", i)
+                self.fonts[i] = dpg.add_font(os.path.join(fonts_path, "Sansation_Regular.ttf"), i)
         self.icons = Icons(font_reg)
         dpg.bind_font(self.fonts[self.normal_font])
 

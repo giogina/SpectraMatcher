@@ -1,3 +1,5 @@
+import os
+
 import dearpygui.dearpygui as dpg
 
 
@@ -307,6 +309,8 @@ class Icons:
     wrench = 0xf0ad
     person_running = 0xf70c
 
+    _fonts_path = ""
+
     def __new__(cls, font_reg=None):  # Make class a Singleton.
         if cls._instance is None:
             cls._instance = super(Icons, cls).__new__(cls)
@@ -321,22 +325,24 @@ class Icons:
                 self.set_font_registry(font_reg)
             self._is_initialized = True
 
-    def set_font_registry(self, font_reg):
+    def set_font_registry(self, font_reg, fonts_path):
         self._font_reg = font_reg
+        self._fonts_path = fonts_path
         return self
 
     def get_icon(self, icon, size, solid=True):  # icon: unicode hex code (e.g. 0xf07c)
         """add icon hex to loaded special characters if necessary; then return string."""
+
         if type(icon) == int:
             if self._font_reg is None:
                 print("Icons: Could not register font, I don't have the registry yet!")
                 return ""
             if (not solid) and (size not in self._fa.keys()):
-                with dpg.font("./fonts/Font Awesome 6 Free-Regular-400.otf", size, parent=self._font_reg) as self._fa[size]:
+                with dpg.font(os.path.join(self._fonts_path, "Font Awesome 6 Free-Regular-400.otf"), size, parent=self._font_reg) as self._fa[size]:
                     dpg.add_font_range(0xf000, 0xf999)
                 # self._registered_fa[size] = []
             elif solid and (size not in self._fs.keys()):
-                with dpg.font("./fonts/Font Awesome 6 Free-Solid-900.otf", size, parent=self._font_reg) as self._fs[size]:
+                with dpg.font(os.path.join(self._fonts_path, "Font Awesome 6 Free-Solid-900.otf"), size, parent=self._font_reg) as self._fs[size]:
                     dpg.add_font_range(0xf000, 0xf999)
             return chr(icon)
         else:

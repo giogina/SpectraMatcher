@@ -4,6 +4,7 @@ import os
 from screeninfo import get_monitors
 from models.settings_manager import SettingsManager
 from models.project import Project
+from utility.font_manager import FontManager
 from utility.system_file_browser import *
 from utility.icons import Icons
 from utility.drop_receiver_window import DropReceiverWindow, initialize_dnd
@@ -22,10 +23,11 @@ class CreateProjectWindow:
         dpg.create_context()
         dpg.configure_app(auto_device=True)
 
+        fonts_path = FontManager.find_fonts_path()
         self.fonts = {}
         with dpg.font_registry() as font_reg:
             for i in [18, 24]:
-                self.fonts[i] = dpg.add_font("./fonts/Sansation_Regular.ttf", i)
+                self.fonts[i] = dpg.add_font(os.path.join(fonts_path, "Sansation_Regular.ttf"), i)
             icons = Icons(font_reg)
         dpg.bind_font(self.fonts[18])
         close_button_theme, selectables_theme = self.adjust_theme()  # selectables_theme_2

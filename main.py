@@ -9,18 +9,24 @@ from views.create_project import CreateProjectWindow
 
 
 def main():
-    # # egularly remove the logger; or just turn it all off?
+    # # regularly remove the logger; or just turn it all off?
     # logging.basicConfig(level=logging.INFO, filename='spectraMatcher.log',
     #                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     # gui_handler = GuiLogHandler()  # to do: Pass GUI element to display logs?
     # logging.getLogger().addHandler(gui_handler)
     # logging.info(f"Started with flags: {sys.argv}")
 
+    with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'w') as launch_log:  # TODO: temp
+        launch_log.write(f"{sys.argv} {len(sys.argv)}\r\n")
     flags = None
     if len(sys.argv) > 1:
         if sys.argv[1] == "-open" and len(sys.argv) > 2:
-            MainWindow(sys.argv[2]).show()
+            with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
+                launch_log.write("Open "+sys.argv[2].replace("\\", "/")+"\r\n")
+            MainWindow(sys.argv[2].replace("\\", "/")).show()
         elif sys.argv[1] == "-new":
+            with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
+                launch_log.write("New " + "\r\n")
             if len(sys.argv) > 2:
                 flags = CreateProjectWindow(sys.argv[2:len(sys.argv)]).show()
             else:
@@ -28,9 +34,9 @@ def main():
         else:
             return
     else:
+        with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:  # TODO: temp
+            launch_log.write("Dashboard" + "\r\n")
         flags = Dashboard().show()
-
-    logging.info(f"Flags received:{flags}")
 
     if flags:  # Restart this program with proper flags.
         Launcher.launch(*flags)
