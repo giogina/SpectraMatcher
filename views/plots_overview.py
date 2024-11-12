@@ -80,7 +80,6 @@ class PlotsOverview:
         self.animation_matrix = dpg.create_translation_matrix([1/6., 0, 0])
         self.last_animation_drag_delta = [0, 0]
         self.label_moving = True  # todo: temp
-        self.overlayed_spec = None
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -658,7 +657,8 @@ class PlotsOverview:
             min_hovered_drag_line_distance = 10*self.pixels_per_plot_y  # (measured in pixel space)
             self.hovered_x_drag_line = None
             self.hovered_label = None
-            overlay_spec = None
+            overlay_spec_data = [[], []]
+            overlay_tag = None
             for s_tag, s in self.viewmodel.state_plots.items():
                 if not dpg.does_item_exist(f"drag-x-{s_tag}"):
                     return  # drawing is currently underway
@@ -684,7 +684,8 @@ class PlotsOverview:
                             min_hovered_drag_line_distance = drag_line_distance
                         if hovered_spectrum == s or self.dragged_plot == s.tag:
                             if not -0.2 < s.yshift <= 0.9 and not self.viewmodel.match_plot.matching_active:
-                                overlay_spec = s
+                                overlay_spec_data = [s.xdata, s.ydata - s.yshift]
+                                overlay_tag = s.tag
 
                     if self.labels:
                         for label in self.annotations[s_tag].values():
@@ -710,13 +711,10 @@ class PlotsOverview:
                         # dpg.configure_item(sender, tooltip=True)
                         # dpg.set_value(self.tooltiptext, f"Diff: {abs(dpg.get_value(f'drag-x-{s_tag}') - mouse_x_plot_space)}")
             self.hovered_spectrum = hovered_spectrum
-            if overlay_spec != self.overlayed_spec:
-                if overlay_spec is None:
-                    dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [[], []])
-                else:
-                    dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", [overlay_spec.xdata, overlay_spec.ydata - overlay_spec.yshift])
-                    dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[overlay_spec.tag])
-                self.overlayed_spec = overlay_spec
+
+            dpg.set_value(f"exp_overlay_{self.viewmodel.is_emission}", overlay_spec_data)
+            if overlay_tag is not None:
+                dpg.bind_item_theme(f"exp_overlay_{self.viewmodel.is_emission}", self.spec_theme[overlay_tag])
 
             if self.viewmodel.match_plot.matching_active:
                 for s in self.viewmodel.match_plot.contributing_state_plots:
