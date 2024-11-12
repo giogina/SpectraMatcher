@@ -1029,7 +1029,6 @@ class PlotsOverview:
                 self.gaussian_labels = True
                 self.labels = True
                 for s in self.viewmodel.state_plots:
-                    print(f"Draw Gaussian labels, spectrum {s}")
                     self.draw_labels(s)
             else:
                 self.labels = False
@@ -1040,7 +1039,6 @@ class PlotsOverview:
                 self.gaussian_labels = False
                 self.labels = True
                 for s in self.viewmodel.state_plots:
-                    print(f"Draw Mulliken labels, spectrum {s}")
                     self.draw_labels(s)
             else:
                 self.labels = False
@@ -1062,7 +1060,6 @@ class PlotsOverview:
             self.annotation_lines[tag] = {}
 
     def draw_labels(self, tag, *args):
-        print("Draw labels called: ", tag)
         if self.labels and dpg.does_item_exist(tag) and dpg.is_item_shown(tag):
             # print(f"Draw labels {tag} (plots_overview)")
             plot = f"plot_{self.viewmodel.is_emission}"
