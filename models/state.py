@@ -109,7 +109,7 @@ class State:
                 ground = State.state_list[0]
                 if ground.is_ground and ground.ok and self.emission_spectrum is not None:
                     self.emission_spectrum.set_vibrational_modes(ground.vibrational_modes)
-                if self.excitation_spectrum is not None:
+                if self.excitation_spectrum is not None and self.vibrational_modes is not None:
                     self.excitation_spectrum.set_vibrational_modes(self.vibrational_modes)
             else:
                 for state in State.state_list[1:]:
@@ -136,7 +136,7 @@ class State:
         if file.progress != "parsing done":
             print(f"Warning in molecular_data assimilate_file_data: File wasn't done parsing yet: {file.path}")
             return
-        print("assimilate data:", SettingsManager().get(Settings.CHECKS))
+        print("assimilate data:", file.name)
         checks = SettingsManager().get(Settings.CHECKS, True)
         if State.molecule_and_method.get("molecule") is None:
             if file.ground_state_energy is not None:  # allow file choice to select molecule

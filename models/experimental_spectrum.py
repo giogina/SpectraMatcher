@@ -362,10 +362,15 @@ class ExperimentalSpectrum:
     def adjust_spec_plotter_range(cls, is_emission):
         """Set up SpecPlotter with sufficient range to fit all experimental spectra & matching half-width"""
         exp_list = [exp for exp in cls.spectra_list if exp.is_emission == is_emission]
+        print([exp.x_min for exp in exp_list])
         if not len(exp_list):
             return None
-        x_min = min([exp.x_min for exp in exp_list])
-        x_max = max([exp.x_max for exp in exp_list])
+        min_list = [exp.x_min for exp in exp_list if exp.x_min is not None]
+        max_list = [exp.x_max for exp in exp_list if exp.x_max is not None]
+        if not len(min_list) or not len(max_list):
+            return None
+        x_min = min(min_list)
+        x_max = max(max_list)
         half_width = SpecPlotter.get_half_width(is_emission)  # Prevent overwriting of half-width
         if half_width is None:
             half_width = [exp.peak_width for exp in exp_list if exp.x_min == x_min][0]

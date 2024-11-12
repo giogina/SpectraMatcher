@@ -22,6 +22,14 @@
             "intensity column": 2,
             "relative wavenumber column": 0,
             "absolute wavenumber column": 1
+        },
+        {
+            "path": "C:\\Users\\Giogina\\Documents\\ovalene\\experiment\\ovalene_DF_exp.txt",
+            "chosen peaks": [],
+            "removed peaks": [],
+            "intensity column": 3,
+            "relative wavenumber column": 0,
+            "absolute wavenumber column": 1
         }
     ],
     "ground state path": "C:\\Users\\Giogina\\Documents\\ovalene\\ground state\\ovalene-ground-opt-freq-disp.log",
@@ -32,17 +40,87 @@
     "state settings": [
         {
             "color": [
-                22.949999999999996,
                 229.5,
-                229.5
+                199.99285714285716,
+                22.949999999999996
             ],
-            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\ovalene-excited-4-opt-freq-disp.log",
-            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT emission\\FCHT.log",
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
+            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission\\FCHT.log",
             "y shift emission": 1.25,
             "matched emission": false,
-            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT\\FCHT.log",
             "y shift excitation": 1.25,
-            "matched excitation": false
+            "matched excitation": false,
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log"
+        },
+        {
+            "color": [
+                81.96428571428574,
+                229.5,
+                22.949999999999996
+            ],
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log",
+            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
+            "y shift emission": 2.5,
+            "matched emission": false,
+            "y shift excitation": 2.5,
+            "matched excitation": false,
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log"
+        },
+        {
+            "color": [
+                22.949999999999996,
+                229.5,
+                140.9785714285714
+            ],
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT\\FCHT.log",
+            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT emission\\FCHT.log",
+            "y shift emission": 3.75,
+            "matched emission": false,
+            "y shift excitation": 3.75,
+            "matched excitation": false,
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\ovalene-excited-3-opt-freq-disp.log"
+        },
+        {
+            "color": [
+                22.949999999999996,
+                140.97857142857148,
+                229.5
+            ],
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT\\FCHT.log",
+            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT emission\\FCHT.log",
+            "y shift emission": 5.0,
+            "matched emission": false,
+            "y shift excitation": 5.0,
+            "matched excitation": false,
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\ovalene-excited-4-opt-freq-disp.log"
+        },
+        {
+            "color": [
+                81.96428571428568,
+                22.949999999999996,
+                229.5
+            ],
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT\\FCHT.log",
+            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT emission\\FCHT.log",
+            "y shift emission": 6.25,
+            "matched emission": false,
+            "y shift excitation": 6.25,
+            "matched excitation": false,
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\ovalene-excited-5-opt-freq-disp.log"
+        },
+        {
+            "color": [
+                229.5,
+                22.949999999999996,
+                199.99285714285725
+            ],
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT\\FCHT.log",
+            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT emission\\FCHT.log",
+            "y shift emission": 7.5,
+            "matched emission": false,
+            "y shift excitation": 7.5,
+            "matched excitation": false,
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\ovalene-excited-6-freq-disp.log"
         }
     ],
     "directory toggle states": {
@@ -63,7 +141,7 @@
     },
     "label settings": {
         "true": {
-            "show labels": true,
+            "show labels": false,
             "show gaussian labels": false,
             "peak intensity label threshold": 0.014000000432133675,
             "stick label relative threshold": 0.1,
