@@ -28,7 +28,7 @@ class CreateProjectWindow:
         with dpg.font_registry() as font_reg:
             for i in [18, 24]:
                 self.fonts[i] = dpg.add_font(os.path.join(fonts_path, "Sansation_Regular.ttf"), i)
-            icons = Icons(font_reg)
+            icons = Icons(font_reg, fonts_path)
         dpg.bind_font(self.fonts[18])
         close_button_theme, selectables_theme = self.adjust_theme()  # selectables_theme_2
 
