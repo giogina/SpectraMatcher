@@ -1025,26 +1025,28 @@ class PlotsOverview:
     def toggle_labels(self, use_Gaussian_labels, *args):
         if use_Gaussian_labels:
             if dpg.get_value(self.label_controls['show gaussian labels']):
+                dpg.set_value(self.label_controls['show labels'], False)
                 self.gaussian_labels = True
                 self.labels = True
                 for s in self.viewmodel.state_plots:
+                    print(f"Draw Gaussian labels, spectrum {s}")
                     self.draw_labels(s)
-                dpg.set_value(self.label_controls['show labels'], False)
             else:
                 self.labels = False
                 self.delete_labels()
         else:
             if dpg.get_value(self.label_controls['show labels']):
+                dpg.set_value(self.label_controls['show gaussian labels'], False)
                 self.gaussian_labels = False
                 self.labels = True
                 for s in self.viewmodel.state_plots:
+                    print(f"Draw Mulliken labels, spectrum {s}")
                     self.draw_labels(s)
-                dpg.set_value(self.label_controls['show gaussian labels'], False)
             else:
                 self.labels = False
                 self.delete_labels()
-        Labels.set(self.viewmodel.is_emission, 'show labels', dpg.get_value(self.label_controls['show labels']))
-        Labels.set(self.viewmodel.is_emission, 'show gaussian labels', dpg.get_value(self.label_controls['show gaussian labels']))
+        Labels.set(self.viewmodel.is_emission, 'show labels', dpg.get_value(self.label_controls['show labels']), silent=True)
+        Labels.set(self.viewmodel.is_emission, 'show gaussian labels', dpg.get_value(self.label_controls['show gaussian labels']), silent=True)
 
     def delete_labels(self, tag, *args):
         if self.labels and dpg.does_item_exist(tag) and dpg.is_item_shown(tag):
@@ -1060,6 +1062,7 @@ class PlotsOverview:
             self.annotation_lines[tag] = {}
 
     def draw_labels(self, tag, *args):
+        print("Draw labels called: ", tag)
         if self.labels and dpg.does_item_exist(tag) and dpg.is_item_shown(tag):
             # print(f"Draw labels {tag} (plots_overview)")
             plot = f"plot_{self.viewmodel.is_emission}"
@@ -1207,12 +1210,12 @@ class PlotsOverview:
 
     def toggle_sticks(self, *args):
         if dpg.get_value(self.show_sticks):
-            Labels.set(self.viewmodel.is_emission, 'show sticks', True)
+            Labels.set(self.viewmodel.is_emission, 'show sticks', True, silent=True)
             for s in self.viewmodel.state_plots.values():
                 self.draw_sticks(s)
         else:
             self.delete_sticks()
-            Labels.set(self.viewmodel.is_emission, 'show sticks', False)
+            Labels.set(self.viewmodel.is_emission, 'show sticks', False, silent=True)
 
     def draw_sticks(self, s, *args):
         if not dpg.does_item_exist(s.tag):

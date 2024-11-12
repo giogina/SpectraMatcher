@@ -148,8 +148,8 @@
     },
     "label settings": {
         "true": {
-            "show labels": true,
-            "show gaussian labels": false,
+            "show labels": false,
+            "show gaussian labels": true,
             "peak intensity label threshold": 0.014000000432133675,
             "stick label relative threshold": 0.1,
             "stick label absolute threshold": 0.010999999940395355,
@@ -159,7 +159,7 @@
             "peak intensity match threshold": 0.03,
             "distance match threshold": 30,
             "global y shifts": 1.25,
-            "show sticks": true
+            "show sticks": false
         },
         "false": {
             "show labels": true,
