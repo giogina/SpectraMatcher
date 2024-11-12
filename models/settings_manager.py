@@ -80,7 +80,7 @@ class SettingsManager:
             try:
                 if os.path.exists(self.settings_file):
                     with open(self.settings_file, "r") as file:
-                        print(f"Attempting to read{self.settings_file}...")
+                        print(f"Attempting to read {self.settings_file}...")
                         temp_settings = copy.deepcopy(SettingsManager._DEFAULT_SETTINGS)
                         temp_settings.update(self._convert_keys_to_tuple(json.load(file)))
                         return temp_settings

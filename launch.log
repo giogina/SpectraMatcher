@@ -1,2 +1,11 @@
-['C:/Users/Giogina/SpectraMatcher/main.py', '-new'] 2
-New 
+['C:/Users/Giogina/SpectraMatcher/main.py', '-open', 'C:\\Users\\Giogina\\SpectraMatcher\\Ovalene 2.spm'] 3
+Open C:/Users/Giogina/SpectraMatcher/Ovalene 2.spm
+Init called
+MainViewMOdel created
+DPG context created
+App configured
+fonts_path: C:\Users\Giogina\SpectraMatcher\fonts
+Fonts loaded
+Monitors gotten: Monitor(x=0, y=0, width=2560, height=1440, width_mm=None, height_mm=None, name=None, is_primary=True)
+Viewport created
+Show called
