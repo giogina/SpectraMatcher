@@ -279,7 +279,7 @@ class File:
         self.modes = None
         self.progress = "start"
         self.state = state  # When imported into project, references state this file belongs to.
-        self.experiment = experiment  # When imported into project, references state this file belongs to.
+        self.experiment = experiment  # When imported into project, references experiment this file belongs to.
         self.columns = None  # For experimental file
 
         self.submit_what_am_i()

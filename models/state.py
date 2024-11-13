@@ -119,9 +119,12 @@ class State:
         return self.ok
 
     def import_file(self, file):
-        file.state = self
-        if file.progress == "parsing done":
-            self.assimilate_file_data(file)  # if not, the file will call that function upon completion.
+        if file.state is None:
+            file.state = self
+            if file.progress == "parsing done":
+                self.assimilate_file_data(file)  # if not, the file will call that function upon completion.
+        else:
+            File(file.path, file.name, file.parent, file.depth, self, None, file.marked_exp)  # Prevent problems with duplicated files sharing the same file.spectrum by generating a fresh file
 
     @classmethod
     def select_molecule_and_ground_state_energy(cls, molecule, ground_state_energy):
@@ -237,7 +240,7 @@ class State:
             self._notify_observers(self.imported_files_changed_notification)
         else:
             self._notify_observers(self.imported_file_changed_notification)
-        file.state = None  # remove state from file to avoid future interferences
+        # file.state = None  # remove state from file to avoid future interferences
         self.check()
 
     @classmethod
