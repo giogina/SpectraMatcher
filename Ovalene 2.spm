@@ -37,7 +37,30 @@
         "molecule": "C\u2083\u2082H\u2081\u2084",
         "ground state energy": -269539068
     },
-    "state settings": [],
+    "state settings": [
+        {
+            "color": [
+                22.949999999999996,
+                229.5,
+                22.949999999999996
+            ],
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\ovalene-excited-4-opt-freq-disp.log",
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
+            "y shift excitation": 1.25,
+            "matched excitation": false
+        },
+        {
+            "color": [
+                22.949999999999996,
+                22.949999999999996,
+                229.5
+            ],
+            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log",
+            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
+            "y shift excitation": 2.5,
+            "matched excitation": false
+        }
+    ],
     "directory toggle states": {
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1": false
     },

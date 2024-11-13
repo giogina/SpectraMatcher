@@ -116,7 +116,7 @@ class State:
                 for state in State.state_list[1:]:
                     if state.ok and state.emission_spectrum is not None:
                         state.emission_spectrum.set_vibrational_modes(self.vibrational_modes)
-            self._notify_observers(self.state_ok_notification)
+            self._notify_observers(self.state_ok_notification)  # TODO: This is getting called too often - excitation okay, emission okay, and reacted to for all states instead of just the okay one...
         return self.ok
 
     def import_file(self, file):
