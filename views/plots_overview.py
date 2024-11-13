@@ -1001,7 +1001,6 @@ class PlotsOverview:
                 if not self.gaussian_labels and len(modes) > 1:
                     modes.sort(key=lambda m: m.name)
                 mode = modes[mode_index]
-                # print(mode.__dict__)
                 dpg.set_value(self.animation_mode_text, f"{mode.wavenumber:.2f} cm⁻¹, {mode.IR}, {mode.vibration_type.replace('others', 'Other deformation')}")
                 self.draw_molecule([[clicked_peak.transition[mode_index][1], mode]])
                 self.viewmodel.set_displayed_animation(clicked_peak)

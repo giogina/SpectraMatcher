@@ -37,99 +37,7 @@
         "molecule": "C\u2083\u2082H\u2081\u2084",
         "ground state energy": -269539068
     },
-    "state settings": [
-        {
-            "color": [
-                229.5,
-                199.99285714285716,
-                22.949999999999996
-            ],
-            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT\\FCHT.log",
-            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\FCHT emission\\FCHT.log",
-            "y shift emission": 1.25,
-            "matched emission": false,
-            "y shift excitation": 1.25,
-            "matched excitation": false,
-            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\1st excited\\ovalene-excited-opt-freq-disp.log"
-        },
-        {
-            "color": [
-                81.96428571428574,
-                229.5,
-                22.949999999999996
-            ],
-            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT\\FCHT.log",
-            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\FCHT emission\\FCHT.log",
-            "y shift emission": 2.5,
-            "matched emission": false,
-            "y shift excitation": 2.5,
-            "matched excitation": false,
-            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\2nd excited\\ovalene-excited-2-opt-freq-disp.log"
-        },
-        {
-            "color": [
-                22.949999999999996,
-                229.5,
-                140.9785714285714
-            ],
-            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT\\FCHT.log",
-            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\FCHT emission\\FCHT.log",
-            "y shift emission": 3.75,
-            "matched emission": false,
-            "y shift excitation": 3.75,
-            "matched excitation": false,
-            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\3rd excited\\ovalene-excited-3-opt-freq-disp.log",
-            "hidden emission": false
-        },
-        {
-            "color": [
-                22.949999999999996,
-                140.97857142857148,
-                229.5
-            ],
-            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT\\FCHT.log",
-            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\FCHT emission\\FCHT.log",
-            "y shift emission": 5.0,
-            "matched emission": false,
-            "y shift excitation": 5.0,
-            "matched excitation": false,
-            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\4th excited\\ovalene-excited-4-opt-freq-disp.log",
-            "hidden emission": false,
-            "hidden excitation": true
-        },
-        {
-            "color": [
-                81.96428571428568,
-                22.949999999999996,
-                229.5
-            ],
-            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT\\FCHT.log",
-            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\FCHT emission\\FCHT.log",
-            "y shift emission": 6.25,
-            "matched emission": false,
-            "y shift excitation": 6.25,
-            "matched excitation": false,
-            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\5th excited\\ovalene-excited-5-opt-freq-disp.log",
-            "hidden emission": true,
-            "hidden excitation": true
-        },
-        {
-            "color": [
-                229.5,
-                22.949999999999996,
-                199.99285714285725
-            ],
-            "excitation file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT\\FCHT.log",
-            "emission file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\FCHT emission\\FCHT.log",
-            "y shift emission": 7.5,
-            "matched emission": false,
-            "y shift excitation": 7.5,
-            "matched excitation": false,
-            "freq file": "C:\\Users\\Giogina\\Documents\\ovalene\\6th excited\\ovalene-excited-6-freq-disp.log",
-            "hidden emission": true,
-            "hidden excitation": true
-        }
-    ],
+    "state settings": [],
     "directory toggle states": {
         "dir_C:\\Users\\Giogina\\Documents\\ovalene\\ignore_1": false
     },
@@ -137,29 +45,29 @@
     "wavenumber correction factors": {
         "true": {
             "bends": 0.986,
-            "H stretches": 0.9950000143051148,
+            "H stretches": 0.9779999723434448,
             "others": 0.996
         },
         "false": {
             "bends": 0.986,
             "H stretches": 0.975,
-            "others": 0.996
+            "others": 0.957000030040741
         }
     },
     "label settings": {
         "true": {
             "show labels": false,
             "show gaussian labels": true,
-            "peak intensity label threshold": 0.014000000432133675,
-            "stick label relative threshold": 0.1,
-            "stick label absolute threshold": 0.010999999940395355,
+            "peak intensity label threshold": 0.07000000029802322,
+            "stick label relative threshold": 0.20100000500679016,
+            "stick label absolute threshold": 0.04100000113248825,
             "peak separation threshold": 0.8,
             "label font size": 18,
             "axis font size": 18,
             "peak intensity match threshold": 0.03,
             "distance match threshold": 30,
             "global y shifts": 1.25,
-            "show sticks": false
+            "show sticks": true
         },
         "false": {
             "show labels": true,
@@ -173,7 +81,7 @@
             "peak intensity match threshold": 0.03,
             "distance match threshold": 30,
             "global y shifts": 1.25,
-            "show sticks": false
+            "show sticks": true
         }
     },
     "peak detection settings": {
@@ -192,9 +100,9 @@
             "distance match threshold": 30,
             "match active": false,
             "combo spectrum y shift": 1.25,
-            "show composite spectrum": true,
+            "show composite spectrum": false,
             "show component spectra": true,
-            "show shade spectra": false,
+            "show shade spectra": true,
             "show stick spectra": false,
             "assign only labeled": false,
             "list only labeled transitions": false
@@ -215,7 +123,7 @@
     "open data files": [],
     "experimental spectra": {},
     "active emission plotter": [
-        12.0,
+        12.8,
         -1404,
         8457,
         1
