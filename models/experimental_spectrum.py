@@ -362,7 +362,6 @@ class ExperimentalSpectrum:
     def adjust_spec_plotter_range(cls, is_emission):
         """Set up SpecPlotter with sufficient range to fit all experimental spectra & matching half-width"""
         exp_list = [exp for exp in cls.spectra_list if exp.is_emission == is_emission]
-        print([exp.x_min for exp in exp_list])
         if not len(exp_list):
             return None
         min_list = [exp.x_min for exp in exp_list if exp.x_min is not None]
