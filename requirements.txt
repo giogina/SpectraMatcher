@@ -1,3 +1,6 @@
+
+# Requires Python 3.7 (to ensure compatibility to Windows 7+; the following package versions are chosen accordingly.)
+
 aiofiles==23.2.1
 altgraph==0.17.4
 cycler==0.11.0
