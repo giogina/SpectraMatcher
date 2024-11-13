@@ -1,0 +1,10 @@
+The Windows .exe is created using Nuitka.
+
+In PyCharm: File > Settings > External Tools, use the Nuitka settings:
+
+    C:\...\SpectraMatcher\venv_win\Scripts\python.exe
+    -m nuitka --assume-yes-for-downloads --standalone --follow-imports --include-data-dir=C:/Users/Giogina/SpectraMatcher/fonts=fonts  --include-data-dir=C:/Users/Giogina/SpectraMatcher/resources=resources --windows-icon-from-ico=C:/Users/Giogina/SpectraMatcher/resources/SpectraMatcher.ico --enable-plugin=tk-inter --windows-disable-console --output-filename=SpectraMatcher.exe $FilePath$
+    Working directory: $ProjectFileDir$
+
+To compile, right-click main.py > External Tools > Nuitka. Takes 5-10 min.
+To create the installer, run wizard_creator.iss (using InnoSetup); the resulting .exe will appear in SpectraMatcher/Installer.
