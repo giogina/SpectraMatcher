@@ -222,7 +222,7 @@ class PlotsOverview:
                                     with dpg.item_handler_registry():
                                         dpg.add_item_visible_handler(callback=self.vibrate_molecule)
                                     dpg.bind_item_handler_registry(f"animation_drawlist_{self.viewmodel.is_emission}", dpg.last_container())
-                                    dpg.add_button(label="Pause", width=-6, callback=lambda x: self.viewmodel.set_displayed_animation(None))
+                                    self.pause_button = dpg.add_button(label="Pause", width=-6, callback=self.pause_animation)
 
                             dpg.add_spacer(height=6)
                         with dpg.collapsing_header(label="Peak detection", default_open=True):
@@ -379,12 +379,16 @@ class PlotsOverview:
 
     def vibrate_molecule(self, *args):
         # print(f"vibrate_molecule (plots_overview) - phase = {self.animation_phase}, animated_peak = {self.viewmodel.animated_peak}")
-        if self.viewmodel.animated_peak is None:
+        if self.viewmodel.animated_peak is None or self.viewmodel.paused:
             return
         old_phase = self.animation_phase
         self.animation_phase = (self.animation_phase + 1) % 360
         dpg.show_item(self.frame_node[self.animation_phase])
         dpg.hide_item(self.frame_node[old_phase])
+
+    def pause_animation(self):
+        paused = self.viewmodel.pause_animation()
+        dpg.set_item_label(self.pause_button, "Resume" if paused else "Pause")
 
     def toggle_fine_adjustments(self, fine, *args):
         if fine:
@@ -1009,6 +1013,8 @@ class PlotsOverview:
                 dpg.set_value(self.animation_mode_text, f"{mode.wavenumber:.2f} cm⁻¹, {mode.IR}, {mode.vibration_type.replace('others', 'Other deformation')}")
                 self.draw_molecule([[clicked_peak.transition[mode_index][1], mode]])
                 self.viewmodel.set_displayed_animation(clicked_peak)
+                self.viewmodel.pause_animation(pause=False)
+                dpg.set_item_label(self.pause_button, "Pause")
                 # dpg.set_value(self.render_hint, f"{state.name} {'emission' if self.viewmodel.is_emission else 'excitation'}, {clicked_peak.get_label(self.gaussian_labels)}")
                 dpg.set_value(self.render_hint, f"{'Ground state' if self.viewmodel.is_emission else state.name} mode #{mode.gaussian_name if self.gaussian_labels else mode.name}")
         elif self.molecule_animation_clicked:

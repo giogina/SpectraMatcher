@@ -53,6 +53,7 @@ class PlotsOverviewViewmodel:
         self.match_plot.add_observer(self)
         self.vert_spacing = 1.25
         self.animated_peak = None
+        self.paused = False
 
     def update(self, event, *args):
         # print(f"Plots overview viewmodel received event: {event} {args}")
@@ -131,6 +132,13 @@ class PlotsOverviewViewmodel:
 
     def set_displayed_animation(self, peak=None):
         self.animated_peak = peak
+
+    def pause_animation(self, pause=None):
+        if type(pause) == bool:
+            self.paused = pause
+        else:
+            self.paused = not self.paused
+        return self.paused
 
     def update_plot_and_drag_lines(self, state_plot):
         if state_plot != self.state_plots[state_plot.tag]:
