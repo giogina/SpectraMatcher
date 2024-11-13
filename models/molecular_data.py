@@ -424,7 +424,6 @@ class FCSpectrum:
 
     def __init__(self, is_emission, peaks, zero_zero_transition_energy, multiplicator):
         self.is_emission = is_emission
-        self._observers = []
         self.peaks = peaks
         self.multiplicator = multiplicator
         self.x_min = 0
@@ -432,6 +431,7 @@ class FCSpectrum:
         self.zero_zero_transition_energy = zero_zero_transition_energy
         self.minima = None
         self.maxima = None
+        self._observers = []
         key, self.x_data, self.y_data, self.mul2 = SpecPlotter.get_spectrum_array(self.peaks, self.is_emission)
         if len(self.x_data):
             self.x_min = min(self.x_data)

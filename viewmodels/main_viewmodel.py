@@ -20,6 +20,7 @@ class MainViewModel(ProjectObserver):
         self._project = Project(self.path)
         self._project_unsaved = False
         self.project_setup_viewmodel = None
+        self.plots_overview_viewmodel = {True: None, False: None}
         self._settings = SettingsManager()
 
         AsyncManager.start()
@@ -33,13 +34,18 @@ class MainViewModel(ProjectObserver):
         return DataFileViewModel(self._project.data_file_manager, self._project)
 
     def get_project_setup_viewmodel(self):
+        print("Project setup vm setup")
         if self.project_setup_viewmodel is None:
             self.project_setup_viewmodel = ProjectSetupViewModel(self._project)
             self.project_setup_viewmodel.set_callback("dialog", self._message_callback)
         return self.project_setup_viewmodel
 
     def get_plots_overview_viewmodel(self, is_emission):
-        return PlotsOverviewViewmodel(self._project, is_emission)
+        print("Plots overview vm setup")
+        if self.plots_overview_viewmodel[is_emission] is None:
+            self.plots_overview_viewmodel[is_emission] = PlotsOverviewViewmodel(self._project, is_emission)
+            self.plots_overview_viewmodel[is_emission].set_callback("dialog", self._message_callback)
+        return self.plots_overview_viewmodel[is_emission]
 
     def load_project(self):
         if self._project.check_newer_autosave():
@@ -86,6 +92,10 @@ class MainViewModel(ProjectObserver):
         self._message_callback = callback
         if self.project_setup_viewmodel is not None:
             self.project_setup_viewmodel.set_callback("dialog", callback)
+        if self.plots_overview_viewmodel[True] is not None:
+            self.plots_overview_viewmodel[True].set_callback("dialog", callback)
+        if self.plots_overview_viewmodel[False] is not None:
+            self.plots_overview_viewmodel[False].set_callback("dialog", callback)
 
     def set_switch_tab_callback(self, callback):
         self._switch_tab_callback = callback

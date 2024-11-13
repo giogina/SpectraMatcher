@@ -54,6 +54,8 @@ class StatePlot:
             self.spectrum_update_callback(self)
             self.update_match_plot()
         if event == FCSpectrum.peaks_changed_notification:
+            if self.spectrum is None or self.spectrum.vibrational_modes is None:
+                return
             self.sticks = []  # stick: position, [[height, color]]
             for peak in self.spectrum.peaks:
                 if peak.transition[0] != [0]:

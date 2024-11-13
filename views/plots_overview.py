@@ -79,7 +79,7 @@ class PlotsOverview:
         self.current_rotation = dpg.create_rotation_matrix(0, [1, 0, 0])
         self.animation_matrix = dpg.create_translation_matrix([1/6., 0, 0])
         self.last_animation_drag_delta = [0, 0]
-        self.label_moving = True  # todo: temp
+        self.label_moving = True
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -627,6 +627,11 @@ class PlotsOverview:
         try:
             if not dpg.is_item_visible(f"plot_{self.viewmodel.is_emission}"):
                 return
+
+            if self.viewmodel.deleted_states:
+                print("Deleted states detected!")
+                self.viewmodel.on_deleted_states_observed()
+
             _helper_data = app_data[0]
             mouse_x_plot_space = _helper_data["MouseX_PlotSpace"]
             mouse_y_plot_space = _helper_data["MouseY_PlotSpace"]
@@ -968,7 +973,6 @@ class PlotsOverview:
     def on_drag_release(self, *args):
         if not dpg.is_item_visible(f"plot_{self.viewmodel.is_emission}"):
             return
-        # print("on release: ", self.label_moving)
         self.left_mouse_is_down = False
         if self.dragged_plot is not None:
             spec = self.viewmodel.state_plots.get(self.dragged_plot)

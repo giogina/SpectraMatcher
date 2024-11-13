@@ -41,6 +41,7 @@ class PlotsOverviewViewmodel:
             "update match plot": noop,
             "update match table": noop,
             "update symmetry list": noop,
+            "dialog": noop,  # For popup windows
         }
 
         self.xydatas = []  # experimental x, y
@@ -54,6 +55,7 @@ class PlotsOverviewViewmodel:
         self.vert_spacing = 1.25
         self.animated_peak = None
         self.paused = False
+        self.deleted_states = False
 
     def update(self, event, *args):
         # print(f"Plots overview viewmodel received event: {event} {args}")
@@ -72,6 +74,8 @@ class PlotsOverviewViewmodel:
                     self._callbacks.get("update labels")(tag)
                 if self.match_plot.matching_active:
                     self._callbacks.get("update match plot")(self.match_plot)
+        elif event == State.state_deleted_notification:
+            self.deleted_states = True
         elif event == State.state_list_changed_notification:
             self._callbacks.get("clear spec list")()
             self._callbacks.get("delete sticks")()
@@ -329,5 +333,12 @@ class PlotsOverviewViewmodel:
             res += f'{x}\t' + '\t'.join([f'{y[i]:.15f}' for y in ydatas]) + '\r\n'
         return res
 
+    def on_deleted_states_observed(self):
+        self.deleted_states = False
+        print("Message...", self._callbacks["dialog"])
+        self._callbacks["dialog"](title="Restart required", message="States have been deleted.\nTo ensure data consistency,\nplease restart SpectraMatcher.",
+                                         buttons=[("Save & Restart", self._trigger_restart)])
 
+    def _trigger_restart(self):
+        print("Restart requested")
 

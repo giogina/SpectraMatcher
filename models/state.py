@@ -17,9 +17,8 @@ class State:
     imported_files_changed_notification = "State files changed"
     state_list_changed_notification = "State list changed"
     state_ok_notification = "State ok"
+    state_deleted_notification = "State deleted"
 
-    # Init with parsed files
-    # def __init__(self, freq_file=None, emission_file=None, excitation_file=None, anharm_file=None):
     def __init__(self, settings=None):
         if settings is None:
             settings = {}
@@ -169,7 +168,7 @@ class State:
             self.own_molecular_formula = file.molecular_formula
             self.own_ground_state_energy = file.energy
             self.delta_E = 0  # just to keep it in the front
-            self.vibrational_modes = copy.deepcopy(file.modes)
+            self.vibrational_modes = file.modes
 
         elif file.type == FileType.FREQ_EXCITED:
             if self.vibrational_modes is not None:
@@ -189,7 +188,7 @@ class State:
                 State.sort_states_by_energy()
             self.settings["freq file"] = file.path
             self.own_molecular_formula = file.molecular_formula
-            self.vibrational_modes = copy.deepcopy(file.modes)
+            self.vibrational_modes = file.modes
         elif file.type == FileType.FC_EXCITATION:
             if self.excitation_spectrum is not None:
                 print("File rejected: Excitation FC file already filled")
@@ -208,9 +207,9 @@ class State:
             self.delta_E = file.spectrum.zero_zero_transition_energy  # just to get the accurate one
             self.own_ground_state_energy = file.energy  # in case of being added before ground state file
             State.sort_states_by_energy()
-            self.excitation_spectrum = copy.deepcopy(file.spectrum)
-            self.excited_geometry = copy.deepcopy(file.final_geom)
-            self.ground_geometry = copy.deepcopy(file.initial_geom)
+            self.excitation_spectrum = file.spectrum
+            self.excited_geometry = file.final_geom
+            self.ground_geometry = file.initial_geom
         elif file.type == FileType.FC_EMISSION:
             if self.emission_spectrum is not None:
                 print("File rejected: Emission FC file already filled")
@@ -231,9 +230,9 @@ class State:
 
             State.sort_states_by_energy()
 
-            self.emission_spectrum = copy.deepcopy(file.spectrum)
-            self.excited_geometry = copy.deepcopy(file.initial_geom)
-            self.ground_geometry = copy.deepcopy(file.final_geom)
+            self.emission_spectrum = file.spectrum
+            self.excited_geometry = file.initial_geom
+            self.ground_geometry = file.final_geom
         if old_order != [x.delta_E for x in self.state_list]:
             self._notify_observers(self.imported_files_changed_notification)
         else:
@@ -270,6 +269,7 @@ class State:
         if state in cls.state_list:
             cls.state_list.remove(state)
             cls.sort_states_by_energy()
+        state._notify_observers(cls.state_deleted_notification)
 
     def wipe(self):
         """Restore a clean slate"""

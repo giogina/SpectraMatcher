@@ -92,6 +92,7 @@ class SpecPlotter:
             half_width = plotter_key[0] + amount
         else:
             half_width = amount
+        half_width = max(half_width, 0.1)
         cls.set_active_plotter(is_emission, half_width, plotter_key[1], plotter_key[2], plotter_key[3])
         return half_width
 
