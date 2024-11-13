@@ -42,6 +42,7 @@ class PlotsOverviewViewmodel:
             "update match table": noop,
             "update symmetry list": noop,
             "dialog": noop,  # For popup windows
+            "restart": noop,  # Close program
         }
 
         self.xydatas = []  # experimental x, y
@@ -336,9 +337,10 @@ class PlotsOverviewViewmodel:
     def on_deleted_states_observed(self):
         self.deleted_states = False
         print("Message...", self._callbacks["dialog"])
-        self._callbacks["dialog"](title="Restart required", message="States have been deleted.\nTo ensure data consistency,\nplease restart SpectraMatcher.",
+        self._callbacks["dialog"](title="Restart required", message="  States have been deleted.\n To ensure data consistency,\nplease restart SpectraMatcher.",
                                          buttons=[("Save & Restart", self._trigger_restart)])
 
     def _trigger_restart(self):
         print("Restart requested")
+        self._callbacks["restart"]()
 

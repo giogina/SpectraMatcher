@@ -1,3 +1,5 @@
+import sys
+
 from models.project import ProjectObserver
 from models.project import Project
 from models.settings_manager import SettingsManager
@@ -28,6 +30,7 @@ class MainViewModel(ProjectObserver):
         self._title_callback = title_callback
         self._message_callback = noop
         self._switch_tab_callback = noop
+        self._exit_callback = noop
 
     # Spawn child view models responsible for child windows.
     def get_file_manager_viewmodel(self):
@@ -45,6 +48,7 @@ class MainViewModel(ProjectObserver):
         if self.plots_overview_viewmodel[is_emission] is None:
             self.plots_overview_viewmodel[is_emission] = PlotsOverviewViewmodel(self._project, is_emission)
             self.plots_overview_viewmodel[is_emission].set_callback("dialog", self._message_callback)
+            self.plots_overview_viewmodel[is_emission].set_callback("restart", self._restart_callback)
         return self.plots_overview_viewmodel[is_emission]
 
     def load_project(self):
@@ -100,6 +104,9 @@ class MainViewModel(ProjectObserver):
     def set_switch_tab_callback(self, callback):
         self._switch_tab_callback = callback
 
+    def set_exit_callback(self, callback):
+        self._exit_callback = callback
+
     def on_save(self):
         self._project.save()
 
@@ -132,6 +139,11 @@ class MainViewModel(ProjectObserver):
         else:
             self._project.close_project()
             return True
+
+    def _restart_callback(self):
+        self._project.save_and_close_project()
+        Launcher.open(self._project.project_file)
+        self._exit_callback()
 
     def get_setting(self, key, default=None):
         return self._settings.get(key, default)

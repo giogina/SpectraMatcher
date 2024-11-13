@@ -35,7 +35,6 @@ class MainWindow:
         dpg.set_viewport_resize_callback(self.on_viewport_resize)
         self.viewport_size = [0, 0]
 
-
         with dpg.window(tag="main window", label="SpectraMatcher", no_scrollbar=True):
             self.menu = MainMenu(self.viewModel)
             with dpg.tab_bar(tag="main tab bar"):
@@ -75,6 +74,7 @@ class MainWindow:
         self.viewModel.set_title_callback(callback=self.update_title)
         self.viewModel.set_message_callback(callback=self.menu.show_dialog)
         self.viewModel.set_switch_tab_callback(callback=self.switch_tab)
+        self.viewModel.set_exit_callback(callback=self.on_viewport_close)
 
     def append_viewport_resize_callback(self, func):  # hand this to any view that needs to react to viewport resize
         self.viewport_resize_callbacks.append(func)
@@ -163,7 +163,7 @@ class MainWindow:
     def show(self):
         dpg.setup_dearpygui()
         dpg.set_frame_callback(1, self.startup_callback)
-        dpg.set_exit_callback(self._on_viewport_close)
+        dpg.set_exit_callback(self.on_viewport_close)
         dpg.set_viewport_small_icon("resources/SpectraMatcher.ico")
         dpg.set_viewport_large_icon("resources/SpectraMatcher.ico")
         dpg.show_viewport()
@@ -174,7 +174,7 @@ class MainWindow:
     def update_title(self, title, *args):
         dpg.set_viewport_title(title)
 
-    def _on_viewport_close(self, *args):
+    def on_viewport_close(self, *args):
         print("Viewport is closing. Exiting application.")
         try:
             self.viewModel.on_close()  # project lock cleanup
