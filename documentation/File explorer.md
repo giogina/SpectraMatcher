@@ -34,3 +34,5 @@ SpectraMatcher parses Gaussian 16 output files, and detect the following types n
 * <img src="../resources/FC-down-2-16-red.png" alt="Emission file icon" width="16" height="16" style="display: inline;">: Emission Franck-Condon / Herzberg-Teller computations
 * <img src="../resources/FC-up-2-16-green.png" alt="Excitation file icon" width="16" height="16" style="display: inline;">: Excitation Franck-Condon / Herzberg-Teller computations
 * <img src="../resources/file-freq-16-blue.png" alt="Frequency file icon" width="16" height="16" style="display: inline;">: Frequency & vibrational mode computations
+
+<!-- TODO: Section about preparing these Gaussian files -->
