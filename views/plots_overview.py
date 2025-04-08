@@ -225,7 +225,7 @@ class PlotsOverview:
                                     self.pause_button = dpg.add_button(label="Pause", width=-6, callback=self.pause_animation)
 
                             dpg.add_spacer(height=6)
-                        with dpg.collapsing_header(label="Peak detection", default_open=True):
+                        with dpg.collapsing_header(label="Experimental peak detection", default_open=True):
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
