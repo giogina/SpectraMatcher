@@ -1,9 +1,8 @@
 import sys
 import subprocess
-# import logging
 import os
-import win32gui
-import win32con
+
+from pandas.compat import is_platform_windows
 
 from models.settings_manager import SettingsManager
 
@@ -56,8 +55,14 @@ class Launcher:
                 print("Spurious lock file deleted")
         return False
 
+
+
     @staticmethod
     def bring_window_to_front(window_title):
+        if not is_platform_windows():
+            return True
+        import win32gui
+        import win32con
         hwnd = win32gui.FindWindow(None, window_title)
         if hwnd:
             win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
@@ -75,6 +80,10 @@ class Launcher:
 
     @staticmethod
     def maximize_window(window_title):
+        if not is_platform_windows():
+            return True
+        import win32gui
+        import win32con
         hwnd = win32gui.FindWindow(None, window_title)
         if hwnd:
             win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
