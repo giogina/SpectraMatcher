@@ -1,26 +1,45 @@
 import dearpygui.dearpygui as dpg
-import DearPyGui_DragAndDrop as dpg_dnd
+from pandas.compat import is_platform_windows
 
 
 def initialize_dnd():
-    dpg_dnd.initialize()
+    if is_platform_windows():
+        import DearPyGui_DragAndDrop as dpg_dnd
+        dpg_dnd.initialize()
 
 
 def drag_over(keys):
-    dpg_dnd.set_drop_effect()
+    if is_platform_windows():
+        import DearPyGui_DragAndDrop as dpg_dnd
+        dpg_dnd.set_drop_effect()
 
+if is_platform_windows():
+    import DearPyGui_DragAndDrop as dpg_dnd
+    DropBaseClass = dpg_dnd.DragAndDrop
+    DropDataObject = dpg_dnd.DragAndDropDataObject
+else:
+    class DropBaseClass: # Dummy base class
+        def __init__(self, *args, **kwargs): pass
+        def create(self, *args, **kwargs): pass
 
-class DropReceiverWindow(dpg_dnd.DragAndDrop):
+    class DropDataObject:
+        def __init__(self, *args, **kwargs): pass
+        def get(self, *args, **kwargs): return None
+        def set(self, *args, **kwargs): pass
+
+class DropReceiverWindow(DropBaseClass):
 
     def __init__(self, drop_callback, hover_drag_theme, normal_theme):
         super().__init__()
         self.window: int = None
-        self.dpg_text: int
+        self.dpg_text: int = None
         self.drop_callback = drop_callback
         self.hover_drag_theme = hover_drag_theme
         self.normal_theme = normal_theme
 
     def create(self, **kwargs):
+        if not is_platform_windows():
+            return
         self.window = dpg.add_child_window(**kwargs)
         dpg.bind_item_theme(self.window, self.normal_theme)
         dpg_dnd.set_drag_over(drag_over)
@@ -34,7 +53,7 @@ class DropReceiverWindow(dpg_dnd.DragAndDrop):
         else:
             dpg.bind_item_theme(self.window, self.normal_theme)
 
-    def Drop(self, dataObject: dpg_dnd.DragAndDropDataObject, keyState: list):
+    def Drop(self, dataObject: DropDataObject, keyState: list):
         if self.window is None:
             return
         dpg.bind_item_theme(self.window, self.normal_theme)
