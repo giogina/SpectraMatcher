@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+import platform
 import tempfile
 # import logging
 import threading
@@ -16,6 +17,18 @@ class Settings:
     SHORTCUTS = "shortcuts"
     FILE_EXPLORER_COLUMNS = "file explorer columns"
     CHECKS = "sanity checks"
+
+
+def get_config_path(app_name ="SpectraMatcher"):
+    system = platform.system()
+
+    if system == "Windows":
+        base = os.getenv('APPDATA') or os.path.expanduser('~\\AppData\\Roaming')
+    elif system == "Darwin":  # macOS
+        base = os.path.expanduser('~/Library/Application Support')
+    else:  # Linux and other Unix
+        base = os.getenv('XDG_CONFIG_HOME') or os.path.expanduser('~/.config')
+    return os.path.join(os.path.join(base, app_name), 'config')
 
 
 class SettingsManager:
@@ -59,9 +72,11 @@ class SettingsManager:
             self.file_lock = threading.Lock()  # Lock for file operations
 
             # self.logger = logging.getLogger(__name__)
-            appdata_path = os.getenv('APPDATA')
-            spectra_matcher_path = os.path.join(appdata_path, 'SpectraMatcher')
-            config_path = os.path.join(spectra_matcher_path, 'config')
+            # appdata_path = os.getenv('APPDATA')
+            # spectra_matcher_path = os.path.join(appdata_path, 'SpectraMatcher')
+            # config_path = os.path.join(spectra_matcher_path, 'config')
+            config_path = get_config_path()
+            print(config_path)
             os.makedirs(config_path, exist_ok=True)
             self.settings_file = os.path.join(config_path, 'settings.json')
 
