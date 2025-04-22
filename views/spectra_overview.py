@@ -32,8 +32,11 @@ class SpectraOverview:
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_release_handler(dpg.mvMouseButton_Right, callback=self.on_right_click_release)
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
-            dpg.add_key_down_handler(dpg.mvKey_Shift, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=True)
-            dpg.add_key_release_handler(dpg.mvKey_Shift, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=False)
+            for attr in ["mvKey_Shift", "mvKey_LeftShift", "mvKey_RightShift"]:
+                key = getattr(dpg, attr, None)
+                if key is not None:
+                    dpg.add_key_down_handler(key, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=True)
+                    dpg.add_key_release_handler(key, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=False)
 
         with dpg.child_window(width=-1, height=32) as self.spectra_list_action_bar:
 

@@ -87,12 +87,21 @@ class PlotsOverview:
             dpg.add_mouse_release_handler(dpg.mvMouseButton_Left, callback=self.on_drag_release)
             dpg.add_mouse_release_handler(dpg.mvMouseButton_Right, callback=self.on_right_click_release)
             dpg.add_mouse_drag_handler(dpg.mvMouseButton_Left, callback=self.on_drag)
-            dpg.add_key_down_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=True)
-            dpg.add_key_release_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=False)
-            dpg.add_key_down_handler(dpg.mvKey_Shift, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=True)
-            dpg.add_key_release_handler(dpg.mvKey_Shift, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=False)
-            dpg.add_key_down_handler(dpg.mvKey_Control, callback=lambda s, a, u: self.toggle_ctrl_flag(u), user_data=True)
-            dpg.add_key_release_handler(dpg.mvKey_Control, callback=lambda s, a, u: self.toggle_ctrl_flag(u), user_data=False)
+            for attr in ["mvKey_Alt", "mvKey_LeftAlt", "mvKey_RightAlt"]:
+                key = getattr(dpg, attr, None)
+                if key is not None:
+                    dpg.add_key_down_handler(key, callback=lambda s, a, u: self.show_drag_lines(u), user_data=True)
+                    dpg.add_key_release_handler(key, callback=lambda s, a, u: self.show_drag_lines(u), user_data=False)
+            for attr in ["mvKey_Shift", "mvKey_LeftShift", "mvKey_RightShift"]:
+                key = getattr(dpg, attr, None)
+                if key is not None:
+                    dpg.add_key_down_handler(key, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=True)
+                    dpg.add_key_release_handler(key, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=False)
+            for attr in ["mvKey_Control", "mvKey_LeftControl", "mvKey_RightControl"]:
+                key = getattr(dpg, attr, None)
+                if key is not None:
+                    dpg.add_key_down_handler(key, callback=lambda s, a, u: self.toggle_ctrl_flag(u), user_data=True)
+                    dpg.add_key_release_handler(key, callback=lambda s, a, u: self.toggle_ctrl_flag(u), user_data=False)
             dpg.add_key_press_handler(dpg.mvKey_Down, callback=lambda s, a, u: self.on_arrow_press("y", -1))
             dpg.add_key_press_handler(dpg.mvKey_Up, callback=lambda s, a, u: self.on_arrow_press("y", 1))
             dpg.add_key_press_handler(dpg.mvKey_Left, callback=lambda s, a, u: self.on_arrow_press("x", -1))
