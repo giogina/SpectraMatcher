@@ -363,6 +363,8 @@ class Icons:
         else:
             label = self.get_icon(icon, size, solid)
         dpg.configure_item(dpg_item, label=label)  # automatically ensures that font is registered
+        if label == "":
+            return dpg_item
 
         if solid:
             dpg.bind_item_font(dpg_item, self._fs[size])
