@@ -351,8 +351,10 @@ class MainMenu:
         return '+'.join([self._dpg_key_to_name(key) for key in shortcut]).replace("Shift+Ctrl", "Ctrl+Shift")
 
     def _on_key_down(self, s, a, *args):
+        # print(self._dpg_key_to_name(a))
         if a not in self.currently_pressed:
-            self.currently_pressed.append(a)
+            if len(self._dpg_key_to_name(a)):
+                self.currently_pressed.append(a)
             shortcuts = self.viewmodel.get_shortcuts()
             action = shortcuts.get(tuple(sorted(self.currently_pressed)))
             if action:
@@ -364,6 +366,7 @@ class MainMenu:
 
     def _on_key_released(self, s, a, *args):
         # If "configure shortcuts" window is open, update shortcut upon release.
+        print(self._dpg_key_to_name(a), [self._dpg_key_to_name(k) for k in self.currently_pressed])
         if self.alter_shortcut_of:
             pressed = []
             for key in self.currently_pressed:
@@ -416,14 +419,14 @@ class MainMenu:
             "mvKey_Y": "Y",
             "mvKey_Z": "Z",
             "mvKey_Control": "Ctrl",
-            "mvKey_LeftControl": "Ctrl",
-            "mvKey_RightControl": "Ctrl",
+            "mvKey_LControl": "Ctrl",
+            "mvKey_RControl": "Ctrl",
             "mvKey_Alt": "Alt",
-            "mvKey_LeftAlt": "Alt",
-            "mvKey_RightAlt": "Alt",
+            "mvKey_LAlt": "Alt",
+            "mvKey_RAlt": "Alt",
             "mvKey_Shift": "Shift",
-            "mvKey_LeftShift": "Shift",
-            "mvKey_RightShift": "Shift",
+            "mvKey_LShift": "Shift",
+            "mvKey_RShift": "Shift",
             "mvKey_Back": "Back",
             "mvKey_Tab": "Tab",
             "mvKey_Clear": "Clear",
