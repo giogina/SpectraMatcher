@@ -252,7 +252,7 @@ class Project(FileObserver):
         autosave_file_path = os.path.join(directory, autosave_filename)
         return autosave_file_path
 
-    def _autosave_loop(self):  # TODO: save-as; check autosave check/recovery functionality
+    def _autosave_loop(self):
         while True:
             # time.sleep(self._autosave_interval)
             time.sleep(0.5)
