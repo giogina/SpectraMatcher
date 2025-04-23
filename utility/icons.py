@@ -333,7 +333,7 @@ class Icons:
     def get_icon(self, icon, size, solid=True):  # icon: unicode hex code (e.g. 0xf07c)
         """add icon hex to loaded special characters if necessary; then return string."""
         if type(icon) == int:
-            if self._font_reg is None or not dpg.is_viewport_ok() or dpg.get_frame_count() < 5:
+            if self._font_reg is None:
                 print("Icons: Could not register font, I don't have the registry yet!")
                 return ""
             if (not solid) and (size not in self._fa.keys()):

@@ -1,4 +1,3 @@
-import sys
 from launcher import Launcher
 from viewmodels.main_viewmodel import MainViewModel
 from views.main_menu import MainMenu
@@ -161,7 +160,7 @@ class MainWindow:
 
     def show(self):
         dpg.setup_dearpygui()
-        dpg.set_frame_callback(1, self.startup_callback)
+        dpg.set_frame_callback(5, self.startup_callback)
         dpg.set_viewport_small_icon("resources/SpectraMatcher.ico")
         dpg.set_viewport_large_icon("resources/SpectraMatcher.ico")
         dpg.show_viewport()
