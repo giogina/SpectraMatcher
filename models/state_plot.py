@@ -17,6 +17,7 @@ class StatePlot:
         self.spectrum.add_observer(self)
         self.name = state.name
         self.index = state_index
+        self.removed = False
         self.e_key = 'emission' if is_emission else 'excitation'
         self.xshift = self.state.settings.get(f"x shift {self.e_key}", 0)
         self.yshift = self.state.settings.get(f"y shift {self.e_key}", state_index*Labels.settings[is_emission].get('global y shifts', 1.25))
@@ -26,7 +27,7 @@ class StatePlot:
         self._base_ydata = self.spectrum.y_data
         self.xdata = self._compute_x_data()
         self.ydata = self._compute_y_data()
-        self.handle_x = self._base_xdata[np.where(self._base_ydata == max(self._base_ydata))[0][0]]
+        self.handle_x = self.xdata[np.where(self.ydata == max(self.ydata))[0][0]]
         self.sticks = []  # stick: position, [[height, color]]
         if self.spectrum.vibrational_modes is not None:
             for peak in self.spectrum.peaks:
@@ -36,7 +37,6 @@ class StatePlot:
         self.spectrum_update_callback = noop
         self.sticks_update_callback = noop
         self.match_plot = match_plot
-        self.removed = False
 
     @staticmethod
     def construct_tag(state, is_emission):
@@ -50,7 +50,7 @@ class StatePlot:
             self._base_ydata = self.spectrum.y_data
             self.xdata = self._compute_x_data()
             self.ydata = self._compute_y_data()
-            self.handle_x = self._base_xdata[np.where(self._base_ydata == max(self._base_ydata))[0][0]]
+            self.handle_x = self.xdata[np.where(self.ydata == max(self.ydata))[0][0]]
             self.spectrum_update_callback(self)
             self.update_match_plot()
         if event == FCSpectrum.peaks_changed_notification:
@@ -73,15 +73,16 @@ class StatePlot:
         self.sticks_update_callback = callback
 
     def _compute_x_data(self):
-        if self._base_xdata == []:
-            print("Empty xdata!")
-            return np.zeros([0])
+        if len(self._base_xdata) == 0:
+            print(f"{self.name}: Empty xdata!")
+            return np.zeros(1)
         return self._base_xdata + round(self.xshift)
 
     def _compute_y_data(self):
-        if self._base_ydata == []:
-            print("Empty ydata!")
-            return np.zeros([0])
+        if len(self._base_ydata) == 0:
+            print(f"{self.name}: Empty ydata!")
+            print(np.zeros(1))
+            return np.zeros(1)
         return (self._base_ydata * self.yscale) + self.yshift
 
     def set_x_shift(self, xshift):

@@ -321,6 +321,7 @@ class Icons:
             self._fa = {}
             self._fs = {}
             self._color_themes = {}
+            self._invisible_color_themes = {}
             if font_reg:
                 self.set_font_registry(font_reg, fonts_path)
             self._is_initialized = True
@@ -346,14 +347,24 @@ class Icons:
         else:
             return ""
 
-    def insert(self, dpg_item, icon, size, solid=True, color=None, tooltip=None):
+    def insert(self, dpg_item, icon, size, solid=True, color=None, tooltip=None, invisible=False):
         """Inserts icon character as label of dpg_item."""
         if color is not None:
-            if not tuple(color) in self._color_themes.keys():
-                with dpg.theme() as self._color_themes[tuple(color)]:
-                    with dpg.theme_component(dpg.mvButton):
-                        dpg.add_theme_color(dpg.mvThemeCol_Text, color)
-            dpg.bind_item_theme(dpg_item, self._color_themes[tuple(color)])
+            if not invisible:
+                if not tuple(color) in self._color_themes.keys():
+                    with dpg.theme() as self._color_themes[tuple(color)]:
+                        with dpg.theme_component(dpg.mvButton):
+                            dpg.add_theme_color(dpg.mvThemeCol_Text, color)
+                dpg.bind_item_theme(dpg_item, self._color_themes[tuple(color)])
+            else:
+                if not tuple(color) in self._invisible_color_themes.keys():
+                    with dpg.theme() as self._invisible_color_themes[tuple(color)]:
+                        with dpg.theme_component(dpg.mvButton):
+                            dpg.add_theme_color(dpg.mvThemeCol_Text, color)
+                            dpg.add_theme_color(dpg.mvThemeCol_Button, [11, 11, 36, 0])
+                            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [11, 11, 36, 0])
+                            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [11, 11, 36, 0])
+                dpg.bind_item_theme(dpg_item, self._invisible_color_themes[tuple(color)])
 
         if type(icon) == list:  # multiple icons above each other
             label_list = []
