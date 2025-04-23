@@ -81,7 +81,6 @@ class StatePlot:
     def _compute_y_data(self):
         if len(self._base_ydata) == 0:
             print(f"{self.name}: Empty ydata!")
-            print(np.zeros(1))
             return np.zeros(1)
         return (self._base_ydata * self.yscale) + self.yshift
 

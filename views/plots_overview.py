@@ -789,9 +789,8 @@ class PlotsOverview:
     def add_experimental_spectrum(self, x_data, y_data, *args):
         dpg.add_line_series(x_data, y_data, parent=f"y_axis_{self.viewmodel.is_emission}")
         self.line_series.append(dpg.last_item())
-        if self.viewmodel.state_plots == {}:
-            dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
-            dpg.bind_item_theme(dpg.last_item(), f"exp_spec_theme_{self.viewmodel.is_emission}")
+        dpg.bind_item_theme(dpg.last_item(), f"exp_spec_theme_{self.viewmodel.is_emission}")
+        dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
 
     def add_spectrum(self, tag, *args):
         xmin, xmax, ymin, ymax = self.viewmodel.get_zoom_range()
