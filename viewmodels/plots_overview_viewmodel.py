@@ -75,7 +75,8 @@ class PlotsOverviewViewmodel:
                     self._callbacks.get("update labels")(tag)
                 if self.match_plot.matching_active:
                     self._callbacks.get("update match plot")(self.match_plot)
-        elif event == State.state_deleted_notification:
+        self._project.project_changed()  # anything changing the interface probably changed the project data
+        if event == State.state_deleted_notification:
             self.deleted_states = True
         elif event == State.state_list_changed_notification:
             self._callbacks.get("clear spec list")()

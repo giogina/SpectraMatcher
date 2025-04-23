@@ -75,6 +75,7 @@ class MainWindow:
         self.viewModel.set_title_callback(callback=self.update_title)
         self.viewModel.set_message_callback(callback=self.menu.show_dialog)
         self.viewModel.set_switch_tab_callback(callback=self.switch_tab)
+        self.viewModel.set_exit_callback(callback=dpg.stop_dearpygui)
 
     def append_viewport_resize_callback(self, func):  # hand this to any view that needs to react to viewport resize
         self.viewport_resize_callbacks.append(func)

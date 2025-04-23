@@ -93,19 +93,23 @@ class Project(FileObserver):
         }
 
         self.window_title = ""  # For bringing that window to the front in Windows
+        self._json_lock = threading.Lock()
+        self._last_saved_json = None
+        self._auto_saved_json = None
+        self._last_change = None
 
     # react to observations from my data file manager / SpecPlotter
     def update(self, event_type, *args):
         if event_type == "directory structure changed":
             self._data["open data folders"] = [d.path for _, d in self.data_file_manager.top_level_directories.items()]
             self._data["open data files"] = [file.path for _, file in self.data_file_manager.top_level_files.items()]
-            self.project_unsaved(True)
+            self.project_changed(True)
         elif event_type == SpecPlotter.active_plotter_changed_notification:
             if args[1]:  # is_emission = True
                 self._data["active emission plotter"] = args[0]
             else:
                 self._data["active excitation plotter"] = args[0]
-            self.project_unsaved(True)
+            self.project_changed(True)
 
     def load(self, auto=False):
         """Load project file"""
@@ -121,7 +125,7 @@ class Project(FileObserver):
                 if os.path.exists(self.project_file):
                     with open(self.project_file, "r") as file:
                         self._data = json.load(file, object_hook=my_decoder)
-                        print(f"Loaded project data: {self._data}")
+                    self._last_saved_json = json.dumps(self._data, sort_keys=True, indent=4, separators=(",", ":"), cls=MyEncoder).strip()
                     self.window_title = self._assemble_window_title()
                     self._mark_project_as_open()
                     self._notify_observers("project data changed")
@@ -202,7 +206,7 @@ class Project(FileObserver):
             self._data["label settings"] = {True: self._data["label settings"]['true'],
                                             False: self._data["label settings"]['false']}
         Labels.settings = self._data["label settings"]
-        Labels.notify_changed_callback = self.project_unsaved
+        Labels.notify_changed_callback = self.project_changed
         if "peak detection settings" not in self._data.keys():
             self._data["peak detection settings"] = {True:  ExperimentalSpectrum.defaults(),
                                                      False: ExperimentalSpectrum.defaults()}
@@ -210,7 +214,7 @@ class Project(FileObserver):
             self._data["peak detection settings"] = {True: self._data["peak detection settings"]['true'],
                                                      False: self._data["peak detection settings"]['false']}
         ExperimentalSpectrum._settings = self._data["peak detection settings"]
-        ExperimentalSpectrum.notify_changed_callback = self.project_unsaved
+        ExperimentalSpectrum.notify_changed_callback = self.project_changed
         if "matcher settings" not in self._data.keys():
             self._data["matcher settings"] = {True:  Matcher.defaults(),
                                               False: Matcher.defaults()}
@@ -218,7 +222,7 @@ class Project(FileObserver):
             self._data["matcher settings"] = {True: self._data["matcher settings"]['true'],
                                               False: self._data["matcher settings"]['false']}
         Matcher.settings = self._data["matcher settings"]
-        Matcher.notify_changed_callback = self.project_unsaved
+        Matcher.notify_changed_callback = self.project_changed
         # Automatically keeps file manager dicts updated in self._data!
         self.data_file_manager.directory_toggle_states = self._data["directory toggle states"]
         self.data_file_manager.ignored_files_and_directories = self._data["ignored"]
@@ -248,17 +252,31 @@ class Project(FileObserver):
         autosave_file_path = os.path.join(directory, autosave_filename)
         return autosave_file_path
 
-    def _autosave_loop(self):
+    def _autosave_loop(self):  # TODO: save-as; check autosave check/recovery functionality
         while True:
-            time.sleep(self._autosave_interval)
-            self.save(auto=True)
+            # time.sleep(self._autosave_interval)
+            time.sleep(0.5)
+            if self._last_change is not None and time.time()-self._last_change > 0.5:
+                self.save(auto=True)
 
     def save(self, auto=False, new_file=False):
         # self.gather_extra_data()
         # Instead: Ensure all important data in sub-models is mutable variables assigned to self._data!
         with self._data_lock:
             snapshot = copy.deepcopy(self._data)
-        save_thread = threading.Thread(target=self._save_project, args=(snapshot, auto, new_file))
+        current_json = json.dumps(snapshot, sort_keys=True, indent=4, separators=(",", ":"), cls=MyEncoder).strip()
+        if auto:
+            if current_json == self._auto_saved_json:
+                return  # Nothing actually changed since last auto save
+            is_unsaved = current_json != self._last_saved_json
+            self.project_unsaved(is_unsaved)
+            self._auto_saved_json = current_json
+            print("Changed data; calling for auto-save")
+        else:
+            self._last_saved_json = current_json
+        self._last_change = None
+
+        save_thread = threading.Thread(target=self._save_project, args=(current_json, auto, new_file))
         save_thread.start()
 
     def _assemble_window_title(self):
@@ -268,12 +286,11 @@ class Project(FileObserver):
         title += " - SpectraMatcher"
         return title
 
-    def _save_project(self, snapshot, auto, new_file=False):
+    def _save_project(self, current_json, auto, new_file=False):
         if not new_file:
-            if auto and not self._is_unsaved:
-                return  # no use auto-saving if nothing has changed
             if not os.path.exists(self.project_file):
                 return
+
         with self._project_file_lock:
             temp_file_path = ""
             if auto:
@@ -283,8 +300,8 @@ class Project(FileObserver):
             try:
                 dir_name, file_name = os.path.split(target_file)
                 temp_fd, temp_file_path = tempfile.mkstemp(dir=dir_name)
-                with os.fdopen(temp_fd, 'w') as temp_file:
-                    json.dump(snapshot, temp_file, indent=4, cls=MyEncoder)
+                with open(temp_fd, 'w') as temp_file:
+                    temp_file.write(current_json)
                 if os.path.exists(target_file):
                     backup_file = target_file + ".backup"
                     if os.path.exists(backup_file):
@@ -334,9 +351,17 @@ class Project(FileObserver):
             for observer in self._observers[event_type]:
                 observer.update(event_type, args)
 
-    def project_unsaved(self, changed=True):
-        self._is_unsaved = changed
-        self._notify_observers("project_unsaved", changed)
+    def project_changed(self, changed=True):
+        '''Set marker for potential change'''
+        if changed:
+            self._last_change = time.time()
+        else:
+            self._last_change = None
+
+    def project_unsaved(self, is_unsaved=True):
+        if self._is_unsaved != is_unsaved:
+            self._is_unsaved = is_unsaved
+            self._notify_observers("project_unsaved", is_unsaved)
 
     def _mark_project_as_open(self):
         try:
@@ -353,6 +378,7 @@ class Project(FileObserver):
             autosave_mod_time = os.path.getmtime(self._autosave_file)
             if os.path.exists(self.project_file):
                 project_mod_time = os.path.getmtime(self.project_file)
+                print(autosave_mod_time, project_mod_time)
                 if autosave_mod_time <= project_mod_time:
                     return False
                 else:
@@ -366,10 +392,10 @@ class Project(FileObserver):
         print(f"Project received save as request: {new_file}")
 
         self.project_file = new_file
-        self.save()
-
+        self.save(auto=False, new_file=True)
         self._settings.add_recent_project(self.project_file)
         self.window_title = self._assemble_window_title()
+        self.project_unsaved(True)  # Causes window title update
         self.project_unsaved(False)
 
         # Rename autosave
@@ -388,8 +414,9 @@ class Project(FileObserver):
         print("Save and close called")
         with self._data_lock:
             snapshot = copy.deepcopy(self._data)
+        current_json = json.dumps(snapshot, sort_keys=True, indent=4, separators=(",", ":"), cls=MyEncoder).strip()
         # save synced-ly this time to make sure it executes before program closes.
-        self._save_project(snapshot, auto=False)
+        self._save_project(current_json, auto=False)
         self.close_project()
 
     def close_project(self, close_anyway=False):
@@ -417,12 +444,12 @@ class Project(FileObserver):
             print(f"Used an unknown project data key '{key}'. Added it anyway.")
         with self._data_lock:
             self._data[key] = value
-        self.project_unsaved()
+        self.project_changed()
 
     def select_ground_state_file(self, path):
         print(f"Setting ground state path in project: {path}")
         self._data["ground state path"] = path
-        self.project_unsaved()
+        self.project_changed()
 
     def get_selected_ground_state_file(self):
         return self._data.get("ground state path")
@@ -434,14 +461,14 @@ class Project(FileObserver):
             self._data["ground state path"] = State.state_list[0].settings["freq file"]
         for state in State.state_list[1:]:
             self._data["state settings"].append(state.settings)
-        self.project_unsaved()
+        self.project_changed()
 
     def copy_experiment_settings(self):
         """Store paths etc of ExperimentalSpectrum instances into _data"""
         self._data["experiment settings"] = []
         for exp in ExperimentalSpectrum.spectra_list:
             self._data["experiment settings"].append(exp.settings)
-        self.project_unsaved()
+        self.project_changed()
 
     def update_progress(self, progress):
         self._data["progress"] = progress
