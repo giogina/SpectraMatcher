@@ -160,7 +160,7 @@ class MainViewModel(ProjectObserver):
 
     def get_recents(self):
         """List of recently opened paths without the current one."""
-        current = self.path.replace("\\", "/")
+        current = self.path
         recents = self.get_setting("recentProjects")
         if current in recents:
             recents.remove(current)

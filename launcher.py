@@ -90,7 +90,7 @@ class Launcher:
     @staticmethod
     def check_for_lock_file(file):
         lockfile = Launcher.get_lockfile_path(file)
-        print("Checking for: ", lockfile)
+        print("Checking for: ", repr(lockfile))
         if os.path.exists(lockfile):  # Check for lock file
             with open(lockfile, "r") as lock_file:
                 lines = lock_file.read().splitlines()
@@ -135,7 +135,6 @@ class Launcher:
             try:
                 result = subprocess.run(["wmctrl", "-a", window_title])
                 if result.returncode != 0:
-                    # optional fallback: notify user
                     subprocess.run(["notify-send", "SpectraMatcher", "Already running — please switch to it."])
                 return result.returncode == 0
             except FileNotFoundError:

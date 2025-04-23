@@ -231,7 +231,6 @@ class SettingsManager:
         self._save_settings_async()
 
     def add_recent_project(self, project_file):
-        project_file = project_file.replace("\\", "/")  # Just to keep things consistent
         with self.update_lock:
             if self._settings_dict[Settings.RECENT_PROJECTS] and self._settings_dict[Settings.RECENT_PROJECTS][0] == project_file:
                 return

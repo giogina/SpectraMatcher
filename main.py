@@ -19,7 +19,7 @@ def main():
     flags = None
     if len(sys.argv) > 1:
         if sys.argv[1] == "-open" and len(sys.argv) > 2:
-            MainWindow(sys.argv[2].replace("\\", "/")).show()
+            MainWindow(sys.argv[2]).show()
         elif sys.argv[1] == "-new":
             if len(sys.argv) > 2:
                 flags = CreateProjectWindow(sys.argv[2:len(sys.argv)]).show()
