@@ -1,6 +1,7 @@
 import copy
 import json
 import os
+import sys
 import tempfile
 # import logging
 import threading
@@ -241,6 +242,9 @@ class Project(FileObserver):
         directory, filename = os.path.split(self.project_file)
         file_base, file_extension = os.path.splitext(filename)
         autosave_filename = f"{file_base}_autosave{file_extension}"
+        if sys.platform.startswith("linux") or sys.platform == "darwin":
+            autosave_filename = "." + autosave_filename
+
         autosave_file_path = os.path.join(directory, autosave_filename)
         return autosave_file_path
 
@@ -301,16 +305,32 @@ class Project(FileObserver):
                     os.remove(temp_file_path)
 
     def _hide(self, file):
-        FILE_ATTRIBUTE_HIDDEN = 0x02
+        if sys.platform.startswith("win"):
+            FILE_ATTRIBUTE_HIDDEN = 0x02
 
-        if isinstance(file, str):
-            c_filepath = ctypes.create_unicode_buffer(file)
+            if isinstance(file, str):
+                c_filepath = ctypes.create_unicode_buffer(file)
+            else:
+                c_filepath = file
+
+            try:
+                ret = ctypes.windll.kernel32.SetFileAttributesW(c_filepath, FILE_ATTRIBUTE_HIDDEN)
+                if ret == 0:
+                    raise ctypes.WinError()
+            except Exception as e:
+                print(f"[Windows] Hiding file {file} failed: {e}")
+
+        elif sys.platform.startswith("linux") or sys.platform == "darwin":
+            dirname, basename = os.path.split(file)
+            if not basename.startswith("."):
+                hidden_name = "." + basename
+                hidden_path = os.path.join(dirname, hidden_name)
+                try:
+                    os.rename(file, hidden_path)
+                except Exception as e:
+                    print(f"[Unix] Hiding file {file} failed: {e}")
         else:
-            c_filepath = file
-        try:
-            ctypes.windll.kernel32.SetFileAttributesW(c_filepath, FILE_ATTRIBUTE_HIDDEN)
-        except Exception as e:
-            print(f"Hiding file {file} failed: {e}")
+            print(f"OS {sys.platform} not supported for file hiding.")
 
     ############### Observers ###############
 

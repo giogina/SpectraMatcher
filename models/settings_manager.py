@@ -2,6 +2,7 @@ import glob
 import json
 import os
 import platform
+import sys
 import tempfile
 # import logging
 import threading
@@ -190,6 +191,15 @@ class SettingsManager:
         else:
             print(f"Tried to get setting {key} which did not exist.")
             return default
+
+    def get_default_log_path(self, flag):
+        base_dir = self.get("projectsPath", os.getcwd())
+        filename = f"spec{flag.strip()}.log"
+        if sys.platform.startswith("linux") or sys.platform == "darwin":
+            if not filename.startswith("."):
+                filename = "." + filename
+        log_file = os.path.join(base_dir, filename)
+        return os.path.abspath(log_file)
 
     def update_settings(self, new_settings):
         for key in new_settings:

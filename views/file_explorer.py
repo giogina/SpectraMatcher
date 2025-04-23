@@ -4,6 +4,7 @@ import subprocess
 import dearpygui.dearpygui as dpg
 import pyperclip
 
+from launcher import Launcher
 from models.state import State
 from utility.font_manager import FontManager
 from viewmodels.data_files_viewmodel import DataFileViewModel
@@ -237,8 +238,8 @@ class FileExplorer:
             dpg.add_spacer(height=2)
             dpg.add_separator()
             dpg.add_spacer(height=2)
-            dpg.add_selectable(label="Open in Explorer ", user_data=directory.path.replace("/", "\\"),
-                               callback=lambda s, a, u: subprocess.Popen(f'explorer "{u}"'))
+            dpg.add_selectable(label="Open in Explorer ", user_data=directory.path,
+                               callback=lambda s, a, u: Launcher.show_in_explorer(u))
 
     def _setup_file_right_click_menu(self, file: File):
         if file.tag not in [f.tag for f in self._file_rows]:
@@ -303,8 +304,8 @@ class FileExplorer:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
                 dpg.add_spacer(height=2)
-            dpg.add_selectable(label="Show in Explorer ", user_data=file.path.replace("/", "\\"),
-                               callback=lambda s, a, u: subprocess.Popen(f'explorer /select,"{u}"'))
+            dpg.add_selectable(label="Show in Explorer ", user_data=file.path,
+                               callback=lambda s, a, u: Launcher.show_in_explorer(u))
 
     def _collapse_all(self, s, a, expand=False, *args):
         for directory in self._directory_nodes:

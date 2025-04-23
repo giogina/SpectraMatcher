@@ -298,9 +298,8 @@ class MainMenu:
         pass
 
     def _on_show_project_log(self, s, a, u, *args):
-        path = self.viewmodel.path + '.log'
-        path = path.replace(' ', '_')
-        subprocess.Popen(f'explorer /select,"{path}"')
+        path = Launcher.get_logfile_path(self.viewmodel.path)
+        Launcher.show_in_explorer(path)
 
     def _on_select_new_shortcut(self, s, a, u, *args):
         self._show_modal_child("input shortcut window")

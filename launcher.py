@@ -35,15 +35,38 @@ class Launcher:
         if flag.strip() == "-open":
             lock = Launcher.check_for_lock_file(args[0])
         if not lock:
-            command = Launcher.get_executable() + flag
-            for a in args:
-                arg = a.strip("'").strip('"')
-                command += f' "{arg}"'
-            log_file = args[0]+".log" if len(args) else (SettingsManager().get("projectsPath").replace("\\", "/")+"/spec").replace("//", "/")+flag.strip()+".log"
-            log_file = log_file.replace(" ", "_")
-            command += f' >{log_file} 2>&1'
+            command = Launcher.get_executable().strip().split(' ')
+            command.append(flag.strip())
+            command.extend(args)
+            log_file = Launcher.get_logfile_path(args[0]) if len(args) else SettingsManager().get_default_log_path(flag)
             print(f'Launching: {command}')
-            subprocess.Popen(command, shell=True)
+            with open(log_file, "w") as f:
+                subprocess.Popen(command, stdout=f, stderr=subprocess.STDOUT)
+
+    @staticmethod
+    def get_logfile_path(path):
+        logpath = os.path.abspath(path)
+        dirname, logfile = os.path.split(logpath)
+        logfile = (logfile + '.log').replace(' ', '_')
+        if sys.platform.startswith("linux") or sys.platform == "darwin":
+            if not logfile.startswith("."):
+                logfile = "." + logfile
+        logpath = os.path.join(dirname, logfile)
+        return logpath
+
+    @staticmethod
+    def show_in_explorer(path):
+        try:
+            if sys.platform.startswith('win'):
+                subprocess.Popen(["explorer", "/select,", path], stderr=subprocess.DEVNULL)
+            elif sys.platform.startswith('linux'):
+                subprocess.Popen(['xdg-open', path], stderr=subprocess.DEVNULL)
+            elif sys.platform == 'darwin':
+                subprocess.Popen(['open', path], stderr=subprocess.DEVNULL)
+            else:
+                print(f"Unsupported OS: cannot open file {path}")
+        except Exception as e:
+            print(f"Failed to open file {path}: {e}")
 
     @staticmethod
     def launch_new():

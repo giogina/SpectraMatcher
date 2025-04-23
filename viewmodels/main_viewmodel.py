@@ -1,5 +1,3 @@
-import sys
-
 from models.project import ProjectObserver
 from models.project import Project
 from models.settings_manager import SettingsManager

@@ -1,10 +1,8 @@
-import os
 import subprocess
 import sys
 import textwrap
 import tkinter as tk
 from tkinter import filedialog, simpledialog
-from tkinter import *
 
 from screeninfo import get_monitors
 
@@ -160,10 +158,9 @@ def _save_as_file_dialog_tk(root_path="/"):
     root.destroy()
     return file_path
 
-# TODO: TEST
 def inquire_close_unsaved(project_name: str, root_path="/"):
     """Returns "discard" or "save" or ("save as", file) """
-    print("project save inquiry dialog....")
+    # print("Project save inquiry dialog....")
     monitor = get_monitors()[0]
     pos = (int((monitor.width-300)/2), int((monitor.height-200)/2))
     root = tk.Tk()
