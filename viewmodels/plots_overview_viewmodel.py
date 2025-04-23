@@ -66,6 +66,8 @@ class PlotsOverviewViewmodel:
             self._extract_exp_x_y_data()
             self._callbacks.get("redraw plot")()
         elif event == State.state_ok_notification:
+            if SpecPlotter.get_plotter_key(self.is_emission) is None:
+                SpecPlotter.set_active_plotter(self.is_emission, 10, -500, 4000)
             state = args[0]
             new_spec_tag = self._extract_state(state)
             if new_spec_tag is not None:
@@ -75,6 +77,7 @@ class PlotsOverviewViewmodel:
                     self._callbacks.get("update labels")(tag)
                 if self.match_plot.matching_active:
                     self._callbacks.get("update match plot")(self.match_plot)
+
         self._project.project_changed()  # anything changing the interface probably changed the project data
         if event == State.state_deleted_notification:
             self.deleted_states = True
@@ -239,7 +242,7 @@ class PlotsOverviewViewmodel:
 
     def get_zoom_range(self):
         xmin = -1000
-        xmax = 3000
+        xmax = 4000
         ymin = -0.1
         ymax = 1.1
         if len(self.xydatas):

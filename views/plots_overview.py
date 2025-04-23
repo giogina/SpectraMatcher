@@ -783,6 +783,8 @@ class PlotsOverview:
 
         for x_data, y_data in self.viewmodel.xydatas:
             self.add_experimental_spectrum(x_data, y_data)
+            dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
+        print("Redraw: ", self.viewmodel.state_plots.keys())
         for s in self.viewmodel.state_plots.keys():
             self.add_spectrum(s)
 
@@ -790,7 +792,6 @@ class PlotsOverview:
         dpg.add_line_series(x_data, y_data, parent=f"y_axis_{self.viewmodel.is_emission}")
         self.line_series.append(dpg.last_item())
         dpg.bind_item_theme(dpg.last_item(), f"exp_spec_theme_{self.viewmodel.is_emission}")
-        dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
 
     def add_spectrum(self, tag, *args):
         xmin, xmax, ymin, ymax = self.viewmodel.get_zoom_range()
@@ -799,6 +800,7 @@ class PlotsOverview:
             xdata, ydata = s.get_xydata(xmin, xmax)  # truncated versions
             dpg.add_line_series(xdata, ydata, label=s.name, show=not s.is_hidden(), parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag, before=self.match_plot)
             self.line_series.append(s.tag)
+            print(ydata)
         else:
             self.update_plot(s)
         if not dpg.does_item_exist(f"drag-{s.tag}"):
@@ -866,6 +868,7 @@ class PlotsOverview:
         if mark_dragged_plot is not None:
             self.dragged_plot = mark_dragged_plot
         if dpg.does_item_exist(state_plot.tag):
+            print("update:", state_plot.ydata)
             dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
             if update_drag_lines or update_all:
                 dpg.set_value(f"drag-{state_plot.tag}", state_plot.yshift)
