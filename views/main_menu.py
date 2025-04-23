@@ -366,7 +366,6 @@ class MainMenu:
 
     def _on_key_released(self, s, a, *args):
         # If "configure shortcuts" window is open, update shortcut upon release.
-        print(self._dpg_key_to_name(a), [self._dpg_key_to_name(k) for k in self.currently_pressed])
         if self.alter_shortcut_of:
             pressed = []
             for key in self.currently_pressed:
