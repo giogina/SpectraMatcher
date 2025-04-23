@@ -217,7 +217,7 @@ class Directory:
     def crawl_contents(self, path, auto_ignore=False):
         dirs = {}
         files = {}
-        for item in os.listdir(path):
+        for item in sorted(os.listdir(path)):
             if isfile(join(path, item)):
                 file_path = os.path.join(path, item)
                 marked = None
