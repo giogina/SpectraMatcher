@@ -1,6 +1,9 @@
 import sys
 import subprocess
 import os
+import time
+
+import psutil
 
 from models.settings_manager import SettingsManager
 
@@ -22,11 +25,11 @@ class Launcher:
 
     @staticmethod
     def get_executable():
-        executable = sys.argv[0]
+        executable = os.path.abspath(sys.argv[0])
         if executable.endswith('.py'):
-            command = f'python {executable} '
+            command = [sys.executable, executable]
         else:
-            command = f'{executable} '
+            command = [executable]
         return command
 
     @staticmethod
@@ -35,7 +38,7 @@ class Launcher:
         if flag.strip() == "-open":
             lock = Launcher.check_for_lock_file(args[0])
         if not lock:
-            command = Launcher.get_executable().strip().split(' ')
+            command = Launcher.get_executable()
             command.append(flag.strip())
             command.extend(args)
             log_file = Launcher.get_logfile_path(args[0]) if len(args) else SettingsManager().get_default_log_path(flag)
@@ -55,10 +58,18 @@ class Launcher:
         return logpath
 
     @staticmethod
-    def show_in_explorer(path):
+    def get_lockfile_path(path):
+        return Launcher.get_logfile_path(path).replace('.log', '.lock')
+
+    @staticmethod
+    def show_in_explorer(path_inp):
         try:
+            path = os.path.abspath(path_inp)
             if sys.platform.startswith('win'):
-                subprocess.Popen(["explorer", "/select,", path], stderr=subprocess.DEVNULL)
+                if os.path.isdir(path):
+                    subprocess.Popen(["explorer", path], stderr=subprocess.DEVNULL)
+                else:
+                    subprocess.Popen(["explorer", "/select,", path], stderr=subprocess.DEVNULL)
             elif sys.platform.startswith('linux'):
                 subprocess.Popen(['xdg-open', path], stderr=subprocess.DEVNULL)
             elif sys.platform == 'darwin':
@@ -78,35 +89,61 @@ class Launcher:
 
     @staticmethod
     def check_for_lock_file(file):
-        if os.path.exists(file + ".lock"):  # Check for lock file
-            with open(file + ".lock", "r") as lock_file:
-                window_title = lock_file.readline().strip()
+        lockfile = Launcher.get_lockfile_path(file)
+        print("Checking for: ", lockfile)
+        if os.path.exists(lockfile):  # Check for lock file
+            with open(lockfile, "r") as lock_file:
+                lines = lock_file.read().splitlines()
+                window_title = lines[0].strip() if len(lines) > 0 else ""
+                try:
+                    pid = int(lines[1].strip()) if len(lines) > 1 else -1
+                except ValueError:
+                    pid = -1
             window_switched = Launcher.bring_window_to_front(window_title)
             if window_switched:
                 return True
+            elif psutil.pid_exists(pid):
+                print("Process still running.")
+                with open(lockfile, "w") as lock_file:
+                    lock_file.write(window_title)
+                return True
             else:
-                os.remove(file + ".lock")  # faulty lock
+                os.remove(lockfile)  # faulty lock
                 print("Spurious lock file deleted")
         return False
 
     @staticmethod
     def bring_window_to_front(window_title):
-        if not import_win_libraries():
-            return True
-        hwnd = win32gui.FindWindow(None, window_title)
-        if hwnd:
-            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-            win32gui.SetForegroundWindow(hwnd)
-            return True
-        else:
-            hwnd = win32gui.FindWindow(None, "*" + window_title)
+        if sys.platform.startswith("win"):
+            if not import_win_libraries():
+                return False
+            hwnd = win32gui.FindWindow(None, window_title)
             if hwnd:
                 win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
                 win32gui.SetForegroundWindow(hwnd)
                 return True
             else:
-                print(f"Window with title '{window_title}' not found.")
+                hwnd = win32gui.FindWindow(None, "*" + window_title)
+                if hwnd:
+                    win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+                    win32gui.SetForegroundWindow(hwnd)
+                    return True
+                else:
+                    print(f"Window with title '{window_title}' not found.")
+                    return False
+        elif sys.platform.startswith("linux"):
+            try:
+                result = subprocess.run(["wmctrl", "-a", window_title])
+                if result.returncode != 0:
+                    # optional fallback: notify user
+                    subprocess.run(["notify-send", "SpectraMatcher", "Already running — please switch to it."])
+                return result.returncode == 0
+            except FileNotFoundError:
+                print("wmctrl not installed. Cannot raise window.")
                 return False
+        else:
+            print(f"Platform '{sys.platform}' not supported for window focus.")
+            return False
 
     @staticmethod
     def maximize_window(window_title):

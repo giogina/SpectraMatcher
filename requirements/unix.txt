@@ -13,6 +13,7 @@ pandas
 pefile
 Pillow
 portalocker
+psutil
 pyparsing
 pyperclip
 python-dateutil

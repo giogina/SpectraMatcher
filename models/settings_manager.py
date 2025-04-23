@@ -34,7 +34,7 @@ def get_config_path(app_name ="SpectraMatcher"):
 
 class SettingsManager:
     _DEFAULT_SETTINGS = {
-        Settings.PROJECTS_PATH: os.path.join(os.path.expanduser("~"), "SpectraMatcher").replace("\\", "/"),
+        Settings.PROJECTS_PATH: os.path.join(os.path.expanduser("~"), "SpectraMatcher"),
         Settings.DATA_PATH: os.path.expanduser("~"),
         Settings.RECENT_PROJECTS: [],
         Settings.AUTO_SAVE_INTERVAL: 60,  # Seconds

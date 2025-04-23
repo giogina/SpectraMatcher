@@ -8,6 +8,7 @@ import threading
 import time
 import ctypes
 
+from launcher import Launcher
 from models.molecular_data import ModeList
 from models.settings_manager import SettingsManager
 from models.data_file_manager import DataFileManager, FileObserver, File
@@ -64,7 +65,7 @@ class Project(FileObserver):
         SpecPlotter.add_observer(self)
         self.project_file = project_file
         self._autosave_file = self._get_autosave_file_path()
-        self._lock_file_path = self.project_file + ".lock"
+        self._lock_file_path = Launcher.get_lockfile_path(self.project_file)
 
         self._data = None
 
@@ -244,7 +245,6 @@ class Project(FileObserver):
         autosave_filename = f"{file_base}_autosave{file_extension}"
         if sys.platform.startswith("linux") or sys.platform == "darwin":
             autosave_filename = "." + autosave_filename
-
         autosave_file_path = os.path.join(directory, autosave_filename)
         return autosave_file_path
 
@@ -307,30 +307,16 @@ class Project(FileObserver):
     def _hide(self, file):
         if sys.platform.startswith("win"):
             FILE_ATTRIBUTE_HIDDEN = 0x02
-
             if isinstance(file, str):
                 c_filepath = ctypes.create_unicode_buffer(file)
             else:
                 c_filepath = file
-
             try:
                 ret = ctypes.windll.kernel32.SetFileAttributesW(c_filepath, FILE_ATTRIBUTE_HIDDEN)
                 if ret == 0:
                     raise ctypes.WinError()
             except Exception as e:
                 print(f"[Windows] Hiding file {file} failed: {e}")
-
-        elif sys.platform.startswith("linux") or sys.platform == "darwin":
-            dirname, basename = os.path.split(file)
-            if not basename.startswith("."):
-                hidden_name = "." + basename
-                hidden_path = os.path.join(dirname, hidden_name)
-                try:
-                    os.rename(file, hidden_path)
-                except Exception as e:
-                    print(f"[Unix] Hiding file {file} failed: {e}")
-        else:
-            print(f"OS {sys.platform} not supported for file hiding.")
 
     ############### Observers ###############
 
@@ -357,7 +343,7 @@ class Project(FileObserver):
             if os.path.exists(self._lock_file_path):
                 os.remove(self._lock_file_path)
             with open(self._lock_file_path, 'w') as lock_file:
-                lock_file.write(self.window_title)
+                lock_file.write(self.window_title+"\n"+str(os.getpid()))
             self._hide(self._lock_file_path)
         except Exception as e:
             print(f"Couldn't write lock file! {e}")
@@ -395,7 +381,7 @@ class Project(FileObserver):
         # Mark new project file as open
         if os.path.exists(self._lock_file_path):
             os.remove(self._lock_file_path)
-        self._lock_file_path = self.project_file + ".lock"
+        self._lock_file_path = Launcher.get_lockfile_path(self.project_file)
         self._mark_project_as_open()
 
     def save_and_close_project(self):
