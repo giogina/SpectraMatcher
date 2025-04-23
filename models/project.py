@@ -421,9 +421,9 @@ class Project(FileObserver):
 
     def close_project(self, close_anyway=False):
         with self._project_file_lock:
-            if not self.check_newer_autosave() or close_anyway:
-                if os.path.exists(self._autosave_file):
-                    os.remove(self._autosave_file)
+            # if not self.check_newer_autosave() or close_anyway:
+            #     if os.path.exists(self._autosave_file):
+            #         os.remove(self._autosave_file)  # Just keep it - won't be loaded if it's older.
             if os.path.exists(self._lock_file_path):
                 os.remove(self._lock_file_path)
 
