@@ -146,14 +146,14 @@ class PlotsOverview:
                         with dpg.table(header_row=False):
                             dpg.add_table_column(width_fixed=True, init_width_or_weight=40)
                             dpg.add_table_column(width_stretch=True)
-                            dpg.add_table_column(width_fixed=True, init_width_or_weight=220)
+                            # dpg.add_table_column(width_fixed=True, init_width_or_weight=220)
                             with dpg.table_row():
                                 with dpg.group(horizontal=True):
                                     self.collapse_plot_settings_button = self.icons.insert(dpg.add_button(height=32, width=32, callback=lambda s, a, u: self.collapse_plot_settings(False), show=True), Icons.caret_right, size=16)
                                 # dpg.add_spacer()
                                 dpg.add_button(height=32, label="Plot settings")
                                 dpg.bind_item_theme(dpg.last_item(), ItemThemes.invisible_button_theme())
-                                dpg.add_spacer(width=32)
+                                # dpg.add_spacer(width=32)
                     dpg.bind_item_theme(self.plot_settings_action_bar, ItemThemes.action_bar_theme())
 
                     with dpg.child_window() as self.plot_settings_group:
