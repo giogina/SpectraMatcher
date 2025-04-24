@@ -36,12 +36,14 @@ class ExperimentalSpectrum:
         # "chosen peaks": [int(peak wavenumber)s]
         # "removed peaks": [int(peak wavenumber)s]
         # }}
+
         if settings is None:
             settings = {"path": file.path,
                         "chosen peaks": [],
                         "removed peaks": [],
                         }
         self.settings = settings  # coupled to project._data
+        print("self.settings = ", self.settings)
         self.spectra_list.append(self)
 
         self.is_emission = False
@@ -111,16 +113,19 @@ class ExperimentalSpectrum:
         ExperimentalSpectrum.notify_changed_callback()
 
     def add_peak(self, x):
+        print("Add peak called")
         index = self.get_x_index(x)
         new_peak = ExpPeak(wavenumber=self.xdata[index], intensity=self.ydata[index], index=index)
         self.peaks.append(new_peak)
         if self.settings.get("chosen peaks") is None:
             self.settings["chosen peaks"] = [int(new_peak.wavenumber)]
+            print("New chosen peaks list", self.settings)
         else:
             if int(new_peak.wavenumber) not in self.settings["chosen peaks"]:
                 self.settings["chosen peaks"].append(int(new_peak.wavenumber))
             if int(new_peak.wavenumber) in self.settings.get("removed peaks", []):
                 self.settings["removed peaks"].remove(int(new_peak.wavenumber))
+            print("Appended new peak", x, self.settings)
         ExperimentalSpectrum.notify_changed_callback()
         return new_peak
 
@@ -330,9 +335,11 @@ class ExperimentalSpectrum:
         ExperimentalSpectrum.adjust_spec_plotter_range(self.is_emission)
 
     def detect_peaks(self):
+        if self.x_min is None or self.x_max is None:
+            return
         peaks, _ = signal.find_peaks(self.smooth_ydata, prominence=ExperimentalSpectrum.get(self.is_emission, 'peak prominence threshold'), width=ExperimentalSpectrum.get(self.is_emission, 'peak width threshold'))
         peaks = list(peaks)
-        for chosen_peak in ExperimentalSpectrum._settings[self.is_emission].get("chosen peaks", []):
+        for chosen_peak in self.settings.get("chosen peaks", []):
             if self.x_min <= chosen_peak <= self.x_max:
                 index = self.get_x_index(chosen_peak)
                 if index not in peaks:
