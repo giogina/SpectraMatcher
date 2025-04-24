@@ -326,9 +326,6 @@ class MatchPlot:
             self.set_yshift(0)
 
     def only_labeled_peaks(self, on):
-        Matcher.set(self.is_emission, 'assign only labeled', on)
-
-    def list_only_labeled_transitions(self, on):
         Matcher.set(self.is_emission, 'list only labeled transitions', on)
 
     def set_yshift(self, value):
@@ -422,8 +419,8 @@ class MatchPlot:
                     peak_data_list += [spec.name]
                     if spec is not None:
                         for cluster in self.super_clusters[peak.match][tag]:
-                            # peak_list = cluster.filtered_peaks(spec.yscale) if Matcher.get(self.is_emission, "list only labeled transitions") else cluster.peaks
-                            peak_list = cluster.filtered_peaks(spec.yscale)
+                            peak_list = cluster.filtered_peaks(spec.yscale) if Matcher.get(self.is_emission, "list only labeled transitions") else cluster.peaks
+                            # peak_list = cluster.filtered_peaks(spec.yscale)
                             for p, peak2 in enumerate(peak_list):
                                 mode_data_list = [format(peak2.wavenumber+spec.xshift, ".1f"),
                                                   format(peak2.corrected_wavenumber+spec.xshift, ".1f"),
@@ -441,7 +438,7 @@ class MatchPlot:
                     else:
                         peak_data_list = peak_data_list[:4]
 
-            if not line_added:
+            if not line_added and not Matcher.get(self.is_emission, "list only labeled transitions"):
                 table.append(peak_data_list)
 
         for line in table:

@@ -459,6 +459,7 @@ class PlotsOverview:
 
     def show_match_table(self, *args):
         if self.match_table_shown:
+            print("Hide called!")
             dpg.delete_item(self.match_table_row)
             dpg.configure_item(self.plot, height=-1)
             dpg.configure_item(self.plot_row, height=0)
