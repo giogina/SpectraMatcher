@@ -8,6 +8,8 @@ import threading
 import time
 import ctypes
 
+import psutil
+
 from launcher import Launcher
 from models.molecular_data import ModeList
 from models.settings_manager import SettingsManager
@@ -19,6 +21,33 @@ from utility.matcher import Matcher
 from utility.wavenumber_corrector import WavenumberCorrector
 from utility.spectrum_plots import SpecPlotter
 
+last_cpu_times = {}
+
+def print_thread_info(threshold=0.5):
+    proc = psutil.Process(os.getpid())
+    interval = 3
+    while True:
+        print("======== Threads ========")
+
+        tid_to_name = {t.native_id: t.name for t in threading.enumerate() if hasattr(t, 'native_id')}
+
+        current = {}
+        for t in proc.threads():
+            tid = t.id
+            cpu_time = t.user_time + t.system_time
+            current[tid] = cpu_time
+
+            last = last_cpu_times.get(tid, 0.0)
+            delta = cpu_time - last
+            usage_percent = (delta / interval) * 100
+
+            if usage_percent > threshold:
+                name = tid_to_name.get(tid, "(unknown)")
+                print(f"Thread ID {tid:<8} | ΔCPU: {delta:.2f}s | CPU%: {usage_percent:5.1f}% | {name}")
+
+        last_cpu_times.clear()
+        last_cpu_times.update(current)
+        time.sleep(interval)
 
 class ProjectObserver:
     def update(self, event_type, *args):
@@ -148,6 +177,8 @@ class Project(FileObserver):
                     print("Attempting to restore autosave file...")
                     self.load(auto=True)
         self._autosave_thread.start()
+
+        # threading.Thread(target=print_thread_info, daemon=True).start()
 
         # Initialize everything based on loaded data!
         if "ignored" not in self._data.keys():
