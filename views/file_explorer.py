@@ -182,7 +182,7 @@ class FileExplorer:
     def _setup_filter_popup(self, filter_button, *args):
         with dpg.popup(filter_button, tag="file filter popup", mousebutton=dpg.mvMouseButton_Left, no_move=False):
             dpg.add_button(label="Filter file types", width=200)
-            dpg.bind_item_theme(dpg.last_item(), ItemThemes.invisible_button_theme())
+            dpg.bind_item_theme(dpg.last_item(), ItemThemes.get_invisible_button_theme())
             dpg.add_separator()
             for extension in self.filterable_extensions:
                 dpg.add_checkbox(label=f"  *{extension}", default_value=True, tag=f"check {extension}",
@@ -522,14 +522,14 @@ class FileExplorer:
                 if file.type == FileType.GAUSSIAN_INPUT:
                     file_icon = Icons.file_code
                 self.icons.insert(f"{file.tag}-c0", file_icon, 16, solid=False)
-                dpg.bind_item_theme(f"{file.tag}-c0", ItemThemes.invisible_button_theme())
+                dpg.bind_item_theme(f"{file.tag}-c0", ItemThemes.get_invisible_button_theme())
 
             status = file.properties.get(GaussianLog.STATUS, "None")
             status_icon = _status_icons.get(status)
             tooltip = status_icon["tooltip"]
             if status == GaussianLog.ERROR and file.error is not None:
                 tooltip += file.error
-            dpg.bind_item_theme(f"{file.tag}-c2", ItemThemes.invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c2", ItemThemes.get_invisible_button_theme())
             self.icons.insert(f"{file.tag}-c2", icon=status_icon["icon"], size=16,
                               color=status_icon["color"], tooltip=tooltip, invisible=True)
 
@@ -574,14 +574,14 @@ class FileExplorer:
                 dpg.set_item_label(f"{file.tag}-c9", f"{int(file.spectrum.zero_zero_transition_energy)}")
                 dpg.set_item_label(f"{file.tag}-c10", f"{str([int(wn) for wn in file.spectrum.get_wavenumbers(5)]).strip('[]').replace(' ', '  ')}, ...")
 
-            dpg.bind_item_theme(f"{file.tag}-c3", ItemThemes.invisible_button_theme())
-            dpg.bind_item_theme(f"{file.tag}-c4", ItemThemes.invisible_button_theme())
-            dpg.bind_item_theme(f"{file.tag}-c5", ItemThemes.invisible_button_theme())
-            dpg.bind_item_theme(f"{file.tag}-c6", ItemThemes.invisible_button_theme())
-            dpg.bind_item_theme(f"{file.tag}-c7", ItemThemes.invisible_button_theme())
-            dpg.bind_item_theme(f"{file.tag}-c8", ItemThemes.invisible_button_theme())
-            dpg.bind_item_theme(f"{file.tag}-c9", ItemThemes.invisible_button_theme())
-            dpg.bind_item_theme(f"{file.tag}-c10", ItemThemes.invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c3", ItemThemes.get_invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c4", ItemThemes.get_invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c5", ItemThemes.get_invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c6", ItemThemes.get_invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c7", ItemThemes.get_invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c8", ItemThemes.get_invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c9", ItemThemes.get_invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c10", ItemThemes.get_invisible_button_theme())
         except Exception as e:
             print("Update file failed: ", e)
 

@@ -1,7 +1,9 @@
 import math
+import threading
 
 import dearpygui.dearpygui as dpg
 import pyperclip
+import time
 
 from models.experimental_spectrum import ExperimentalSpectrum
 from utility.font_manager import FontManager
@@ -80,6 +82,8 @@ class PlotsOverview:
         self.animation_matrix = dpg.create_translation_matrix([1/6., 0, 0])
         self.last_animation_drag_delta = [0, 0]
         self.label_moving = True
+        self.match_marker_lock = threading.Lock()
+        self.last_hover_check = time.time()
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -152,7 +156,7 @@ class PlotsOverview:
                                     self.collapse_plot_settings_button = self.icons.insert(dpg.add_button(height=32, width=32, callback=lambda s, a, u: self.collapse_plot_settings(False), show=True), Icons.caret_right, size=16)
                                 # dpg.add_spacer()
                                 dpg.add_button(height=32, label="Plot settings")
-                                dpg.bind_item_theme(dpg.last_item(), ItemThemes.invisible_button_theme())
+                                dpg.bind_item_theme(dpg.last_item(), ItemThemes.get_invisible_button_theme())
                                 # dpg.add_spacer(width=32)
                     dpg.bind_item_theme(self.plot_settings_action_bar, ItemThemes.action_bar_theme())
 
@@ -294,6 +298,7 @@ class PlotsOverview:
         self.red_match_lines = []
         self.red_peak_points = []
         self.table = []
+        self.hovered_match_table_line = None
         self.configure_theme()
 
     def viewport_resize_update(self, *args):
@@ -493,7 +498,7 @@ class PlotsOverview:
                             dpg.configure_item(self.match_entry[(i, j)], label=" "+entry)
                         else:
                             self.match_entry[(i, j)] = dpg.add_button(label=" "+entry, parent=self.match_rows[i], width=-1)
-                            dpg.bind_item_theme(self.match_entry[(i, j)], ItemThemes.invisible_button_theme())
+                            dpg.bind_item_theme(self.match_entry[(i, j)], ItemThemes.get_invisible_button_theme())
             else:
                 self.reconstruct_match_table()
             self.table = table
@@ -507,43 +512,72 @@ class PlotsOverview:
             with dpg.table_row(parent=self.match_table) as self.match_rows[i]:
                 for j, entry in enumerate(line):
                     self.match_entry[(i, j)] = dpg.add_button(label=" "+entry, width=-1)
-                    dpg.bind_item_theme(self.match_entry[(i, j)], ItemThemes.invisible_button_theme())
+                    dpg.bind_item_theme(self.match_entry[(i, j)], ItemThemes.get_invisible_button_theme())
+
+    def mark_hovered_match(self):
+        with self.match_marker_lock:
+            i = self.hovered_match_table_line
+            if i is None:
+                for red_line in self.red_match_lines:
+                    dpg.configure_item(self.match_lines[red_line], color=[120, 120, 200, 255])
+                self.red_match_lines = []
+                return
+            while self.table[i + 1][0].strip() == "":
+                i -= 1
+            try:
+                exp_wn = round(float(self.table[i + 1][0].strip()))
+                new_red_lines = []
+                for red_line in self.red_match_lines:
+                    if not int(red_line[0][0]) == exp_wn:
+                        dpg.configure_item(self.match_lines[red_line], color=[120, 120, 200, 255])
+                    else:
+                        new_red_lines.append(red_line)
+                self.red_match_lines = new_red_lines
+                point_present = False
+                for point in self.red_peak_points:
+                    if int(dpg.get_value(point)[0]) != exp_wn:
+                        dpg.delete_item(point)
+                        self.red_peak_points.remove(point)
+                    else:
+                        point_present = True
+                for key2, line in self.match_lines.items():
+                    if dpg.does_item_exist(line):
+                        if round(key2[0][0]) == exp_wn:
+                            dpg.configure_item(line, color=[255, 0, 0])
+                            if not key2 in self.red_match_lines:
+                                self.red_match_lines.append(key2)
+                if not len(self.red_match_lines) and not point_present:
+                    exp_peak_wns = [int(peak.wavenumber) for peak in self.viewmodel.match_plot.exp_peaks]
+                    if exp_wn in exp_peak_wns:
+                        peak = self.viewmodel.match_plot.exp_peaks[exp_peak_wns.index(exp_wn)]
+                        dpg.add_drag_point(parent=self.plot, default_value=(peak.wavenumber, peak.intensity),
+                                           color=[255, 0, 0])
+                        self.red_peak_points.append(dpg.last_item())
+            except Exception as e:
+                print("Match table hover exception: ", e)
 
     def on_match_table_hovered(self, *args):
-        for s_tag in self.viewmodel.state_plots.keys():
-            dpg.hide_item(f"drag-x-{s_tag}")
-        for key, entry in self.match_entry.items():
-            if dpg.does_item_exist(entry) and dpg.is_item_hovered(entry):
-                (i, j) = key
-                while self.table[i+1][0].strip() == "":
-                    i -= 1
-                try:
-                    exp_wn = round(float(self.table[i+1][0].strip()))
-                    for red_line in self.red_match_lines:
-                        if not int(red_line[0][0]) == exp_wn:
-                            dpg.configure_item(self.match_lines[red_line], color=[120, 120, 200, 255])
-                            self.red_match_lines.remove(red_line)
-                    point_present = False
-                    for point in self.red_peak_points:
-                        if int(dpg.get_value(point)[0]) != exp_wn:
-                            dpg.delete_item(point)
-                            self.red_peak_points.remove(point)
-                        else:
-                            point_present = True
-                    for key2, line in self.match_lines.items():
-                        if dpg.does_item_exist(line):
-                            if round(key2[0][0]) == exp_wn:
-                                dpg.configure_item(line, color=[255, 0, 0])
-                                if not key2 in self.red_match_lines:
-                                    self.red_match_lines.append(key2)
-                    if not len(self.red_match_lines) and not point_present:
-                        exp_peak_wns = [int(peak.wavenumber) for peak in self.viewmodel.match_plot.exp_peaks]
-                        if exp_wn in exp_peak_wns:
-                            peak = self.viewmodel.match_plot.exp_peaks[exp_peak_wns.index(exp_wn)]
-                            dpg.add_drag_point(parent=self.plot, default_value=(peak.wavenumber, peak.intensity), color=[255, 0, 0])
-                            self.red_peak_points.append(dpg.last_item())
-                except Exception as e:
-                    pass
+        if time.time() - self.last_hover_check < 0.1:
+            return
+        self.last_hover_check = time.time()  # slight debounce
+        start_i = 0 if self.hovered_match_table_line is None else self.hovered_match_table_line  # start scanning from last known hovered entry
+
+        for delta_i in range(0, len(self.match_rows.keys())):
+            for i in [start_i - delta_i, start_i + delta_i]:
+                if i in self.match_rows.keys():
+                    j=0
+                    while (i,j) in self.match_entry.keys():
+                        entry = self.match_entry[(i,j)]
+                        if dpg.does_item_exist(entry) and dpg.is_item_hovered(entry):
+                            if self.hovered_match_table_line != i:
+                                self.hovered_match_table_line = i
+                                self.mark_hovered_match()
+                            return
+                        j += 1
+        if self.hovered_match_table_line != None:
+            self.hovered_match_table_line = None
+            self.mark_hovered_match()
+
 
     def enable_edit_peaks(self, enable, *args):
         self.peak_edit_mode_enabled = enable
@@ -800,7 +834,6 @@ class PlotsOverview:
             xdata, ydata = s.get_xydata(xmin, xmax)  # truncated versions
             dpg.add_line_series(xdata, ydata, label=s.name, show=not s.is_hidden(), parent=f"y_axis_{self.viewmodel.is_emission}", tag=s.tag, before=self.match_plot)
             self.line_series.append(s.tag)
-            print(ydata)
         else:
             self.update_plot(s)
         if not dpg.does_item_exist(f"drag-{s.tag}"):
@@ -868,7 +901,7 @@ class PlotsOverview:
         if mark_dragged_plot is not None:
             self.dragged_plot = mark_dragged_plot
         if dpg.does_item_exist(state_plot.tag):
-            print("update:", state_plot.ydata)
+            # print("update:", state_plot.ydata)
             dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
             if update_drag_lines or update_all:
                 dpg.set_value(f"drag-{state_plot.tag}", state_plot.yshift)

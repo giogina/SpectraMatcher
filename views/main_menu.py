@@ -92,7 +92,7 @@ class MainMenu:
                 self.modal_child_window_tags.append("message and buttons")
                 dpg.add_spacer(height=80)
                 self.icons.insert(dpg.add_button(tag="modal icon button", height=60, width=-1), icon=Icons.exclamation_triangle, size=50)
-                dpg.bind_item_theme("modal icon button", ItemThemes.invisible_button_theme())
+                dpg.bind_item_theme("modal icon button", ItemThemes.get_invisible_button_theme())
                 dpg.add_button(label="Message", height=100, width=-1, tag="button dialog message")
                 dpg.add_spacer(height=40)
                 with dpg.table(header_row=False, show=False, width=-1, tag="three buttons table"):

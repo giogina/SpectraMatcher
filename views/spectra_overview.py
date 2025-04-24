@@ -53,7 +53,7 @@ class SpectraOverview:
                 with dpg.table_row():
                     dpg.add_spacer()
                     dpg.add_button(height=32, label="Spectra")
-                    dpg.bind_item_theme(dpg.last_item(), ItemThemes.invisible_button_theme())
+                    dpg.bind_item_theme(dpg.last_item(), ItemThemes.get_invisible_button_theme())
                     self.collapse_plot_settings_button = self.icons.insert(
                         dpg.add_button(height=32, width=32, callback=lambda s, a, u: self.collapse_spectrum_list(False),
                                        show=True), Icons.caret_left, size=16)
