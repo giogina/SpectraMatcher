@@ -1,3 +1,5 @@
+import os
+
 from models.project import ProjectObserver
 from models.project import Project
 from models.settings_manager import SettingsManager
@@ -51,17 +53,27 @@ class MainViewModel(ProjectObserver):
 
     def load_project(self):
         if self._project.check_newer_autosave():
-            print(f"attempting to set message...")
-            self._message_callback(title="Newer autosave detected!", message="Restore autosave?",
-                                   buttons=[("Yes", self._restore_autosave),
-                                            ("No", self._load)])
+            if os.path.exists(self._project.project_file):
+                self._message_callback(title="Newer autosave detected!", message="Newer autosave detected!\n        Restore autosave?",
+                                       buttons=[("Yes", self._restore_autosave),
+                                                ("No", self._load)])
+            else:
+                self._message_callback(title="No project file found! Restore autosave?", message="No project file found!\n   Restore autosave?",
+                                       buttons=[("Ok", self._restore_autosave)])
         else:
             self._load()
+
+    def handle_failed_project_file_load(self):
+        self._message_callback(title="Project file corrupted",
+                               message="The project file seems to be currupted.\nAttempt to restore autosave?",
+                               buttons=[("Yes", self._restore_autosave),
+                                        ("No", noop)])
 
     def _load(self, auto=False):
         self._project.add_observer(self, "project_unsaved")
         self._project.add_observer(self, "progress updated")
         self._project.add_observer(self, "Project file not found")
+        self._project.load_failed_callback = self.handle_failed_project_file_load
         self._project.load(auto)
         self._title_callback(self._assemble_window_title())
 

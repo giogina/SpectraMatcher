@@ -18,6 +18,7 @@ from models.state import State
 from models.experimental_spectrum import ExperimentalSpectrum
 from utility.labels import Labels
 from utility.matcher import Matcher
+from utility.noop import noop
 from utility.wavenumber_corrector import WavenumberCorrector
 from utility.spectrum_plots import SpecPlotter
 
@@ -102,6 +103,8 @@ class Project(FileObserver):
         self._autosave_thread = threading.Thread(target=self._autosave_loop)
         self._autosave_thread.daemon = True  # Set as a daemon thread
 
+        self.load_failed_callback = noop
+
         try:  # Restoring backups needs to happen before checking for autosaves.
             if os.path.exists(self.project_file + ".backup") and not os.path.exists(self.project_file):
                 os.rename(self.project_file + ".backup", self.project_file)
@@ -152,8 +155,13 @@ class Project(FileObserver):
                         os.remove(self.project_file)
                     os.rename(self._autosave_file, self.project_file)
                 if os.path.exists(self.project_file):
-                    with open(self.project_file, "r") as file:
-                        self._data = json.load(file, object_hook=my_decoder)
+                    try:
+                        with open(self.project_file, "r") as file:
+                            self._data = json.load(file, object_hook=my_decoder)
+                    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                        print(f"Failed to load project file: {e}")
+                        self.load_failed_callback()
+                        return
                     self._last_saved_json = json.dumps(self._data, sort_keys=True, indent=4, separators=(",", ":"), cls=MyEncoder).strip()
                     self.window_title = self._assemble_window_title()
                     self._mark_project_as_open()
@@ -409,7 +417,6 @@ class Project(FileObserver):
             autosave_mod_time = os.path.getmtime(self._autosave_file)
             if os.path.exists(self.project_file):
                 project_mod_time = os.path.getmtime(self.project_file)
-                print(autosave_mod_time, project_mod_time)
                 if autosave_mod_time <= project_mod_time:
                     return False
                 else:
@@ -452,6 +459,11 @@ class Project(FileObserver):
 
     def close_project(self, close_anyway=False):
         with self._project_file_lock:
+            if close_anyway:
+                try:
+                    os.utime(self.project_file, None)  # update to current time
+                except Exception as e:
+                    print("Could not update project file timestamp:", e)
             # if not self.check_newer_autosave() or close_anyway:
             #     if os.path.exists(self._autosave_file):
             #         os.remove(self._autosave_file)  # Just keep it - won't be loaded if it's older.
