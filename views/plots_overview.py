@@ -884,7 +884,6 @@ class PlotsOverview:
         for x_data, y_data in self.viewmodel.xydatas:
             self.add_experimental_spectrum(x_data, y_data)
             dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
-        print("Redraw: ", self.viewmodel.state_plots.keys())
         for s in self.viewmodel.state_plots.keys():
             self.add_spectrum(s)
 
