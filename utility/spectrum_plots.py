@@ -75,7 +75,6 @@ class SpecPlotter:
     @classmethod
     def set_active_plotter(cls, is_emission, half_width, x_min, x_max, x_step=1):
         plotter_key = (round(half_width*10)/10, int(min(x_min, x_max)), int(max(x_min, x_max)), max(1, int(x_step)))
-        print(f"Setting active plotter: {'Emission' if is_emission else 'Excitation'}, {plotter_key}")
         if is_emission:
             cls._active_emission_plotter = plotter_key
         else:
