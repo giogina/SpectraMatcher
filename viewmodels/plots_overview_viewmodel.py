@@ -105,7 +105,7 @@ class PlotsOverviewViewmodel:
             for tag, s in self.state_plots.items():
                 self._callbacks.get("update labels")(tag)
             if self.match_plot.matching_active:
-                if Matcher.get(self.is_emission, "assign only labeled"):
+                if Matcher.get(self.is_emission, "list only labeled transitions"):
                     self.match_plot.assign_peaks()
                 self._callbacks.get("update match table")()
         elif event == ExperimentalSpectrum.peaks_changed_notification:

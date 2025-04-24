@@ -1,8 +1,6 @@
 import os
 import re
-import subprocess
 import dearpygui.dearpygui as dpg
-import pyperclip
 
 from launcher import Launcher
 from models.state import State
@@ -13,6 +11,27 @@ from utility.icons import Icons
 from utility.drop_receiver_window import DropReceiverWindow, initialize_dnd
 from utility.custom_dpg_items import CustomDpgItems
 from utility.item_themes import ItemThemes
+
+try:
+    import pyperclip
+    pyperclip.copy("test")
+    if pyperclip.paste() != "test":
+        raise RuntimeError("Clipboard test failed")
+except Exception as e:
+    print("Pyperclip unavailable or broken:", e)
+
+    class DummyPyperclip:
+        @staticmethod
+        def copy(text):
+            print("Clipboard copy not available.")
+            Launcher.notify_linux_user("No copy tool found. Run: sudo apt-get install xclip")
+
+        @staticmethod
+        def paste():
+            print("Clipboard paste not available.")
+            Launcher.notify_linux_user("No copy tool found. Run: sudo apt-get install xclip")
+            return ""
+    pyperclip = DummyPyperclip
 
 _file_icons = {
     FileType.GAUSSIAN_INPUT: Icons.file_code,

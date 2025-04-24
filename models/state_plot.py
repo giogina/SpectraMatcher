@@ -276,14 +276,14 @@ class MatchPlot:
         for peak in exp_peaks:
             peak.match = None
 
-        if not Matcher.get(self.is_emission, "assign only labeled"):
+        if not Matcher.get(self.is_emission, "list only labeled transitions"):
             super_cluster_peaks = list(self.super_clusters.keys())
         else:
             super_cluster_peaks = []
             for mm, tag_clusters in self.super_clusters.items():
                 include = False
                 for tag, cluster_list in tag_clusters.items():
-                    if sum([len(cluster.label.strip()) for cluster in cluster_list]) > 0:
+                    if sum([len(cluster.construct_label(False, 1).strip()) for cluster in cluster_list]) > 0:
                         include = True
                         break
                 if include:

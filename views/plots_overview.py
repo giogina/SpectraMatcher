@@ -2,9 +2,9 @@ import math
 import threading
 
 import dearpygui.dearpygui as dpg
-import pyperclip
 import time
 
+from launcher import Launcher
 from models.experimental_spectrum import ExperimentalSpectrum
 from utility.font_manager import FontManager
 from utility.icons import Icons
@@ -13,6 +13,29 @@ from utility.labels import Labels
 from utility.matcher import Matcher
 from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel, WavenumberCorrector
 from utility.spectrum_plots import adjust_color_for_dark_theme, SpecPlotter
+
+try:
+    import pyperclip
+    pyperclip.copy("test")
+    if pyperclip.paste() != "test":
+        raise RuntimeError("Clipboard test failed")
+except Exception as e:
+    print("Pyperclip unavailable or broken:", e)
+
+    class DummyPyperclip:
+        @staticmethod
+        def copy(text):
+            print("Clipboard copy not available.")
+            Launcher.notify_linux_user("No copy tool found. Run: sudo apt-get install xclip")
+
+        @staticmethod
+        def paste():
+            print("Clipboard paste not available.")
+            Launcher.notify_linux_user("No copy tool found. Run: sudo apt-get install xclip")
+            return ""
+
+    pyperclip = DummyPyperclip
+
 
 
 class PlotsOverview:
@@ -1140,6 +1163,7 @@ class PlotsOverview:
                 self.delete_labels()
         Labels.set(self.viewmodel.is_emission, 'show labels', dpg.get_value(self.label_controls['show labels']), silent=True)
         Labels.set(self.viewmodel.is_emission, 'show gaussian labels', dpg.get_value(self.label_controls['show gaussian labels']), silent=True)
+        self.update_match_table()
 
     def delete_labels(self, tag, *args):
         if self.labels and dpg.does_item_exist(tag) and dpg.is_item_shown(tag):

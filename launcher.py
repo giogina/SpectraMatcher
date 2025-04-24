@@ -152,3 +152,11 @@ class Launcher:
         if hwnd:
             win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
             return True
+
+    @staticmethod
+    def notify_linux_user(message):
+        if sys.platform.startswith("linux"):
+            try:
+                subprocess.Popen(["notify-send", "SpectraMatcher", message])
+            except FileNotFoundError:
+                print("notify-send not available. Could not show system notification.")
