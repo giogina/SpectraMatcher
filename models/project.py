@@ -302,7 +302,7 @@ class Project(FileObserver):
             is_unsaved = current_json != self._last_saved_json
             self.project_unsaved(is_unsaved)
             self._auto_saved_json = current_json
-            print("Changed data; calling for auto-save")
+            # print("Changed data; calling for auto-save")
         else:
             self._last_saved_json = current_json
         self._last_change = None

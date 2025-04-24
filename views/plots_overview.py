@@ -488,32 +488,65 @@ class PlotsOverview:
             dpg.bind_item_handler_registry(table_group, self.table_hover_handlers)
 
     def update_match_table(self, *args):
+        animation_running = not self.viewmodel.paused
+        if animation_running:
+            self.viewmodel.pause_animation(True)
         if self.match_table_shown:
-            table = self.viewmodel.match_plot.get_match_table(use_gaussian_labels=self.gaussian_labels)
+            table = self.viewmodel.match_plot.get_match_table(use_gaussian_labels=self.gaussian_labels,append_mode_data=True)
             if len(table) > 1 and len(table)-1 >= len(list(self.match_rows.keys())):
                 for i, line in enumerate(table[1:]):
                     if i not in self.match_rows.keys():
                         self.match_rows[i] = dpg.add_table_row(parent=self.match_table)
                     for j, entry in enumerate(line):
-                        if dpg.does_item_exist(self.match_entry.get((i, j))):
-                            dpg.configure_item(self.match_entry[(i, j)], label=" "+entry)
-                        else:
-                            self.match_entry[(i, j)] = dpg.add_button(label=" "+entry, parent=self.match_rows[i], width=-1)
-                            dpg.bind_item_theme(self.match_entry[(i, j)], ItemThemes.get_invisible_button_theme())
+                        if type(entry) == str:
+                            if dpg.does_item_exist(self.match_entry.get((i, j))):
+                                dpg.configure_item(self.match_entry[(i, j)], label=" "+entry, user_data=line[-1])
+                            else:
+                                self.match_entry[(i, j)] = dpg.add_button(label=" "+entry, parent=self.match_rows[i], width=-1, callback=lambda s, a, u: self.on_table_button_click(u), user_data=line[-1])
+                                dpg.bind_item_theme(self.match_entry[(i, j)], ItemThemes.get_invisible_button_theme())
             else:
                 self.reconstruct_match_table()
             self.table = table
+        if animation_running:
+            self.viewmodel.pause_animation(False)
 
     def reconstruct_match_table(self, *args):
-        self.table = self.viewmodel.match_plot.get_match_table(use_gaussian_labels=self.gaussian_labels)
+        animation_running = not self.viewmodel.paused
+        if animation_running:
+            self.viewmodel.pause_animation(True)
+        self.table = self.viewmodel.match_plot.get_match_table(use_gaussian_labels=self.gaussian_labels,append_mode_data=True)
         for row in self.match_rows.values():
             dpg.delete_item(row)
         self.match_rows = {}
         for i, line in enumerate(self.table[1:]):
             with dpg.table_row(parent=self.match_table) as self.match_rows[i]:
                 for j, entry in enumerate(line):
-                    self.match_entry[(i, j)] = dpg.add_button(label=" "+entry, width=-1)
-                    dpg.bind_item_theme(self.match_entry[(i, j)], ItemThemes.get_invisible_button_theme())
+                    if type(entry) == str:
+                        self.match_entry[(i, j)] = dpg.add_button(label=" "+entry, width=-1, callback=lambda s, a, u: self.on_table_button_click(u), user_data=line[-1])
+                        dpg.bind_item_theme(self.match_entry[(i, j)], ItemThemes.get_invisible_button_theme())
+        if animation_running:
+            self.viewmodel.pause_animation(False)
+
+
+    def on_table_button_click(self, u): #  clicked_peak: FCpeak object
+        if type(u) == tuple and len(u) == 2:
+            (state, clicked_peak) = u
+        else:
+            return
+
+        mode_index = 0  # Don't have that fine control on a button
+
+        spectrum = state.emission_spectrum if self.viewmodel.is_emission else state.excitation_spectrum
+        modes = [spectrum.vibrational_modes.get_mode(t[0]) for t in clicked_peak.transition]
+        if not self.gaussian_labels and len(modes) > 1:
+            modes.sort(key=lambda m: m.name)
+        mode = modes[mode_index]
+        dpg.set_value(self.animation_mode_text, f"{mode.wavenumber:.2f} cm⁻¹, {mode.IR}, {mode.vibration_type.replace('others', 'Other deformation')}")
+        self.draw_molecule([[clicked_peak.transition[mode_index][1], mode]])
+        self.viewmodel.set_displayed_animation(clicked_peak)
+        self.viewmodel.pause_animation(pause=False)
+        dpg.set_item_label(self.pause_button, "Pause")
+        dpg.set_value(self.render_hint,f"{'Ground state' if self.viewmodel.is_emission else state.name} mode #{mode.gaussian_name if self.gaussian_labels else mode.name}")
 
     def mark_hovered_match(self):
         with self.match_marker_lock:
@@ -558,9 +591,12 @@ class PlotsOverview:
                 print("Match table hover exception: ", e)
 
     def on_match_table_hovered(self, *args):
+        if (not self.viewmodel.paused) and dpg.is_item_visible(f"animation_drawlist_{self.viewmodel.is_emission}"):
+            return
         if time.time() - self.last_hover_check < 0.1:
             return
         self.last_hover_check = time.time()  # slight debounce
+
         start_i = 0 if self.hovered_match_table_line is None else self.hovered_match_table_line  # start scanning from last known hovered entry
 
         for delta_i in range(0, len(self.match_rows.keys())):

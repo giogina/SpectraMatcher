@@ -391,7 +391,7 @@ class MatchPlot:
 
         return tsv_table
 
-    def get_match_table(self, use_gaussian_labels=False, header_only=False):
+    def get_match_table(self, use_gaussian_labels=False, header_only=False, append_mode_data=False):
         table = [["experimental peak position",
                                   "experimental peak intensity",
                                   "computed peak position",  # comp spectrum (composite) peak wavenumber (maximum[0])
@@ -429,6 +429,8 @@ class MatchPlot:
                                                   peak2.get_label(use_gaussian_labels),
                                                   peak2.symmetries[0] if len(set(peak2.symmetries)) == 1 else '',
                                                   peak2.types[0] if len(set(peak2.types)) == 1 else '']
+                                if append_mode_data:
+                                    mode_data_list.append((spec.state, peak2))
                                 peak_data_list += mode_data_list
                                 table.append(peak_data_list)
                                 line_added = True
