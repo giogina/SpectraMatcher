@@ -268,7 +268,7 @@ class PlotsOverview:
                                     dpg.add_checkbox(label=" Edit peaks", default_value=False, callback=lambda s, a, u: self.enable_edit_peaks(a))
                                     self.peak_controls['peak prominence threshold'] = dpg.add_slider_float(label=" Min. prominence", min_value=0, max_value=0.1, default_value=ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak prominence threshold', 0.005), callback=lambda s, a, u: ExperimentalSpectrum.set(self.viewmodel.is_emission, 'peak prominence threshold', a))
                                     self.peak_controls['peak width threshold'] = dpg.add_slider_int(label=" Min. width", min_value=0, max_value=100, default_value=ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak width threshold', 2), callback=lambda s, a, u: ExperimentalSpectrum.set(self.viewmodel.is_emission, 'peak width threshold', a))
-                                    dpg.add_button(label="Defaults", width=-6, callback=lambda s, a, u: ExperimentalSpectrum.reset_defaults(self.viewmodel.is_emission))
+                                    dpg.add_button(label="Defaults", width=-6, callback=lambda s, a, u: self.reset_experimental_peak_detection_defaults())
                                     dpg.add_button(label="Reset manual selection", width=-6, callback=lambda s, a, u: ExperimentalSpectrum.reset_manual_peaks(self.viewmodel.is_emission))
                                     dpg.add_spacer(height=6)
                         with dpg.collapsing_header(label="Composite spectrum", default_open=False):
@@ -333,6 +333,12 @@ class PlotsOverview:
         if self.match_table_shown:
             dpg.configure_item(self.plot, height=dpg.get_viewport_height()/2)
             dpg.configure_item(self.plot_row, height=dpg.get_viewport_height()/2)
+            
+    def reset_experimental_peak_detection_defaults(self, *args):
+        ExperimentalSpectrum.reset_defaults(self.viewmodel.is_emission)
+        dpg.set_value(self.peak_controls['peak prominence threshold'], value= ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak prominence threshold', 0.005))
+        dpg.set_value(self.peak_controls['peak width threshold'], value= ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak width threshold', 2))
+
 
     def edit_mulliken(self, *args):
         print(f"edit_mulliken (plots_overview): Editor shown = {dpg.is_item_shown(self.label_controls['Mulliken editor'])}")
