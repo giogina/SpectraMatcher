@@ -133,7 +133,7 @@ class MainViewModel(ProjectObserver):
         AsyncManager.shutdown()
         if self._project is None:
             return True
-        if self._project_unsaved or self._project.check_newer_autosave():
+        if self._project_unsaved:
             response = inquire_close_unsaved(project_name=self.get("name"), root_path=self.get_setting("projectsPath", "/"))  # User either saves, discards (return true) or cancels
             if response == "discard":
                 self._project.close_project(close_anyway=True)
@@ -147,7 +147,7 @@ class MainViewModel(ProjectObserver):
             else:
                 return False
         else:
-            self._project.close_project()
+            self._project.close_project(close_anyway=True)
             return True
 
     def _restart_callback(self):
