@@ -183,22 +183,19 @@ class CreateProjectWindow:
 
     def construct_savefile_name(self, *args):
         if dpg.get_value('name input'):
-            name = dpg.get_value('name input')+".spm"  # .replace(" ", "_")+".spm"
+            name = dpg.get_value('name input')+".smp"
         else:
-            name = "untitled.spm"
-        directory = self.settings.get("projectsPath").replace("\\", "/")
-        path = directory
-        if not path.endswith("/"):
-            path += "/"
-        path += name
-        # path = os.path.join(directory, name)
+            name = "untitled.smp"
+        directory = self.settings.get("projectsPath", os.getcwd())
+        path = os.path.join(directory, name)
         return self.uniquify_path(path)
 
     def uniquify_path(self, path):
         unique_path = path
         i = 1
         while os.path.exists(unique_path):
-            unique_path = path[0:-4]+f"({i}).spm"
+            base, ext = os.path.splitext(path)
+            unique_path = f"{base}({i}){ext}"
             i += 1
         return unique_path
 
@@ -235,7 +232,7 @@ class CreateProjectWindow:
         self.path_from_file_dialog = False
 
     def on_ok(self, *args):
-        path = dpg.get_value('path input')
+        path = os.path.abspath(dpg.get_value('path input'))
         if os.path.exists(path) and not self.path_from_file_dialog:
             dpg.configure_item("modal_id", show=True)
         else:

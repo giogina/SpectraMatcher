@@ -1,8 +1,12 @@
 import math
+import threading
 
 import dearpygui.dearpygui as dpg
-import pyperclip
+import time
 
+import numpy as np
+
+from launcher import Launcher
 from models.experimental_spectrum import ExperimentalSpectrum
 from utility.font_manager import FontManager
 from utility.icons import Icons
@@ -11,6 +15,29 @@ from utility.labels import Labels
 from utility.matcher import Matcher
 from viewmodels.plots_overview_viewmodel import PlotsOverviewViewmodel, WavenumberCorrector
 from utility.spectrum_plots import adjust_color_for_dark_theme, SpecPlotter
+
+try:
+    import pyperclip
+    pyperclip.copy("test")
+    if pyperclip.paste() != "test":
+        raise RuntimeError("Clipboard test failed")
+except Exception as e:
+    print("Pyperclip unavailable or broken:", e)
+
+    class DummyPyperclip:
+        @staticmethod
+        def copy(text):
+            print("Clipboard copy not available.")
+            Launcher.notify_linux_user("No copy tool found. Run: sudo apt-get install xclip")
+
+        @staticmethod
+        def paste():
+            print("Clipboard paste not available.")
+            Launcher.notify_linux_user("No copy tool found. Run: sudo apt-get install xclip")
+            return ""
+
+    pyperclip = DummyPyperclip
+
 
 
 class PlotsOverview:
@@ -80,6 +107,12 @@ class PlotsOverview:
         self.animation_matrix = dpg.create_translation_matrix([1/6., 0, 0])
         self.last_animation_drag_delta = [0, 0]
         self.label_moving = True
+        self.match_marker_lock = threading.Lock()
+        self.last_hover_check = time.time()
+        self.light_mode = False
+        self.matched_plot = None  # stored for light mode switch
+        self._screenshot_file = None
+        self._screenshot_box = None
 
         with dpg.handler_registry() as self.mouse_handlers:
             dpg.add_mouse_wheel_handler(callback=lambda s, a, u: self.on_scroll(a))
@@ -87,12 +120,21 @@ class PlotsOverview:
             dpg.add_mouse_release_handler(dpg.mvMouseButton_Left, callback=self.on_drag_release)
             dpg.add_mouse_release_handler(dpg.mvMouseButton_Right, callback=self.on_right_click_release)
             dpg.add_mouse_drag_handler(dpg.mvMouseButton_Left, callback=self.on_drag)
-            dpg.add_key_down_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=True)
-            dpg.add_key_release_handler(dpg.mvKey_Alt, callback=lambda s, a, u: self.show_drag_lines(u), user_data=False)
-            dpg.add_key_down_handler(dpg.mvKey_Shift, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=True)
-            dpg.add_key_release_handler(dpg.mvKey_Shift, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=False)
-            dpg.add_key_down_handler(dpg.mvKey_Control, callback=lambda s, a, u: self.toggle_ctrl_flag(u), user_data=True)
-            dpg.add_key_release_handler(dpg.mvKey_Control, callback=lambda s, a, u: self.toggle_ctrl_flag(u), user_data=False)
+            for attr in ["mvKey_Alt", "mvKey_LAlt", "mvKey_RAlt"]:
+                key = getattr(dpg, attr, None)
+                if key is not None:
+                    dpg.add_key_down_handler(key, callback=lambda s, a, u: self.show_drag_lines(u), user_data=True)
+                    dpg.add_key_release_handler(key, callback=lambda s, a, u: self.show_drag_lines(u), user_data=False)
+            for attr in ["mvKey_Shift", "mvKey_LShift", "mvKey_RShift"]:
+                key = getattr(dpg, attr, None)
+                if key is not None:
+                    dpg.add_key_down_handler(key, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=True)
+                    dpg.add_key_release_handler(key, callback=lambda s, a, u: self.toggle_fine_adjustments(u), user_data=False)
+            for attr in ["mvKey_Control", "mvKey_LControl", "mvKey_RControl"]:
+                key = getattr(dpg, attr, None)
+                if key is not None:
+                    dpg.add_key_down_handler(key, callback=lambda s, a, u: self.toggle_ctrl_flag(u), user_data=True)
+                    dpg.add_key_release_handler(key, callback=lambda s, a, u: self.toggle_ctrl_flag(u), user_data=False)
             dpg.add_key_press_handler(dpg.mvKey_Down, callback=lambda s, a, u: self.on_arrow_press("y", -1))
             dpg.add_key_press_handler(dpg.mvKey_Up, callback=lambda s, a, u: self.on_arrow_press("y", 1))
             dpg.add_key_press_handler(dpg.mvKey_Left, callback=lambda s, a, u: self.on_arrow_press("x", -1))
@@ -135,16 +177,20 @@ class PlotsOverview:
                 with dpg.table_cell():
                     with dpg.child_window(width=-1, height=32) as self.plot_settings_action_bar:
                         with dpg.table(header_row=False):
-                            dpg.add_table_column(width_fixed=True, init_width_or_weight=40)
+                            dpg.add_table_column(width_fixed=True, init_width_or_weight=32)
+                            dpg.add_table_column(width_fixed=True, init_width_or_weight=32)
                             dpg.add_table_column(width_stretch=True)
-                            dpg.add_table_column(width_fixed=True, init_width_or_weight=220)
+                            # dpg.add_table_column(width_fixed=True, init_width_or_weight=220)
                             with dpg.table_row():
                                 with dpg.group(horizontal=True):
                                     self.collapse_plot_settings_button = self.icons.insert(dpg.add_button(height=32, width=32, callback=lambda s, a, u: self.collapse_plot_settings(False), show=True), Icons.caret_right, size=16)
-                                # dpg.add_spacer()
-                                dpg.add_button(height=32, label="Plot settings")
-                                dpg.bind_item_theme(dpg.last_item(), ItemThemes.invisible_button_theme())
-                                dpg.add_spacer(width=32)
+                                    # dpg.add_spacer()
+                                self.icons.insert(dpg.add_button(height=32, width=32, callback=self.switch_plot_theme), Icons.moon, size=16, tooltip="Light / Dark mode")
+
+                                dpg.add_button(height=32, label="  Plot settings")
+
+                                dpg.bind_item_theme(dpg.last_item(), ItemThemes.get_invisible_button_theme())
+                                # dpg.add_spacer(width=32)
                     dpg.bind_item_theme(self.plot_settings_action_bar, ItemThemes.action_bar_theme())
 
                     with dpg.child_window() as self.plot_settings_group:
@@ -225,14 +271,14 @@ class PlotsOverview:
                                     self.pause_button = dpg.add_button(label="Pause", width=-6, callback=self.pause_animation)
 
                             dpg.add_spacer(height=6)
-                        with dpg.collapsing_header(label="Peak detection", default_open=True):
+                        with dpg.collapsing_header(label="Experimental peak detection", default_open=True):
                             with dpg.group(horizontal=True):
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
                                     dpg.add_checkbox(label=" Edit peaks", default_value=False, callback=lambda s, a, u: self.enable_edit_peaks(a))
                                     self.peak_controls['peak prominence threshold'] = dpg.add_slider_float(label=" Min. prominence", min_value=0, max_value=0.1, default_value=ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak prominence threshold', 0.005), callback=lambda s, a, u: ExperimentalSpectrum.set(self.viewmodel.is_emission, 'peak prominence threshold', a))
                                     self.peak_controls['peak width threshold'] = dpg.add_slider_int(label=" Min. width", min_value=0, max_value=100, default_value=ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak width threshold', 2), callback=lambda s, a, u: ExperimentalSpectrum.set(self.viewmodel.is_emission, 'peak width threshold', a))
-                                    dpg.add_button(label="Defaults", width=-6, callback=lambda s, a, u: ExperimentalSpectrum.reset_defaults(self.viewmodel.is_emission))
+                                    dpg.add_button(label="Defaults", width=-6, callback=lambda s, a, u: self.reset_experimental_peak_detection_defaults())
                                     dpg.add_button(label="Reset manual selection", width=-6, callback=lambda s, a, u: ExperimentalSpectrum.reset_manual_peaks(self.viewmodel.is_emission))
                                     dpg.add_spacer(height=6)
                         with dpg.collapsing_header(label="Composite spectrum", default_open=False):
@@ -285,6 +331,7 @@ class PlotsOverview:
         self.red_match_lines = []
         self.red_peak_points = []
         self.table = []
+        self.hovered_match_table_line = None
         self.configure_theme()
 
     def viewport_resize_update(self, *args):
@@ -296,6 +343,20 @@ class PlotsOverview:
         if self.match_table_shown:
             dpg.configure_item(self.plot, height=dpg.get_viewport_height()/2)
             dpg.configure_item(self.plot_row, height=dpg.get_viewport_height()/2)
+
+    def switch_plot_theme(self, *args):
+        self.light_mode = not self.light_mode
+        if self.light_mode:
+            dpg.bind_item_theme(self.plot, f"plot_background_white_{self.viewmodel.is_emission}")
+        else:
+            dpg.bind_item_theme(self.plot, f"plot_background_dark_{self.viewmodel.is_emission}")
+        self.redraw_plot(rezoom=False)
+        self.update_match_plot(self.matched_plot)
+
+    def reset_experimental_peak_detection_defaults(self, *args):
+        ExperimentalSpectrum.reset_defaults(self.viewmodel.is_emission)
+        dpg.set_value(self.peak_controls['peak prominence threshold'], value= ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak prominence threshold', 0.005))
+        dpg.set_value(self.peak_controls['peak width threshold'], value= ExperimentalSpectrum.get(self.viewmodel.is_emission, 'peak width threshold', 2))
 
     def edit_mulliken(self, *args):
         print(f"edit_mulliken (plots_overview): Editor shown = {dpg.is_item_shown(self.label_controls['Mulliken editor'])}")
@@ -445,6 +506,7 @@ class PlotsOverview:
 
     def show_match_table(self, *args):
         if self.match_table_shown:
+            print("Hide called!")
             dpg.delete_item(self.match_table_row)
             dpg.configure_item(self.plot, height=-1)
             dpg.configure_item(self.plot_row, height=0)
@@ -473,68 +535,134 @@ class PlotsOverview:
             dpg.bind_item_handler_registry(table_group, self.table_hover_handlers)
 
     def update_match_table(self, *args):
+        animation_running = not self.viewmodel.paused
+        if animation_running:
+            self.viewmodel.pause_animation(True)
         if self.match_table_shown:
-            table = self.viewmodel.match_plot.get_match_table(use_gaussian_labels=self.gaussian_labels)
+            table = self.viewmodel.match_plot.get_match_table(use_gaussian_labels=self.gaussian_labels,append_mode_data=True)
             if len(table) > 1 and len(table)-1 >= len(list(self.match_rows.keys())):
                 for i, line in enumerate(table[1:]):
                     if i not in self.match_rows.keys():
                         self.match_rows[i] = dpg.add_table_row(parent=self.match_table)
                     for j, entry in enumerate(line):
-                        if dpg.does_item_exist(self.match_entry.get((i, j))):
-                            dpg.configure_item(self.match_entry[(i, j)], label=" "+entry)
-                        else:
-                            self.match_entry[(i, j)] = dpg.add_button(label=" "+entry, parent=self.match_rows[i], width=-1)
-                            dpg.bind_item_theme(self.match_entry[(i, j)], ItemThemes.invisible_button_theme())
+                        if type(entry) == str:
+                            if dpg.does_item_exist(self.match_entry.get((i, j))):
+                                dpg.configure_item(self.match_entry[(i, j)], label=" "+entry, user_data=line[-1])
+                            else:
+                                self.match_entry[(i, j)] = dpg.add_button(label=" "+entry, parent=self.match_rows[i], width=-1, callback=lambda s, a, u: self.on_table_button_click(u), user_data=line[-1])
+                                dpg.bind_item_theme(self.match_entry[(i, j)], ItemThemes.get_invisible_button_theme())
             else:
                 self.reconstruct_match_table()
             self.table = table
+        if animation_running:
+            self.viewmodel.pause_animation(False)
 
     def reconstruct_match_table(self, *args):
-        self.table = self.viewmodel.match_plot.get_match_table(use_gaussian_labels=self.gaussian_labels)
+        animation_running = not self.viewmodel.paused
+        if animation_running:
+            self.viewmodel.pause_animation(True)
+        self.table = self.viewmodel.match_plot.get_match_table(use_gaussian_labels=self.gaussian_labels,append_mode_data=True)
         for row in self.match_rows.values():
             dpg.delete_item(row)
         self.match_rows = {}
         for i, line in enumerate(self.table[1:]):
             with dpg.table_row(parent=self.match_table) as self.match_rows[i]:
                 for j, entry in enumerate(line):
-                    self.match_entry[(i, j)] = dpg.add_button(label=" "+entry, width=-1)
-                    dpg.bind_item_theme(self.match_entry[(i, j)], ItemThemes.invisible_button_theme())
+                    if type(entry) == str:
+                        self.match_entry[(i, j)] = dpg.add_button(label=" "+entry, width=-1, callback=lambda s, a, u: self.on_table_button_click(u), user_data=line[-1])
+                        dpg.bind_item_theme(self.match_entry[(i, j)], ItemThemes.get_invisible_button_theme())
+        if animation_running:
+            self.viewmodel.pause_animation(False)
+
+
+    def on_table_button_click(self, u): #  clicked_peak: FCpeak object
+        if type(u) == tuple and len(u) == 2:
+            (state, clicked_peak) = u
+        else:
+            return
+
+        mode_index = 0  # Don't have that fine control on a button
+
+        spectrum = state.emission_spectrum if self.viewmodel.is_emission else state.excitation_spectrum
+        modes = [spectrum.vibrational_modes.get_mode(t[0]) for t in clicked_peak.transition]
+        if not self.gaussian_labels and len(modes) > 1:
+            modes.sort(key=lambda m: m.name)
+        mode = modes[mode_index]
+        dpg.set_value(self.animation_mode_text, f"{mode.wavenumber:.2f} cm⁻¹, {mode.IR}, {mode.vibration_type.replace('others', 'Other deformation')}")
+        self.draw_molecule([[clicked_peak.transition[mode_index][1], mode]])
+        self.viewmodel.set_displayed_animation(clicked_peak)
+        self.viewmodel.pause_animation(pause=False)
+        dpg.set_item_label(self.pause_button, "Pause")
+        dpg.set_value(self.render_hint,f"{'Ground state' if self.viewmodel.is_emission else state.name} mode #{mode.gaussian_name if self.gaussian_labels else mode.name}")
+
+    def mark_hovered_match(self):
+        unmarked_line_color = [180, 180, 242, 255] if self.light_mode else [120, 120, 200, 255]
+        with self.match_marker_lock:
+            i = self.hovered_match_table_line
+            if i is None:
+                for red_line in self.red_match_lines:
+                    dpg.configure_item(self.match_lines[red_line], color=unmarked_line_color)
+                self.red_match_lines = []
+                return
+            while self.table[i + 1][0].strip() == "":
+                i -= 1
+            try:
+                exp_wn = round(float(self.table[i + 1][0].strip()))
+                new_red_lines = []
+                for red_line in self.red_match_lines:
+                    if not int(red_line[0][0]) == exp_wn:
+                        dpg.configure_item(self.match_lines[red_line], color=unmarked_line_color)
+                    else:
+                        new_red_lines.append(red_line)
+                self.red_match_lines = new_red_lines
+                point_present = False
+                for point in self.red_peak_points:
+                    if int(dpg.get_value(point)[0]) != exp_wn:
+                        dpg.delete_item(point)
+                        self.red_peak_points.remove(point)
+                    else:
+                        point_present = True
+                for key2, line in self.match_lines.items():
+                    if dpg.does_item_exist(line):
+                        if round(key2[0][0]) == exp_wn:
+                            dpg.configure_item(line, color=[255, 0, 0])
+                            if not key2 in self.red_match_lines:
+                                self.red_match_lines.append(key2)
+                if not len(self.red_match_lines) and not point_present:
+                    exp_peak_wns = [int(peak.wavenumber) for peak in self.viewmodel.match_plot.exp_peaks]
+                    if exp_wn in exp_peak_wns:
+                        peak = self.viewmodel.match_plot.exp_peaks[exp_peak_wns.index(exp_wn)]
+                        dpg.add_drag_point(parent=self.plot, default_value=(peak.wavenumber, peak.intensity),
+                                           color=[255, 0, 0])
+                        self.red_peak_points.append(dpg.last_item())
+            except Exception as e:
+                print("Match table hover exception: ", e)
 
     def on_match_table_hovered(self, *args):
-        for s_tag in self.viewmodel.state_plots.keys():
-            dpg.hide_item(f"drag-x-{s_tag}")
-        for key, entry in self.match_entry.items():
-            if dpg.does_item_exist(entry) and dpg.is_item_hovered(entry):
-                (i, j) = key
-                while self.table[i+1][0].strip() == "":
-                    i -= 1
-                try:
-                    exp_wn = round(float(self.table[i+1][0].strip()))
-                    for red_line in self.red_match_lines:
-                        if not int(red_line[0][0]) == exp_wn:
-                            dpg.configure_item(self.match_lines[red_line], color=[120, 120, 200, 255])
-                            self.red_match_lines.remove(red_line)
-                    point_present = False
-                    for point in self.red_peak_points:
-                        if int(dpg.get_value(point)[0]) != exp_wn:
-                            dpg.delete_item(point)
-                            self.red_peak_points.remove(point)
-                        else:
-                            point_present = True
-                    for key2, line in self.match_lines.items():
-                        if dpg.does_item_exist(line):
-                            if round(key2[0][0]) == exp_wn:
-                                dpg.configure_item(line, color=[255, 0, 0])
-                                if not key2 in self.red_match_lines:
-                                    self.red_match_lines.append(key2)
-                    if not len(self.red_match_lines) and not point_present:
-                        exp_peak_wns = [int(peak.wavenumber) for peak in self.viewmodel.match_plot.exp_peaks]
-                        if exp_wn in exp_peak_wns:
-                            peak = self.viewmodel.match_plot.exp_peaks[exp_peak_wns.index(exp_wn)]
-                            dpg.add_drag_point(parent=self.plot, default_value=(peak.wavenumber, peak.intensity), color=[255, 0, 0])
-                            self.red_peak_points.append(dpg.last_item())
-                except Exception as e:
-                    pass
+        if (not self.viewmodel.paused) and dpg.is_item_visible(f"animation_drawlist_{self.viewmodel.is_emission}"):
+            return
+        if time.time() - self.last_hover_check < 0.1:
+            return
+        self.last_hover_check = time.time()  # slight debounce
+
+        start_i = 0 if self.hovered_match_table_line is None else self.hovered_match_table_line  # start scanning from last known hovered entry
+
+        for delta_i in range(0, len(self.match_rows.keys())):
+            for i in [start_i - delta_i, start_i + delta_i]:
+                if i in self.match_rows.keys():
+                    j=0
+                    while (i,j) in self.match_entry.keys():
+                        entry = self.match_entry[(i,j)]
+                        if dpg.does_item_exist(entry) and dpg.is_item_hovered(entry):
+                            if self.hovered_match_table_line != i:
+                                self.hovered_match_table_line = i
+                                self.mark_hovered_match()
+                            return
+                        j += 1
+        if self.hovered_match_table_line != None:
+            self.hovered_match_table_line = None
+            self.mark_hovered_match()
+
 
     def enable_edit_peaks(self, enable, *args):
         self.peak_edit_mode_enabled = enable
@@ -646,9 +774,10 @@ class PlotsOverview:
                     self.draw_labels(tag)
 
             if dpg.is_item_hovered(self.plot_settings_group) or dpg.is_item_hovered(f"plot_{self.viewmodel.is_emission}") or dpg.is_item_hovered(f"spectra list group {self.viewmodel.is_emission}"):
+                line_color = [180, 180, 242, 255] if self.light_mode else [120, 120, 200, 255]
                 for line in self.red_match_lines:
                     if dpg.does_item_exist(self.match_lines[line]):
-                        dpg.configure_item(self.match_lines[line], color=[120, 120, 200, 255])
+                        dpg.configure_item(self.match_lines[line], color=line_color)
                 self.red_match_lines = []
                 for point in self.red_peak_points:
                     dpg.delete_item(point)
@@ -764,7 +893,7 @@ class PlotsOverview:
     def sticks_callback(self, sender, app_data, *args):
         return
 
-    def redraw_plot(self, *args):
+    def redraw_plot(self, rezoom = True, *args):
         for tag in self.line_series:
             dpg.delete_item(tag)
         self.line_series = []
@@ -774,14 +903,17 @@ class PlotsOverview:
 
         for x_data, y_data in self.viewmodel.xydatas:
             self.add_experimental_spectrum(x_data, y_data)
+            if rezoom:
+                dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
         for s in self.viewmodel.state_plots.keys():
             self.add_spectrum(s)
 
     def add_experimental_spectrum(self, x_data, y_data, *args):
         dpg.add_line_series(x_data, y_data, parent=f"y_axis_{self.viewmodel.is_emission}")
         self.line_series.append(dpg.last_item())
-        if self.viewmodel.state_plots == {}:
-            dpg.fit_axis_data(f"x_axis_{self.viewmodel.is_emission}")
+        if self.light_mode:
+            dpg.bind_item_theme(dpg.last_item(), f"exp_spec_theme_light_{self.viewmodel.is_emission}")
+        else:
             dpg.bind_item_theme(dpg.last_item(), f"exp_spec_theme_{self.viewmodel.is_emission}")
 
     def add_spectrum(self, tag, *args):
@@ -858,6 +990,7 @@ class PlotsOverview:
         if mark_dragged_plot is not None:
             self.dragged_plot = mark_dragged_plot
         if dpg.does_item_exist(state_plot.tag):
+            # print("update:", state_plot.ydata)
             dpg.set_value(state_plot.tag, [state_plot.xdata, state_plot.ydata])
             if update_drag_lines or update_all:
                 dpg.set_value(f"drag-{state_plot.tag}", state_plot.yshift)
@@ -873,6 +1006,7 @@ class PlotsOverview:
                 self.fit_y(dummy_series_update_only=True)
 
     def update_match_plot(self, match_plot, *args):
+        self.matched_plot = match_plot
         if Matcher.get(self.viewmodel.is_emission, 'show shade spectra', False):
             for shade in self.shade_plots:
                 if dpg.get_item_user_data(shade) not in [s.tag for s in match_plot.contributing_state_plots]:
@@ -937,20 +1071,26 @@ class PlotsOverview:
         old_lines = self.match_lines
         self.match_lines = {}
         if not match_plot.hidden and match_plot.matching_active:
+            line_color = [180, 180, 242, 255] if self.light_mode else [120, 120, 200, 255]
             for peak in match_plot.exp_peaks:
                 if peak.match is not None:
-                    line_start = (peak.wavenumber, peak.intensity + 10/self.pixels_per_plot_y)
-                    line_end = (peak.match[0], match_plot.yshift - 10/self.pixels_per_plot_y)
-                    y_offset = abs(line_end[0] - line_start[0])*self.pixels_per_plot_x/self.pixels_per_plot_y
-                    elbow = (line_start[0], line_end[1] - y_offset)
+                    if self.pixels_per_plot_y > 10:
+                        line_start = (peak.wavenumber, peak.intensity + 10/self.pixels_per_plot_y)
+                        line_end = (peak.match[0], match_plot.yshift - 10/self.pixels_per_plot_y)
+                        y_offset = abs(line_end[0] - line_start[0])*self.pixels_per_plot_x/self.pixels_per_plot_y
+                        elbow = (line_start[0], line_end[1] - y_offset)
+                    else:
+                        line_start = (peak.wavenumber, peak.intensity + 0.03)
+                        line_end = (peak.match[0], match_plot.yshift - 0.03)
+                        elbow = (line_start[0], line_end[1])
                     if (line_start, elbow) in old_lines.keys():
                         self.match_lines[(line_start, elbow)] = old_lines[(line_start, elbow)]  # no change to vertical line
                     else:
-                        self.match_lines[(line_start, elbow)] = dpg.draw_line(line_start, elbow, thickness=0, parent=self.plot, color=[120, 120, 200, 255])
+                        self.match_lines[(line_start, elbow)] = dpg.draw_line(line_start, elbow, thickness=0, parent=self.plot, color=line_color)
                     if (elbow, line_end) in old_lines.keys():
                         self.match_lines[(elbow, line_end)] = old_lines[(elbow, line_end)]
                     else:
-                        self.match_lines[(elbow, line_end)] = dpg.draw_line(elbow, line_end, thickness=0, parent=self.plot, color=[120, 120, 200, 255])
+                        self.match_lines[(elbow, line_end)] = dpg.draw_line(elbow, line_end, thickness=0, parent=self.plot, color=line_color)
 
         for key, line in old_lines.items():
             if key not in self.match_lines.keys():
@@ -1059,6 +1199,7 @@ class PlotsOverview:
                 self.delete_labels()
         Labels.set(self.viewmodel.is_emission, 'show labels', dpg.get_value(self.label_controls['show labels']), silent=True)
         Labels.set(self.viewmodel.is_emission, 'show gaussian labels', dpg.get_value(self.label_controls['show gaussian labels']), silent=True)
+        self.update_match_table()
 
     def delete_labels(self, tag, *args):
         if self.labels and dpg.does_item_exist(tag) and dpg.is_item_shown(tag):
@@ -1104,12 +1245,13 @@ class PlotsOverview:
                 cluster.set_label_size([text_size[0]/self.pixels_per_plot_x, text_size[1]/self.pixels_per_plot_y])
             state_plot.spectrum.decide_label_positions(gap_width=font_size/self.pixels_per_plot_x, gap_height=font_size/self.pixels_per_plot_y)
 
+            label_color = [255, 255, 255, 255] if self.light_mode else [0, 0, 0, 0]
             clusters = state_plot.spectrum.get_clusters(in_placement_order=True)
             for cluster in clusters:
                 if len(cluster.label):
                     peak_pos, label_pos = cluster.get_plot_pos(state_plot, gap_height=Labels.settings[self.viewmodel.is_emission]['label font size']/self.pixels_per_plot_y)
                     if not dpg.does_item_exist(str(peak_pos)):
-                        annotation = dpg.add_plot_annotation(tag=str(peak_pos), label=cluster.label, default_value=label_pos, clamped=False, offset=(0, -cluster.height/2/self.pixels_per_plot_y), color=[0, 0, 0, 0], parent=plot, user_data=(cluster, state_plot.tag))  #[200, 200, 200, 0]
+                        annotation = dpg.add_plot_annotation(tag=str(peak_pos), label=cluster.label, default_value=label_pos, clamped=False, offset=(0, -cluster.height/2/self.pixels_per_plot_y), color=label_color, parent=plot, user_data=(cluster, state_plot.tag))  #[200, 200, 200, 0]
                     else:
                         annotation = str(peak_pos)
                     self.annotations[tag][peak_pos] = annotation
@@ -1166,8 +1308,10 @@ class PlotsOverview:
         if pos_only:
             return start_pos, elbow_pos, label_pos
         else:
-            line_v = dpg.draw_line(start_pos, elbow_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=[200, 200, 255, 200])
-            line_d = dpg.draw_line(elbow_pos, label_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=[200, 200, 255, 200])
+            line_color = [0, 0, 55, 200] if self.light_mode else [200, 200, 255, 200]
+
+            line_v = dpg.draw_line(start_pos, elbow_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=line_color)
+            line_d = dpg.draw_line(elbow_pos, label_pos, parent=f"plot_{self.viewmodel.is_emission}", thickness=0., color=line_color)
             return line_v, line_d
 
     def update_labels(self, tag, *args):
@@ -1254,46 +1398,74 @@ class PlotsOverview:
             self.dragged_plot = s.tag
 
     def configure_theme(self, *args):
-        with dpg.theme(tag=f"plot_theme_{self.viewmodel.is_emission}"):
-            with dpg.theme_component(dpg.mvScatterSeries):
-                dpg.add_theme_color(dpg.mvPlotCol_Line, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
-                dpg.add_theme_color(dpg.mvPlotCol_MarkerFill, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
-                dpg.add_theme_style(dpg.mvPlotStyleVar_Marker, dpg.mvPlotMarker_Square, category=dpg.mvThemeCat_Plots)
-                dpg.add_theme_style(dpg.mvPlotStyleVar_MarkerSize, 1, category=dpg.mvThemeCat_Plots)
-            with dpg.theme_component(dpg.mvDragLine):
-                dpg.add_theme_color(dpg.mvPlotCol_Line, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
-            # with dpg.theme_component(dpg.mvLineSeries):
-            #     dpg.add_theme_color(dpg.mvPlotCol_InlayText, (200, 0, 0))
-        dpg.bind_item_theme(self.dummy_series, f"plot_theme_{self.viewmodel.is_emission}")
+            with dpg.theme(tag=f"plot_theme_{self.viewmodel.is_emission}"):
+                with dpg.theme_component(dpg.mvScatterSeries):
+                    dpg.add_theme_color(dpg.mvPlotCol_Line, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_MarkerFill, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_style(dpg.mvPlotStyleVar_Marker, dpg.mvPlotMarker_Square, category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_style(dpg.mvPlotStyleVar_MarkerSize, 1, category=dpg.mvThemeCat_Plots)
+                with dpg.theme_component(dpg.mvDragLine):
+                    dpg.add_theme_color(dpg.mvPlotCol_Line, (60, 150, 200, 0), category=dpg.mvThemeCat_Plots)
+                # with dpg.theme_component(dpg.mvLineSeries):
+                #     dpg.add_theme_color(dpg.mvPlotCol_InlayText, (200, 0, 0))
+            dpg.bind_item_theme(self.dummy_series, f"plot_theme_{self.viewmodel.is_emission}")
 
-        with dpg.theme(tag=f"exp_spec_theme_{self.viewmodel.is_emission}"):
-            with dpg.theme_component(dpg.mvLineSeries):
-                dpg.add_theme_color(dpg.mvPlotCol_Line, (200, 200, 255, 255), category=dpg.mvThemeCat_Plots)
+            with dpg.theme(tag=f"exp_spec_theme_{self.viewmodel.is_emission}"):
+                with dpg.theme_component(dpg.mvLineSeries):
+                    dpg.add_theme_color(dpg.mvPlotCol_Line, (200, 200, 255, 255), category=dpg.mvThemeCat_Plots)
+            with dpg.theme(tag=f"exp_spec_theme_light_{self.viewmodel.is_emission}"):
+                with dpg.theme_component(dpg.mvLineSeries):
+                    dpg.add_theme_color(dpg.mvPlotCol_Line, (0, 0, 55, 255), category=dpg.mvThemeCat_Plots)
 
-        with dpg.theme() as plot_settings_theme:
-            with dpg.theme_component(dpg.mvAll):
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4)
-                dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
-                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 6, 6)
-            with dpg.theme_component(dpg.mvCollapsingHeader):
-                dpg.add_theme_color(dpg.mvThemeCol_Header, [200, 200, 255, 80])
-            # with dpg.theme_component(dpg.mvTreeNode):
-            #     dpg.add_theme_color(dpg.mvThemeCol_Header, [200, 200, 255, 40])
-            #     dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [200, 200, 255, 40])
-            #     dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 8, 8)
-        dpg.bind_item_theme(self.plot_settings_group, plot_settings_theme)
+            with dpg.theme() as plot_settings_theme:
+                with dpg.theme_component(dpg.mvAll):
+                    dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 4, 4)
+                    dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 4, 4)
+                    dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 6, 6)
+                with dpg.theme_component(dpg.mvCollapsingHeader):
+                    dpg.add_theme_color(dpg.mvThemeCol_Header, [200, 200, 255, 80])
+                # with dpg.theme_component(dpg.mvTreeNode):
+                #     dpg.add_theme_color(dpg.mvThemeCol_Header, [200, 200, 255, 40])
+                #     dpg.add_theme_color(dpg.mvThemeCol_ChildBg, [200, 200, 255, 40])
+                #     dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 8, 8)
+            dpg.bind_item_theme(self.plot_settings_group, plot_settings_theme)
 
-        with dpg.theme() as expand_button_theme:
-            with dpg.theme_component(dpg.mvAll):
-                dpg.add_theme_color(dpg.mvThemeCol_Button, [200, 200, 255, 200])
-                dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 2, 2)
-                dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 0)
-        dpg.bind_item_theme(self.expand_plot_settings_button, expand_button_theme)
+            with dpg.theme() as expand_button_theme:
+                with dpg.theme_component(dpg.mvAll):
+                    dpg.add_theme_color(dpg.mvThemeCol_Button, [200, 200, 255, 200])
+                    dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 2, 2)
+                    dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 0, 0)
+            dpg.bind_item_theme(self.expand_plot_settings_button, expand_button_theme)
 
-        with dpg.theme() as self.match_table_theme:
-            with dpg.theme_component(dpg.mvTable):
-                dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 6, 2)
-                dpg.add_theme_color(dpg.mvThemeCol_TableHeaderBg, [60, 60, 154])
+            with dpg.theme() as self.match_table_theme:
+                with dpg.theme_component(dpg.mvTable):
+                    dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 6, 2)
+                    dpg.add_theme_color(dpg.mvThemeCol_TableHeaderBg, [60, 60, 154])
+
+            with dpg.theme(tag=f"plot_background_white_{self.viewmodel.is_emission}"):
+                with dpg.theme_component(dpg.mvPlot):
+                    dpg.add_theme_color(dpg.mvPlotCol_PlotBg, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_PlotBorder, [0, 0, 0, 255], category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_AxisBg, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_AxisBgActive, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_Fill, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_AxisText, [0, 0, 0, 255], category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_FrameBg, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_AxisBgHovered, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+
+            axisbg = [33, 33, 108, 255]
+            with dpg.theme(tag=f"plot_background_dark_{self.viewmodel.is_emission}"):
+                with dpg.theme_component(dpg.mvPlot):
+                    dpg.add_theme_color(dpg.mvPlotCol_PlotBg, [11, 11, 36, 255], category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_PlotBorder, [131, 131, 255, 100], category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_AxisBg, axisbg, category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_AxisBgActive, axisbg, category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_AxisBgHovered, axisbg,category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_Fill, axisbg, category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_AxisText, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_FrameBg, axisbg, category=dpg.mvThemeCat_Plots)
+
+                    
 
     def on_scroll(self, direction, *args):
         # print(f"On scroll (plots_overview)")

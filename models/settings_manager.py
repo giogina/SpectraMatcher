@@ -1,6 +1,8 @@
 import glob
 import json
 import os
+import platform
+import sys
 import tempfile
 # import logging
 import threading
@@ -18,9 +20,21 @@ class Settings:
     CHECKS = "sanity checks"
 
 
+def get_config_path(app_name ="SpectraMatcher"):
+    system = platform.system()
+
+    if system == "Windows":
+        base = os.getenv('APPDATA') or os.path.expanduser('~\\AppData\\Roaming')
+    elif system == "Darwin":  # macOS
+        base = os.path.expanduser('~/Library/Application Support')
+    else:  # Linux and other Unix
+        base = os.getenv('XDG_CONFIG_HOME') or os.path.expanduser('~/.config')
+    return os.path.join(os.path.join(base, app_name), 'config')
+
+
 class SettingsManager:
     _DEFAULT_SETTINGS = {
-        Settings.PROJECTS_PATH: os.path.join(os.path.expanduser("~"), "SpectraMatcher").replace("\\", "/"),
+        Settings.PROJECTS_PATH: os.path.join(os.path.expanduser("~"), "SpectraMatcher"),
         Settings.DATA_PATH: os.path.expanduser("~"),
         Settings.RECENT_PROJECTS: [],
         Settings.AUTO_SAVE_INTERVAL: 60,  # Seconds
@@ -59,9 +73,11 @@ class SettingsManager:
             self.file_lock = threading.Lock()  # Lock for file operations
 
             # self.logger = logging.getLogger(__name__)
-            appdata_path = os.getenv('APPDATA')
-            spectra_matcher_path = os.path.join(appdata_path, 'SpectraMatcher')
-            config_path = os.path.join(spectra_matcher_path, 'config')
+            # appdata_path = os.getenv('APPDATA')
+            # spectra_matcher_path = os.path.join(appdata_path, 'SpectraMatcher')
+            # config_path = os.path.join(spectra_matcher_path, 'config')
+            config_path = get_config_path()
+            print(config_path)
             os.makedirs(config_path, exist_ok=True)
             self.settings_file = os.path.join(config_path, 'settings.json')
 
@@ -176,6 +192,15 @@ class SettingsManager:
             print(f"Tried to get setting {key} which did not exist.")
             return default
 
+    def get_default_log_path(self, flag):
+        base_dir = self.get("projectsPath", os.getcwd())
+        filename = f"spec{flag.strip()}.log"
+        if sys.platform.startswith("linux") or sys.platform == "darwin":
+            if not filename.startswith("."):
+                filename = "." + filename
+        log_file = os.path.join(base_dir, filename)
+        return os.path.abspath(log_file)
+
     def update_settings(self, new_settings):
         for key in new_settings:
             if key not in SettingsManager._DEFAULT_SETTINGS:
@@ -206,7 +231,6 @@ class SettingsManager:
         self._save_settings_async()
 
     def add_recent_project(self, project_file):
-        project_file = project_file.replace("\\", "/")  # Just to keep things consistent
         with self.update_lock:
             if self._settings_dict[Settings.RECENT_PROJECTS] and self._settings_dict[Settings.RECENT_PROJECTS][0] == project_file:
                 return

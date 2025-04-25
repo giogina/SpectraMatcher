@@ -321,6 +321,7 @@ class Icons:
             self._fa = {}
             self._fs = {}
             self._color_themes = {}
+            self._invisible_color_themes = {}
             if font_reg:
                 self.set_font_registry(font_reg, fonts_path)
             self._is_initialized = True
@@ -339,7 +340,6 @@ class Icons:
             if (not solid) and (size not in self._fa.keys()):
                 with dpg.font(os.path.join(self._fonts_path, "Font Awesome 6 Free-Regular-400.otf"), size, parent=self._font_reg) as self._fa[size]:
                     dpg.add_font_range(0xf000, 0xf999)
-                # self._registered_fa[size] = []
             elif solid and (size not in self._fs.keys()):
                 with dpg.font(os.path.join(self._fonts_path, "Font Awesome 6 Free-Solid-900.otf"), size, parent=self._font_reg) as self._fs[size]:
                     dpg.add_font_range(0xf000, 0xf999)
@@ -347,14 +347,24 @@ class Icons:
         else:
             return ""
 
-    def insert(self, dpg_item, icon, size, solid=True, color=None, tooltip=None):
+    def insert(self, dpg_item, icon, size, solid=True, color=None, tooltip=None, invisible=False):
         """Inserts icon character as label of dpg_item."""
         if color is not None:
-            if not tuple(color) in self._color_themes.keys():
-                with dpg.theme() as self._color_themes[tuple(color)]:
-                    with dpg.theme_component(dpg.mvButton):
-                        dpg.add_theme_color(dpg.mvThemeCol_Text, color)
-            dpg.bind_item_theme(dpg_item, self._color_themes[tuple(color)])
+            if not invisible:
+                if not tuple(color) in self._color_themes.keys():
+                    with dpg.theme() as self._color_themes[tuple(color)]:
+                        with dpg.theme_component(dpg.mvButton):
+                            dpg.add_theme_color(dpg.mvThemeCol_Text, color)
+                dpg.bind_item_theme(dpg_item, self._color_themes[tuple(color)])
+            else:
+                if not tuple(color) in self._invisible_color_themes.keys():
+                    with dpg.theme() as self._invisible_color_themes[tuple(color)]:
+                        with dpg.theme_component(dpg.mvButton):
+                            dpg.add_theme_color(dpg.mvThemeCol_Text, color)
+                            dpg.add_theme_color(dpg.mvThemeCol_Button, [11, 11, 36, 0])
+                            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, [11, 11, 36, 0])
+                            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, [11, 11, 36, 0])
+                dpg.bind_item_theme(dpg_item, self._invisible_color_themes[tuple(color)])
 
         if type(icon) == list:  # multiple icons above each other
             label_list = []
@@ -364,6 +374,8 @@ class Icons:
         else:
             label = self.get_icon(icon, size, solid)
         dpg.configure_item(dpg_item, label=label)  # automatically ensures that font is registered
+        if label == "":
+            return dpg_item
 
         if solid:
             dpg.bind_item_font(dpg_item, self._fs[size])

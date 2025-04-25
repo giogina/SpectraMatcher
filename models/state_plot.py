@@ -1,8 +1,8 @@
-from scipy import signal
 from models.experimental_spectrum import ExperimentalSpectrum
 from utility.labels import Labels
 from utility.matcher import Matcher
 from utility.noop import noop
+from utility import signal
 from models.molecular_data import FCSpectrum
 import numpy as np
 
@@ -17,6 +17,7 @@ class StatePlot:
         self.spectrum.add_observer(self)
         self.name = state.name
         self.index = state_index
+        self.removed = False
         self.e_key = 'emission' if is_emission else 'excitation'
         self.xshift = self.state.settings.get(f"x shift {self.e_key}", 0)
         self.yshift = self.state.settings.get(f"y shift {self.e_key}", state_index*Labels.settings[is_emission].get('global y shifts', 1.25))
@@ -26,7 +27,7 @@ class StatePlot:
         self._base_ydata = self.spectrum.y_data
         self.xdata = self._compute_x_data()
         self.ydata = self._compute_y_data()
-        self.handle_x = self._base_xdata[np.where(self._base_ydata == max(self._base_ydata))[0][0]]
+        self.handle_x = self.xdata[np.where(self.ydata == max(self.ydata))[0][0]]
         self.sticks = []  # stick: position, [[height, color]]
         if self.spectrum.vibrational_modes is not None:
             for peak in self.spectrum.peaks:
@@ -36,7 +37,6 @@ class StatePlot:
         self.spectrum_update_callback = noop
         self.sticks_update_callback = noop
         self.match_plot = match_plot
-        self.removed = False
 
     @staticmethod
     def construct_tag(state, is_emission):
@@ -50,7 +50,7 @@ class StatePlot:
             self._base_ydata = self.spectrum.y_data
             self.xdata = self._compute_x_data()
             self.ydata = self._compute_y_data()
-            self.handle_x = self._base_xdata[np.where(self._base_ydata == max(self._base_ydata))[0][0]]
+            self.handle_x = self.xdata[np.where(self.ydata == max(self.ydata))[0][0]]
             self.spectrum_update_callback(self)
             self.update_match_plot()
         if event == FCSpectrum.peaks_changed_notification:
@@ -73,15 +73,15 @@ class StatePlot:
         self.sticks_update_callback = callback
 
     def _compute_x_data(self):
-        if self._base_xdata == []:
-            print("Empty xdata!")
-            return np.zeros([0])
+        if len(self._base_xdata) == 0:
+            print(f"{self.name}: Empty xdata!")
+            return np.zeros(1)
         return self._base_xdata + round(self.xshift)
 
     def _compute_y_data(self):
-        if self._base_ydata == []:
-            print("Empty ydata!")
-            return np.zeros([0])
+        if len(self._base_ydata) == 0:
+            print(f"{self.name}: Empty ydata!")
+            return np.zeros(1)
         return (self._base_ydata * self.yscale) + self.yshift
 
     def set_x_shift(self, xshift):
@@ -234,13 +234,9 @@ class MatchPlot:
         """Find indices of local minima and maxima of self.ydata"""
         if len(self.ydata) == 0:
             return
-        maxima, _ = list(signal.find_peaks(self.ydata))
+        minima, maxima = signal.local_extrema(self.ydata)
         if len(maxima) == 0:
             return
-        mins, _ = list(signal.find_peaks([-y for y in self.ydata]))
-        minima = [0]
-        minima.extend(mins)
-        minima.append(len(self.ydata) - 1)
 
         self.maxima = []  # list of (min_x, max_x, min_x)
 
@@ -276,14 +272,14 @@ class MatchPlot:
         for peak in exp_peaks:
             peak.match = None
 
-        if not Matcher.get(self.is_emission, "assign only labeled"):
+        if not Matcher.get(self.is_emission, "list only labeled transitions"):
             super_cluster_peaks = list(self.super_clusters.keys())
         else:
             super_cluster_peaks = []
             for mm, tag_clusters in self.super_clusters.items():
                 include = False
                 for tag, cluster_list in tag_clusters.items():
-                    if sum([len(cluster.label.strip()) for cluster in cluster_list]) > 0:
+                    if sum([len(cluster.construct_label(False, 1).strip()) for cluster in cluster_list]) > 0:
                         include = True
                         break
                 if include:
@@ -326,9 +322,6 @@ class MatchPlot:
             self.set_yshift(0)
 
     def only_labeled_peaks(self, on):
-        Matcher.set(self.is_emission, 'assign only labeled', on)
-
-    def list_only_labeled_transitions(self, on):
         Matcher.set(self.is_emission, 'list only labeled transitions', on)
 
     def set_yshift(self, value):
@@ -394,7 +387,7 @@ class MatchPlot:
 
         return tsv_table
 
-    def get_match_table(self, use_gaussian_labels=False, header_only=False):
+    def get_match_table(self, use_gaussian_labels=False, header_only=False, append_mode_data=False):
         table = [["experimental peak position",
                                   "experimental peak intensity",
                                   "computed peak position",  # comp spectrum (composite) peak wavenumber (maximum[0])
@@ -422,8 +415,8 @@ class MatchPlot:
                     peak_data_list += [spec.name]
                     if spec is not None:
                         for cluster in self.super_clusters[peak.match][tag]:
-                            # peak_list = cluster.filtered_peaks(spec.yscale) if Matcher.get(self.is_emission, "list only labeled transitions") else cluster.peaks
-                            peak_list = cluster.filtered_peaks(spec.yscale)
+                            peak_list = cluster.filtered_peaks(spec.yscale) if Matcher.get(self.is_emission, "list only labeled transitions") else cluster.peaks
+                            # peak_list = cluster.filtered_peaks(spec.yscale)
                             for p, peak2 in enumerate(peak_list):
                                 mode_data_list = [format(peak2.wavenumber+spec.xshift, ".1f"),
                                                   format(peak2.corrected_wavenumber+spec.xshift, ".1f"),
@@ -432,6 +425,8 @@ class MatchPlot:
                                                   peak2.get_label(use_gaussian_labels),
                                                   peak2.symmetries[0] if len(set(peak2.symmetries)) == 1 else '',
                                                   peak2.types[0] if len(set(peak2.types)) == 1 else '']
+                                if append_mode_data:
+                                    mode_data_list.append((spec.state, peak2))
                                 peak_data_list += mode_data_list
                                 table.append(peak_data_list)
                                 line_added = True
@@ -441,7 +436,7 @@ class MatchPlot:
                     else:
                         peak_data_list = peak_data_list[:4]
 
-            if not line_added:
+            if not line_added and not Matcher.get(self.is_emission, "list only labeled transitions"):
                 table.append(peak_data_list)
 
         for line in table:

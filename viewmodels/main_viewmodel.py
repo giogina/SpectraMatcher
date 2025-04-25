@@ -1,4 +1,4 @@
-import sys
+import os
 
 from models.project import ProjectObserver
 from models.project import Project
@@ -53,17 +53,27 @@ class MainViewModel(ProjectObserver):
 
     def load_project(self):
         if self._project.check_newer_autosave():
-            print(f"attempting to set message...")
-            self._message_callback(title="Newer autosave detected!", message="Restore autosave?",
-                                   buttons=[("Yes", self._restore_autosave),
-                                            ("No", self._load)])
+            if os.path.exists(self._project.project_file):
+                self._message_callback(title="Newer autosave detected!", message="Newer autosave detected!\n        Restore autosave?",
+                                       buttons=[("Yes", self._restore_autosave),
+                                                ("No", self._load)])
+            else:
+                self._message_callback(title="No project file found! Restore autosave?", message="No project file found!\n   Restore autosave?",
+                                       buttons=[("Ok", self._restore_autosave)])
         else:
             self._load()
+
+    def handle_failed_project_file_load(self):
+        self._message_callback(title="Project file corrupted",
+                               message="The project file seems to be currupted.\nAttempt to restore autosave?",
+                               buttons=[("Yes", self._restore_autosave),
+                                        ("No", noop)])
 
     def _load(self, auto=False):
         self._project.add_observer(self, "project_unsaved")
         self._project.add_observer(self, "progress updated")
         self._project.add_observer(self, "Project file not found")
+        self._project.load_failed_callback = self.handle_failed_project_file_load
         self._project.load(auto)
         self._title_callback(self._assemble_window_title())
 
@@ -123,7 +133,7 @@ class MainViewModel(ProjectObserver):
         AsyncManager.shutdown()
         if self._project is None:
             return True
-        if self._project_unsaved or self._project.check_newer_autosave():
+        if self._project_unsaved:
             response = inquire_close_unsaved(project_name=self.get("name"), root_path=self.get_setting("projectsPath", "/"))  # User either saves, discards (return true) or cancels
             if response == "discard":
                 self._project.close_project(close_anyway=True)
@@ -137,7 +147,7 @@ class MainViewModel(ProjectObserver):
             else:
                 return False
         else:
-            self._project.close_project()
+            self._project.close_project(close_anyway=True)
             return True
 
     def _restart_callback(self):
@@ -162,7 +172,7 @@ class MainViewModel(ProjectObserver):
 
     def get_recents(self):
         """List of recently opened paths without the current one."""
-        current = self.path.replace("\\", "/")
+        current = self.path
         recents = self.get_setting("recentProjects")
         if current in recents:
             recents.remove(current)

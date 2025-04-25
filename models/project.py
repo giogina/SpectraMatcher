@@ -1,12 +1,16 @@
 import copy
 import json
 import os
+import sys
 import tempfile
 # import logging
 import threading
 import time
 import ctypes
 
+import psutil
+
+from launcher import Launcher
 from models.molecular_data import ModeList
 from models.settings_manager import SettingsManager
 from models.data_file_manager import DataFileManager, FileObserver, File
@@ -14,9 +18,37 @@ from models.state import State
 from models.experimental_spectrum import ExperimentalSpectrum
 from utility.labels import Labels
 from utility.matcher import Matcher
+from utility.noop import noop
 from utility.wavenumber_corrector import WavenumberCorrector
 from utility.spectrum_plots import SpecPlotter
 
+last_cpu_times = {}
+
+def print_thread_info(threshold=0.5):
+    proc = psutil.Process(os.getpid())
+    interval = 3
+    while True:
+        print("======== Threads ========")
+
+        tid_to_name = {t.native_id: t.name for t in threading.enumerate() if hasattr(t, 'native_id')}
+
+        current = {}
+        for t in proc.threads():
+            tid = t.id
+            cpu_time = t.user_time + t.system_time
+            current[tid] = cpu_time
+
+            last = last_cpu_times.get(tid, 0.0)
+            delta = cpu_time - last
+            usage_percent = (delta / interval) * 100
+
+            if usage_percent > threshold:
+                name = tid_to_name.get(tid, "(unknown)")
+                print(f"Thread ID {tid:<8} | ΔCPU: {delta:.2f}s | CPU%: {usage_percent:5.1f}% | {name}")
+
+        last_cpu_times.clear()
+        last_cpu_times.update(current)
+        time.sleep(interval)
 
 class ProjectObserver:
     def update(self, event_type, *args):
@@ -63,13 +95,15 @@ class Project(FileObserver):
         SpecPlotter.add_observer(self)
         self.project_file = project_file
         self._autosave_file = self._get_autosave_file_path()
-        self._lock_file_path = self.project_file + ".lock"
+        self._lock_file_path = Launcher.get_lockfile_path(self.project_file)
 
         self._data = None
 
         self._autosave_interval = self._settings.get('autoSaveInterval', 60)  # Default 60 seconds
         self._autosave_thread = threading.Thread(target=self._autosave_loop)
         self._autosave_thread.daemon = True  # Set as a daemon thread
+
+        self.load_failed_callback = noop
 
         try:  # Restoring backups needs to happen before checking for autosaves.
             if os.path.exists(self.project_file + ".backup") and not os.path.exists(self.project_file):
@@ -91,19 +125,23 @@ class Project(FileObserver):
         }
 
         self.window_title = ""  # For bringing that window to the front in Windows
+        self._json_lock = threading.Lock()
+        self._last_saved_json = None
+        self._auto_saved_json = None
+        self._last_change = None
 
     # react to observations from my data file manager / SpecPlotter
     def update(self, event_type, *args):
         if event_type == "directory structure changed":
             self._data["open data folders"] = [d.path for _, d in self.data_file_manager.top_level_directories.items()]
             self._data["open data files"] = [file.path for _, file in self.data_file_manager.top_level_files.items()]
-            self.project_unsaved(True)
+            self.project_changed(True)
         elif event_type == SpecPlotter.active_plotter_changed_notification:
             if args[1]:  # is_emission = True
                 self._data["active emission plotter"] = args[0]
             else:
                 self._data["active excitation plotter"] = args[0]
-            self.project_unsaved(True)
+            self.project_changed(True)
 
     def load(self, auto=False):
         """Load project file"""
@@ -117,9 +155,14 @@ class Project(FileObserver):
                         os.remove(self.project_file)
                     os.rename(self._autosave_file, self.project_file)
                 if os.path.exists(self.project_file):
-                    with open(self.project_file, "r") as file:
-                        self._data = json.load(file, object_hook=my_decoder)
-                        print(f"Loaded project data: {self._data}")
+                    try:
+                        with open(self.project_file, "r") as file:
+                            self._data = json.load(file, object_hook=my_decoder)
+                    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                        print(f"Failed to load project file: {e}")
+                        self.load_failed_callback()
+                        return
+                    self._last_saved_json = json.dumps(self._data, sort_keys=True, indent=4, separators=(",", ":"), cls=MyEncoder).strip()
                     self.window_title = self._assemble_window_title()
                     self._mark_project_as_open()
                     self._notify_observers("project data changed")
@@ -142,6 +185,8 @@ class Project(FileObserver):
                     print("Attempting to restore autosave file...")
                     self.load(auto=True)
         self._autosave_thread.start()
+
+        # threading.Thread(target=print_thread_info, daemon=True).start()
 
         # Initialize everything based on loaded data!
         if "ignored" not in self._data.keys():
@@ -200,7 +245,7 @@ class Project(FileObserver):
             self._data["label settings"] = {True: self._data["label settings"]['true'],
                                             False: self._data["label settings"]['false']}
         Labels.settings = self._data["label settings"]
-        Labels.notify_changed_callback = self.project_unsaved
+        Labels.notify_changed_callback = self.project_changed
         if "peak detection settings" not in self._data.keys():
             self._data["peak detection settings"] = {True:  ExperimentalSpectrum.defaults(),
                                                      False: ExperimentalSpectrum.defaults()}
@@ -208,7 +253,7 @@ class Project(FileObserver):
             self._data["peak detection settings"] = {True: self._data["peak detection settings"]['true'],
                                                      False: self._data["peak detection settings"]['false']}
         ExperimentalSpectrum._settings = self._data["peak detection settings"]
-        ExperimentalSpectrum.notify_changed_callback = self.project_unsaved
+        ExperimentalSpectrum.notify_changed_callback = self.project_changed
         if "matcher settings" not in self._data.keys():
             self._data["matcher settings"] = {True:  Matcher.defaults(),
                                               False: Matcher.defaults()}
@@ -216,7 +261,7 @@ class Project(FileObserver):
             self._data["matcher settings"] = {True: self._data["matcher settings"]['true'],
                                               False: self._data["matcher settings"]['false']}
         Matcher.settings = self._data["matcher settings"]
-        Matcher.notify_changed_callback = self.project_unsaved
+        Matcher.notify_changed_callback = self.project_changed
         # Automatically keeps file manager dicts updated in self._data!
         self.data_file_manager.directory_toggle_states = self._data["directory toggle states"]
         self.data_file_manager.ignored_files_and_directories = self._data["ignored"]
@@ -241,20 +286,36 @@ class Project(FileObserver):
         directory, filename = os.path.split(self.project_file)
         file_base, file_extension = os.path.splitext(filename)
         autosave_filename = f"{file_base}_autosave{file_extension}"
+        if sys.platform.startswith("linux") or sys.platform == "darwin":
+            autosave_filename = "." + autosave_filename
         autosave_file_path = os.path.join(directory, autosave_filename)
         return autosave_file_path
 
     def _autosave_loop(self):
         while True:
-            time.sleep(self._autosave_interval)
-            self.save(auto=True)
+            # time.sleep(self._autosave_interval)
+            time.sleep(0.5)
+            if self._last_change is not None and time.time()-self._last_change > 0.5:
+                self.save(auto=True)
 
     def save(self, auto=False, new_file=False):
         # self.gather_extra_data()
         # Instead: Ensure all important data in sub-models is mutable variables assigned to self._data!
         with self._data_lock:
             snapshot = copy.deepcopy(self._data)
-        save_thread = threading.Thread(target=self._save_project, args=(snapshot, auto, new_file))
+        current_json = json.dumps(snapshot, sort_keys=True, indent=4, separators=(",", ":"), cls=MyEncoder).strip()
+        if auto:
+            if current_json == self._auto_saved_json:
+                return  # Nothing actually changed since last auto save
+            is_unsaved = current_json != self._last_saved_json
+            self.project_unsaved(is_unsaved)
+            self._auto_saved_json = current_json
+            # print("Changed data; calling for auto-save")
+        else:
+            self._last_saved_json = current_json
+        self._last_change = None
+
+        save_thread = threading.Thread(target=self._save_project, args=(current_json, auto, new_file))
         save_thread.start()
 
     def _assemble_window_title(self):
@@ -264,12 +325,11 @@ class Project(FileObserver):
         title += " - SpectraMatcher"
         return title
 
-    def _save_project(self, snapshot, auto, new_file=False):
+    def _save_project(self, current_json, auto, new_file=False):
         if not new_file:
-            if auto and not self._is_unsaved:
-                return  # no use auto-saving if nothing has changed
             if not os.path.exists(self.project_file):
                 return
+
         with self._project_file_lock:
             temp_file_path = ""
             if auto:
@@ -279,8 +339,8 @@ class Project(FileObserver):
             try:
                 dir_name, file_name = os.path.split(target_file)
                 temp_fd, temp_file_path = tempfile.mkstemp(dir=dir_name)
-                with os.fdopen(temp_fd, 'w') as temp_file:
-                    json.dump(snapshot, temp_file, indent=4, cls=MyEncoder)
+                with open(temp_fd, 'w') as temp_file:
+                    temp_file.write(current_json)
                 if os.path.exists(target_file):
                     backup_file = target_file + ".backup"
                     if os.path.exists(backup_file):
@@ -301,16 +361,18 @@ class Project(FileObserver):
                     os.remove(temp_file_path)
 
     def _hide(self, file):
-        FILE_ATTRIBUTE_HIDDEN = 0x02
-
-        if isinstance(file, str):
-            c_filepath = ctypes.create_unicode_buffer(file)
-        else:
-            c_filepath = file
-        try:
-            ctypes.windll.kernel32.SetFileAttributesW(c_filepath, FILE_ATTRIBUTE_HIDDEN)
-        except Exception as e:
-            print(f"Hiding file {file} failed: {e}")
+        if sys.platform.startswith("win"):
+            FILE_ATTRIBUTE_HIDDEN = 0x02
+            if isinstance(file, str):
+                c_filepath = ctypes.create_unicode_buffer(file)
+            else:
+                c_filepath = file
+            try:
+                ret = ctypes.windll.kernel32.SetFileAttributesW(c_filepath, FILE_ATTRIBUTE_HIDDEN)
+                if ret == 0:
+                    raise ctypes.WinError()
+            except Exception as e:
+                print(f"[Windows] Hiding file {file} failed: {e}")
 
     ############### Observers ###############
 
@@ -328,16 +390,24 @@ class Project(FileObserver):
             for observer in self._observers[event_type]:
                 observer.update(event_type, args)
 
-    def project_unsaved(self, changed=True):
-        self._is_unsaved = changed
-        self._notify_observers("project_unsaved", changed)
+    def project_changed(self, changed=True):
+        '''Set marker for potential change'''
+        if changed:
+            self._last_change = time.time()
+        else:
+            self._last_change = None
+
+    def project_unsaved(self, is_unsaved=True):
+        if self._is_unsaved != is_unsaved:
+            self._is_unsaved = is_unsaved
+            self._notify_observers("project_unsaved", is_unsaved)
 
     def _mark_project_as_open(self):
         try:
             if os.path.exists(self._lock_file_path):
                 os.remove(self._lock_file_path)
             with open(self._lock_file_path, 'w') as lock_file:
-                lock_file.write(self.window_title)
+                lock_file.write(self.window_title+"\n"+str(os.getpid()))
             self._hide(self._lock_file_path)
         except Exception as e:
             print(f"Couldn't write lock file! {e}")
@@ -360,10 +430,10 @@ class Project(FileObserver):
         print(f"Project received save as request: {new_file}")
 
         self.project_file = new_file
-        self.save()
-
+        self.save(auto=False, new_file=True)
         self._settings.add_recent_project(self.project_file)
         self.window_title = self._assemble_window_title()
+        self.project_unsaved(True)  # Causes window title update
         self.project_unsaved(False)
 
         # Rename autosave
@@ -375,22 +445,28 @@ class Project(FileObserver):
         # Mark new project file as open
         if os.path.exists(self._lock_file_path):
             os.remove(self._lock_file_path)
-        self._lock_file_path = self.project_file + ".lock"
+        self._lock_file_path = Launcher.get_lockfile_path(self.project_file)
         self._mark_project_as_open()
 
     def save_and_close_project(self):
         print("Save and close called")
         with self._data_lock:
             snapshot = copy.deepcopy(self._data)
+        current_json = json.dumps(snapshot, sort_keys=True, indent=4, separators=(",", ":"), cls=MyEncoder).strip()
         # save synced-ly this time to make sure it executes before program closes.
-        self._save_project(snapshot, auto=False)
+        self._save_project(current_json, auto=False)
         self.close_project()
 
     def close_project(self, close_anyway=False):
         with self._project_file_lock:
-            if not self.check_newer_autosave() or close_anyway:
-                if os.path.exists(self._autosave_file):
-                    os.remove(self._autosave_file)
+            if close_anyway:
+                try:
+                    os.utime(self.project_file, None)  # update to current time
+                except Exception as e:
+                    print("Could not update project file timestamp:", e)
+            # if not self.check_newer_autosave() or close_anyway:
+            #     if os.path.exists(self._autosave_file):
+            #         os.remove(self._autosave_file)  # Just keep it - won't be loaded if it's older.
             if os.path.exists(self._lock_file_path):
                 os.remove(self._lock_file_path)
 
@@ -411,12 +487,12 @@ class Project(FileObserver):
             print(f"Used an unknown project data key '{key}'. Added it anyway.")
         with self._data_lock:
             self._data[key] = value
-        self.project_unsaved()
+        self.project_changed()
 
     def select_ground_state_file(self, path):
         print(f"Setting ground state path in project: {path}")
         self._data["ground state path"] = path
-        self.project_unsaved()
+        self.project_changed()
 
     def get_selected_ground_state_file(self):
         return self._data.get("ground state path")
@@ -428,14 +504,14 @@ class Project(FileObserver):
             self._data["ground state path"] = State.state_list[0].settings["freq file"]
         for state in State.state_list[1:]:
             self._data["state settings"].append(state.settings)
-        self.project_unsaved()
+        self.project_changed()
 
     def copy_experiment_settings(self):
         """Store paths etc of ExperimentalSpectrum instances into _data"""
         self._data["experiment settings"] = []
         for exp in ExperimentalSpectrum.spectra_list:
             self._data["experiment settings"].append(exp.settings)
-        self.project_unsaved()
+        self.project_changed()
 
     def update_progress(self, progress):
         self._data["progress"] = progress

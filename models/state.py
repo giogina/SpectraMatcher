@@ -124,7 +124,7 @@ class State:
             if file.progress == "parsing done":
                 self.assimilate_file_data(file)  # if not, the file will call that function upon completion.
         else:
-            File(file.path, file.name, file.parent, file.depth, self, None, file.marked_exp)  # Prevent problems with duplicated files sharing the same file.spectrum by generating a fresh file
+            File(file.path, file.name, file.parent_directory, file.depth, self, None, file.marked_exp)  # Prevent problems with duplicated files sharing the same file.spectrum by generating a fresh file
 
     @classmethod
     def select_molecule_and_ground_state_energy(cls, molecule, ground_state_energy):

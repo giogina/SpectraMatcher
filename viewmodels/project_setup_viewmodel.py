@@ -92,7 +92,7 @@ class ProjectSetupViewModel(ProjectObserver):
         """Molecule & level of theory option selected in top-level dropdown"""
         key = self.mlo_options.get(list_str)
         State.select_molecule_and_ground_state_energy(*key)
-        self._project.project_unsaved()
+        self._project.project_changed()
 
     def import_state_file(self, file, state_index):
         state = State.state_list[state_index]

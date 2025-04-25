@@ -2,12 +2,13 @@ import math
 from collections import Counter
 
 import numpy as np
-from scipy import signal
+# from scipy import signal
 
 from utility.async_manager import AsyncManager
 from utility.spectrum_plots import SpecPlotter
 from utility.wavenumber_corrector import WavenumberCorrector
 from utility.labels import Labels
+from utility import signal
 
 
 _ELEMENT_NAMES = {'1': "H", '2': "He", '3': "Li", '4': "Be", '5': "B", '6': "C", '7': "N", '8': "O", '9': "F",
@@ -580,15 +581,7 @@ class FCSpectrum:
 
     def compute_min_max(self):
         """Return indices of local minima and maxima of self.ydata"""
-        maxima, _ = list(signal.find_peaks(self.y_data))
-        if len(maxima) == 0:
-            return None, None
-        mins, _ = list(signal.find_peaks([-y for y in self.y_data]))
-        minima = [0]
-        minima.extend(mins)
-        minima.append(len(self.y_data) - 1)
-        self.minima = minima
-        self.maxima = maxima
+        self.minima, self.maxima = signal.local_extrema(self.y_data)
 
     def get_clusters(self, in_placement_order=False):
         if in_placement_order:

@@ -1,4 +1,5 @@
 import os
+import sys
 from os.path import isfile, join
 import re
 from enum import Enum
@@ -149,9 +150,9 @@ class DataFileManager:
         return self.all_files.get(tag)
 
     def get_file_by_path(self, path):
-        path = path.replace("/", "\\")
+        path = os.path.normpath(path)
         for file in self.all_files.values():
-            if file.path == path:
+            if os.path.normpath(file.path) == path:
                 return file
         return None
 
@@ -194,7 +195,7 @@ class Directory:
     def __init__(self, path, manager: DataFileManager, name=None, parent=None, depth=0):
         self.content_dirs = {}
         self.content_files = {}
-        self.path = path.replace("/", "\\")
+        self.path = os.path.normpath(path)
         self.manager = manager
         self.tag = f"dir_{path}_{depth}"
         self.depth = depth
@@ -205,8 +206,8 @@ class Directory:
         self.parent_directory = parent
 
         auto_ignore = False
-        if self.path.find("\\ignore") > -1 or self.path.find("\\old") > -1:
-            print(f"Ignoring directory by path>: {self.path}")
+        if self.path.find("ignore") > -1 or self.path.find("old") > -1:
+            print(f"Ignoring directory by path: {self.path}")
             self.manager.ignore(self.tag)
             self.manager.toggle_directory(directory_tag=self.tag, is_open=False)
             auto_ignore = True
@@ -216,9 +217,9 @@ class Directory:
     def crawl_contents(self, path, auto_ignore=False):
         dirs = {}
         files = {}
-        for item in os.listdir(path):
+        for item in sorted(os.listdir(path)):
             if isfile(join(path, item)):
-                file_path = join(path, item).replace("/", "\\")
+                file_path = os.path.join(path, item)
                 marked = None
                 if file_path in self.manager.files_marked_as_excitation:
                     marked = "excitation"
@@ -252,7 +253,7 @@ class File:
         self.properties = {}
         self.is_human_readable = True  # \n instead of \r\n making it ugly in notepad
         self.type = None
-        self.path = path.replace("/", "\\")
+        self.path = os.path.normpath(path)
         if name:
             self.name = name
         else:
@@ -321,9 +322,10 @@ class File:
     def _read_file_lines(self):
         PathLockManager.acquire_read(self.path)
         try:
-            with open(self.path, 'rb') as file:
-                content = file.read(1024)
-                self.is_human_readable = b'\r\n' in content
+            if sys.platform.startswith("win"):
+                with open(self.path, 'rb') as file:
+                    content = file.read(1024)
+                    self.is_human_readable = b'\r\n' in content
             with open(self.path, 'r', encoding='utf-8') as f:
                 tmp_lines = [line.rstrip("\r\n") for line in f]
                 if self.type in FileType.LOG_TYPES:

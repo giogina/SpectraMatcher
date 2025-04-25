@@ -10,7 +10,6 @@ class Matcher:
                  'show component spectra': True,
                  'show shade spectra': False,
                  'show stick spectra': False,
-                 "assign only labeled": False,
                  "list only labeled transitions": False
                  }
     settings = {True: {}, False: {}}

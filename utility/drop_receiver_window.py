@@ -1,6 +1,28 @@
 import dearpygui.dearpygui as dpg
-import DearPyGui_DragAndDrop as dpg_dnd
 
+try:
+    import DearPyGui_DragAndDrop as dpg_dnd
+    dragndrop_enabled = True
+    DropBaseClass = dpg_dnd.DragAndDrop
+    DropDataObject = dpg_dnd.DragAndDropDataObject
+
+except ImportError:
+    dragndrop_enabled = True
+    # Fallbacks for systems without the library
+    class DummyDpgDnd:
+        def initialize(self, *args, **kwargs): pass
+        def set_drop_effect(self, *args, **kwargs): pass
+        def set_drag_over(self, *args, **kwargs): pass
+        class DragAndDrop:  # Dummy base class
+            def __init__(self, *args, **kwargs): pass
+            def create(self, *args, **kwargs): pass
+
+        class DragAndDropDataObject:
+            def __init__(self, *args, **kwargs): pass
+            def get(self, *args, **kwargs): return None
+            def set(self, *args, **kwargs): pass
+
+    dpg_dnd = DummyDpgDnd()
 
 def initialize_dnd():
     dpg_dnd.initialize()
@@ -15,7 +37,7 @@ class DropReceiverWindow(dpg_dnd.DragAndDrop):
     def __init__(self, drop_callback, hover_drag_theme, normal_theme):
         super().__init__()
         self.window: int = None
-        self.dpg_text: int
+        self.dpg_text: int = None
         self.drop_callback = drop_callback
         self.hover_drag_theme = hover_drag_theme
         self.normal_theme = normal_theme
@@ -27,6 +49,8 @@ class DropReceiverWindow(dpg_dnd.DragAndDrop):
 
     def DragOver(self, keyState: list):
         if self.window is None:
+            return
+        if not dragndrop_enabled:
             return
         if dpg.is_item_hovered(self.window):
             dpg.bind_item_theme(self.window, self.hover_drag_theme)

@@ -1,8 +1,6 @@
 import numpy as np
 import colorsys
 
-from scipy.interpolate import interp1d
-
 
 def hsv_to_rgb(h, s, v):
     if s == 0.0: return (v, v, v)
@@ -75,13 +73,12 @@ class SpecPlotter:
     @classmethod
     def set_active_plotter(cls, is_emission, half_width, x_min, x_max, x_step=1):
         plotter_key = (round(half_width*10)/10, int(min(x_min, x_max)), int(max(x_min, x_max)), max(1, int(x_step)))
-        print(f"Setting active plotter: {'Emission' if is_emission else 'Excitation'}, {plotter_key}")
         if is_emission:
             cls._active_emission_plotter = plotter_key
         else:
             cls._active_excitation_plotter = plotter_key
         if plotter_key not in cls._plotters:
-            SpecPlotter(int(half_width*10)/10, int(min(x_min, x_max)), int(max(x_min, x_max)), x_step=max(1, int(x_step)))
+            SpecPlotter(*plotter_key)
         for o in cls._observers:
             o.update(cls.active_plotter_changed_notification, plotter_key, is_emission)
 
@@ -117,10 +114,7 @@ class SpecPlotter:
     @classmethod
     def get_spectrum_array(cls, peaks, is_emission):
         """Get array using currently active plotter"""
-        if is_emission:
-            plotter_key = cls._active_emission_plotter
-        else:
-            plotter_key = cls._active_excitation_plotter
+        plotter_key = cls.get_plotter_key(is_emission)
         if plotter_key is not None:
             ydata = cls._plotters[plotter_key].spectrum_array(peaks)
             top = max(0.01, max(ydata))

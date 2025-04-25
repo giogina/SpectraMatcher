@@ -1,9 +1,8 @@
 import os
 import re
-import subprocess
 import dearpygui.dearpygui as dpg
-import pyperclip
 
+from launcher import Launcher
 from models.state import State
 from utility.font_manager import FontManager
 from viewmodels.data_files_viewmodel import DataFileViewModel
@@ -12,6 +11,27 @@ from utility.icons import Icons
 from utility.drop_receiver_window import DropReceiverWindow, initialize_dnd
 from utility.custom_dpg_items import CustomDpgItems
 from utility.item_themes import ItemThemes
+
+try:
+    import pyperclip
+    pyperclip.copy("test")
+    if pyperclip.paste() != "test":
+        raise RuntimeError("Clipboard test failed")
+except Exception as e:
+    print("Pyperclip unavailable or broken:", e)
+
+    class DummyPyperclip:
+        @staticmethod
+        def copy(text):
+            print("Clipboard copy not available.")
+            Launcher.notify_linux_user("No copy tool found. Run: sudo apt-get install xclip")
+
+        @staticmethod
+        def paste():
+            print("Clipboard paste not available.")
+            Launcher.notify_linux_user("No copy tool found. Run: sudo apt-get install xclip")
+            return ""
+    pyperclip = DummyPyperclip
 
 _file_icons = {
     FileType.GAUSSIAN_INPUT: Icons.file_code,
@@ -181,7 +201,7 @@ class FileExplorer:
     def _setup_filter_popup(self, filter_button, *args):
         with dpg.popup(filter_button, tag="file filter popup", mousebutton=dpg.mvMouseButton_Left, no_move=False):
             dpg.add_button(label="Filter file types", width=200)
-            dpg.bind_item_theme(dpg.last_item(), ItemThemes.invisible_button_theme())
+            dpg.bind_item_theme(dpg.last_item(), ItemThemes.get_invisible_button_theme())
             dpg.add_separator()
             for extension in self.filterable_extensions:
                 dpg.add_checkbox(label=f"  *{extension}", default_value=True, tag=f"check {extension}",
@@ -237,8 +257,8 @@ class FileExplorer:
             dpg.add_spacer(height=2)
             dpg.add_separator()
             dpg.add_spacer(height=2)
-            dpg.add_selectable(label="Open in Explorer ", user_data=directory.path.replace("/", "\\"),
-                               callback=lambda s, a, u: subprocess.Popen(f'explorer "{u}"'))
+            dpg.add_selectable(label="Open in Explorer ", user_data=directory.path,
+                               callback=lambda s, a, u: Launcher.show_in_explorer(u))
 
     def _setup_file_right_click_menu(self, file: File):
         if file.tag not in [f.tag for f in self._file_rows]:
@@ -303,8 +323,8 @@ class FileExplorer:
                 dpg.add_spacer(height=2)
                 dpg.add_separator()
                 dpg.add_spacer(height=2)
-            dpg.add_selectable(label="Show in Explorer ", user_data=file.path.replace("/", "\\"),
-                               callback=lambda s, a, u: subprocess.Popen(f'explorer /select,"{u}"'))
+            dpg.add_selectable(label="Show in Explorer ", user_data=file.path,
+                               callback=lambda s, a, u: Launcher.show_in_explorer(u))
 
     def _collapse_all(self, s, a, expand=False, *args):
         for directory in self._directory_nodes:
@@ -471,104 +491,119 @@ class FileExplorer:
                 dpg.bind_item_theme(directory_tag, theme=self.un_ignored_directory_theme)
 
     def update_file(self, file: File, table=None):
-        # print(f"update file: {file.path}, {file.routing_info}")
-        if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
-            if table is None:
-                # print(f"Delay displaying file: {file.path}")
-                return  # Too early, the item to be updated hasn't been made yet.
-            # print(f"Constructing table row for {file.tag}")
-            with dpg.table_row(tag=file.tag, parent=table):
-                for i, column in enumerate(self._table_columns):
-                    width = self._table_columns[i][1] + 6   # table button extra width adjustment
-                    if i == 0:  # Icon, can be icon or image button
-                        with dpg.group(horizontal=True):
-                            dpg.add_button(width=width, tag=f"{file.tag}-c{i}")
-                            dpg.add_image_button("FC excitation-16", width=width, tag=f"{file.tag}-c{i}-img", show=False)
-                            dpg.add_spacer(width=6)
-                    elif i == 1:  # file name, adjust indent of following columns
-                        width -= 52 + file.depth * 20
-                        if file.parent_directory is None:
-                            width -= 10  # Make up for extra spacing in front
-                        dpg.add_selectable(label=file.name, width=width, span_columns=True, tag=f"{file.tag}-c1")
-                    else:
-                        dpg.add_button(width=width, tag=f"{file.tag}-c{i}", show=self._table_columns[i][3])
-            self._file_rows.append(file)
+        try:
+            # print(f"update file: {file.path}, {file.routing_info}")
+            if file.tag not in [f.tag for f in self._file_rows]:  # construct dpg items for this row
+                if table is None:
+                    # print(f"Delay displaying file: {file.path}")
+                    return  # Too early, the item to be updated hasn't been made yet.
+                # print(f"Constructing table row for {file.tag}")
+                with dpg.table_row(tag=file.tag, parent=table):
+                    for i, column in enumerate(self._table_columns):
+                        width = self._table_columns[i][1] + 6   # table button extra width adjustment
+                        if i == 0:  # Icon, can be icon or image button
+                            with dpg.group(horizontal=True):
+                                dpg.add_button(width=width, tag=f"{file.tag}-c{i}")
+                                dpg.add_image_button("FC excitation-16", width=width, tag=f"{file.tag}-c{i}-img", show=False)
+                                dpg.add_spacer(width=6)
+                        elif i == 1:  # file name, adjust indent of following columns
+                            width -= 52 + file.depth * 20
+                            if file.parent_directory is None:
+                                width -= 10  # Make up for extra spacing in front
+                            dpg.add_selectable(label=file.name, width=width, span_columns=True, tag=f"{file.tag}-c1")
+                        else:
+                            dpg.add_button(width=width, tag=f"{file.tag}-c{i}", show=self._table_columns[i][3])
+                self._file_rows.append(file)
 
-        # Gather & insert file info
-        if self.viewmodel.is_ignored(file.tag):
-            dpg.bind_item_theme(f"{file.tag}-c{0}", self.ignored_file_theme)
-            dpg.bind_item_theme(f"{file.tag}-c{1}", self.ignored_file_theme)
-        else:
-            dpg.bind_item_theme(f"{file.tag}-c{0}", self.un_ignored_file_theme)
-            dpg.bind_item_theme(f"{file.tag}-c{1}", self.un_ignored_file_theme)
-        if file.type in _file_icon_textures.keys() and not self.viewmodel.is_ignored(file.tag):
-            dpg.configure_item(f"{file.tag}-c0", width=0, show=False)
-            dpg.configure_item(f"{file.tag}-c0-img", width=self._table_columns[0][1], show=True)
-            file_icon_texture_tag = f"{file.type}-{16}"
-            dpg.configure_item(f"{file.tag}-c0-img", texture_tag=file_icon_texture_tag)
-            dpg.bind_item_theme(f"{file.tag}-c1", self.file_type_color_theme[file.type])
-            if type(file.properties) == dict and file.properties.get(GaussianLog.STATUS) == GaussianLog.FINISHED:
-                with dpg.drag_payload(parent=f"{file.tag}-c{1}", drag_data=file, payload_type="Ground file" if file.type==FileType.FREQ_GROUND else "Excited file"):
-                    dpg.add_text(file.path)
-            if file.type in (FileType.EXPERIMENT_EMISSION, FileType.EXPERIMENT_EXCITATION):
-                with dpg.drag_payload(parent=f"{file.tag}-c{1}", drag_data=file, payload_type="Experiment file"):
-                    dpg.add_text(file.path)
-        else:
-            dpg.configure_item(f"{file.tag}-c0-img", width=0, show=False)
-            dpg.configure_item(f"{file.tag}-c0", width=self._table_columns[0][1], show=True)
-            file_icon = Icons.file
-            if file.type == FileType.GAUSSIAN_INPUT:
-                file_icon = Icons.file_code
-            self.icons.insert(f"{file.tag}-c0", file_icon, 16, solid=False)
+            # Gather & insert file info
+            if self.viewmodel.is_ignored(file.tag):
+                dpg.bind_item_theme(f"{file.tag}-c{0}", self.ignored_file_theme)
+                dpg.bind_item_theme(f"{file.tag}-c{1}", self.ignored_file_theme)
+            else:
+                dpg.bind_item_theme(f"{file.tag}-c{0}", self.un_ignored_file_theme)
+                dpg.bind_item_theme(f"{file.tag}-c{1}", self.un_ignored_file_theme)
+            if file.type in _file_icon_textures.keys() and not self.viewmodel.is_ignored(file.tag):
+                dpg.configure_item(f"{file.tag}-c0", width=0, show=False)
+                dpg.configure_item(f"{file.tag}-c0-img", width=self._table_columns[0][1], show=True)
+                file_icon_texture_tag = f"{file.type}-{16}"
+                dpg.configure_item(f"{file.tag}-c0-img", texture_tag=file_icon_texture_tag)
+                dpg.bind_item_theme(f"{file.tag}-c1", self.file_type_color_theme[file.type])
+                if type(file.properties) == dict and file.properties.get(GaussianLog.STATUS) == GaussianLog.FINISHED:
+                    with dpg.drag_payload(parent=f"{file.tag}-c{1}", drag_data=file, payload_type="Ground file" if file.type==FileType.FREQ_GROUND else "Excited file"):
+                        dpg.add_text(file.path)
+                if file.type in (FileType.EXPERIMENT_EMISSION, FileType.EXPERIMENT_EXCITATION):
+                    with dpg.drag_payload(parent=f"{file.tag}-c{1}", drag_data=file, payload_type="Experiment file"):
+                        dpg.add_text(file.path)
+            else:
+                dpg.configure_item(f"{file.tag}-c0-img", width=0, show=False)
+                dpg.configure_item(f"{file.tag}-c0", width=self._table_columns[0][1], show=True)
+                file_icon = Icons.file
+                if file.type == FileType.GAUSSIAN_INPUT:
+                    file_icon = Icons.file_code
+                self.icons.insert(f"{file.tag}-c0", file_icon, 16, solid=False)
+                dpg.bind_item_theme(f"{file.tag}-c0", ItemThemes.get_invisible_button_theme())
 
-        status = file.properties.get(GaussianLog.STATUS, "None")
-        status_icon = _status_icons.get(status)
-        tooltip = status_icon["tooltip"]
-        if status == GaussianLog.ERROR and file.error is not None:
-            tooltip += file.error
-        self.icons.insert(f"{file.tag}-c2", icon=status_icon["icon"], size=16,
-                          color=status_icon["color"], tooltip=tooltip)
+            status = file.properties.get(GaussianLog.STATUS, "None")
+            status_icon = _status_icons.get(status)
+            tooltip = status_icon["tooltip"]
+            if status == GaussianLog.ERROR and file.error is not None:
+                tooltip += file.error
+            dpg.bind_item_theme(f"{file.tag}-c2", ItemThemes.get_invisible_button_theme())
+            self.icons.insert(f"{file.tag}-c2", icon=status_icon["icon"], size=16,
+                              color=status_icon["color"], tooltip=tooltip, invisible=True)
 
-        if file.routing_info is not None:
-            self._setup_file_right_click_menu(file)
-            td = file.routing_info.get('td')
-            if td is not None:
-                dpg.set_item_label(f"{file.tag}-c3", f"{td[0]}/{td[1]}")
-            elif file.type == FileType.FREQ_GROUND:
-                dpg.set_item_label(f"{file.tag}-c3", "ground")
+            if file.routing_info is not None:
+                self._setup_file_right_click_menu(file)
+                td = file.routing_info.get('td')
+                if td is not None:
+                    dpg.set_item_label(f"{file.tag}-c3", f"{td[0]}/{td[1]}")
+                elif file.type == FileType.FREQ_GROUND:
+                    dpg.set_item_label(f"{file.tag}-c3", "ground")
 
-            jobs = ' '.join(file.routing_info.get('jobs', ''))
-            job_label = ' '.join([job.split('=')[0] for job in file.routing_info.get('jobs', [])])
-            if file.type in (FileType.FC_EXCITATION, FileType.FC_EMISSION, FileType.GAUSSIAN_INPUT):
-                if re.search(r"(?<![a-zA-Z])(fc)", jobs):
-                    if re.search(r"(?<![a-zA-Z])(fcht)", jobs):
-                        job_label = "FCHT"
-                    else:
-                        job_label = "FC"
-                elif re.search(r"(?<![a-zA-Z])(ht)", jobs):
-                    job_label = "HT"
-            dpg.set_item_label(f"{file.tag}-c4", job_label)
-            if dpg.does_item_exist(f"{file.tag}-c4 tooltip"):
-                dpg.delete_item(f"{file.tag}-c4 tooltip")
-            with dpg.tooltip(f"{file.tag}-c4", tag=f"{file.tag}-c4 tooltip", delay=0.3):
-                dpg.add_text(f" {jobs} ")
+                jobs = ' '.join(file.routing_info.get('jobs', ''))
+                job_label = ' '.join([job.split('=')[0] for job in file.routing_info.get('jobs', [])])
+                if file.type in (FileType.FC_EXCITATION, FileType.FC_EMISSION, FileType.GAUSSIAN_INPUT):
+                    if re.search(r"(?<![a-zA-Z])(fc)", jobs):
+                        if re.search(r"(?<![a-zA-Z])(fcht)", jobs):
+                            job_label = "FCHT"
+                        else:
+                            job_label = "FC"
+                    elif re.search(r"(?<![a-zA-Z])(ht)", jobs):
+                        job_label = "HT"
+                dpg.set_item_label(f"{file.tag}-c4", job_label)
+                if dpg.does_item_exist(f"{file.tag}-c4 tooltip"):
+                    dpg.delete_item(f"{file.tag}-c4 tooltip")
+                with dpg.tooltip(f"{file.tag}-c4", tag=f"{file.tag}-c4 tooltip", delay=0.3):
+                    dpg.add_text(f" {jobs} ")
 
-            if file.routing_info.get('loth') is not None:
-                dpg.set_item_label(f"{file.tag}-c5", f"{file.routing_info.get('loth', '')}")
+                if file.routing_info.get('loth') is not None:
+                    dpg.set_item_label(f"{file.tag}-c5", f"{file.routing_info.get('loth', '')}")
 
-                dpg.set_item_label(f"{file.tag}-c6", f"{' '.join(file.routing_info.get('keywords', ''))}")
+                    dpg.set_item_label(f"{file.tag}-c6", f"{' '.join(file.routing_info.get('keywords', ''))}")
 
-            dpg.set_item_label(f"{file.tag}-c7", file.molecular_formula)
+                dpg.set_item_label(f"{file.tag}-c7", file.molecular_formula)
 
-            if file.multiplicity is not None:
-                dpg.set_item_label(f"{file.tag}-c8", f"{file.multiplicity}")
+                if file.multiplicity is not None:
+                    dpg.set_item_label(f"{file.tag}-c8", f"{file.multiplicity}")
 
-        if file.modes is not None:
-            dpg.set_item_label(f"{file.tag}-c10", f"{str([int(wn) for wn in file.modes.get_wavenumbers(5)]).strip('[]').replace(' ', '  ')}, ...")
+            if file.modes is not None:
+                dpg.set_item_label(f"{file.tag}-c10", f"{str([int(wn) for wn in file.modes.get_wavenumbers(5)]).strip('[]').replace(' ', '  ')}, ...")
 
-        if file.spectrum is not None:
-            dpg.set_item_label(f"{file.tag}-c9", f"{int(file.spectrum.zero_zero_transition_energy)}")
-            dpg.set_item_label(f"{file.tag}-c10", f"{str([int(wn) for wn in file.spectrum.get_wavenumbers(5)]).strip('[]').replace(' ', '  ')}, ...")
+            if file.spectrum is not None:
+                dpg.set_item_label(f"{file.tag}-c9", f"{int(file.spectrum.zero_zero_transition_energy)}")
+                dpg.set_item_label(f"{file.tag}-c10", f"{str([int(wn) for wn in file.spectrum.get_wavenumbers(5)]).strip('[]').replace(' ', '  ')}, ...")
+
+            dpg.bind_item_theme(f"{file.tag}-c3", ItemThemes.get_invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c4", ItemThemes.get_invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c5", ItemThemes.get_invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c6", ItemThemes.get_invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c7", ItemThemes.get_invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c8", ItemThemes.get_invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c9", ItemThemes.get_invisible_button_theme())
+            dpg.bind_item_theme(f"{file.tag}-c10", ItemThemes.get_invisible_button_theme())
+        except Exception as e:
+            print("Update file failed: ", e)
+
 
     def configure_theme(self):
         with dpg.theme() as file_explorer_theme:

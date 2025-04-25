@@ -1,25 +1,73 @@
+import subprocess
+import sys
+import textwrap
 import tkinter as tk
 from tkinter import filedialog, simpledialog
-from tkinter import *
 
 from screeninfo import get_monitors
 
 from launcher import Launcher
 
-
 def open_project_file_dialog(root_path="/"):
+    try:
+        return _open_project_file_dialog_subprocess(root_path)
+    except Exception as e:  # Fallback (worked for Windows)
+        _open_project_file_dialog_tk(root_path)
+
+def _open_project_file_dialog_subprocess(initial_path="/"):
+    code = textwrap.dedent(f"""
+        import tkinter as tk
+        from tkinter import filedialog
+        root = tk.Tk()
+        root.withdraw()
+        path = filedialog.askopenfilename(
+            initialdir=r'{initial_path}',
+            title="Select project file",
+            filetypes=[("SpectraMatcher Projects (.smp)", "*.smp"), ("All Files", "*.*")]
+        )
+        if path:
+            print(path)
+    """)
+
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    return result.stdout.strip() or None
+
+def _open_project_file_dialog_tk(root_path="/"):
     root = tk.Tk()
     root.withdraw()  # Hides the tkinter root window
     file_path = filedialog.askopenfilename(
         initialdir=root_path,  # self.settings.get("projectsPath", "/"),
         title="Select project file",
-        filetypes=[("SpectraMatcher Projects (.spm)", "*.spm*"), ("All Files", "*.*")]
+        filetypes=[("SpectraMatcher Projects (.smp)", "*.smp*"), ("All Files", "*.*")]
     )
     root.destroy()
     return file_path
 
 
 def data_dir_file_dialog(root_path="/"):
+    try:
+        return _data_dir_file_dialog_subprocess(root_path)
+    except Exception as e:
+        return _data_dir_file_dialog_tk(root_path)
+
+def _data_dir_file_dialog_subprocess(initial_path="/"):
+    code = textwrap.dedent(f"""
+        import tkinter as tk
+        from tkinter import filedialog
+        root = tk.Tk()
+        root.withdraw()
+        path = filedialog.askdirectory(
+            initialdir=r'{initial_path}',
+            title="Select data directory"
+        )
+        if path:
+            print(path)
+    """)
+
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    return result.stdout.strip() or None
+
+def _data_dir_file_dialog_tk(root_path="/"):
     root = tk.Tk()
     root.withdraw()
     file_path = filedialog.askdirectory(
@@ -31,6 +79,36 @@ def data_dir_file_dialog(root_path="/"):
 
 
 def data_files_dialog(root_path="/"):
+    try:
+        return _data_files_dialog_subprocess(root_path)
+    except Exception as e:
+        return _data_files_dialog_tk(root_path)
+
+def _data_files_dialog_subprocess(initial_path="/"):
+    code = textwrap.dedent(f"""
+        import tkinter as tk
+        from tkinter import filedialog
+        root = tk.Tk()
+        root.withdraw()
+        paths = filedialog.askopenfilenames(
+            initialdir=r'{initial_path}',
+            title="Select data files",
+            filetypes=[
+                ("All Files", "*.*"),
+                ("Gaussian log files", "*.log"),
+                ("Text files", "*.txt*")
+            ],
+        )
+        if paths:
+            for path in paths:
+                print(path)
+    """)
+
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    # Split multiple lines, strip empty results
+    return [line.strip() for line in result.stdout.strip().splitlines() if line.strip()]
+
+def _data_files_dialog_tk(root_path="/"):
     root = tk.Tk()
     root.withdraw()
     file_path = filedialog.askopenfilenames(
@@ -43,21 +121,46 @@ def data_files_dialog(root_path="/"):
 
 
 def save_as_file_dialog(root_path="/"):
+    try:
+        return _save_as_file_dialog_subprocess(root_path)
+    except Exception as e:
+        print("Subprocess dialog failed, falling back:", e)
+        return _save_as_file_dialog_tk(root_path)
+
+def _save_as_file_dialog_subprocess(initial_path="/"):
+    code = textwrap.dedent(f"""
+        import tkinter as tk
+        from tkinter import filedialog
+        root = tk.Tk()
+        root.withdraw()
+        path = filedialog.asksaveasfilename(
+            initialdir=r'{initial_path}',
+            title="Save project as",
+            filetypes=[("SpectraMatcher Project (.smp)", "*.smp*"), ("All Files", "*.*")],
+            defaultextension=".smp"
+        )
+        if path:
+            print(path)
+    """)
+
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    return result.stdout.strip() or None
+
+def _save_as_file_dialog_tk(root_path="/"):
     root = tk.Tk()
     root.withdraw()  # Hides the tkinter root window
     file_path = filedialog.asksaveasfilename(
         initialdir=root_path,
         title="Save project as",
-        filetypes=[("SpectraMatcher Project (.spm)", "*.spm*"), ("All Files", "*.*")],
-        defaultextension=".spm",
+        filetypes=[("SpectraMatcher Project (.smp)", "*.smp*"), ("All Files", "*.*")],
+        defaultextension=".smp",
     )
     root.destroy()
     return file_path
 
-
 def inquire_close_unsaved(project_name: str, root_path="/"):
     """Returns "discard" or "save" or ("save as", file) """
-    print("project save inquiry dialog....")
+    # print("Project save inquiry dialog....")
     monitor = get_monitors()[0]
     pos = (int((monitor.width-300)/2), int((monitor.height-200)/2))
     root = tk.Tk()
@@ -66,17 +169,20 @@ def inquire_close_unsaved(project_name: str, root_path="/"):
     root.withdraw()
     root.update_idletasks()
     root.withdraw()  # Hide the root window
-    dialog = SaveChangesDialog(root, project_name)
-    root.destroy()
-    choice = dialog.user_choice  # Return the choice
-    if choice == "save as":
-        path = save_as_file_dialog(root_path)
-        if path:
-            return "save as", path
-        else:
-            return inquire_close_unsaved()  # try again
-    else:
-        return choice
+    try:
+        while True:
+            dialog = SaveChangesDialog(root, project_name)
+            choice = dialog.user_choice  # Return the choice
+            if choice == "save as":
+                path = save_as_file_dialog(root_path)
+                if path:
+                    return "save as", path
+                else:
+                    continue  # try again
+            else:
+                return choice
+    finally:
+        root.destroy()
 
 
 class SaveChangesDialog(simpledialog.Dialog):
