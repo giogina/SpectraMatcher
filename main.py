@@ -5,8 +5,9 @@ from launcher import Launcher
 from views.main_window import MainWindow
 from views.startup_dashboard import Dashboard
 from views.create_project import CreateProjectWindow
-# -m nuitka --assume-yes-for-downloads --standalone --follow-imports --include-data-dir=C:/Users/Giogina/SpectraMatcher/fonts=fonts  --include-data-dir=C:/Users/Giogina/SpectraMatcher/resources=resources --windows-icon-from-ico=C:/Users/Giogina/SpectraMatcher/resources/SpectraMatcher.ico --enable-plugin=tk-inter --windows-disable-console --output-filename=SpectraMatcher.exe $FilePath$
-
+# Windows: -m nuitka --assume-yes-for-downloads --standalone --follow-imports --include-data-dir=C:/Users/Giogina/SpectraMatcher/fonts=fonts  --include-data-dir=C:/Users/Giogina/SpectraMatcher/resources=resources --windows-icon-from-ico=C:/Users/Giogina/SpectraMatcher/resources/SpectraMatcher.ico --enable-plugin=tk-inter --windows-disable-console --output-filename=SpectraMatcher.exe $FilePath$
+# Linux: -m nuitka --standalone --follow-imports --enable-plugin=tk-inter --include-data-dir=./fonts=fonts --include-data-dir=./resources=resources --assume-yes-for-downloads --output-filename=SpectraMatcher $FilePath$
+#         mv main.dist/ (obtained form Nuitka) -> Linux_installer/bin/; cd Linux_installer/; cp spectramatcher.sh bin/ (launcher to take care of the --open flag); zip -9 -r SpectraMatcher_Linux_Installer.zip bin/ install_spectramatcher.sh README.txt ../LICENSE
 
 def main():
     # # regularly remove the logger; or just turn it all off?

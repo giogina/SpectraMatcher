@@ -344,7 +344,7 @@ class PlotsOverview:
             dpg.configure_item(self.plot, height=dpg.get_viewport_height()/2)
             dpg.configure_item(self.plot_row, height=dpg.get_viewport_height()/2)
 
-    def switch_plot_theme(self):
+    def switch_plot_theme(self, *args):
         self.light_mode = not self.light_mode
         if self.light_mode:
             dpg.bind_item_theme(self.plot, f"plot_background_white_{self.viewmodel.is_emission}")
