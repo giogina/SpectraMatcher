@@ -79,6 +79,7 @@ On Windows 7, only Python 3.7 can be run, which requires specific versions of th
 pip install -r requirements/win7.txt
 ```
 Should a library download no longer be available, use the [backup wheels](./backup_wheels_python37/).
+Be careful to keep the provided `.dll` files in the main directory, as some might be missing from Windows 7. 
 
 You can then run SpectraMatcher as
 ```bash
