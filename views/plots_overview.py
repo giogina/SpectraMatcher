@@ -1074,10 +1074,15 @@ class PlotsOverview:
             line_color = [180, 180, 242, 255] if self.light_mode else [120, 120, 200, 255]
             for peak in match_plot.exp_peaks:
                 if peak.match is not None:
-                    line_start = (peak.wavenumber, peak.intensity + 10/self.pixels_per_plot_y)
-                    line_end = (peak.match[0], match_plot.yshift - 10/self.pixels_per_plot_y)
-                    y_offset = abs(line_end[0] - line_start[0])*self.pixels_per_plot_x/self.pixels_per_plot_y
-                    elbow = (line_start[0], line_end[1] - y_offset)
+                    if self.pixels_per_plot_y > 10:
+                        line_start = (peak.wavenumber, peak.intensity + 10/self.pixels_per_plot_y)
+                        line_end = (peak.match[0], match_plot.yshift - 10/self.pixels_per_plot_y)
+                        y_offset = abs(line_end[0] - line_start[0])*self.pixels_per_plot_x/self.pixels_per_plot_y
+                        elbow = (line_start[0], line_end[1] - y_offset)
+                    else:
+                        line_start = (peak.wavenumber, peak.intensity + 0.03)
+                        line_end = (peak.match[0], match_plot.yshift - 0.03)
+                        elbow = (line_start[0], line_end[1])
                     if (line_start, elbow) in old_lines.keys():
                         self.match_lines[(line_start, elbow)] = old_lines[(line_start, elbow)]  # no change to vertical line
                     else:
