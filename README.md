@@ -118,4 +118,6 @@ python3 main.py -open file.smp
 
 </details>
 
+---
+
 ![](./documentation/screenshot.png)
