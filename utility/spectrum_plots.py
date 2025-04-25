@@ -1,8 +1,6 @@
 import numpy as np
 import colorsys
 
-from scipy.interpolate import interp1d
-
 
 def hsv_to_rgb(h, s, v):
     if s == 0.0: return (v, v, v)

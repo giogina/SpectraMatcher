@@ -1,5 +1,5 @@
 from models.data_file_manager import File, FileType
-from scipy import signal
+from utility import signal as signal
 import numpy as np
 from utility.spectrum_plots import SpecPlotter
 from utility.noop import noop
@@ -319,13 +319,10 @@ class ExperimentalSpectrum:
         high_peaks = []
         pr = 1
         while not len(high_peaks):
-            high_peaks, _ = signal.find_peaks(smooth_ydata, prominence=pr)
+            high_peaks, properties = signal.find_peaks(smooth_ydata, prominence=pr, width=0)
             pr = pr / 2
-        pws = signal.peak_widths(smooth_ydata, high_peaks)
-
-        widths = [xdata[round(w[0])] - xdata[round(w[1])] for w in zip(pws[2], pws[3])]
-        width = int(abs(sum(widths) / len(widths)) * 5) / 10
-        self.peak_width = width / ((max(xdata) - min(xdata)) / len(xdata))
+        xstep = (self.x_max - self.x_min) / (len(self.xdata) - 1)
+        self.peak_width = properties['widths'][0]*xstep/2 if len(properties['widths']) > 0 else 10*xstep
 
         self.detect_peaks()  #prominence=0.05, width=10 / (abs(xdata[-1] - xdata[0]) / len(xdata))
 
@@ -335,9 +332,11 @@ class ExperimentalSpectrum:
         ExperimentalSpectrum.adjust_spec_plotter_range(self.is_emission)
 
     def detect_peaks(self):
-        if self.x_min is None or self.x_max is None:
+        if self.x_min is None or self.x_max is None or len(self.xdata) < 2:
             return
-        peaks, _ = signal.find_peaks(self.smooth_ydata, prominence=ExperimentalSpectrum.get(self.is_emission, 'peak prominence threshold'), width=ExperimentalSpectrum.get(self.is_emission, 'peak width threshold'))
+        xstep = (self.x_max - self.x_min)/(len(self.xdata) - 1)
+        peaks, pm = signal.find_peaks(self.smooth_ydata, prominence=ExperimentalSpectrum.get(self.is_emission, 'peak prominence threshold'), width=ExperimentalSpectrum.get(self.is_emission, 'peak width threshold')/xstep)
+
         peaks = list(peaks)
         for chosen_peak in self.settings.get("chosen peaks", []):
             if self.x_min <= chosen_peak <= self.x_max:
@@ -350,13 +349,6 @@ class ExperimentalSpectrum:
                 self.peaks.append(ExpPeak(index=p, wavenumber=self.xdata[p], intensity=self.ydata[p]))
 
         self._notify_observers(self.peaks_changed_notification)
-
-        # prominences = signal.peak_prominences(self.smooth_ydata, [p.index for p in self.peaks])
-        # widths = signal.peak_widths(self.smooth_ydata, [p.index for p in self.peaks])
-        #
-        # for p, peak in enumerate(self.peaks):
-        #     peak.prominence = prominences[0][p]
-        #     peak.width = widths[0][p]
 
     @classmethod
     def remove(cls, exp):

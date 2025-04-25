@@ -1,8 +1,8 @@
-from scipy import signal
 from models.experimental_spectrum import ExperimentalSpectrum
 from utility.labels import Labels
 from utility.matcher import Matcher
 from utility.noop import noop
+from utility import signal
 from models.molecular_data import FCSpectrum
 import numpy as np
 
@@ -234,13 +234,9 @@ class MatchPlot:
         """Find indices of local minima and maxima of self.ydata"""
         if len(self.ydata) == 0:
             return
-        maxima, _ = list(signal.find_peaks(self.ydata))
+        minima, maxima = signal.local_extrema(self.ydata)
         if len(maxima) == 0:
             return
-        mins, _ = list(signal.find_peaks([-y for y in self.ydata]))
-        minima = [0]
-        minima.extend(mins)
-        minima.append(len(self.ydata) - 1)
 
         self.maxima = []  # list of (min_x, max_x, min_x)
 
