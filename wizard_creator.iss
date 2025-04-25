@@ -27,7 +27,7 @@ ChangesAssociations=yes
 DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users.)
 PrivilegesRequired=lowest
-OutputDir=C:\Users\Giogina\SpectraMatcher\installer
+OutputDir=C:\Users\Giogina\SpectraMatcher\windows_installer
 OutputBaseFilename=SpectraMatcher-setup
 SetupIconFile=C:\Users\Giogina\SpectraMatcher\resources\SpectraMatcher.ico
 Compression=lzma
