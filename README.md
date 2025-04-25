@@ -5,11 +5,6 @@ SpectraMatcher is a tool for analyzing and matching vibronic spectra. A quick st
 The tool is available as compiled binaries for Windows and Linux, or can be run using Python. The respective setup steps are described below.
 
 
-Installation wizards:
-
-
-
-
 <details><summary><strong>Windows installer</strong></summary>
 
 SpectraMatcher is compatible with **Windows 7 and above**.
