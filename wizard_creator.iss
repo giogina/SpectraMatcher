@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "SpectraMatcher"
-#define MyAppVersion "Beta-0.9"
+#define MyAppVersion "1.1.0"
 #define MyAppURL "https://github.com/giogina/SpectraMatcher"
 #define MyDocURL "https://spectramatcher.gitbook.io/spectramatcher"
 #define MyBugURL "https://github.com/giogina/SpectraMatcher/issues"
@@ -21,6 +21,7 @@ AppVersion={#MyAppVersion}
 AppPublisherURL={#MyDocURL}
 AppSupportURL={#MyBugURL}
 AppUpdatesURL={#MyAppURL}
+LicenseFile=C:\Users\Giogina\SpectraMatcher\LICENSE
 DefaultDirName={autopf}\{#MyAppName}
 ChangesAssociations=yes
 DisableProgramGroupPage=yes
@@ -48,6 +49,7 @@ Source: "C:\Users\Giogina\SpectraMatcher\dlls for dearpygui\api-ms-win-downlevel
 Source: "C:\Users\Giogina\SpectraMatcher\dlls for dearpygui\api-ms-win-downlevel-ole32-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\Giogina\SpectraMatcher\dlls for dearpygui\api-ms-win-downlevel-shlwapi-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\Giogina\SpectraMatcher\dlls for dearpygui\vcruntime140_1.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\Giogina\SpectraMatcher\LICENSE"
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
@@ -60,6 +62,9 @@ Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+
+[Messages]
+LicenseLabel=It's okay, I didn't read it all either.
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
