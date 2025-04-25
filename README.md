@@ -17,7 +17,7 @@ Requirements: Windows 7+
 
 
 <details><summary><strong>Linux installer</strong></summary>
-To install the Linux binary, download the [installer](Linux_installer/) follow these steps:
+To install the Linux binary, download the [installer](./Linux_installer/SpectraMatcher_Linux.zip) follow these steps:
 
 
 1. Unzip the archive:
