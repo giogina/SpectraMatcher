@@ -315,15 +315,6 @@ class ExperimentalSpectrum:
             self.errors.append(f"Absolute and relative wavenumber columns don't match")
         self.smooth_ydata = smooth_ydata
 
-        # determine width from high / most prominent peaks
-        high_peaks = []
-        pr = 1
-        while not len(high_peaks):
-            high_peaks, properties = signal.find_peaks(smooth_ydata, prominence=pr, width=0)
-            pr = pr / 2
-        xstep = (self.x_max - self.x_min) / (len(self.xdata) - 1)
-        self.peak_width = properties['widths'][0]*xstep/2 if len(properties['widths']) > 0 else 10*xstep
-
         self.detect_peaks()  #prominence=0.05, width=10 / (abs(xdata[-1] - xdata[0]) / len(xdata))
 
         self.ok = len(self.errors) == 0
@@ -369,9 +360,9 @@ class ExperimentalSpectrum:
             return None
         x_min = min(min_list)
         x_max = max(max_list)
-        half_width = SpecPlotter.get_half_width(is_emission)  # Prevent overwriting of half-width
-        if half_width is None:
-            half_width = [exp.peak_width for exp in exp_list if exp.x_min == x_min][0]
+        half_width = SpecPlotter.get_half_width(is_emission)  # Prevent overwriting of set half-width
+        # if half_width == 10 or half_width is None:
+        #     half_width = [exp.peak_width for exp in exp_list if exp.x_min == x_min][0]
         SpecPlotter.set_active_plotter(is_emission, half_width, x_min-1000, 2*x_max+1000)
 
 
