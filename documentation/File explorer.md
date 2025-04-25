@@ -18,7 +18,7 @@ If no such headings are supplied, SpectraMatcher identifies data columns accordi
 
 Once an experimental spectrum data file is added to the project, the columns can be selected manually by right-clicking on the corresponding range:
 
-<figure><img src=".gitbook/assets/select data columns.gif" alt=""><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/select_data_columns.gif" alt=""><figcaption></figcaption></figure>
 
 Experimental files are interpreted as excitation or emission spectra based on their file names: Any file containing one of the sub-strings "DF_", "fluor" or "emmi" is interpreted as an emission spectrum; all other data table files are interpreted as excitation spectra.
 

@@ -1446,26 +1446,32 @@ class PlotsOverview:
                 with dpg.theme_component(dpg.mvPlot):
                     dpg.add_theme_color(dpg.mvPlotCol_PlotBg, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
                     dpg.add_theme_color(dpg.mvPlotCol_PlotBorder, [0, 0, 0, 255], category=dpg.mvThemeCat_Plots)
-                    dpg.add_theme_color(dpg.mvPlotCol_AxisBg, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
-                    dpg.add_theme_color(dpg.mvPlotCol_AxisBgActive, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
-                    dpg.add_theme_color(dpg.mvPlotCol_Fill, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
-                    dpg.add_theme_color(dpg.mvPlotCol_AxisText, [0, 0, 0, 255], category=dpg.mvThemeCat_Plots)
                     dpg.add_theme_color(dpg.mvPlotCol_FrameBg, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
-                    dpg.add_theme_color(dpg.mvPlotCol_AxisBgHovered, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+                    dpg.add_theme_color(dpg.mvPlotCol_Fill, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+                    if hasattr(dpg, "mvPlotCol_AxisBg"):
+                        dpg.add_theme_color(dpg.mvPlotCol_AxisBg, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+                        dpg.add_theme_color(dpg.mvPlotCol_AxisBgActive, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+                        dpg.add_theme_color(dpg.mvPlotCol_AxisText, [0, 0, 0, 255], category=dpg.mvThemeCat_Plots)
+                        dpg.add_theme_color(dpg.mvPlotCol_AxisBgHovered, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+                    elif hasattr(dpg, "mvPlotCol_XAxis"):
+                        dpg.add_theme_color(dpg.mvPlotCol_XAxis, [0, 0, 0, 255], category=dpg.mvThemeCat_Plots)
+                        dpg.add_theme_color(dpg.mvPlotCol_YAxis, [0, 0, 0, 255], category=dpg.mvThemeCat_Plots)
 
             axisbg = [33, 33, 108, 255]
             with dpg.theme(tag=f"plot_background_dark_{self.viewmodel.is_emission}"):
                 with dpg.theme_component(dpg.mvPlot):
                     dpg.add_theme_color(dpg.mvPlotCol_PlotBg, [11, 11, 36, 255], category=dpg.mvThemeCat_Plots)
                     dpg.add_theme_color(dpg.mvPlotCol_PlotBorder, [131, 131, 255, 100], category=dpg.mvThemeCat_Plots)
-                    dpg.add_theme_color(dpg.mvPlotCol_AxisBg, axisbg, category=dpg.mvThemeCat_Plots)
-                    dpg.add_theme_color(dpg.mvPlotCol_AxisBgActive, axisbg, category=dpg.mvThemeCat_Plots)
-                    dpg.add_theme_color(dpg.mvPlotCol_AxisBgHovered, axisbg,category=dpg.mvThemeCat_Plots)
                     dpg.add_theme_color(dpg.mvPlotCol_Fill, axisbg, category=dpg.mvThemeCat_Plots)
-                    dpg.add_theme_color(dpg.mvPlotCol_AxisText, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
                     dpg.add_theme_color(dpg.mvPlotCol_FrameBg, axisbg, category=dpg.mvThemeCat_Plots)
-
-                    
+                    if hasattr(dpg, "mvPlotCol_AxisBg"):
+                        dpg.add_theme_color(dpg.mvPlotCol_AxisBg, axisbg, category=dpg.mvThemeCat_Plots)
+                        dpg.add_theme_color(dpg.mvPlotCol_AxisBgActive, axisbg, category=dpg.mvThemeCat_Plots)
+                        dpg.add_theme_color(dpg.mvPlotCol_AxisBgHovered, axisbg,category=dpg.mvThemeCat_Plots)
+                        dpg.add_theme_color(dpg.mvPlotCol_AxisText, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+                    elif hasattr(dpg, "mvPlotCol_XAxis"):
+                        dpg.add_theme_color(dpg.mvPlotCol_XAxis, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+                        dpg.add_theme_color(dpg.mvPlotCol_YAxis, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
 
     def on_scroll(self, direction, *args):
         # print(f"On scroll (plots_overview)")
