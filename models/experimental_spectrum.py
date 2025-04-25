@@ -326,7 +326,9 @@ class ExperimentalSpectrum:
         if self.x_min is None or self.x_max is None or len(self.xdata) < 2:
             return
         xstep = (self.x_max - self.x_min)/(len(self.xdata) - 1)
-        peaks, pm = signal.find_peaks(self.smooth_ydata, prominence=ExperimentalSpectrum.get(self.is_emission, 'peak prominence threshold'), width=ExperimentalSpectrum.get(self.is_emission, 'peak width threshold')/xstep)
+        if xstep is None:
+            return
+        peaks, pm = signal.find_peaks(self.smooth_ydata, prominence=ExperimentalSpectrum.get(self.is_emission, 'peak prominence threshold'), width=ExperimentalSpectrum.get(self.is_emission, 'peak width threshold', 10)/xstep)
 
         peaks = list(peaks)
         for chosen_peak in self.settings.get("chosen peaks", []):
