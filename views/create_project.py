@@ -183,9 +183,9 @@ class CreateProjectWindow:
 
     def construct_savefile_name(self, *args):
         if dpg.get_value('name input'):
-            name = dpg.get_value('name input')+".spm"  # .replace(" ", "_")+".spm"
+            name = dpg.get_value('name input')+".smp"
         else:
-            name = "untitled.spm"
+            name = "untitled.smp"
         directory = self.settings.get("projectsPath", os.getcwd())
         path = os.path.join(directory, name)
         return self.uniquify_path(path)

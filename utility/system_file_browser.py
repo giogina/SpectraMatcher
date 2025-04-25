@@ -23,7 +23,7 @@ def _open_project_file_dialog_subprocess(initial_path="/"):
         path = filedialog.askopenfilename(
             initialdir=r'{initial_path}',
             title="Select project file",
-            filetypes=[("SpectraMatcher Projects (.spm)", "*.spm"), ("All Files", "*.*")]
+            filetypes=[("SpectraMatcher Projects (.smp)", "*.smp"), ("All Files", "*.*")]
         )
         if path:
             print(path)
@@ -38,7 +38,7 @@ def _open_project_file_dialog_tk(root_path="/"):
     file_path = filedialog.askopenfilename(
         initialdir=root_path,  # self.settings.get("projectsPath", "/"),
         title="Select project file",
-        filetypes=[("SpectraMatcher Projects (.spm)", "*.spm*"), ("All Files", "*.*")]
+        filetypes=[("SpectraMatcher Projects (.smp)", "*.smp*"), ("All Files", "*.*")]
     )
     root.destroy()
     return file_path
@@ -136,8 +136,8 @@ def _save_as_file_dialog_subprocess(initial_path="/"):
         path = filedialog.asksaveasfilename(
             initialdir=r'{initial_path}',
             title="Save project as",
-            filetypes=[("SpectraMatcher Project (.spm)", "*.spm*"), ("All Files", "*.*")],
-            defaultextension=".spm"
+            filetypes=[("SpectraMatcher Project (.smp)", "*.smp*"), ("All Files", "*.*")],
+            defaultextension=".smp"
         )
         if path:
             print(path)
@@ -152,8 +152,8 @@ def _save_as_file_dialog_tk(root_path="/"):
     file_path = filedialog.asksaveasfilename(
         initialdir=root_path,
         title="Save project as",
-        filetypes=[("SpectraMatcher Project (.spm)", "*.spm*"), ("All Files", "*.*")],
-        defaultextension=".spm",
+        filetypes=[("SpectraMatcher Project (.smp)", "*.smp*"), ("All Files", "*.*")],
+        defaultextension=".smp",
     )
     root.destroy()
     return file_path
