@@ -104,9 +104,12 @@ class Launcher:
                 return True
             elif psutil.pid_exists(pid):
                 print("Process still running.")
-                with open(lockfile, "w") as lock_file:
-                    lock_file.write(window_title)
-                return True
+                try:
+                    with open(lockfile, "w") as lock_file:
+                        lock_file.write(window_title)
+                    return True
+                finally:
+                    return False
             else:
                 os.remove(lockfile)  # faulty lock
                 print("Spurious lock file deleted")
