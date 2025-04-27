@@ -1,6 +1,8 @@
 old/
 *.spm
+*.smp
 *.log
+*.lock
 *.backup
 *_autosave.spm
 spectraMatcher.log
