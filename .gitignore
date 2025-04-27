@@ -1,9 +1,13 @@
 old/
+*.spm
+*.log
 *.backup
 *_autosave.spm
 spectraMatcher.log
 __pycache__
 venv_win
+venv_win/
+*log/
 /old/
 build*/
 build.dist/
