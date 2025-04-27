@@ -8,7 +8,7 @@
 #define MyBugURL "https://github.com/giogina/SpectraMatcher/issues"
 #define MyAppExeName "SpectraMatcher.exe"
 #define MyAppAssocName MyAppName + " File"
-#define MyAppAssocExt ".spm"
+#define MyAppAssocExt ".smp"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
 
 [Setup]
