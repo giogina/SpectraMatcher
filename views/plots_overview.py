@@ -1472,6 +1472,8 @@ class PlotsOverview:
                     elif hasattr(dpg, "mvPlotCol_XAxis"):
                         dpg.add_theme_color(dpg.mvPlotCol_XAxis, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
                         dpg.add_theme_color(dpg.mvPlotCol_YAxis, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
+            dpg.bind_item_theme(self.plot, f"plot_background_dark_{self.viewmodel.is_emission}")
+
 
     def on_scroll(self, direction, *args):
         # print(f"On scroll (plots_overview)")
