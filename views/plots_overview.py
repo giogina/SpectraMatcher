@@ -4,8 +4,6 @@ import threading
 import dearpygui.dearpygui as dpg
 import time
 
-import numpy as np
-
 from launcher import Launcher
 from models.experimental_spectrum import ExperimentalSpectrum
 from utility.font_manager import FontManager
@@ -1474,9 +1472,7 @@ class PlotsOverview:
                         dpg.add_theme_color(dpg.mvPlotCol_YAxis, [255, 255, 255, 255], category=dpg.mvThemeCat_Plots)
             dpg.bind_item_theme(self.plot, f"plot_background_dark_{self.viewmodel.is_emission}")
 
-
     def on_scroll(self, direction, *args):
-        # print(f"On scroll (plots_overview)")
         if self.hovered_spectrum_y_drag_line is not None and dpg.is_item_hovered(self.plot):
             self.viewmodel.resize_spectrum(self.hovered_spectrum_y_drag_line, direction * self.adjustment_factor)
         elif self.hovered_x_drag_line is not None and dpg.is_item_hovered(self.plot):
