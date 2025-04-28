@@ -321,6 +321,7 @@ class File:
 
     def _read_file_lines(self):
         PathLockManager.acquire_read(self.path)
+        lines = []
         try:
             if sys.platform.startswith("win"):
                 with open(self.path, 'rb') as file:
