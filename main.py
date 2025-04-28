@@ -8,8 +8,13 @@ from launcher import Launcher
 
 
 def main():
-    log_file = None
 
+    if len(sys.argv) > 3 and sys.argv[1] == "-dialog":   # DO NOT print anything (except the result) here - that would mess with subprocess results.
+        from utility.system_file_browser import run_directly
+        print(run_directly(sys.argv[2], sys.argv[3]))
+        return
+
+    log_file = None
     try:
         input_path = str(sys.argv[2]) if len(sys.argv) > 2 else "SpectraMatcher"
         log_file_path = Launcher.get_logfile_path(input_path)
