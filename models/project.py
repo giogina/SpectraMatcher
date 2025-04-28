@@ -85,7 +85,6 @@ class Project(FileObserver):
     def __init__(self, project_file):
         self._project_file_lock = threading.Lock()
         self._data_lock = threading.Lock()
-        # self._logger = logging.getLogger(__name__)
         self._observers = {}
         self._is_unsaved = False
 
@@ -434,6 +433,10 @@ class Project(FileObserver):
 
         try:
             self.project_file = new_file
+            name = os.path.splitext(os.path.split(new_file)[1])[0]
+            with self._data_lock:
+                self._data["name"] = name
+
             self.save(auto=False, new_file=True)
             self._settings.add_recent_project(self.project_file)
             if not at_shutdown:
