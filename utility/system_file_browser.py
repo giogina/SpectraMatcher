@@ -194,6 +194,7 @@ def save_or_discard_dialog(project_name):
                 self.destroy()
 
         root = tk.Tk()
+        root.title("Save changes to {project_name}?")
         root.geometry("+{pos[0]}+{pos[1]}")
         root.withdraw()
         root.update_idletasks()
