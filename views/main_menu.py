@@ -8,6 +8,7 @@ from utility.system_file_browser import *
 from screeninfo import get_monitors
 from contextlib import contextmanager
 import webbrowser
+from launcher import Launcher
 
 
 class MainMenu:
