@@ -355,10 +355,13 @@ class Project(FileObserver):
                 # self._logger.info(f"Save successful.")
                 if not auto:
                     self.project_unsaved(False)
-            except (IOError, OSError) as e:
+            except Exception as e:
                 print(f"Error saving project: {e}")
                 if temp_file_path:
-                    os.remove(temp_file_path)
+                    try:
+                        os.remove(temp_file_path)
+                    except Exception as e:
+                        print(f"Error removing temp file {temp_file_path}: {e}")
 
     def _hide(self, file):
         if sys.platform.startswith("win"):
@@ -429,24 +432,27 @@ class Project(FileObserver):
     def save_as(self, new_file):
         print(f"Project received save as request: {new_file}")
 
-        self.project_file = new_file
-        self.save(auto=False, new_file=True)
-        self._settings.add_recent_project(self.project_file)
-        self.window_title = self._assemble_window_title()
-        self.project_unsaved(True)  # Causes window title update
-        self.project_unsaved(False)
+        try:
+            self.project_file = new_file
+            self.save(auto=False, new_file=True)
+            self._settings.add_recent_project(self.project_file)
+            self.window_title = self._assemble_window_title()
+            self.project_unsaved(True)  # Causes window title update
+            self.project_unsaved(False)
 
-        # Rename autosave
-        old_autosave = self._autosave_file
-        self._autosave_file = self._get_autosave_file_path()
-        if os.path.exists(old_autosave):
-            os.rename(old_autosave, self._autosave_file)  # might as well just keep it for safety...
+            # Rename autosave
+            old_autosave = self._autosave_file
+            self._autosave_file = self._get_autosave_file_path()
+            if os.path.exists(old_autosave):
+                os.rename(old_autosave, self._autosave_file)  # might as well just keep it for safety...
 
-        # Mark new project file as open
-        if os.path.exists(self._lock_file_path):
-            os.remove(self._lock_file_path)
-        self._lock_file_path = Launcher.get_lockfile_path(self.project_file)
-        self._mark_project_as_open()
+            # Mark new project file as open
+            if os.path.exists(self._lock_file_path):
+                os.remove(self._lock_file_path)
+            self._lock_file_path = Launcher.get_lockfile_path(self.project_file)
+            self._mark_project_as_open()
+        except Exception as e:
+            print(f"Error saving as {new_file}:, {e}")
 
     def save_and_close_project(self):
         print("Save and close called")
@@ -468,7 +474,10 @@ class Project(FileObserver):
             #     if os.path.exists(self._autosave_file):
             #         os.remove(self._autosave_file)  # Just keep it - won't be loaded if it's older.
             if os.path.exists(self._lock_file_path):
-                os.remove(self._lock_file_path)
+                try:
+                    os.remove(self._lock_file_path)
+                except Exception as e:
+                    print(f"Error closing lock file {self._lock_file_path}: {e}")
 
     def get(self, key, default=None):
         with self._data_lock:
