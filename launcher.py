@@ -47,7 +47,7 @@ class Launcher:
             command.extend(args)
             print(f'Launching: {command}')
             try:
-                subprocess.Popen(command)
+                subprocess.Popen(command, close_fds=True)
             except Exception as e:
                 print("Error while launching: ", e)
 
@@ -59,13 +59,16 @@ class Launcher:
         else:
             log_dirname = "log"
         log_dir = os.path.join(base_dir, log_dirname)
-        if not os.path.exists(log_dir):  # Create the directory if it doesn't exist
-            os.makedirs(log_dir, exist_ok=True)
-        if sys.platform.startswith("win"):  # On Windows, set the hidden attribute
-            try:
-                subprocess.check_call(["attrib", "+h", log_dir])
-            except Exception as e:
-                print(f"Warning: Could not set hidden attribute on {log_dir}: {e}")
+        try:
+            if not os.path.exists(log_dir):  # Create the directory if it doesn't exist
+                os.makedirs(log_dir, exist_ok=True)
+            if sys.platform.startswith("win"):  # On Windows, set the hidden attribute
+                try:
+                    subprocess.check_call(["attrib", "+h", log_dir])
+                except Exception as e:
+                    print(f"Warning: Could not set hidden attribute on {log_dir}: {e}")
+        except Exception as e:
+            print("Log directory could not be created: ", e)
         return os.path.abspath(log_dir)
 
     @staticmethod
@@ -91,13 +94,16 @@ class Launcher:
     @staticmethod
     def cleanup_old_logs(max_age_days=1):
         log_dir = Launcher.get_log_dir()
+        if not os.path.exists(log_dir):
+            print(f"Could not clean log dir: Directory {log_dir} does not exist.")
+            return
         now = time.time()
         max_age_seconds = max_age_days * 86400
-        _, own_log = os.path.split(Launcher.log_file_path) if Launcher.log_file_path is not None else ""
+        _, own_log = os.path.split(Launcher.log_file_path) if Launcher.log_file_path else ""
 
         for filename in os.listdir(log_dir):
             file_path = os.path.join(log_dir, filename)
-            if (filename != own_log) and os.path.isfile(file_path):
+            if (filename != own_log) and os.path.isfile(file_path) and (os.path.splitext(file_path)[1] == ".log"):
                 try:
                     file_mtime = os.path.getmtime(file_path)
                     if now - file_mtime > max_age_seconds:
@@ -144,7 +150,7 @@ class Launcher:
     @staticmethod
     def check_for_lock_file(file):
         lockfile = Launcher.get_lockfile_path(file)
-        print("Checking for: ", repr(lockfile))
+        print("Checking for lock file: ", repr(lockfile))
         try:
             if os.path.exists(lockfile):  # Check for lock file
                 with open(lockfile, "r") as lock_file:
