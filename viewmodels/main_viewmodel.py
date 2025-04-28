@@ -142,7 +142,7 @@ class MainViewModel(ProjectObserver):
                 self._project.save_and_close_project()
                 return True
             elif type(response) == tuple and response[0] == "save as":
-                self._project.save_as(response[1])
+                self._project.save_as(response[1], at_shutdown=True)
                 return True
             else:
                 return False

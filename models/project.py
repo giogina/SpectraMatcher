@@ -429,28 +429,29 @@ class Project(FileObserver):
         else:
             return False
 
-    def save_as(self, new_file):
+    def save_as(self, new_file, at_shutdown=False):
         print(f"Project received save as request: {new_file}")
 
         try:
             self.project_file = new_file
             self.save(auto=False, new_file=True)
             self._settings.add_recent_project(self.project_file)
-            self.window_title = self._assemble_window_title()
-            self.project_unsaved(True)  # Causes window title update
-            self.project_unsaved(False)
+            if not at_shutdown:
+                self.window_title = self._assemble_window_title()
+                self.project_unsaved(True)  # Causes window title update
+                self.project_unsaved(False)
 
-            # Rename autosave
-            old_autosave = self._autosave_file
-            self._autosave_file = self._get_autosave_file_path()
-            if os.path.exists(old_autosave):
-                os.rename(old_autosave, self._autosave_file)  # might as well just keep it for safety...
+                # Rename autosave
+                old_autosave = self._autosave_file
+                self._autosave_file = self._get_autosave_file_path()
+                if os.path.exists(old_autosave):
+                    os.rename(old_autosave, self._autosave_file)  # might as well just keep it for safety...
 
-            # Mark new project file as open
-            if os.path.exists(self._lock_file_path):
-                os.remove(self._lock_file_path)
-            self._lock_file_path = Launcher.get_lockfile_path(self.project_file)
-            self._mark_project_as_open()
+                # Mark new project file as open
+                if os.path.exists(self._lock_file_path):
+                    os.remove(self._lock_file_path)
+                self._lock_file_path = Launcher.get_lockfile_path(self.project_file)
+                self._mark_project_as_open()
         except Exception as e:
             print(f"Error saving as {new_file}:, {e}")
 

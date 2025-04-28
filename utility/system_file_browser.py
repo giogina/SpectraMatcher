@@ -1,12 +1,10 @@
 import subprocess
-import sys
 import textwrap
 import tkinter as tk
 from tkinter import filedialog, simpledialog
-
+from tkinter import *
 from screeninfo import get_monitors
 
-from launcher import Launcher
 
 def open_project_file_dialog(root_path="/"):
     try:
@@ -146,6 +144,7 @@ def _save_as_file_dialog_subprocess(initial_path="/"):
     result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
     return result.stdout.strip() or None
 
+
 def _save_as_file_dialog_tk(root_path="/"):
     root = tk.Tk()
     root.withdraw()  # Hides the tkinter root window
@@ -158,61 +157,49 @@ def _save_as_file_dialog_tk(root_path="/"):
     root.destroy()
     return file_path
 
-def inquire_close_unsaved(project_name: str, root_path="/"):
-    """Returns "discard" or "save" or ("save as", file) """
-    # print("Project save inquiry dialog....")
+
+def inquire_close_unsaved(project_name, root_path="/"):
+    choice = save_or_discard_dialog(project_name)
+    if choice == "save as":
+        path = save_as_file_dialog(root_path)
+        if path:
+            return "save as", path
+        else:
+            return inquire_close_unsaved(project_name, root_path=root_path)  # try again
+    elif choice not in ("save", "discard"):
+        return "discard"
+    else:
+        return choice
+
+
+def save_or_discard_dialog(project_name):
     monitor = get_monitors()[0]
-    pos = (int((monitor.width-300)/2), int((monitor.height-200)/2))
-    root = tk.Tk()
-    root.geometry("+{}+{}".format(pos[0], pos[1]))  # Root does not move yet
-    root.overrideredirect(1)
-    root.withdraw()
-    root.update_idletasks()
-    root.withdraw()  # Hide the root window
-    try:
-        while True:
-            dialog = SaveChangesDialog(root, project_name)
-            choice = dialog.user_choice  # Return the choice
-            if choice == "save as":
-                path = save_as_file_dialog(root_path)
-                if path:
-                    return "save as", path
-                else:
-                    continue  # try again
-            else:
-                return choice
-    finally:
-        root.destroy()
+    pos = (int((monitor.width - 300) / 2), int((monitor.height - 200) / 2))
+    code = textwrap.dedent(f"""
+        import tkinter as tk
+        from tkinter import simpledialog
 
+        class SaveDialog(simpledialog.Dialog):
+            def body(self, master):
+                self.result = "discard"
+                tk.Label(master, text="Would you like to save changes to {project_name}?").pack(padx=10, pady=10)
+            def buttonbox(self):
+                box = tk.Frame(self)
+                tk.Button(box, text="Save", width=10, command=lambda: self.ok("save")).pack(side=tk.LEFT, padx=5, pady=5)
+                tk.Button(box, text="Save As...", width=10, command=lambda: self.ok("save as")).pack(side=tk.LEFT, padx=5, pady=5)
+                tk.Button(box, text="Discard", width=10, command=lambda: self.ok("discard")).pack(side=tk.LEFT, padx=5, pady=5)
+                box.pack()
+            def ok(self, choice):
+                self.result = choice
+                self.destroy()
 
-class SaveChangesDialog(simpledialog.Dialog):
-    def __init__(self, parent, name):
-        self.user_choice = ""
-        self.name = name
-        super().__init__(parent, title="Save changes?")
+        root = tk.Tk()
+        root.geometry("+{pos[0]}+{pos[1]}")
+        root.withdraw()
+        root.update_idletasks()
+        dialog = SaveDialog(root)
+        print(dialog.result)
+    """)
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)  # possibly , timeout=200 - but unlikely to be necessary.
+    return result.stdout.strip()
 
-    def body(self, master):
-        tk.Label(master, text=f"\nWould you like to save changes to {self.name}?\n").pack()
-        self.bring_to_front()
-        return None  # Override if you need to return a specific widget
-
-    def buttonbox(self):
-        box = tk.Frame(self)
-
-        save_button = tk.Button(box, text="Save", width=20, command=lambda: self.ok("save"), default=tk.ACTIVE)
-        save_button.pack(side=tk.LEFT, padx=5, pady=5)
-        save_as_button = tk.Button(box, text="Save As...", width=20, command=lambda: self.ok("save as"))
-        save_as_button.pack(side=tk.LEFT, padx=5, pady=5)
-        discard_button = tk.Button(box, text="Discard", width=20, command=lambda: self.ok("discard"))
-        discard_button.pack(side=tk.LEFT, padx=5, pady=5)
-
-        self.bind("<Return>", lambda event, choice="save": self.ok(choice))
-
-        box.pack()
-
-    def ok(self, choice=None):
-        self.user_choice = choice  # Store the user's choice
-        super().ok()  # This will close the dialog
-
-    def bring_to_front(self):
-        self.after(100, lambda: Launcher.bring_window_to_front("Save changes?"))
