@@ -11,16 +11,12 @@ from utility.icons import Icons
 from utility.font_manager import FontManager
 import dearpygui.dearpygui as dpg
 from screeninfo import get_monitors
-# import logging
 
 
 class MainWindow:
 
     def __init__(self, path):
-        # with open("C:/Users/Giogina/SpectraMatcher/launch.log", 'a') as launch_log:
-        #     launch_log.write(f"Init called\n")
         self.result = 0
-        # self.logger = logging.getLogger(__name__)
         self.viewModel = MainViewModel(path)
         self.icons = Icons()
 

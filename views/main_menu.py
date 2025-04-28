@@ -1,4 +1,3 @@
-import subprocess
 
 from models.settings_manager import Settings
 from utility.item_themes import ItemThemes
@@ -6,18 +5,15 @@ from viewmodels.main_viewmodel import MainViewModel, noop
 import dearpygui.dearpygui as dpg
 from utility.icons import Icons
 from utility.system_file_browser import *
-# import logging
 from screeninfo import get_monitors
 from contextlib import contextmanager
 import webbrowser
-# TODO: Implement more shortcuts & menu actions (visible panels? Switch to spectrum tab?)
 
 
 class MainMenu:
     """Takes care of the viewport menu as well as keyboard shortcuts (combinations including Ctrl or Alt only)"""
     def __init__(self, viewmodel: MainViewModel):
         self.viewmodel = viewmodel
-        # self.logger = logging.getLogger(__name__)
         self.icons = Icons()
 
         # Helper variables for various stuff below; handle with care
@@ -298,8 +294,7 @@ class MainMenu:
         pass
 
     def _on_show_project_log(self, s, a, u, *args):
-        path = Launcher.get_logfile_path(self.viewmodel.path)
-        Launcher.show_in_explorer(path)
+        Launcher.show_log_file()
 
     def _on_select_new_shortcut(self, s, a, u, *args):
         self._show_modal_child("input shortcut window")

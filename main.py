@@ -1,27 +1,38 @@
-import logging
 import sys
-from utility.gui_log_handler import GuiLogHandler
 from launcher import Launcher
-from views.main_window import MainWindow
-from views.startup_dashboard import Dashboard
-from views.create_project import CreateProjectWindow
+
+
 # Windows: -m nuitka --assume-yes-for-downloads --standalone --follow-imports --include-data-dir=C:/Users/Giogina/SpectraMatcher/fonts=fonts  --include-data-dir=C:/Users/Giogina/SpectraMatcher/resources=resources --windows-icon-from-ico=C:/Users/Giogina/SpectraMatcher/resources/SpectraMatcher.ico --enable-plugin=tk-inter --windows-disable-console --output-filename=SpectraMatcher.exe $FilePath$
 # Linux: -m nuitka --standalone --follow-imports --enable-plugin=tk-inter --include-data-dir=./fonts=fonts --include-data-dir=./resources=resources --assume-yes-for-downloads --output-filename=SpectraMatcher $FilePath$
 #         mv main.dist/ (obtained form Nuitka) -> Linux_installer/bin/; cd Linux_installer/; cp spectramatcher.sh bin/ (launcher to take care of the --open flag); zip -9 -r SpectraMatcher_Linux_Installer.zip bin/ install_spectramatcher.sh README.txt ../LICENSE
 
+
 def main():
-    # # regularly remove the logger; or just turn it all off?
-    # logging.basicConfig(level=logging.INFO, filename='spectraMatcher.log',
-    #                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    # gui_handler = GuiLogHandler()  # to do: Pass GUI element to display logs?
-    # logging.getLogger().addHandler(gui_handler)
-    # logging.info(f"Started with flags: {sys.argv}")
+    log_file = None
+
+    try:
+        input_path = str(sys.argv[2]) if len(sys.argv) > 2 else "SpectraMatcher"
+        log_file_path = Launcher.get_logfile_path(input_path)
+
+        log_file = open(log_file_path, "w", buffering=1, encoding="utf-8")  # Line-buffered, safer
+
+        sys.stdout = log_file  # Redirect stdout and stderr
+        sys.stderr = log_file
+    except Exception as e:
+        print(f"Could not open log file {log_file_path}: {e}")
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
+
+    Launcher.cleanup_old_logs()
+    print(f"Program started with flags: {sys.argv}")
 
     flags = None
     if len(sys.argv) > 1:
         if sys.argv[1] == "-open" and len(sys.argv) > 2:
+            from views.main_window import MainWindow
             MainWindow(sys.argv[2]).show()
         elif sys.argv[1] == "-new":
+            from views.create_project import CreateProjectWindow
             if len(sys.argv) > 2:
                 flags = CreateProjectWindow(sys.argv[2:len(sys.argv)]).show()
             else:
@@ -29,10 +40,19 @@ def main():
         else:
             return
     else:
+        from views.startup_dashboard import Dashboard
         flags = Dashboard().show()
 
     if flags:  # Restart this program with proper flags.
         Launcher.launch(*flags)
+
+    if log_file:
+        try:
+            log_file.close()
+        except Exception as e:
+            print("Closing exception: ", e)
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
 
 
 if __name__ == "__main__":

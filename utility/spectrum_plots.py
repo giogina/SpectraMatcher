@@ -140,13 +140,16 @@ class SpecPlotter:
 
     def _shifted_peak(self, position_index):
         """Shifts and truncates self._base_peak to be correctly positioned in self._x_data."""
-        base_peak = self._base_peak
-        middle_index = self._base_peak_middle_index
+        try:
+            base_peak = self._base_peak
+            middle_index = self._base_peak_middle_index
 
-        start_index = middle_index - position_index
-        start_index = int(start_index)
-        stop_index = start_index + self.x_data.size
-        if start_index < 0 or stop_index > base_peak.size:
-            return np.zeros(self.x_data.size)  # peak too far out of range, return zeroes.
-        else:
-            return base_peak[start_index:stop_index]  # section of base peak vector with peak in correct position
+            start_index = middle_index - position_index
+            start_index = int(start_index)
+            stop_index = start_index + self.x_data.size
+            if start_index < 0 or stop_index > base_peak.size:
+                return np.zeros(self.x_data.size)  # peak too far out of range, return zeroes.
+            else:
+                return base_peak[start_index:stop_index]  # section of base peak vector with peak in correct position
+        except Exception:
+            return np.zeros(self.x_data.size)

@@ -1,3 +1,4 @@
+import datetime
 import sys
 import subprocess
 import os
@@ -10,6 +11,7 @@ from models.settings_manager import SettingsManager
 win32gui = None
 win32con = None
 
+
 def import_win_libraries():
     global win32gui, win32con
     try:
@@ -21,7 +23,9 @@ def import_win_libraries():
     except ImportError:
         return False
 
+
 class Launcher:
+    log_file_path = None
 
     @staticmethod
     def get_executable():
@@ -41,25 +45,75 @@ class Launcher:
             command = Launcher.get_executable()
             command.append(flag.strip())
             command.extend(args)
-            log_file = Launcher.get_logfile_path(args[0]) if len(args) else SettingsManager().get_default_log_path(flag)
             print(f'Launching: {command}')
-            with open(log_file, "w") as f:
-                subprocess.Popen(command, stdout=f, stderr=subprocess.STDOUT)
+            try:
+                subprocess.Popen(command)
+            except Exception as e:
+                print("Error while launching: ", e)
+
+    @staticmethod
+    def get_log_dir():
+        base_dir = os.path.abspath(SettingsManager().get("projectsPath", os.getcwd()))
+        if sys.platform.startswith("linux") or sys.platform == "darwin":
+            log_dirname = ".log"
+        else:
+            log_dirname = "log"
+        log_dir = os.path.join(base_dir, log_dirname)
+        if not os.path.exists(log_dir):  # Create the directory if it doesn't exist
+            os.makedirs(log_dir, exist_ok=True)
+        if sys.platform.startswith("win"):  # On Windows, set the hidden attribute
+            try:
+                subprocess.check_call(["attrib", "+h", log_dir])
+            except Exception as e:
+                print(f"Warning: Could not set hidden attribute on {log_dir}: {e}")
+        return os.path.abspath(log_dir)
 
     @staticmethod
     def get_logfile_path(path):
-        logpath = os.path.abspath(path)
-        dirname, logfile = os.path.split(logpath)
-        logfile = (logfile + '.log').replace(' ', '_')
-        if sys.platform.startswith("linux") or sys.platform == "darwin":
-            if not logfile.startswith("."):
-                logfile = "." + logfile
-        logpath = os.path.join(dirname, logfile)
-        return logpath
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        _, logfile = os.path.split(path)
+        logfile = os.path.splitext(str(logfile))[0].replace(' ', '_')  # Remove extension
+        logfile = f"{logfile}_{timestamp}.log"
+        log_path = os.path.join(Launcher.get_log_dir(), logfile)
+        Launcher.log_file_path = log_path
+        print("Log file: ", log_path)
+        return log_path
 
     @staticmethod
-    def get_lockfile_path(path):
-        return Launcher.get_logfile_path(path).replace('.log', '.lock')
+    def show_log_file():
+        path = Launcher.log_file_path
+        if path is not None and os.path.exists(path):
+            Launcher.show_in_explorer(path)
+        else:
+            log_dir = Launcher.get_log_dir()
+            Launcher.show_in_explorer(log_dir)
+
+    @staticmethod
+    def cleanup_old_logs(max_age_days=1):
+        log_dir = Launcher.get_log_dir()
+        now = time.time()
+        max_age_seconds = max_age_days * 86400
+        _, own_log = os.path.split(Launcher.log_file_path) if Launcher.log_file_path is not None else ""
+
+        for filename in os.listdir(log_dir):
+            file_path = os.path.join(log_dir, filename)
+            if (filename != own_log) and os.path.isfile(file_path):
+                try:
+                    file_mtime = os.path.getmtime(file_path)
+                    if now - file_mtime > max_age_seconds:
+                        os.remove(file_path)
+                except Exception as e:
+                    print(f"Warning: Could not delete {file_path}: {e}")
+
+    @staticmethod
+    def get_lockfile_path(file):
+        dirname, lockfile = os.path.split(file)
+        lockfile = (lockfile + '.lock').replace(' ', '_')
+        if sys.platform.startswith("linux") or sys.platform == "darwin":
+            if not lockfile.startswith("."):
+                lockfile = "." + lockfile
+        lock_path = os.path.join(dirname, lockfile)
+        return lock_path
 
     @staticmethod
     def show_in_explorer(path_inp):
@@ -91,28 +145,35 @@ class Launcher:
     def check_for_lock_file(file):
         lockfile = Launcher.get_lockfile_path(file)
         print("Checking for: ", repr(lockfile))
-        if os.path.exists(lockfile):  # Check for lock file
-            with open(lockfile, "r") as lock_file:
-                lines = lock_file.read().splitlines()
-                window_title = lines[0].strip() if len(lines) > 0 else ""
-                try:
-                    pid = int(lines[1].strip()) if len(lines) > 1 else -1
-                except ValueError:
-                    pid = -1
-            window_switched = Launcher.bring_window_to_front(window_title)
-            if window_switched:
-                return True
-            elif psutil.pid_exists(pid):
-                print("Process still running.")
-                try:
-                    with open(lockfile, "w") as lock_file:
-                        lock_file.write(window_title)
+        try:
+            if os.path.exists(lockfile):  # Check for lock file
+                with open(lockfile, "r") as lock_file:
+                    lines = lock_file.read().splitlines()
+                    window_title = lines[0].strip() if len(lines) > 0 else ""
+                    try:
+                        pid = int(lines[1].strip()) if len(lines) > 1 else -1
+                    except ValueError:
+                        pid = -1
+                window_switched = Launcher.bring_window_to_front(window_title)
+                if window_switched:
                     return True
-                finally:
-                    return False
-            else:
-                os.remove(lockfile)  # faulty lock
-                print("Spurious lock file deleted")
+                elif psutil.pid_exists(pid):
+                    print("Process still running.")
+                    try:
+                        with open(lockfile, "w") as lock_file:
+                            lock_file.write(window_title)
+                        return True
+                    except Exception as e:
+                        return False
+                else:
+                    try:
+                        os.remove(lockfile)  # faulty lock
+                        print("Spurious lock file deleted")
+                    except Exception as e:
+                        print("Lock file couldn't be deleted! ", e)
+                        return False
+        except Exception as e:
+            print("Error in lock file check! ", e)
         return False
 
     @staticmethod

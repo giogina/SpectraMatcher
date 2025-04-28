@@ -1,5 +1,4 @@
 import dearpygui.dearpygui as dpg
-# import logging
 import os
 from screeninfo import get_monitors
 from models.settings_manager import SettingsManager
@@ -15,7 +14,6 @@ class CreateProjectWindow:
     def __init__(self, args=[]):
         self.result = None
         self.import_from = args
-        # self.logger = logging.getLogger(__name__)
         self.projectPath = ""
         self.settings = SettingsManager()
 
@@ -50,10 +48,6 @@ class CreateProjectWindow:
             with dpg.theme_component(dpg.mvAll):
                 dpg.add_theme_color(dpg.mvThemeCol_Border, (150, 150, 255), category=dpg.mvThemeCat_Core)
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (25, 50, 75, 100), category=dpg.mvThemeCat_Core)
-
-        # with dpg.theme() as non_hover_drag_theme:
-        #     with dpg.theme_component(dpg.mvAll):
-        #         dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (25, 50, 75, 0), category=dpg.mvThemeCat_Core)
 
         dpg.create_viewport(title='Create new project - SpectraMatcher', width=dash_width, height=dash_height,
                             x_pos=int(monitor.width/2-dash_width/2), y_pos=int(monitor.height/2-dash_height/2))

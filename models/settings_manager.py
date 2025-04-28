@@ -4,7 +4,6 @@ import os
 import platform
 import sys
 import tempfile
-# import logging
 import threading
 import copy
 
@@ -72,17 +71,12 @@ class SettingsManager:
             self.update_lock = threading.Lock()  # Lock for updating settings in memory
             self.file_lock = threading.Lock()  # Lock for file operations
 
-            # self.logger = logging.getLogger(__name__)
-            # appdata_path = os.getenv('APPDATA')
-            # spectra_matcher_path = os.path.join(appdata_path, 'SpectraMatcher')
-            # config_path = os.path.join(spectra_matcher_path, 'config')
             config_path = get_config_path()
             print(config_path)
             os.makedirs(config_path, exist_ok=True)
             self.settings_file = os.path.join(config_path, 'settings.json')
 
             self._settings_dict = self._load_settings()
-            # self.logger.info(f"Settings loaded. {self._settings_dict}")
 
             projects_path = self.get(Settings.PROJECTS_PATH)
             if not os.path.exists(projects_path):
