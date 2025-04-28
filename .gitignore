@@ -10,6 +10,7 @@ __pycache__
 venv_win
 venv_win/
 *log/
+.idea/
 /old/
 build*/
 build.dist/
