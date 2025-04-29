@@ -205,14 +205,14 @@ class CreateProjectWindow:
 
     def on_add_data(self, *args):
         file = data_dir_file_dialog(self.settings.get("dataPath", os.path.expanduser("~")))
-        if file and len(file) and os.path.exists(file):
+        if file and len(file)>4 and os.path.exists(file):
             self.import_from.append(file)
             s = dpg.add_selectable(label=file, parent="selectables")
             self.selectables.append((file, s))
 
     def on_save_as(self, *args):
         file = save_as_file_dialog(self.settings.get("projectsPath", os.path.expanduser("~")))
-        if file and len(file) and os.path.exists(file):
+        if file and len(file)>4 and os.path.exists(file):
             dpg.set_value("path input", file)
             self.path_changed = True
             self.path_from_file_dialog = True

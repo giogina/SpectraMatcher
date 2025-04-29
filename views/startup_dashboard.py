@@ -471,7 +471,7 @@ class Dashboard:
     def open_project(self, *args):
         # Logic to open a project
         project_path = open_project_file_dialog(self.settings.get("projectsPath", os.path.expanduser("~")))
-        if project_path and os.path.exists(project_path):
+        if project_path and len(project_path) and os.path.exists(project_path):
             self.result = ('-open', project_path)
             dpg.stop_dearpygui()
 

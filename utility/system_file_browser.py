@@ -129,7 +129,7 @@ def inquire_close_unsaved(project_name, root_path=os.path.expanduser("~")):
     print("Choice: ", choice)
     if choice == "save as":
         path = save_as_file_dialog(root_path)
-        if path:
+        if path and len(str(path)) > 4 and os.path.exists(str(path)):
             return "save as", path
         else:
             return inquire_close_unsaved(project_name, root_path=root_path)  # try again
