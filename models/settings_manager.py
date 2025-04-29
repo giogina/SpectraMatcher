@@ -224,7 +224,8 @@ class SettingsManager:
         self._settings_dict[Settings.SHORTCUTS][shortcut] = action
         self._save_settings_async()
 
-    def add_recent_project(self, project_file):
+    def add_recent_project(self, file):
+        project_file = os.path.normpath(os.path.abspath(file))
         with self.update_lock:
             if self._settings_dict[Settings.RECENT_PROJECTS] and self._settings_dict[Settings.RECENT_PROJECTS][0] == project_file:
                 return
