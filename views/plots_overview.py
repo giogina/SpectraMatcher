@@ -145,6 +145,10 @@ class PlotsOverview:
             with dpg.theme_component(dpg.mvLineSeries):
                 dpg.add_theme_color(dpg.mvPlotCol_Line, [255, 255, 255], category=dpg.mvThemeCat_Plots)
 
+        with dpg.theme() as self.black_line_series_theme:
+            with dpg.theme_component(dpg.mvLineSeries):
+                dpg.add_theme_color(dpg.mvPlotCol_Line, [0, 0, 0], category=dpg.mvThemeCat_Plots)
+
         with dpg.table(header_row=False, borders_innerV=True, resizable=True) as self.layout_table:
             self.plot_column = dpg.add_table_column(init_width_or_weight=4)
             self.plot_settings_column = dpg.add_table_column(init_width_or_weight=1)
@@ -1048,7 +1052,10 @@ class PlotsOverview:
         if Matcher.get(self.viewmodel.is_emission, 'show composite spectrum', False):
             dpg.show_item(self.match_plot)
             dpg.set_value(self.match_plot, [match_plot.xdata, match_plot.ydata])
-            dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
+            if self.light_mode:
+                dpg.bind_item_theme(self.match_plot, self.black_line_series_theme)
+            else:
+                dpg.bind_item_theme(self.match_plot, self.white_line_series_theme)
         else:
             dpg.set_value(self.match_plot, [[], []])
 
