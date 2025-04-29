@@ -91,7 +91,7 @@ class DataFileViewModel(FileObserver):
 
     def inquire_open_data_directory(self):
         path = data_dir_file_dialog(self._data_file_manager.last_path)
-        if path and len(path)>4 and os.path.exists(path):
+        if path and len(path) > 2 and os.path.exists(path):
             self._data_file_manager.open_directories([path])
 
     def add_directory_or_file(self, paths):
