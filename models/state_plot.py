@@ -27,7 +27,7 @@ class StatePlot:
         self._base_ydata = self.spectrum.y_data
         self.xdata = self._compute_x_data()
         self.ydata = self._compute_y_data()
-        self.handle_x = self.xdata[np.where(self.ydata == max(self.ydata))[0][0]]
+        self.handle_x = self.xdata[np.where(self.ydata == max(self.ydata))[0][0]]-self.xshift
         self.sticks = []  # stick: position, [[height, color]]
         if self.spectrum.vibrational_modes is not None:
             for peak in self.spectrum.peaks:
@@ -50,7 +50,7 @@ class StatePlot:
             self._base_ydata = self.spectrum.y_data
             self.xdata = self._compute_x_data()
             self.ydata = self._compute_y_data()
-            self.handle_x = self.xdata[np.where(self.ydata == max(self.ydata))[0][0]]
+            self.handle_x = self.xdata[np.where(self.ydata == max(self.ydata))[0][0]]-self.xshift
             self.spectrum_update_callback(self)
             self.update_match_plot()
         if event == FCSpectrum.peaks_changed_notification:
