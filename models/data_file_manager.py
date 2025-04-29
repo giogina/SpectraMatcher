@@ -53,6 +53,7 @@ class DataFileManager:
     def open_directories(self, open_data_dirs, open_data_files=None):
         print(f"Opening: {open_data_dirs, open_data_files}")
         path = None
+        refresh = self.top_level_files == {}
         if open_data_dirs:
             for path in open_data_dirs:
                 directory = Directory(path, self)
@@ -65,7 +66,7 @@ class DataFileManager:
         self.last_path = os.path.dirname(path) if path else "/"
 
         # notify file explorer viewmodel to re-populate the entire list, and parent project to update top level paths.
-        self.notify_observers("directory structure changed", len(self.top_level_files.keys())==1)
+        self.notify_observers("directory structure changed", refresh)
 
         # for file in self.all_files.values():
         #     file.submit_what_am_i(observers=self.get_event_observers("file changed"), notification="file changed")  # Need to do this after directory structure notification, or it'll be too fast!
