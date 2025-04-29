@@ -449,7 +449,7 @@ class PlotsOverview:
         dpg.show_item(self.frame_node[self.animation_phase])
         dpg.hide_item(self.frame_node[old_phase])
 
-    def pause_animation(self):
+    def pause_animation(self, *args):
         paused = self.viewmodel.pause_animation()
         dpg.set_item_label(self.pause_button, "Resume" if paused else "Pause")
 
