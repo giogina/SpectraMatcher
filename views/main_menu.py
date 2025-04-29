@@ -1,3 +1,4 @@
+import os.path
 
 from models.settings_manager import Settings
 from utility.item_themes import ItemThemes
@@ -280,7 +281,7 @@ class MainMenu:
     def _on_open(self, *args):
         print(f"Open project")
         file = open_project_file_dialog(self.viewmodel.get_setting("projectsPath", "/"))
-        if file:
+        if file and os.path.exists(file):
             self.viewmodel.on_open(file)
 
     def _open_recent(self, s, a, u, *args):
