@@ -63,7 +63,7 @@ class DataFileManager:
             for path in open_data_files:
                 file = File(path)
                 self.top_level_files[file.tag] = file
-        self.last_path = os.path.dirname(path) if path else "/"
+        self.last_path = os.path.dirname(path) if path else os.path.expanduser("~")
 
         # notify file explorer viewmodel to re-populate the entire list, and parent project to update top level paths.
         self.notify_observers("directory structure changed", refresh)

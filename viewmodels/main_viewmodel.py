@@ -134,7 +134,7 @@ class MainViewModel(ProjectObserver):
         if self._project is None:
             return True
         if self._project_unsaved:
-            response = inquire_close_unsaved(project_name=self.get("name"), root_path=self.get_setting("projectsPath", "/"))  # User either saves, discards (return true) or cancels
+            response = inquire_close_unsaved(project_name=self.get("name"), root_path=self.get_setting("projectsPath", os.path.expanduser("~")))  # User either saves, discards (return true) or cancels
             if response == "discard":
                 self._project.close_project(close_anyway=True)
                 return True

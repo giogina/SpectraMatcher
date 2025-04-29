@@ -50,15 +50,15 @@ def run_directly(function, arg):
     return result
 
 
-def open_project_file_dialog(root_path="/"):
+def open_project_file_dialog(root_path=os.path.expanduser("~")):
     return _run_in_subprocess("open_project_file", root_path)
 
 
-def _open_project_file_dialog_tk(root_path="/"):  # DO NOT print anything here - that would mess with subprocess results.
+def _open_project_file_dialog_tk(root_path=os.path.expanduser("~")):  # DO NOT print anything here - that would mess with subprocess results.
     root = tk.Tk()
     root.withdraw()  # Hides the tkinter root window
     file_path = filedialog.askopenfilename(
-        initialdir=root_path,  # self.settings.get("projectsPath", "/"),
+        initialdir=root_path,
         title="Select project file",
         filetypes=[("SpectraMatcher Projects (.smp)", "*.smp*"), ("All Files", "*.*")]
     )
@@ -70,7 +70,7 @@ def data_dir_file_dialog(root_path=os.path.expanduser("~")):
     return _run_in_subprocess("open_directory_dialog", root_path)
 
 
-def _data_dir_file_dialog_tk(root_path="/"):   # DO NOT print anything here - that would mess with subprocess results.
+def _data_dir_file_dialog_tk(root_path=os.path.expanduser("~")):   # DO NOT print anything here - that would mess with subprocess results.
     root = tk.Tk()
     root.withdraw()
     file_path = filedialog.askdirectory(
@@ -81,9 +81,10 @@ def _data_dir_file_dialog_tk(root_path="/"):   # DO NOT print anything here - th
     return file_path
 
 
-###
 def data_files_dialog(root_path=os.path.expanduser("~")):
     result = _run_in_subprocess("open_files_dialog", root_path)
+    if type(result) != str:
+        return []
     result = ast.literal_eval(result)
     print(f"Multi files: {type(result)}\n", result)
     if result is not None:
@@ -104,11 +105,11 @@ def _data_files_dialog_tk(root_path=os.path.expanduser("~")):   # DO NOT print a
     return file_path
 
 
-def save_as_file_dialog(root_path="/"):
+def save_as_file_dialog(root_path=os.path.expanduser("~")):
     return _run_in_subprocess("save_as_file_dialog", root_path)
 
 
-def _save_as_file_dialog_tk(root_path="/"):  # DO NOT print anything here - that would mess with subprocess results.
+def _save_as_file_dialog_tk(root_path=os.path.expanduser("~")):  # DO NOT print anything here - that would mess with subprocess results.
     root = tk.Tk()
     root.withdraw()  # Hides the tkinter root window
     file_path = filedialog.asksaveasfilename(
@@ -121,7 +122,7 @@ def _save_as_file_dialog_tk(root_path="/"):  # DO NOT print anything here - that
     return file_path
 
 
-def inquire_close_unsaved(project_name, root_path="/"):
+def inquire_close_unsaved(project_name, root_path=os.path.expanduser("~")):
     print("Inquire closed unsaved:", project_name, root_path)
     choice = _run_in_subprocess("inquire_close_unsaved", project_name)
 

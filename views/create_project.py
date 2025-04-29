@@ -211,8 +211,8 @@ class CreateProjectWindow:
             self.selectables.append((file, s))
 
     def on_save_as(self, *args):
-        file = save_as_file_dialog(self.settings.get("projectsPath", "/"))
-        if file and len(file):
+        file = save_as_file_dialog(self.settings.get("projectsPath", os.path.expanduser("~")))
+        if file and len(file) and os.path.exists(file):
             dpg.set_value("path input", file)
             self.path_changed = True
             self.path_from_file_dialog = True

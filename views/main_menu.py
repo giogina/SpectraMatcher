@@ -264,8 +264,8 @@ class MainMenu:
 
     def _on_save_as(self, *args):
         print(f"Save as requested")
-        file = save_as_file_dialog(self.viewmodel.get_setting("projectsPath", "/"))
-        if len(file):
+        file = save_as_file_dialog(self.viewmodel.get_setting("projectsPath", os.path.expanduser("~")))
+        if len(file) and os.path.exists(file):
             self.viewmodel.on_save_as(file)
 
     def _on_save(self, *args):
@@ -280,7 +280,7 @@ class MainMenu:
 
     def _on_open(self, *args):
         print(f"Open project")
-        file = open_project_file_dialog(self.viewmodel.get_setting("projectsPath", "/"))
+        file = open_project_file_dialog(self.viewmodel.get_setting("projectsPath", os.path.expanduser("~")))
         if file and os.path.exists(file):
             self.viewmodel.on_open(file)
 
