@@ -8,7 +8,7 @@ from tkinter import *
 from screeninfo import get_monitors
 
 
-def _run_in_subprocess(function, arg, timeout=60):
+def _run_in_subprocess(function, arg, timeout=180):
     executable = os.path.abspath(sys.argv[0])
     if executable.endswith('.py'):  # Python
         command = [sys.executable, executable, "-dialog", function, arg]
@@ -28,7 +28,7 @@ def _run_in_subprocess(function, arg, timeout=60):
         try:
             return run_directly(function, arg)
         except Exception as f:
-            print(f"Fallback for {function} {arg} failed: {e}")
+            print(f"Fallback for {function} {arg} failed: {f}")
             return None
     except subprocess.TimeoutExpired:
         print(f"Subprocess timed out after {timeout} seconds.")
@@ -66,7 +66,7 @@ def _open_project_file_dialog_tk(root_path="/"):  # DO NOT print anything here -
     return file_path
 
 
-def data_dir_file_dialog(root_path="/"):
+def data_dir_file_dialog(root_path=os.path.expanduser("~")):
     return _run_in_subprocess("open_directory_dialog", root_path)
 
 
@@ -81,7 +81,8 @@ def _data_dir_file_dialog_tk(root_path="/"):   # DO NOT print anything here - th
     return file_path
 
 
-def data_files_dialog(root_path="/"):
+###
+def data_files_dialog(root_path=os.path.expanduser("~")):
     result = _run_in_subprocess("open_files_dialog", root_path)
     result = ast.literal_eval(result)
     print(f"Multi files: {type(result)}\n", result)
@@ -91,7 +92,7 @@ def data_files_dialog(root_path="/"):
         return []
 
 
-def _data_files_dialog_tk(root_path="/"):   # DO NOT print anything here - that would mess with subprocess results.
+def _data_files_dialog_tk(root_path=os.path.expanduser("~")):   # DO NOT print anything here - that would mess with subprocess results.
     root = tk.Tk()
     root.withdraw()
     file_path = filedialog.askopenfilenames(

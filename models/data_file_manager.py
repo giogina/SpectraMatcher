@@ -4,7 +4,7 @@ from os.path import isfile, join
 import re
 from enum import Enum
 
-from models.settings_manager import SettingsManager
+from models.settings_manager import SettingsManager, Settings
 from utility.experimental_spectrum_parser import ExperimentParser
 from utility.read_write_lock import PathLockManager
 from utility.async_manager import AsyncManager
@@ -42,7 +42,7 @@ class DataFileManager:
         self.top_level_directories = {}
         self.top_level_files = {}
         self._observers = {}
-        self.last_path = SettingsManager().get("dataPath", "/")  # Last added data path; for file dialog root dirs
+        self.last_path = SettingsManager().get(Settings.DATA_PATH, os.path.expanduser("~"))  # Last added data path; for file dialog root dirs
         # Set from parent Project instance, directly coupled to its _data:
         self.directory_toggle_states = {}  # "directory tag": bool - is dir toggled open?
         self.ignored_files_and_directories = []
@@ -65,7 +65,7 @@ class DataFileManager:
         self.last_path = os.path.dirname(path) if path else "/"
 
         # notify file explorer viewmodel to re-populate the entire list, and parent project to update top level paths.
-        self.notify_observers("directory structure changed")
+        self.notify_observers("directory structure changed", len(self.top_level_files.keys())==1)
 
         # for file in self.all_files.values():
         #     file.submit_what_am_i(observers=self.get_event_observers("file changed"), notification="file changed")  # Need to do this after directory structure notification, or it'll be too fast!
@@ -91,7 +91,7 @@ class DataFileManager:
     def close_file(self, file_tag):
         if file_tag in self.top_level_files.keys():
             del self.top_level_files[file_tag]
-            self.notify_observers("directory structure changed")
+            self.notify_observers("directory structure changed", True)
 
     def toggle_directory(self, directory_tag, is_open):
         self.directory_toggle_states[directory_tag] = is_open

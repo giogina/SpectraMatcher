@@ -1,3 +1,5 @@
+import os.path
+
 from models.data_file_manager import DataFileManager, FileObserver, File, Directory
 from models.experimental_spectrum import ExperimentalSpectrum
 from models.project import Project
@@ -89,7 +91,7 @@ class DataFileViewModel(FileObserver):
 
     def inquire_open_data_directory(self):
         path = data_dir_file_dialog(self._data_file_manager.last_path)
-        if path:
+        if path and os.path.exists(path):
             self._data_file_manager.open_directories([path])
 
     def add_directory_or_file(self, paths):
@@ -100,15 +102,14 @@ class DataFileViewModel(FileObserver):
 
     def inquire_open_data_files(self):
         files = data_files_dialog(self._data_file_manager.last_path)
-        if files and len(files):
-            self._data_file_manager.open_directories(open_data_dirs=[], open_data_files=list(files))
+        if files and type(files) == list and len(files):
+            self._data_file_manager.open_directories(open_data_dirs=[], open_data_files=files)
 
     def _populate_file_explorer(self, reset=False):
         # dir_vms = {t: DirectoryViewModel(d) for t, d in self._data_file_manager.top_level_directories.items()}
         # file_vms = {t: FileViewModel(file) for t, file in self._data_file_manager.top_level_files.items()}
         dirs = self._data_file_manager.top_level_directories
         files = self._data_file_manager.top_level_files
-
         if reset:
             self._callbacks.get("reset file explorer", noop)(dirs, files)
         else:

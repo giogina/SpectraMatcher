@@ -477,7 +477,7 @@ class FileExplorer:
                     for column in self._table_columns:
                         dpg.add_table_column(label=column[0])
         for file_tag in files.keys():
-            self.update_file(files[file_tag], table=f"{parent}-files table")
+            self.update_file(files[file_tag], table=tag)
 
     def update_dir_ignored_status(self, directory_tag):
         if directory_tag in self._directory_nodes.keys():
