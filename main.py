@@ -3,8 +3,17 @@ from launcher import Launcher
 
 
 # Windows: -m nuitka --assume-yes-for-downloads --standalone --follow-imports --include-data-dir=C:/Users/Giogina/SpectraMatcher/fonts=fonts  --include-data-dir=C:/Users/Giogina/SpectraMatcher/resources=resources --windows-icon-from-ico=C:/Users/Giogina/SpectraMatcher/resources/SpectraMatcher.ico --enable-plugin=tk-inter --windows-disable-console --output-filename=SpectraMatcher.exe $FilePath$
+#         Installation wizard:
+#         To make dearpygui work on win7: Make sure # https://learn.microsoft.com/en-GB/cpp/windows/latest-supported-vc-redist?view=msvc-170
+#         is installed, and include IEShims.dll and d3dcompiler_47.dll (currently present in C:\Users\Giogina\SpectraMatcher\venv_win\Lib\site-packages\dearpygui).
+#         (The VC .dlls are automatically included in Nuitka; the other two dlls are added by inno setup.)
+#         Then, simply run wizard_creator.iss in Inno setup.
+
 # Linux: -m nuitka --standalone --follow-imports --enable-plugin=tk-inter --include-data-dir=./fonts=fonts --include-data-dir=./resources=resources --assume-yes-for-downloads --output-filename=SpectraMatcher $FilePath$
-#         mv main.dist/ (obtained form Nuitka) -> Linux_installer/bin/; cd Linux_installer/; cp spectramatcher.sh bin/ (launcher to take care of the --open flag); zip -9 -r SpectraMatcher_Linux_Installer.zip bin/ install_spectramatcher.sh README.txt ../LICENSE
+#         mv main.dist/ (obtained form Nuitka) -> Linux_installer/bin/;
+#         cd Linux_installer/
+#         cp spectramatcher.sh bin/ (launcher to take care of the --open flag);
+#         zip -9 -r SpectraMatcher_Linux_Installer.zip bin/ install_spectramatcher.sh README.txt LICENSE
 
 
 def main():
@@ -62,8 +71,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    # Installation wizard:
-    #   To make dearpygui work on win7: Make sure # https://learn.microsoft.com/en-GB/cpp/windows/latest-supported-vc-redist?view=msvc-170
-    #   is installed, and include IEShims.dll and d3dcompiler_47.dll (currently present in C:\Users\Giogina\SpectraMatcher\venv_win\Lib\site-packages\dearpygui).
-    #   (The VC .dlls are automatically included in Nuitka; the other two dlls are added by inno setup.)
