@@ -9,8 +9,9 @@ __pycache__
 venv_win
 venv_win/
 *log/
-.idea/
+/.idea/
 /old/
 /build.dist/
 /main.dist/
 build*/
+/Ovalene.smp
