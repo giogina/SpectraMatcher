@@ -172,9 +172,9 @@ install_icon() {
 # ===== Run All =====
 
 echo ""
-echo -e "\033[1;35m     ===================================================="
-echo    "     = SpectraMatcher — Vibronic Spectrum Matching Tool ="
-echo -e "     ====================================================\033[0m"
+echo -e "\033[1;35m           ===================================================="
+echo    "           = SpectraMatcher — Vibronic Spectrum Matching Tool ="
+echo -e "           ====================================================\033[0m"
 echo ""
 
 install_dependencies

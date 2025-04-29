@@ -142,7 +142,7 @@ class PlotsOverviewViewmodel:
     def set_displayed_animation(self, peak=None):
         self.animated_peak = peak
 
-    def pause_animation(self, pause=None):
+    def pause_animation(self, pause=None, *args):
         if type(pause) == bool:
             self.paused = pause
         else:
