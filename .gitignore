@@ -12,7 +12,6 @@ venv_win/
 *log/
 .idea/
 /old/
-build*/
-build.dist/
+/build.dist/
 /main.dist/
-/Ovalene
+build*/

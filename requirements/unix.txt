@@ -1,7 +1,7 @@
 aiofiles
 altgraph
 cycler
-dearpygui
+dearpygui==2.0.0
 importlib-metadata
 kiwisolver
 mistletoe
