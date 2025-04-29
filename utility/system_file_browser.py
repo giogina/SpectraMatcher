@@ -148,14 +148,18 @@ def _inquire_close_unsaved_tk(project_name):
     root.geometry(f"+{pos[0]}+{pos[1]}")
     root.withdraw()
     root.update_idletasks()
-    dialog = SaveDialog(root)
+    dialog = SaveDialog(root, project_name=project_name)
     return dialog.result
 
 
 class SaveDialog(simpledialog.Dialog):
+    def __init__(self, parent, project_name):
+        self.project_name = project_name
+        self.result = "discard"
+        super().__init__(parent, title="Save changes?")
     def body(self, master):
         self.result = "discard"
-        tk.Label(master, text="Would you like to save changes to {project_name}?").pack(padx=10, pady=10)
+        tk.Label(master, text=f"Would you like to save changes to {self.project_name}?").pack(padx=10, pady=10)
     def buttonbox(self):
         box = tk.Frame(self)
         tk.Button(box, text="Save", width=10, command=lambda: self.ok("save")).pack(side=tk.LEFT, padx=5, pady=5)
