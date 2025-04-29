@@ -1,7 +1,6 @@
 old/
 *.spm
 *.smp
-*.log
 *.lock
 *.backup
 *_autosave.spm

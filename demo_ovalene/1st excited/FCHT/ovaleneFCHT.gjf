@@ -1,0 +1,9 @@
+%nprocshared=16
+%mem=20GB
+%chk=ovalene-ground-opt-freq-disp.chk
+#p geom=AllCheck Freq=(ReadFC, FCHT, SaveNM, ReadFCHT) NoSymm
+
+MaxInt=300 SPECHWHM=4 PRTINT=1.D-4 SPECRES=3.0 PrtMat=12
+
+ovalene-excited-opt-freq-disp.chk
+
