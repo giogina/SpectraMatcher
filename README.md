@@ -103,11 +103,17 @@ Make sure you have the following system dependencies installed first:
 # On Debian/Ubuntu:
 sudo apt install python3-tk wmctrl xclip
 ```
-Then install the Python packages:
+Then install the Python packages. For newer Python versions (tested for 3.10+), run:
 ```bash
 pip install -r requirements/unix.txt
 ```
-And run:
+For Python 3.7, older versions of the libraries are necessary, which are installed with:
+
+```bash
+pip install -r requirements/unix37.txt
+```
+
+To start SpectraMatcher, run:
 
 ```bash
 python3 main.py
