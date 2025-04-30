@@ -114,7 +114,7 @@ python main.py -open file.smp
 {% endtab %}
 
 
-{% tab title="Linux / macOS & Python 3.8+" %}
+{% tab title="Linux / macOS" %}
 First, install the required system packages:
 
 ```bash
@@ -124,37 +124,23 @@ sudo apt install python3-tk wmctrl xclip
 
 Then, install the Python dependencies:
 
+{% tabs %}
+{% tab title="Python 3.8+" %}
+
 ```bash
 pip install -r requirements/unix.txt
 ```
 
-To start SpectraMatcher:
-
-```bash
-python3 main.py
-```
-
-Or to open a file directly:
-
-```bash
-python3 main.py -open file.smp
-```
 {% endtab %}
-
-{% tab title="Linux / macOS & Python 3.7" %}
-First, install the required system packages:
-
-```bash
-# On Debian/Ubuntu:
-sudo apt install python3-tk wmctrl xclip
-```
-
-Then, install the Python dependencies.
+{% tab title="Python 7" %}
 For Python 3.7, older library versions are needed, which are installed with:
 
 ```bash
 pip install -r requirements/unix37.txt
 ```
+
+{% endtab %}
+{% endtabs %}
 
 To start SpectraMatcher:
 
