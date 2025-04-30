@@ -1,3 +1,7 @@
+---
+icon: binoculars
+---
+
 # About SpectraMatcher
 
 **SpectraMatcher** is a graphical tool for analyzing and matching computed and experimental vibronic spectra. It provides an intuitive interface for importing data, visualizing and interactively adjusting spectra, and automatically assigning peak correspondences.
