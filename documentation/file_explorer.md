@@ -37,7 +37,7 @@ Right-clicking any file in the explorer panel opens a context menu with addition
 - **Import into project** to add the file directly to the active project panel.
 - **Copy last geometry** to clipboard — useful for reusing molecular structures in new calculations.
 - **Open in file explorer** to locate the file on your system.
-- **Make readable** to make `.log` files readable in basic editors like Notepad by converting line endings from Unix (`\n`) to Windows-style (`\r\n`).
+- **Make readable** to make `.log` files readable in basic editors like Notepad by converting line endings from Unix (\n) to Windows-style (\r\n).
 
 These options make it easy to manage large datasets, troubleshoot files, and prepare follow-up calculations without leaving the interface.
 
