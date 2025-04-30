@@ -67,110 +67,106 @@ This is useful if you want to contribute to development or run on platforms not 
 
 **1. Clone the repository**
 
-    ```bash
-    git clone https://github.com/giogina/SpectraMatcher.git
-    cd SpectraMatcher
-    ```
+```bash
+git clone https://github.com/giogina/SpectraMatcher.git
+cd SpectraMatcher
+```
 
 **2. Install dependencies**
 
 {% tabs %}
-{% tab title="Windows & Python 3.8+" %}
+{% tab title="Windows" %}
+{% tabs %}
+{% tab title="Python 3.8+" %}
 On recent Windows and Python versions, install the required libraries with:
 
-    ```bash
-    pip install -r requirements/win-latest.txt
-    ```
+```bash
+pip install -r requirements/win-latest.txt
+```
 
-To run SpectraMatcher:
-
-    ```bash
-    python main.py
-    ```
-
-Or to open a project file directly:
-
-    ```bash
-    python main.py -open file.smp
-    ```
 {% endtab %}
-
-{% tab title="Windows & Python 3.7" %}
+{% tab title="Python 3.7" %}
 On Windows 7, only Python 3.7 is supported. Install the compatible versions of the dependencies with:
 
-    ```bash
-    pip install -r requirements/win7.txt
-    ```
+```bash
+pip install -r requirements/win7.txt
+```
 
 If any packages fail to install due to missing downloads, use the [backup wheels](https://github.com/giogina/SpectraMatcher/tree/main/backup_wheels_python37).\
 Make sure the provided `.dll` files remain in the main directory — some may be missing from default Windows 7 setups.
 
+
+{% endtab %}
+{% endtabs %}
+
 To run SpectraMatcher:
 
-    ```bash
-    python main.py
-    ```
+```bash
+python main.py
+```
 
 Or to open a project file directly:
 
-    ```bash
-    python main.py -open file.smp
-    ```
+```bash
+python main.py -open file.smp
+```
+
 {% endtab %}
+
 
 {% tab title="Linux / macOS & Python 3.8+" %}
 First, install the required system packages:
 
-    ```bash
-    # On Debian/Ubuntu:
-    sudo apt install python3-tk wmctrl xclip
-    ```
+```bash
+# On Debian/Ubuntu:
+sudo apt install python3-tk wmctrl xclip
+```
 
 Then, install the Python dependencies:
 
-    ```bash
-    pip install -r requirements/unix.txt
-    ```
+```bash
+pip install -r requirements/unix.txt
+```
 
 To start SpectraMatcher:
 
-    ```bash
-    python3 main.py
-    ```
+```bash
+python3 main.py
+```
 
 Or to open a file directly:
 
-    ```bash
-    python3 main.py -open file.smp
-    ```
+```bash
+python3 main.py -open file.smp
+```
 {% endtab %}
 
 {% tab title="Linux / macOS & Python 3.7" %}
 First, install the required system packages:
 
-    ```bash
-    # On Debian/Ubuntu:
-    sudo apt install python3-tk wmctrl xclip
-    ```
+```bash
+# On Debian/Ubuntu:
+sudo apt install python3-tk wmctrl xclip
+```
 
 Then, install the Python dependencies.
 For Python 3.7, older library versions are needed, which are installed with:
 
-    ```bash
-    pip install -r requirements/unix37.txt
-    ```
+```bash
+pip install -r requirements/unix37.txt
+```
 
 To start SpectraMatcher:
 
-    ```bash
-    python3 main.py
-    ```
+```bash
+python3 main.py
+```
 
 Or to open a file directly:
 
-    ```bash
-    python3 main.py -open file.smp
-    ```
+```bash
+python3 main.py -open file.smp
+```
 {% endtab %}
 {% endtabs %}
 {% endtab %}
@@ -180,11 +176,13 @@ Or to open a file directly:
 
 ## Startup
 
-The startup dashboard allows to create or open a SpectraMatcher project file. These files, which have the extension .spm, are by default saved in the C:\Users\UserName\SpectraMatcher\ directory.
+The startup dashboard allows to create or open a SpectraMatcher project file. These files, which have the extension .smp, are by default saved in the `C:\Users\UserName\SpectraMatcher\` directory on Windows, or the `~/SpectraMatcher/` directory on Linux.
 
-You may use up or down arrow keys to select a recent project, and hit enter to open it. Pressing Escape closes the dashbaord.
 
 <figure><img src=".gitbook/assets/Dashboard.png" alt=""><figcaption></figcaption></figure>
+
+> 💡 **Tip:** Select a recent project using the up or down arrow keys, and hit enter to open it. Pressing Escape closes the dashbaord.
+
 
 ## Create a new project
 
