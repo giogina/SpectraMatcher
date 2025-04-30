@@ -6,6 +6,8 @@ icon: rocket-launch
 
 **SpectraMatcher** is a graphical tool for analyzing and matching computed and experimental vibronic spectra. It provides an intuitive interface for importing data, visualizing and interactively adjusting spectra, and automatically assigning peak correspondences.
 
+<figure><img src=".gitbook/assets/screenshot.png" alt="SpectraMatcher Screenshot"><figcaption></figcaption></figure>
+
 The software is open source and actively maintained on [https://github.com/giogina/SpectraMatcher/](https://github.com/giogina/SpectraMatcher/tree/main), where you can find the latest releases, example files, and installation options.
 
 ## Installation
@@ -21,9 +23,7 @@ To install:
 1. [Download the latest .exe](../windows_installer/SpectraMatcher-setup-1.1.0.exe) from the [windows\_installer](../windows_installer) directory of the repository.
 2. Run the installation wizard and follow the on-screen instructions. It is recommended to keep the default installation directory.
 
-No Python or additional setup is needed.
-
-\
+No Python or additional setup is needed.\
 Once installed, you can open SpectraMatcher from the Start Menu or by double-clicking any `.smp` project file.
 
 > 💡 **Tip:** If Windows SmartScreen shows a warning, click “More info” → “Run anyway”.
@@ -61,7 +61,7 @@ After installation, you can launch SpectraMatcher from the Start Menu, the deskt
 You can also open `.smp` project files directly by double-clicking.
 {% endtab %}
 
-{% tab title="Python" %}
+{% tab title="Run from Source (Python)" %}
 SpectraMatcher can also be run directly from source using **Python 3.7 or newer**.\
 This is useful if you want to contribute to development or run on platforms not supported by the precompiled installer.
 
@@ -159,22 +159,15 @@ python3 main.py -open file.smp
 {% endtabs %}
 
 
+## [Starting a New Project](project_creation.md)
 
-## Startup
+When you launch SpectraMatcher, the startup dashboard lets you open a recent project or create a new one.
 
-The startup dashboard allows to create or open a SpectraMatcher project file. These files, which have the extension .smp, are by default saved in the `C:\Users\UserName\SpectraMatcher\` directory on Windows, or the `~/SpectraMatcher/` directory on Linux.
+To start a new project:
+1. Enter a name and choose where to save it.
+2. (Optional) Add your data files right away by clicking the folder icon or dragging files into the import area.
 
-
-<figure><img src=".gitbook/assets/Dashboard.png" alt=""><figcaption></figcaption></figure>
-
-> 💡 **Tip:** Select a recent project using the up or down arrow keys, and hit enter to open it. Pressing Escape closes the dashbaord.
-
-
-## Create a new project
-
-Upon choosing to create a new project, you are queried to choose the project name and file location. Optionally, you can already supply data files; either by clicking the "Add folder" icon, or by dragging & dropping files or folders into the "import data" field.
-
-<figure><img src=".gitbook/assets/Create_Project.png" alt=""><figcaption></figcaption></figure>
+Project files use the `.smp` extension and are saved by default in `C:\Users\UserName\SpectraMatcher\` (Windows) or `~/SpectraMatcher/` (Linux).
 
 ## Import Data
 
