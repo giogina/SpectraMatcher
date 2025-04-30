@@ -46,14 +46,14 @@ These options make it easy to manage large datasets, troubleshoot files, and pre
 Files available in the left panel can now be imported into the project. This can be done in two ways:\
 By manually dragging each file into its corresponding slot, or simply by clicking "Auto Import" on top of the right panel.
 
-The "Auto Import" button becomes active as soon as the scanning of files is complete. Auto import gathers all matching files; comparing ground state energies, molecular formulas and 0-0 transition energies to ensure consistency.\
+The "Auto Import" button becomes active as soon as the scanning of files is complete. Auto import gathers all matching files by comparing ground state energies, molecular formulas and 0-0 transition energies.\
 If the opened data folders contain computations for more than one molecule or method, the relevant one may be selected using the drop-down menu appearing under the project name.
 
 If you want to import mis-matched files together - e.g., for comparing different frequency calculation methods - the consistency checks can be disabled by selecting Settings > "disable sanity checks".
 
 Files imported into the project are immediately analyzed, and the respective spectra appear in the "Emission" and "Excitation" tabs.
 
-Pressing the "Done" button performs finalizes the import, updates the project progress, and takes you to the Emission tab to begin analysis.
+Pressing the "Done" button finalizes the import, updates the project progress, and takes you to the Emission tab to begin analysis.
 
 ## Accepted Input File Types
 
