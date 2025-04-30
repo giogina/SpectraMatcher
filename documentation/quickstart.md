@@ -4,11 +4,9 @@ icon: rocket-launch
 
 # Quick start guide
 
-
-
 ## Installation
 
-To get started with SpectraMatcher, you can either run the installation wizard for Windows or Linux, or launch it directly with Python. The instructions for each option are below.
+To get started with SpectraMatcher, you can either run the installation wizard for Windows or Linux, or launch it directly with Python.
 
 {% tabs %}
 {% tab title="Windows" %}
@@ -162,9 +160,7 @@ When you launch SpectraMatcher, the startup dashboard lets you open a recent pro
 
 > 💡 Select a recent project using the 🡻 🡹 keys, Enter to open, Escape to close.
 
-When you start a new project:
-1. Enter a name and choose where to save it.
-2. (Optional) Add your data files right away by clicking the folder icon or dragging files into the import area.
+When you start a new project, you may add your data files right away by clicking the folder icon or dragging files into the import area (Windows only).
 
 Project files use the `.smp` extension and are by default saved in a `{home}/SpectraMatcher/` directory.
 
@@ -178,7 +174,7 @@ If you added data in the setup screen, they’ll already be listed in the left-h
 
 <figure><img src=".gitbook/assets/Import_Data.png" alt="Import Data tab overview"><figcaption></figcaption></figure>
 
-Once files are detected, click the **Auto Import** button to automatically gather and import compatible data.
+Click the **Auto Import** button to automatically gather and import compatible data.
 
 > 💡 Auto Import checks for consistency in geometry, method, and 0–0 transition energy.  
 > You can also manually assign files by dragging them into the corresponding slots.
@@ -186,7 +182,6 @@ Once files are detected, click the **Auto Import** button to automatically gathe
 For supported file types and further import options, see the [Data Import](file_explorer.md) section.
 
 When you're ready, click **Done** to proceed to the spectrum viewer.
-
 
 
 ## Emission and Excitation Spectra
@@ -221,7 +216,7 @@ Matched peaks are indicated by vertical lines, and a detailed assignment table i
 
 For advanced matching options and details on how scores are computed, see the [Matching](matching.md) section.
 
-### Exporting Results
+### Export of Results
 
 Once the spectra are aligned and peaks have been matched, SpectraMatcher allows you to export your results in several convenient formats.
 
