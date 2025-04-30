@@ -27,7 +27,10 @@ Once installed, you can launch SpectraMatcher from the Start Menu or by double-c
 
 <details><summary><strong>Linux installer</strong></summary>
 
-To install the Linux binary, download [linux_installer/SpectraMatcher_Linux_Installer.zip](linux_installer/SpectraMatcher_Linux_Installer.zip) and follow these steps:
+The provided SpectraMatcher binary requries **glibc version 2.31 or newer** (typically available on Ubuntu 20.04+, Debian 11+, Fedora 32+, and most other Linux distributions released since 2020).
+
+
+Download the installer [linux_installer/SpectraMatcher_Linux_Installer_1.1.0.zip](linux_installer/SpectraMatcher_Linux_Installer_1.1.0.zip) and follow these steps:
 
 1. Unzip the archive:
 
