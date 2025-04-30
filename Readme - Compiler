@@ -8,3 +8,9 @@ In PyCharm: File > Settings > External Tools, use the Nuitka settings:
 
 To compile, right-click main.py > External Tools > Nuitka. Takes 5-10 min.
 To create the installer, run wizard_creator.iss (using InnoSetup); the resulting .exe will appear in SpectraMatcher/Installer.
+
+
+
+
+In Linux:
+Install Docker; run build_linux.sh from the main directory. (Version number is set in this file, only affects name of output zip file)
