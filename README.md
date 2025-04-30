@@ -124,4 +124,4 @@ python3 main.py -open file.smp
 
 ---
 
-![](./documentation/screenshot.png)
+![](./documentation/.gitbook/assets/screenshot.png)

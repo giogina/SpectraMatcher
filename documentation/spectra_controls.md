@@ -1,4 +1,4 @@
-# Emission and Excitation Spectra Plots and Controls
+# Emission and Excitation Spectra Visualization and Controls
 
 ## Zoom & Pan
 The plot can be zoomed with constant aspect ratio by scrolling while the mouse is hovered over a non-interactive part of the plot (more on the interactive parts below).
