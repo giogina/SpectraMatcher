@@ -1,5 +1,21 @@
 # Emission and Excitation Spectra Visualization and Controls
 
+
+The emission and excitation spectra corresponding to the experiment and all computed excited states are shown in the "Emission Spectra" and "Excitation Spectra" tabs.
+
+<figure><img src=".gitbook/assets/emission_tab.png" alt="SpectraMatcher Emission Spectra overview"><figcaption></figcaption></figure>
+
+The white, lower-most spectrum is the experimental spectrum, or a combination of the experimental spectra if multiple are supplied.\
+The computed spectra are displayed above, and listed in the left side-panel.\
+The various ways in which the plot and spectra can be manipulated, including moving, scaling and adjusting the half-width, are explained in the [Plot & Spectra Controls](spectra_controls.md) section.
+
+The right panel provides controls for various plot, spectrum, and matching properties:
+
+### Anharmonic correction factors
+
+The error in wavenumbers of harmonically approximated vibrations is commonly reduced by applying a correction factor to all wavenumbers.\
+SpectraMatcher allows for even finer control:
+
 ## Zoom & Pan
 The plot can be zoomed with constant aspect ratio by scrolling while the mouse is hovered over a non-interactive part of the plot (more on the interactive parts below).
 To zoom only in x or y direction, hover the mouse over the corresponding axis and scroll.

@@ -1,5 +1,24 @@
 # Import Data files
 
+After creating a project, you’ll be taken to the **Import Data** tab. This screen shows all files available for analysis.
+
+If you added data in the setup screen, they’ll already be listed in the left-hand panel. You can add more files at any time by:
+- Clicking the **“Add file”** or **“Add folder”** buttons in the top-right, or
+- Dragging and dropping files or folders into the left panel.
+
+<figure><img src=".gitbook/assets/Import_Data.png" alt="Import Data tab overview"><figcaption></figcaption></figure>
+
+Once files are detected, click the **Auto Import** button to automatically gather and match compatible data.  
+Spectra from imported files will appear in the **Emission** and **Excitation** tabs.
+
+> 💡 **Tip:** Auto Import checks for consistency in geometry, method, and 0–0 transition energy.  
+> You can also manually assign files by dragging them into the corresponding slots.
+
+When you're ready, click **Done** to proceed to the spectrum viewer. This also causes the project to always be opened in the spectrum viewer tab in the future.
+
+For supported file types and import options, see the [Data Import](File%20explorer.md) section.
+
+
 ## Accepted File Types
 
 ### Experimental Spectra Files
