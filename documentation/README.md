@@ -32,7 +32,7 @@ Once installed, you can open SpectraMatcher from the Start Menu or by double-cli
 {% tab title="Linux" %}
 The provided SpectraMatcher binary requires **glibc version 2.31 or newer**, which is typically available on Ubuntu 20.04+, Debian 11+, Fedora 32+, and most other Linux distributions released since 2020. To install it, follow these steps:
 
-1. [Download the latest installer](../linux_installer/SpectraMatcher_Linux_Installer_1.1.0.zip). Current version: 1.1.0.
+1.  [Download the latest installer](../linux_installer/SpectraMatcher_Linux_Installer_1.1.0.zip). Current version: 1.1.0.
 2.  Unzip the archive:
 
     ```bash
@@ -67,74 +67,110 @@ This is useful if you want to contribute to development or run on platforms not 
 
 **1. Clone the repository**
 
-```bash
-git clone https://github.com/giogina/SpectraMatcher.git
-cd SpectraMatcher
-```
+    ```bash
+    git clone https://github.com/giogina/SpectraMatcher.git
+    cd SpectraMatcher
+    ```
 
 **2. Install dependencies**
 
 {% tabs %}
-{% tab title="Windows" %}
-On recent Windows versions, install the required libraries with:
+{% tab title="Windows & Python 3.8+" %}
+On recent Windows and Python versions, install the required libraries with:
 
-```bash
-pip install -r requirements/win-latest.txt
-```
-
-On Windows 7, only Python 3.7 is supported. Install the compatible versions of the dependencies with:
-
-```bash
-pip install -r requirements/win7.txt
-```
-
-If any packages fail to install due to missing downloads, use the [backup wheels](https://github.com/giogina/SpectraMatcher/tree/main/backup_wheels_python37).\
-Make sure the provided `.dll` files remain in the main directory — some may be missing from Windows 7 by default.
+    ```bash
+    pip install -r requirements/win-latest.txt
+    ```
 
 To run SpectraMatcher:
 
-```bash
-python main.py
-```
+    ```bash
+    python main.py
+    ```
 
 Or to open a project file directly:
 
-```bash
-python main.py -open file.smp
-```
+    ```bash
+    python main.py -open file.smp
+    ```
 {% endtab %}
 
-{% tab title="Linux / macOS" %}
+{% tab title="Windows & Python 3.7" %}
+On Windows 7, only Python 3.7 is supported. Install the compatible versions of the dependencies with:
+
+    ```bash
+    pip install -r requirements/win7.txt
+    ```
+
+If any packages fail to install due to missing downloads, use the [backup wheels](https://github.com/giogina/SpectraMatcher/tree/main/backup_wheels_python37).\
+Make sure the provided `.dll` files remain in the main directory — some may be missing from default Windows 7 setups.
+
+To run SpectraMatcher:
+
+    ```bash
+    python main.py
+    ```
+
+Or to open a project file directly:
+
+    ```bash
+    python main.py -open file.smp
+    ```
+{% endtab %}
+
+{% tab title="Linux / macOS & Python 3.8+" %}
 First, install the required system packages:
 
-```bash
-# On Debian/Ubuntu:
-sudo apt install python3-tk wmctrl xclip
-```
+    ```bash
+    # On Debian/Ubuntu:
+    sudo apt install python3-tk wmctrl xclip
+    ```
 
-Then install the Python dependencies. For Python 3.10 or newer:
+Then, install the Python dependencies:
 
-```bash
-pip install -r requirements/unix.txt
-```
-
-For Python 3.7, older library versions are needed:
-
-```bash
-pip install -r requirements/unix37.txt
-```
+    ```bash
+    pip install -r requirements/unix.txt
+    ```
 
 To start SpectraMatcher:
 
-```bash
-python3 main.py
-```
+    ```bash
+    python3 main.py
+    ```
 
 Or to open a file directly:
 
-```bash
-python3 main.py -open file.smp
-```
+    ```bash
+    python3 main.py -open file.smp
+    ```
+{% endtab %}
+
+{% tab title="Linux / macOS & Python 3.7" %}
+First, install the required system packages:
+
+    ```bash
+    # On Debian/Ubuntu:
+    sudo apt install python3-tk wmctrl xclip
+    ```
+
+Then, install the Python dependencies.
+For Python 3.7, older library versions are needed, which are installed with:
+
+    ```bash
+    pip install -r requirements/unix37.txt
+    ```
+
+To start SpectraMatcher:
+
+    ```bash
+    python3 main.py
+    ```
+
+Or to open a file directly:
+
+    ```bash
+    python3 main.py -open file.smp
+    ```
 {% endtab %}
 {% endtabs %}
 {% endtab %}
