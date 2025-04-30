@@ -160,13 +160,13 @@ python3 main.py -open file.smp
 
 When you launch SpectraMatcher, the startup dashboard lets you open a recent project or create a new one.
 
+> 💡 Select a recent project using the 🡻 🡹 keys, Enter to open, Escape to close.
+
 When you start a new project:
 1. Enter a name and choose where to save it.
 2. (Optional) Add your data files right away by clicking the folder icon or dragging files into the import area.
 
 Project files use the `.smp` extension and are by default saved in a `{home}/SpectraMatcher/` directory.
-
-> 💡 In the startup dashboard, select a recent project using the 🡻 🡹 keys, Enter to open, Escape to close.
 
 ## Data Import
 
