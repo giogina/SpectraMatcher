@@ -16,13 +16,15 @@ The table of matched peaks — including intensities, transition labels, and wav
 
 Choose the format in the drop-down menu in the **Match settings** panel, then click **Copy table** to copy the data to your clipboard, ready to paste into your text editor of choice.
 
+> 💡 The copying functionality uses the clipboard tool installed on your system. On linux, this requires e.g. xclip to be installed — this is done automatically by SpectraMatcher's installation script.
+
 <figure><img src=".gitbook/assets/copy_table_menu.png" alt="Copy table button"></figure>
 
+The plain-text table is kept minimally formatted, to facilitate further analysis, e.g. in spreadsheet software.
+The Word and LaTeX tables feature properly aligned columns and math-mode formatting for vibrational mode labels:
+<figure><img src=".gitbook/assets/latex_table.png" alt="Rendered LaTeX table output"><figcaption>Example of the exported LaTeX table as rendered in a document.</figcaption></figure>
 
-
-> 💡 The exported LaTeX table includes properly aligned columns and math-mode formatting for vibrational mode labels.  
-> You can preview an example output below:
-> <figure><img src=".gitbook/assets/latex_table.png" alt="Rendered LaTeX table output"><figcaption>Example of the exported LaTeX table as rendered in a document.</figcaption></figure>
+> 💡 Ensure you use `\usepackage{booktabs}` in your preamble to enable proper formatting of the LaTeX table. Alternatively, replace the `\toprule` etc. by `\hline` commands.
 
 ## Exporting Computed Spectra as Data
 
