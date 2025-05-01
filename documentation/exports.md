@@ -66,3 +66,6 @@ To copy this plot, simply take a screenshot.
 > - **Linux**: Press `Shift + PrtScrn`to select a region of the screen.
 > - **macOS**: Press `Cmd + Shift + 4` and drag to capture a region. The screenshot is saved to your desktop by default.
 
+
+<figure><img src=".gitbook/assets/white_plot.png" alt="Copy table button"></figure>
+
