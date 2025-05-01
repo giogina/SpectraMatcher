@@ -181,7 +181,7 @@ class CreateProjectWindow:
         else:
             name = "untitled.smp"
         directory = self.settings.get("projectsPath", os.getcwd())
-        path = os.path.join(directory, name)
+        path = os.path.normpath(os.path.abspath(os.path.join(directory, name)))
         return self.uniquify_path(path)
 
     def uniquify_path(self, path):

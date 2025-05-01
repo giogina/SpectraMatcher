@@ -124,12 +124,12 @@ class Launcher:
     @staticmethod
     def show_in_explorer(path_inp):
         try:
-            path = os.path.abspath(path_inp)
+            path = os.path.normpath(os.path.abspath(path_inp))
             if sys.platform.startswith('win'):
                 if os.path.isdir(path):
-                    subprocess.Popen(["explorer", path], stderr=subprocess.DEVNULL)
+                    subprocess.Popen(["explorer", path], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 else:
-                    subprocess.Popen(["explorer", "/select,", path], stderr=subprocess.DEVNULL)
+                    subprocess.Popen(["explorer", "/select,", path], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             elif sys.platform.startswith('linux'):
                 subprocess.Popen(['xdg-open', path], stderr=subprocess.DEVNULL)
             elif sys.platform == 'darwin':
