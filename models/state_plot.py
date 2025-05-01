@@ -271,6 +271,7 @@ class MatchPlot:
                 exp_peaks.extend(exp.peaks)
         for peak in exp_peaks:
             peak.match = None
+        exp_peaks.sort(key = lambda p: p.wavenumber)
 
         if not Matcher.get(self.is_emission, "list only labeled transitions"):
             super_cluster_peaks = list(self.super_clusters.keys())
@@ -366,14 +367,21 @@ class MatchPlot:
     def get_match_table_tex(self, use_gaussian_labels):
         table = self.get_match_table(use_gaussian_labels=use_gaussian_labels)
 
-        column_alignment = "|".join(["c" for _ in range(len(table[0]))])
-        latex_table = "\\begin{tabular}{" + "|" + column_alignment + "|}\n\\hline\n"
+        column_alignment = " ".join(["c" for _ in range(len(table[0]))])
+        # latex_table = "\\begin{tabular}{" + " " + column_alignment + " }\n\\hline\n"
+        latex_table = "\\begin{tabular}{" + " " + column_alignment + " }\n\\toprule\n"
+        latex_table += "\\multicolumn{2}{c}{Experiment} & \\multicolumn{2}{c}{Computed} & & \\multicolumn{6}{c}{Transition}\\\\\n"
+        latex_table += "\\cmidrule(lr){1-2} \\cmidrule(lr){3-4} \\cmidrule(lr){5-11}\n"
+        latex_table += "$\\tilde{\\nu}$ & intensity & $\\tilde{\\nu}$ & intensity & state & $\\tilde{\\nu}$ & $\\tilde{\\nu}^\\text{corr}$ & intensity & & sym & type \\\\\n"
+        latex_table += "\\midrule\n"
 
-        for line in table:
-            line[-3] = Labels.label2tex(line[-3])
-            latex_table += " & ".join([str(entry) for entry in line]) + " \\\\\n\\hline\n"
+        for line in table[1:]:
+            line[4] = str(line[4]).replace(' excited state', '')
+            line[-6] = Labels.label2tex(line[-6]).replace("$$", " ")
+            line[-1] = str(line[-1]).replace("X-H stretch", "X-H").replace("Other", "")
+            latex_table += " & ".join([str(entry) for entry in line]) + " \\\\\n"
 
-        latex_table += "\\end{tabular}"
+        latex_table += "\\bottomrule\n\\end{tabular}"
         return latex_table
 
     def get_match_table_tsv(self, use_gaussian_labels):
@@ -392,12 +400,11 @@ class MatchPlot:
                                   "experimental peak intensity",
                                   "computed peak position",  # comp spectrum (composite) peak wavenumber (maximum[0])
                                   "computed peak intensity",  # comp spectrum (composite) peak intensity (maximum[1]) (?)
-
                                   "state",
+                                  'transition',
                                   "mode wavenumber",
                                   "corrected wavenumber",
                                   'intensity',
-                                  'transition',
                                   'symmetry',
                                   'vibration type']]
         if header_only:
@@ -418,11 +425,11 @@ class MatchPlot:
                             peak_list = cluster.filtered_peaks(spec.yscale) if Matcher.get(self.is_emission, "list only labeled transitions") else cluster.peaks
                             # peak_list = cluster.filtered_peaks(spec.yscale)
                             for p, peak2 in enumerate(peak_list):
-                                mode_data_list = [format(peak2.wavenumber+spec.xshift, ".1f"),
+                                mode_data_list = [peak2.get_label(use_gaussian_labels),
+                                                  format(peak2.wavenumber+spec.xshift, ".1f"),
                                                   format(peak2.corrected_wavenumber+spec.xshift, ".1f"),
                                                   format(peak2.intensity*spec.yscale, ".3f"),
                                                   # (Labels.label2html(peak.get_label(use_gaussian_labels)) if html else Labels.label2tex(peak.get_label(use_gaussian_labels))),
-                                                  peak2.get_label(use_gaussian_labels),
                                                   peak2.symmetries[0] if len(set(peak2.symmetries)) == 1 else '',
                                                   peak2.types[0] if len(set(peak2.types)) == 1 else '']
                                 if append_mode_data:

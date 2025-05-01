@@ -484,7 +484,7 @@ class FCSpectrum:
                     mode = self.vibrational_modes.get_mode(t[0])
                     if mode is not None:
                         peak.symmetries.append(mode.IR)
-                        type = {'bends': "Bend", 'H stretches': "*-H stretch", "others": "Other"}[mode.vibration_type]
+                        type = {'bends': "Bend", 'H stretches': "X-H stretch", "others": "Other"}[mode.vibration_type]
                         # type = ["*-H stretch", "Other", "Bend"][mode.vibration_properties.index(max(mode.vibration_properties))]
                         peak.types.append(type)
 

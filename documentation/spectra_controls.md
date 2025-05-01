@@ -9,19 +9,21 @@ The emission and excitation spectra corresponding to the experiment and all comp
 <figure><img src=".gitbook/assets/emission_tab.png" alt="SpectraMatcher Emission Spectra overview"><figcaption></figcaption></figure>
 
 The white, lower-most spectrum is the experimental spectrum, or a combination of the experimental spectra if multiple are supplied.\
-The computed spectra are displayed above, and listed in the left side-panel.\
-The various ways in which the plot and spectra can be manipulated, including moving, scaling and adjusting the half-width, are explained in the [Plot & Spectra Controls](spectra_controls.md) section.
+The computed spectra are displayed above, and listed in the left side-panel.
+The right panel provides controls for various plot, spectrum, and matching properties.\
+This section explains the various ways in which the plot and spectra can be manipulated, including:
+* [Moving and scaling](#moving-and-scaling-computed-spectra) of computed spectra
+* Setting the **half-width** of computed spectra
+* Applying **anharmonic correction factors** to different vibration types
+* Showing customizable **transition labels**
+* Animating vibrational modes
+* Adjusting the (auto-detected) experimental peak positions
+* Overlaying composite computed spectra onto the experimental one
 
-The right panel provides controls for various plot, spectrum, and matching properties:
 
-### Anharmonic correction factors
+## Plot controls: Zoom & Pan
 
-The error in wavenumbers of harmonically approximated vibrations is commonly reduced by applying a correction factor to all wavenumbers.\
-SpectraMatcher allows for even finer control:
-
-## Zoom & Pan
-
-The plot can be zoomed with constant aspect ratio by scrolling while the mouse is hovered over a non-interactive part of the plot (more on the interactive parts below).\
+The plot can be zoomed with constant aspect ratio by scrolling while the mouse is hovered over a by scrolling while hovering the mouse over an empty area of the plot (i.e., not over a spectrum).\
 To zoom only in x or y direction, hover the mouse over the corresponding axis and scroll.
 
 Equivalently, the plot can be dragged freely by clicking into the free plot area, or along one axis only by dragging the axis.
@@ -34,7 +36,7 @@ Further axis and plot options are available in the plot context menu under "X/Y 
 
 <figure><img src=".gitbook/assets/Axis_right_click_menu.png" alt=""><figcaption></figcaption></figure>
 
-<figure><img src=".gitbook/assets/settings_right_click_menu.png" alt=""><figcaption></figcaption></figure>
+[//]: # (<figure><img src=".gitbook/assets/settings_right_click_menu.png" alt=""><figcaption></figcaption></figure>)
 
 ## Slider controls
 
@@ -63,7 +65,7 @@ Additionally, using the buttons on the right-hand side of this section, one can 
 ### Plot drag lines
 
 Spectra can be manipulated directly in the plot, using certain drag lines which appear when the mouse pointer is close enough. All available drag lines can be shown by holding down the Alt button.\
-Hovering the mouse near the base of the spectrum reveals a drag line which can be used to vertically drag the spectrum. While this line is being hovered, scrolling the mouse wheel causes a scaling of the corresponding spectrum:
+Hovering the mouse near the base of the spectrum reveals a drag line which can be used to vertically drag the spectrum. While this line is being hovered, scrolling the mouse wheel scales the corresponding spectrum:
 
 <figure><img src=".gitbook/assets/scroll_and_y_shift_using_drag_lines.gif" alt="Scrolling and y shifting using drag lines"><figcaption></figcaption></figure>
 
