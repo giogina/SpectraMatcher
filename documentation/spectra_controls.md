@@ -79,3 +79,29 @@ As with sliders, holding down the Shift button causes a finer adjustment while s
 ### Global vertical spacing
 
 The global "vertical spacing" slider on the top right places all visible spectra equidistantly.
+
+
+## Vibrational mode animations
+
+## Composite Spectrum
+
+The composite spectrum is a sum of selected computed excited-state spectra.
+While the matching mode is not active, the composite spectrum is shown as an overlay over the experimental spectrum:
+
+<figure><img src=".gitbook/assets/overlay_composite.png" alt="Composite spectrum computed overlayed over experiment"></figure>
+
+This can be quite useful while aligning the computed spectra with the experimental data. To add or remove spectra from the composite, you can:
+- Hold `Ctrl` and click on a computed spectrum in the plot to quickly add or remove it.
+- Use the checkboxes in the **Composite Spectrum** panel to include or exclude specific excited states:
+
+<figure><img src=".gitbook/assets/composite.png" alt="Composite spectrum selection"></figure>
+
+In the bottom of this panel, you can choose how the composite spectrum and its components are displayed:
+- **Composite spectrum**: The sum of all individual component spectra, as a line (white/black).
+- **Component spectra**: The component spectra, stacked on top of each other, as colored lines.
+- **Shaded contributions**: The area under each component spectrum is colored.
+
+This is quite fun to play with:
+<figure><img src=".gitbook/assets/composite.gif" alt="Composite spectra"></figure>
+
+> 📝 Note: Peak labels are a property of the component spectra. Thus, if you turn off the **component spectra** option, the labels will disappear.
