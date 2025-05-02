@@ -29,7 +29,7 @@ To zoom only in x or y direction, hover the mouse over the corresponding axis an
 
 In the same way, the plot can be dragged freely by clicking into the free plot area, or along one axis only by dragging the axis.
 
-<figure><img src=".gitbook/assets/zoom_pan_hq" alt="zoom into a plot region"><figcaption>Zoom or drag the plot, or individual axes.</figcaption></figure>
+<figure><img src=".gitbook/assets/zoom_pan_hq.gif" alt="zoom into a plot region"><figcaption>Zoom or drag the plot, or individual axes.</figcaption></figure>
 
 Zoom into an interesting region by right-click-dragging over it. Double-click the plot to zoom out to show all contents.
 
