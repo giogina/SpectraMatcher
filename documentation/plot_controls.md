@@ -27,17 +27,20 @@ This section covers useful tips and tricks for interacting with the spectrum con
 The plot can be zoomed with constant aspect ratio by scrolling while the mouse is hovered over a by scrolling while hovering the mouse over an empty area of the plot (i.e., not over a spectrum).\
 To zoom only in x or y direction, hover the mouse over the corresponding axis and scroll.
 
-In the same way, the plot can be dragged freely by clicking into the free plot area, or along one axis only by dragging the axis:
+In the same way, the plot can be dragged freely by clicking into the free plot area, or along one axis only by dragging the axis.
 
-{% embed url="https://github.com/giogina/SpectraMatcher/blob/main/documentation/.gitbook/assets/zoom_pan.webm" %}
+<figure><img src=".gitbook/assets/zoom_pan_hq" alt="zoom into a plot region"><figcaption>Zoom or drag the plot, or individual axes.</figcaption></figure>
 
-Zoom into an interesting region by right-click-dragging over it. Double click the plot to zoom out to show all contents.
+Zoom into an interesting region by right-click-dragging over it. Double-click the plot to zoom out to show all contents.
+
+<figure><img src=".gitbook/assets/rightclick_zoom.gif" alt="zoom into a plot region"><figcaption>Zoom into a plot region by right-clicking and dragging.</figcaption></figure>
 
 Alternatively, to set exact axis limits, right-click the axis (or the plot area and select X/Y axis), Ctrl+click the relevant min/max number, and enter the desired number.
 
 Further axis and plot options are available in the plot context menu under "X/Y axis" and "Settings":
 
 <figure><img src=".gitbook/assets/Axis_right_click_menu.png" alt=""><figcaption></figcaption></figure>
+
 
 ## Slider controls
 
