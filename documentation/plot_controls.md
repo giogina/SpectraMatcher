@@ -16,7 +16,7 @@ The "Emission Spectra" and "Excitation Spectra" tabs display plots of the respec
 
 To learn about the functionalities provided by these controls — such as adjusting half-width, scaling spectra, or applying anharmonic corrections — see [Spectra Controls](spectra_controls.md).
 
-This section covers useful tips and tricks for interacting with the spectrum controls and plot efficiently:
+This section covers useful tips and tricks for interacting with the plot and spectrum controls efficiently:
 
 * [Plot zoom and pan](plot_controls.md#plot-controls-zoom--pan)
 * [Slider controls](plot_controls.md#slider-controls)
