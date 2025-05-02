@@ -15,11 +15,11 @@ class AsyncManager:
 
     @classmethod
     def start(cls):
-        print(f"Asyncmanager started!")
         if cls._loop is None:
-            print(f"Initiating async manager!")
+            print(f"Initiating async manager...")
             cls._thread = threading.Thread(target=cls._start_loop_in_thread, daemon=True)
             cls._thread.start()
+            print("Async manager started!")
 
     @classmethod
     def _start_loop_in_thread(cls):
@@ -41,10 +41,19 @@ class AsyncManager:
                 cls.notify_observers(observers, notification, result)
 
     @classmethod
-    def submit_task(cls, task_id, func, *args, observers=None, notification=""):
+    def submit_task(cls, task_id, func, *args, observers=None, notification="", retries=1):
         """Synchronously submit a task from the main thread."""
-        if not cls._loop:
-            raise RuntimeError("Event loop is not running")
+        if not cls._loop or not cls._loop.is_running():
+            if retries > 10:
+                print("Async submit task: Loop still not running after 10 retries")
+                return
+
+            def retry():
+                import time
+                time.sleep(0.1*retries)
+                cls.submit_task(task_id, func, *args, observers=observers, notification=notification, retries=retries+1)
+            threading.Thread(target=retry, daemon=True).start()
+            return
         cls._waiting_task_map[task_id] = (func, args)
         asyncio.run_coroutine_threadsafe(cls._submit_task(task_id, func, *args, observers=observers, notification=notification), cls._loop)
 
