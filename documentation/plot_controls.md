@@ -19,14 +19,14 @@ To learn about the functionalities provided by these controls — such as adjust
 This section covers useful tips and tricks for interacting with the plot and spectrum controls efficiently:
 
 * [Plot zoom and pan](plot_controls.md#plot-controls-zoom--pan)
-* [Slider controls](plot_controls.md#slider-controls)
+* [Sliders](plot_controls.md#sliders)
 * [Data manipulation directly in the plot](plot_controls.md#data-manipulation-directly-in-the-plot)
 
 These features are based on [DearPyGui](https://dearpygui.readthedocs.io/en/latest/index.html)'s responsive [interactive plotting functionality](https://dearpygui.readthedocs.io/en/latest/documentation/plots.html).
 
 ## Plot controls: Zoom & Pan
 
-The plot can be zoomed with constant aspect ratio by scrolling while the mouse is hovered over a by scrolling while hovering the mouse over an empty area of the plot (i.e., not over a spectrum).\
+The plot can be zoomed with constant aspect ratio by scrolling while hovering the mouse over an empty area of the plot (i.e., not over a spectrum).
 To zoom only in x or y direction, hover the mouse over the corresponding axis and scroll.
 
 In the same way, the plot can be dragged freely by clicking into the free plot area, or along one axis only by dragging the axis.
@@ -44,14 +44,14 @@ Further axis and plot options are available in the plot context menu under "X/Y 
 <figure><img src=".gitbook/assets/Axis_right_click_menu.png" alt=""><figcaption></figcaption></figure>
 
 
-## Slider controls
+## Sliders
 
 All sliders can be changed in four different ways:
 * **Dragging the handle**,
 * **Scrolling the mouse wheel** while hovering the mouse over the slider,
 * **Ctrl+Click** to enter an exact numerical value,
 * Using **arrow keys** to adjust the last altered slider in the corresponding direction:
-  * The vertical arrow keys **↑ ↓** alter the most recently changed vertical spectrum shift, spectrum scale, or global vertical spacing.\
+  * The vertical arrow keys **↑ ↓** alter the most recently changed vertical spectrum shift, spectrum scale, or global vertical spacing.
   * The horizontal arrow keys **← →** adjust the most recently changed spectrum wavenumber shift, half width, or anharmonic correction factor.
 
 Holding down **Shift** while scrolling or using arrow keys allows for finer adjustments.
@@ -64,12 +64,12 @@ The plot contains a number of hidden objects, which are revealed when hovering t
 
 ### Plot drag lines
 
-Spectra can be manipulated directly in the plot, using drag lines which appear when the mouse pointer is close enough. All available drag lines can be shown by holding down the **Alt** button. Each line can be dragged, as well as scrolled while hovered; with different effects:\
+Spectra can be manipulated directly in the plot, using drag lines which appear when the mouse pointer is close enough. All available drag lines can be shown by holding down the **Alt** button. Each line can be dragged, as well as scrolled while hovered; with different effects:
 * **The horizontal drag line at the base of each spectrum** can be used to vertically drag the spectrum. The spectrum can be re-scaled by scrolling the mouse wheel while this line is being hovered:
 
 <figure><img src=".gitbook/assets/scroll_and_y_shift_using_drag_lines.gif" alt="Scrolling and y shifting using drag lines"><figcaption></figcaption></figure>
 
-Similarly, hovering the mouse at the position of the highest peak reveals a line which can be used to horizontally drag the spectrum. Scrolling while this drag line is hovered adjusts the half-width of the computed spectra.\
+Similarly, hovering the mouse at the position of the highest peak reveals a line which can be used to horizontally drag the spectrum. Scrolling while this drag line is hovered adjusts the half-width of the computed spectra.
 Note that the half-width is a global variable applied to all computed spectra, as it should not depend on the choice of excited state.
 
 <figure><img src=".gitbook/assets/scroll_and_wavenumber_shift_using_drag_lines.gif" alt="Scrolling and x shifting using drag lines"><figcaption></figcaption></figure>
