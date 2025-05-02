@@ -67,5 +67,5 @@ To copy this plot, simply take a screenshot.
 > - **macOS**: Press `Cmd + Shift + 4` and drag to capture a region. The screenshot is saved to your desktop by default.
 
 
-<figure><img src=".gitbook/assets/white_plot.png" alt="Plot of matched labeled vibronic spectra"></figure>
+<figure><img src=".gitbook/assets/match_plot.png" alt="Plot of matched labeled vibronic spectra"></figure>
 

@@ -21,6 +21,8 @@ Once enabled, SpectraMatcher attempts to assign experimental peaks to computed o
 
 To fine-tune the amount of assigned peaks, you can also enable **“Assign only labeled peaks”** — this restricts matching to only those computed peaks that are currently labeled in the plot (based on your label display settings).
 
+<figure><img src=".gitbook/assets/match_plot.png" alt="Plot of matched labeled vibronic spectra"></figure>
+
 ## Peak Assignment Table
 
 When peak matching is active, a table of peak assignments can be shown below the plot by clicking **"Show assignment table"**. It includes:

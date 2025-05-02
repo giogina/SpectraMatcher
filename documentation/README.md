@@ -24,5 +24,5 @@ After matching peaks, you can copy the peak assignment table directly as tab-sep
 
 Or take a screenshot of the annotated spectrum — perfect for slides, figures, or sharing your results.
 
-<figure><img src=".gitbook/assets/white_plot.png" alt="Plot of matched labeled vibronic spectra"><figcaption>Plot of labeled, matched vibronic spectra.</figcaption></figure>
+<figure><img src=".gitbook/assets/match_plot.png" alt="Plot of matched labeled vibronic spectra"><figcaption>Plot of labeled, matched vibronic spectra.</figcaption></figure>
 
