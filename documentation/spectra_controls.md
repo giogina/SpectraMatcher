@@ -2,15 +2,9 @@
 icon: wave-pulse
 ---
 
-# Visualization & Spectra Controls
+# Spectra Controls
 
-The emission and excitation spectra corresponding to the experiment and all computed excited states are shown in the "Emission Spectra" and "Excitation Spectra" tabs.
 
-<figure><img src=".gitbook/assets/emission_tab.png" alt="SpectraMatcher Emission Spectra overview"><figcaption></figcaption></figure>
-
-The white, lower-most spectrum is the experimental spectrum, or a combination of the experimental spectra if multiple are supplied.\
-The computed spectra are displayed above, and listed in the left side-panel.
-The right panel provides controls for various plot, spectrum, and matching properties.\
 This section explains the various ways in which the plot and spectra can be manipulated, including:
 * [Moving and scaling](#moving-and-scaling-computed-spectra) of computed spectra
 * Setting the **half-width** of computed spectra
@@ -21,34 +15,6 @@ This section explains the various ways in which the plot and spectra can be mani
 * Overlaying composite computed spectra onto the experimental one
 
 
-## Plot controls: Zoom & Pan
-
-The plot can be zoomed with constant aspect ratio by scrolling while the mouse is hovered over a by scrolling while hovering the mouse over an empty area of the plot (i.e., not over a spectrum).\
-To zoom only in x or y direction, hover the mouse over the corresponding axis and scroll.
-
-Equivalently, the plot can be dragged freely by clicking into the free plot area, or along one axis only by dragging the axis.
-
-Zoom into an interesting region by right-click-dragging over it. Double click the plot to zoom out to show all contents.
-
-Alternatively, to set exact axis limits, right-click the axis (or the plot area and select X/Y axis), Ctrl+click the relevant min/max number, and enter the desired number.
-
-Further axis and plot options are available in the plot context menu under "X/Y axis" and "Settings":
-
-<figure><img src=".gitbook/assets/Axis_right_click_menu.png" alt=""><figcaption></figcaption></figure>
-
-[//]: # (<figure><img src=".gitbook/assets/settings_right_click_menu.png" alt=""><figcaption></figcaption></figure>)
-
-## Slider controls
-
-All sliders can be changed by dragging the handle or by scrolling the mouse wheel while hovering the mouse over the slider.
-
-Alternatively, an exact numerical value can be entered after holding Control and left-clicking the slider.
-
-The arrow keys adjust the last altered slider in the corresponding direction:\
-The vertical arrow keys ↑ ↓ alter the most recently changed vertical spectrum shift, spectrum scale, or global vertical spacing.\
-The horizontal arrow keys ← → adjust the most recently changed spectrum wavenumber shift, half width, or anharmonic correction factor.
-
-Holding down Shift while scrolling or using arrow buttons allows for finer adjustments.
 
 ## Moving and scaling computed spectra
 
@@ -62,19 +28,7 @@ Each spectrum can be individually moved using its corresponding sliders in the l
 
 Additionally, using the buttons on the right-hand side of this section, one can hide the spectrum from the plot, choose its color, and reset the shift & scale parameters.
 
-### Plot drag lines
 
-Spectra can be manipulated directly in the plot, using certain drag lines which appear when the mouse pointer is close enough. All available drag lines can be shown by holding down the Alt button.\
-Hovering the mouse near the base of the spectrum reveals a drag line which can be used to vertically drag the spectrum. While this line is being hovered, scrolling the mouse wheel scales the corresponding spectrum:
-
-<figure><img src=".gitbook/assets/scroll_and_y_shift_using_drag_lines.gif" alt="Scrolling and y shifting using drag lines"><figcaption></figcaption></figure>
-
-Similarly, hovering the mouse at the position of the highest peak reveals a line which can be used to horizontally drag the spectrum. Scrolling while this drag line is hovered adjusts the half-width of the computed spectra.\
-Note that the half-width is a global variable applied to all computed spectra, as it should not depend on the choice of excited state.
-
-<figure><img src=".gitbook/assets/scroll_and_wavenumber_shift_using_drag_lines.gif" alt="Scrolling and x shifting using drag lines"><figcaption></figcaption></figure>
-
-As with sliders, holding down the Shift button causes a finer adjustment while scrolling.
 
 ### Global vertical spacing
 
