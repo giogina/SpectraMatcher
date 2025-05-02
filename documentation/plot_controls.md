@@ -28,7 +28,11 @@ This section covers useful tips and tricks for interacting with the spectrum con
 The plot can be zoomed with constant aspect ratio by scrolling while the mouse is hovered over a by scrolling while hovering the mouse over an empty area of the plot (i.e., not over a spectrum).\
 To zoom only in x or y direction, hover the mouse over the corresponding axis and scroll.
 
-Equivalently, the plot can be dragged freely by clicking into the free plot area, or along one axis only by dragging the axis.
+In the same way, the plot can be dragged freely by clicking into the free plot area, or along one axis only by dragging the axis.
+
+<video autoplay loop muted playsinline>
+  <source src=".gitbook/assets/zoom_pan.webm" type="video/webm">
+</video>
 
 Zoom into an interesting region by right-click-dragging over it. Double click the plot to zoom out to show all contents.
 
