@@ -37,6 +37,16 @@ The global "vertical spacing" slider on the top right places all visible spectra
 
 ## Vibrational mode animations
 
+## Experimental peak adjustments
+
+### Experimental peak markers
+In experimental peak edit mode, peak maxima are marked with white dots, which can be used to manually adjust the selection:
+* **Left-click** to insert a new peak marker at the hovered wavenumber.
+* **Drag** a marker to change its position.
+* **Right-click** on a marker to remove it.
+* 
+<figure><img src=".gitbook/assets/peak_edit.gif" alt="Add, drag, or remove peak markers"><figcaption>Left-click to insert a peak marker. Drag the marker to change its position. Right-click to remove it.</figcaption></figure>
+
 ## Composite Spectrum
 
 The composite spectrum is a sum of selected computed excited-state spectra.

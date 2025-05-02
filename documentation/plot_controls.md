@@ -22,6 +22,8 @@ This section covers useful tips and tricks for interacting with the spectrum con
 * [Slider controls](plot_controls.md#slider-controls)
 * [Data manipulation directly in the plot](plot_controls.md#data-manipulation-directly-in-the-plot)
 
+These features are based on [DearPyGui](https://dearpygui.readthedocs.io/en/latest/index.html)'s responsive [interactive plotting functionality](https://dearpygui.readthedocs.io/en/latest/documentation/plots.html).
+
 ## Plot controls: Zoom & Pan
 
 The plot can be zoomed with constant aspect ratio by scrolling while the mouse is hovered over a by scrolling while hovering the mouse over an empty area of the plot (i.e., not over a spectrum).\
@@ -56,10 +58,14 @@ Holding down **Shift** while scrolling or using arrow keys allows for finer adju
 
 ## Data manipulation directly in the plot
 
+The plot contains a number of hidden objects, which are revealed when hovering the mouse nearby, and can be used to manipulate the plotted data. This includes:
+* [Plot drag lines](#plot-drag-lines): Horizontal and vertical lines for each excited state plot, used to move or scale the plot, or adjust the half-width.
+* [Label drag handles](#label-drag-handles): Dots attached to each label, which can be used to drag the label to a desired location.
+
 ### Plot drag lines
 
-Spectra can be manipulated directly in the plot, using certain drag lines which appear when the mouse pointer is close enough. All available drag lines can be shown by holding down the Alt button.\
-Hovering the mouse near the base of the spectrum reveals a drag line which can be used to vertically drag the spectrum. While this line is being hovered, scrolling the mouse wheel scales the corresponding spectrum:
+Spectra can be manipulated directly in the plot, using drag lines which appear when the mouse pointer is close enough. All available drag lines can be shown by holding down the **Alt** button. Each line can be dragged, as well as scrolled while hovered; with different effects:\
+* **The horizontal drag line at the base of each spectrum** can be used to vertically drag the spectrum. The spectrum can be re-scaled by scrolling the mouse wheel while this line is being hovered:
 
 <figure><img src=".gitbook/assets/scroll_and_y_shift_using_drag_lines.gif" alt="Scrolling and y shifting using drag lines"><figcaption></figcaption></figure>
 
@@ -68,4 +74,9 @@ Note that the half-width is a global variable applied to all computed spectra, a
 
 <figure><img src=".gitbook/assets/scroll_and_wavenumber_shift_using_drag_lines.gif" alt="Scrolling and x shifting using drag lines"><figcaption></figcaption></figure>
 
-As with sliders, holding down the Shift button causes a finer adjustment while scrolling.
+As with sliders, holding down the **Shift** key causes a finer adjustment while scrolling.
+
+### Label drag handles
+By hovering over a label, a yellow drag handle is revealed at its bottom, which can be used to move the label:
+
+<figure><img src=".gitbook/assets/label_moving.gif" alt="Drag labels to wherever you want them"><figcaption>Hovering over a label reveals a yellow drag handle. Use it to drag the label to your desired location.</figcaption></figure>
