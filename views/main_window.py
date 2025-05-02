@@ -26,8 +26,7 @@ class MainWindow:
 
         FontManager.load_fonts()
         monitor = get_monitors()[0]
-        dpg.create_viewport(title='SpectraMatcher',
-                            width=monitor.width-0, height=monitor.height-30, x_pos=0, y_pos=0)
+        dpg.create_viewport(title='SpectraMatcher', width=monitor.width-0, height=monitor.height-30, x_pos=monitor.x, y_pos=monitor.y)
         self.viewport_resize_callbacks = []  # list of functions to be called when viewport resizes
         dpg.set_viewport_resize_callback(self.on_viewport_resize)
         self.viewport_size = [0, 0]

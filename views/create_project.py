@@ -50,7 +50,7 @@ class CreateProjectWindow:
                 dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (25, 50, 75, 100), category=dpg.mvThemeCat_Core)
 
         dpg.create_viewport(title='Create new project - SpectraMatcher', width=dash_width, height=dash_height,
-                            x_pos=int(monitor.width/2-dash_width/2), y_pos=int(monitor.height/2-dash_height/2))
+                            x_pos=int(monitor.x + monitor.width/2-dash_width/2), y_pos=int(monitor.y + monitor.height/2-dash_height/2))
         initialize_dnd()
         dpg.set_viewport_decorated(False)
         with dpg.window(label="Create New Project", width=dash_width, height=dash_height, tag="new project window"):

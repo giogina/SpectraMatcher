@@ -62,7 +62,7 @@ class MainMenu:
 
         # Looks like I can have only one modal window, so I'll toggle the contents instead.
         self.modal_child_window_tags = []
-        with dpg.window(label="modal", show=False, modal=True, no_collapse=True, no_scrollbar=True, no_resize=True, tag="the one modal window", width=600, height=400, pos=(int(monitor.width/2-600/2), int(monitor.height/2-400/2))):
+        with dpg.window(label="modal", show=False, modal=True, no_collapse=True, no_scrollbar=True, no_resize=True, tag="the one modal window", width=600, height=400, pos=(int(monitor.x + monitor.width/2-600/2), int(monitor.y + monitor.height/2-400/2))):
             with dpg.child_window(show=False, no_scrollbar=True, tag="configure shortcuts window"):
                 self.modal_child_window_tags.append("configure shortcuts window")
                 with dpg.table(height=300, tag="shortcuts table", indent=42, header_row=False):

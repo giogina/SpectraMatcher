@@ -141,7 +141,7 @@ def inquire_close_unsaved(project_name, root_path=os.path.expanduser("~")):
 
 def _inquire_close_unsaved_tk(project_name):
     monitor = get_monitors()[0]
-    pos = (int((monitor.width - 300) / 2), int((monitor.height - 200) / 2))
+    pos = (int(monitor.x + (monitor.width - 300) / 2), int(monitor.y + (monitor.height - 200) / 2))
 
     root = tk.Tk()
     root.title(f"Save changes to {project_name}?")

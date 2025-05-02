@@ -92,7 +92,7 @@ class Dashboard:
         self.init_textures()
 
         dpg.create_viewport(title='SpectraMatcher', width=dash_width, height=dash_height,
-                            x_pos=int(monitor.width/2-dash_width/2), y_pos=int(monitor.height/2-dash_height/2))
+                            x_pos=int(monitor.x + monitor.width/2-dash_width/2), y_pos=int(monitor.y + monitor.height/2-dash_height/2))
         dpg.set_viewport_decorated(False)
         with dpg.window(label="Dashboard", width=dash_width, height=dash_height, tag="dash"):
             with dpg.group(horizontal=True):
