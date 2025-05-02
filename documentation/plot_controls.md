@@ -30,11 +30,11 @@ To zoom only in x or y direction, hover the mouse over the corresponding axis an
 
 In the same way, the plot can be dragged freely by clicking into the free plot area, or along one axis only by dragging the axis.
 
-<video autoplay loop muted playsinline>
-  <source src=".gitbook/assets/zoom_pan.webm" type="video/webm">
-</video>
+<figure><img src=".gitbook/assets/zoom_pan_hq" alt="zoom into a plot region"><figcaption>Zoom or drag the plot, or individual axes.</figcaption></figure>
 
-Zoom into an interesting region by right-click-dragging over it. Double click the plot to zoom out to show all contents.
+Zoom into an interesting region by right-click-dragging over it. Double-click the plot to zoom out to show all contents.
+
+<figure><img src=".gitbook/assets/rightclick_zoom.gif" alt="zoom into a plot region"><figcaption>Zoom into a plot region by right clicking and dragging.</figcaption></figure>
 
 Alternatively, to set exact axis limits, right-click the axis (or the plot area and select X/Y axis), Ctrl+click the relevant min/max number, and enter the desired number.
 
