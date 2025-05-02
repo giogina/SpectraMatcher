@@ -44,15 +44,15 @@ Further axis and plot options are available in the plot context menu under "X/Y 
 
 ## Slider controls
 
-All sliders can be changed by dragging the handle or by scrolling the mouse wheel while hovering the mouse over the slider.
+All sliders can be changed in four different ways:
+* **Dragging the handle**,
+* **Scrolling the mouse wheel** while hovering the mouse over the slider,
+* **Ctrl+Click** to enter an exact numerical value,
+* Using **arrow keys** to adjust the last altered slider in the corresponding direction:
+  * The vertical arrow keys **↑ ↓** alter the most recently changed vertical spectrum shift, spectrum scale, or global vertical spacing.\
+  * The horizontal arrow keys **← →** adjust the most recently changed spectrum wavenumber shift, half width, or anharmonic correction factor.
 
-Alternatively, an exact numerical value can be entered after holding Control and left-clicking the slider.
-
-The arrow keys adjust the last altered slider in the corresponding direction:\
-The vertical arrow keys ↑ ↓ alter the most recently changed vertical spectrum shift, spectrum scale, or global vertical spacing.\
-The horizontal arrow keys ← → adjust the most recently changed spectrum wavenumber shift, half width, or anharmonic correction factor.
-
-Holding down Shift while scrolling or using arrow buttons allows for finer adjustments.
+Holding down **Shift** while scrolling or using arrow keys allows for finer adjustments.
 
 ## Data manipulation directly in the plot
 
