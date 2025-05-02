@@ -18,16 +18,20 @@ To activate automatic matching, open the **Match settings** panel and check the 
 ## Matching Parameters
 
 Once enabled, SpectraMatcher assigns experimental peaks to computed ones based on **wavenumber proximity** and **relative intensity**. For both of these metrics, threshold values can be set using the sliders:
-- **Distance** threshold \(\tau_{\Delta \tilde{\nu}}\): Only peaks with a small enough wavenumber difference
+- **Distance** threshold $\tau_{\Delta \tilde{\nu}}$: Only peaks with a small enough wavenumber difference
+
     $$ 
     |\tilde{\nu}_\text{exp} - \tilde{\nu}_\text{comp} | \leq \tau_{\Delta \tilde{\nu}}
     $$ 
+
     are matched.
 
 - **Rel. intensity** threshold $\tau_I$: Only peaks with sufficiently similar intensity, i.e.
+
     $$ 
     \frac{i_\text{exp}}{i_\text{comp}} \geq \tau_I \leq \frac{i_\text{comp}}{i_\text{exp}}
-    $$ 
+    $$
+
     are matched. The setting $\tau_I = 1$ would allow only equally-sized peaks to be matched; $\tau_I = 0$ imposes no restrictions. (Note that intensities within each spectrum are defined relative to its highest peak.)
 
 To fine-tune the amount of assigned peaks, you can also enable **“Assign only labeled peaks”** — this restricts matching to only those computed peaks that are currently labeled in the plot (based on your label display settings).
