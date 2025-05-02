@@ -8,22 +8,21 @@ The "Emission Spectra" and "Excitation Spectra" tabs display plots of the respec
 
 <figure><img src=".gitbook/assets/emission_tab.png" alt="SpectraMatcher Emission Spectra overview"><figcaption></figcaption></figure>
 
-- The **experimental spectrum** (white) is shown at the bottom.
-- Each **computed spectra** are plotted above and color-coded by excited state.
-- The left panel lists each computed excited state and provides individual control sliders.
-- The right panel contains global controls.
-- Matched peaks, labels, and assignments are shown as overlays directly on the plot.
+* The **experimental spectrum** (white) is shown at the bottom.
+* Each **computed spectra** are plotted above and color-coded by excited state.
+* The left panel lists each computed excited state and provides individual control sliders.
+* The right panel contains global controls.
+* Matched peaks, labels, and assignments are shown as overlays directly on the plot.
 
 To learn about the functionalities provided by these controls — such as adjusting half-width, scaling spectra, or applying anharmonic corrections — see [Spectra Controls](spectra_controls.md).
 
 This section covers useful tips and tricks for interacting with the spectrum controls and plot efficiently:
-* [Plot zoom and pan](#plot-controls-zoom--pan)
-* [Slider controls](#slider-controls)
-* [Data manipulation directly in the plot](#data-manipulation-directly-in-the-plot)
 
+* [Plot zoom and pan](plot_controls.md#plot-controls-zoom--pan)
+* [Slider controls](plot_controls.md#slider-controls)
+* [Data manipulation directly in the plot](plot_controls.md#data-manipulation-directly-in-the-plot)
 
 ## Plot controls: Zoom & Pan
-
 
 The plot can be zoomed with constant aspect ratio by scrolling while the mouse is hovered over a by scrolling while hovering the mouse over an empty area of the plot (i.e., not over a spectrum).\
 To zoom only in x or y direction, hover the mouse over the corresponding axis and scroll.
@@ -34,7 +33,7 @@ In the same way, the plot can be dragged freely by clicking into the free plot a
 
 Zoom into an interesting region by right-click-dragging over it. Double-click the plot to zoom out to show all contents.
 
-<figure><img src=".gitbook/assets/rightclick_zoom.gif" alt="zoom into a plot region"><figcaption>Zoom into a plot region by right clicking and dragging.</figcaption></figure>
+<figure><img src=".gitbook/assets/rightclick_zoom.gif" alt="zoom into a plot region"><figcaption>Zoom into a plot region by right-clicking and dragging.</figcaption></figure>
 
 Alternatively, to set exact axis limits, right-click the axis (or the plot area and select X/Y axis), Ctrl+click the relevant min/max number, and enter the desired number.
 
