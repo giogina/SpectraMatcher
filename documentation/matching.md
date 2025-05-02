@@ -18,7 +18,7 @@ To activate automatic matching, open the **Match settings** panel and check the 
 ## Matching Parameters
 
 Once enabled, SpectraMatcher assigns experimental peaks to computed ones based on **wavenumber proximity** and **relative intensity**. For both of these metrics, threshold values can be set using the sliders:
-- **Distance** threshold $\tau_{\Delta \tilde{\nu}}$: Only peaks with a small enough wavenumber difference
+- **Distance** threshold \(\tau_{\Delta \tilde{\nu}}\): Only peaks with a small enough wavenumber difference
     $$ 
     |\tilde{\nu}_\text{exp} - \tilde{\nu}_\text{comp} | \leq \tau_{\Delta \tilde{\nu}}
     $$ 

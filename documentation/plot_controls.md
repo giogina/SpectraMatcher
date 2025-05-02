@@ -38,7 +38,6 @@ Further axis and plot options are available in the plot context menu under "X/Y 
 
 <figure><img src=".gitbook/assets/Axis_right_click_menu.png" alt=""><figcaption></figcaption></figure>
 
-[//]: # (<figure><img src=".gitbook/assets/settings_right_click_menu.png" alt=""><figcaption></figcaption></figure>)
 
 ## Slider controls
 
