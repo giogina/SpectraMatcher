@@ -229,7 +229,7 @@ The table of matched peaks — including wavenumbers, intensities, and transitio
 Choose your preferred format from the menu at the bottom of the **Match Settings** dropdown, and use the **Copy Table** button to copy the table to your clipboard.
 
 #### Spectrum Data
-To export numerical data for the convoluted computed spectra, open the **Composite Spectrum** dropdown, select the spectra you are interested in, and click **Copy selected spectra** to copy the full spectrum, as tab-separated text, to your clipboard.
+To export numerical data for the convoluted computed spectra, open the **Composite Spectrum** dropdown, check the spectra you want to export, and click **Copy selected spectra** to copy the full spectrum, as tab-separated text, to your clipboard.
 
 This data includes wavenumber–intensity pairs and can be pasted directly into analysis tools or plotting software.
 

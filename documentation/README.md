@@ -16,6 +16,12 @@ Check out the features below, or jump right to the [Quick Start Guide](quickstar
 
 # Features
 
+## [Vibtional mode animations](spectra_controls.md#vibrational-mode-animations)
+
+Visualize what vibrational mode is responsible for a peak by clicking its label to animate the molecular motion: 
+
+<figure><img src=".gitbook/assets/anim.gif" alt="Spectrum slider controls"><figcaption></figcaption></figure>
+
 ## [Clean, publication-ready export](exports.md)
 
 After matching peaks, you can copy the peak assignment table directly as tab-separated text, or nicely formatted as Word or LaTeX — ready to paste straight into your paper.
