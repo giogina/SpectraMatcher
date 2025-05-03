@@ -45,7 +45,14 @@ The displayed computed vibronic spectral profiles are obtained by convolution of
 
 ## Anharmonic correction factors
 
+Computed vibronic spectra typically rely on the harmonic approximation, which often overestimates vibrational frequencies. To better match experimental spectra, SpectraMatcher allows users to apply empirical scaling factors to the computed wavenumbers, separately for different vibrational mode types (X–H stretches, out-of-plane bends, and other deformations):
+
 <figure><img src=".gitbook/assets/anharm_correction_settings.png" alt="vibronic transition label settings"><figcaption></figcaption></figure>
+
+Typically, X-H stretches require a slightly lower correction factor than other deformations.
+
+SpectraMatcher automatically classifies each vibrational mode into one of these types.
+By ticking the **Show stick spectra** checkbox, you can display the transitions making up each computed spectrum as individual sticks, which are color coded by vibrational type. This allows you to directly identify which peaks will be influenced by which anharmonic correction factor.
 
 ## Transition labels
 
