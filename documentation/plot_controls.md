@@ -46,6 +46,8 @@ Further axis and plot options are available in the plot context menu under "X/Y 
 
 ## Sliders
 
+<figure><img src=".gitbook/assets/slider.png" alt="SpectraMatcher slider"><figcaption></figcaption></figure>
+
 All sliders can be changed in four different ways:
 * **Dragging the handle**,
 * **Scrolling the mouse wheel** while hovering the mouse over the slider,
@@ -58,7 +60,7 @@ Holding down **Shift** while scrolling or using arrow keys allows for finer adju
 
 ## Data manipulation directly in the plot
 
-The plot contains a number of hidden objects, which are revealed when hovering the mouse nearby, and can be used to manipulate the plotted data. This includes:
+The plot contains a number of hidden objects, which are revealed when you hover the mouse nearby, and can be used to manipulate the plotted data. This includes:
 * [Plot drag lines](#plot-drag-lines): Horizontal and vertical lines for each excited state plot, used to move or scale the plot, or adjust the half-width.
 * [Label drag handles](#label-drag-handles): Dots attached to each label, which can be used to drag the label to a desired location.
 
