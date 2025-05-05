@@ -1,6 +1,8 @@
 # SpectraMatcher
 
-SpectraMatcher is a tool for analyzing and matching vibronic spectra. A quick start guide and full documentation, including detailed usage guides, features, and examples, can be found here: [spectramatcher.gitbook.io/spectramatcher](https://spectramatcher.gitbook.io/spectramatcher)
+**SpectraMatcher** is a Python-based tool for analyzing and matching vibronic spectra from experimental data and Gaussian frequency and Franck–Condon / Herzberg-Teller computations. It streamlines file parsing, allows adjustment of vibronic spectra in an interactive plot, animates vibrational modes, automatically matches computed with experimental peaks, and exports publication-ready figures and tables.
+
+A quick start guide and full documentation, including detailed usage guides, features, and examples, can be found here: [spectramatcher.gitbook.io/spectramatcher](https://spectramatcher.gitbook.io/spectramatcher)
 
 The tool is available as compiled binaries for Windows and Linux, or can be run using Python. The respective setup steps are described below.
 
