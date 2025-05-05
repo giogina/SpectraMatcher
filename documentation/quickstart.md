@@ -2,7 +2,7 @@
 icon: rocket-launch
 ---
 
-# Quick start guide
+# Quick Start Guide
 
 ## Installation
 
@@ -27,7 +27,7 @@ Once installed, you can open SpectraMatcher from the Start Menu or by double-cli
 {% tab title="Linux" %}
 The provided SpectraMatcher binary requires **glibc version 2.31 or newer**, which is typically available on Ubuntu 20.04+, Debian 11+, Fedora 32+, and most other Linux distributions released since 2020. To install it, follow these steps:
 
-1.  [Download the latest installer](../linux_installer/SpectraMatcher_Linux_Installer_1.1.0.zip). Current version: 1.1.0.
+1.  [Download the latest installer](../linux_installer/SpectraMatcher_Linux_Installer_1.1.0.zip) from the [linux\_installer](../linux_installer) directory of the repository.
 2.  Unzip the archive:
 
     ```bash
