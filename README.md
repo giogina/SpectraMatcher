@@ -1,6 +1,6 @@
 # SpectraMatcher
 
-SpectraMatcher is a tool for analyzing and matching vibronic spectra. A quick start guide and full documentation can be found here: https://spectramatcher.gitbook.io/spectramatcher
+SpectraMatcher is a tool for analyzing and matching vibronic spectra. A quick start guide and full documentation, including detailed usage guides, features, and examples, can be found here: [spectramatcher.gitbook.io/spectramatcher](https://spectramatcher.gitbook.io/spectramatcher)
 
 The tool is available as compiled binaries for Windows and Linux, or can be run using Python. The respective setup steps are described below.
 
