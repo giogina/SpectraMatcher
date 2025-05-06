@@ -18,7 +18,7 @@ Check out the features below, or jump right to the [Quick Start Guide](quickstar
 
 ### [Smart import & auto-detection of Gaussian files](file_explorer.md#file-explorer)
 
-SpectraMatcher scans all added files — including entire folders — to automatically detect and classify Gaussian frequency and Franck-Condon/Herzberg-Teller computations, as well as experimental spectra. Icons indicate job type and status (complete, error, negative frequencies), while additional data (molecular formula, method, $$u_{00}$$, etc.) is extracted on the fly.
+SpectraMatcher scans all added files — including entire folders — to automatically detect and classify Gaussian frequency and vibronic (Franck-Condon/Herzberg-Teller) computations, as well as experimental spectra. Icons indicate job type and status (complete, error, negative frequencies), while additional data (molecular formula, method, $$u_{00}$$, etc.) is extracted on the fly.
 
 <figure><img src=".gitbook/assets/file_explorer.png" alt="File explorer panel"><figcaption><p>Gaussian jobs are scanned and labeled automatically during import.</p></figcaption></figure>
 
