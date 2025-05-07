@@ -92,7 +92,7 @@ SpectraMatcher parses Gaussian 16 output files, and detects the following three 
 * ![Excitation file icon](../resources/FC-up-2-16-green.png): Excitation Franck-Condon / Herzberg-Teller computations
 * ![Frequency file icon](../resources/file-freq-16-blue.png): Frequency & vibrational mode computations
 
-Example Gaussian input and output files can be found [here](https://github.com/giogina/SpectraMatcher/tree/main/demo_ovalene).
+Example Gaussian input (.gjf) and output (.log) files necessary for creating vibronic spectra of ovalene ($$C_{32}H_{14}$$, a polycyclic aromatic hydrocarbon) can be found [here](https://github.com/giogina/SpectraMatcher/tree/main/demo/ovalene.zip).
 
 #### Frequency Files
 
