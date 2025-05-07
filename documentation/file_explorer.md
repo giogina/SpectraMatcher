@@ -107,7 +107,7 @@ These files are essential for applying **vibration-type–specific scaling facto
 
 #### Vibronic (FC/HT) Files
 
-Vibronic output files must include results of Franck–Condon / Herzberg–Teller computations, as produced by Gaussian's 'fc' or `fcht` keywords. From these, SpectraMatcher extracts:
+Vibronic output files must include results of Franck–Condon / Herzberg–Teller computations, as produced by Gaussian's `fc` or `fcht` keywords. From these, SpectraMatcher extracts:
 - The **wavenumber** and **intensity** of each vibronic transition
 - The contributing vibrational modes and their quantum numbers
 - The type of calculation (emission or excitation)
