@@ -51,7 +51,7 @@ Further axis and plot options are available in the plot context menu under "X/Y 
 All sliders can be changed in four different ways:
 * **Dragging the handle**,
 * **Scrolling the mouse wheel** while hovering the mouse over the slider,
-* **Ctrl+Click** to enter an exact numerical value,
+* **Ctrl+Click** to enter an exact numerical value (confirm with **Enter**),
 * Using **arrow keys** to adjust the last altered slider in the corresponding direction:
   * The vertical arrow keys **↑ ↓** alter the most recently changed vertical spectrum shift, spectrum scale, or global vertical spacing.
   * The horizontal arrow keys **← →** adjust the most recently changed spectrum wavenumber shift, half width, or anharmonic correction factor.
