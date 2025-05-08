@@ -33,10 +33,10 @@ class FontManager:
             # self.fonts[self.normal_font] = dpg.add_font("./fonts/SansationRegular.ttf", self.normal_font)
             with dpg.font(os.path.join(fonts_path, "SansationRegular.ttf"), cls.normal_font) as cls.fonts[cls.normal_font]:
                 dpg.add_font_range(0x2070, 0x20b0, parent=cls.fonts[cls.normal_font])
-                dpg.add_font_chars([0x0394, 0x2264, 0x2265])
+                dpg.add_font_chars([0x0394, 0x2264, 0x2265, 0x2013])
             with dpg.font(os.path.join(fonts_path, "SansationRegular.ttf"), cls.big_font) as cls.fonts[cls.big_font]:
                 dpg.add_font_range(0x2070, 0x20b0, parent=cls.fonts[cls.big_font])
-                dpg.add_font_chars([0x0394, 0x2264, 0x2265])
+                dpg.add_font_chars([0x0394, 0x2264, 0x2265, 0x2013])
             for i in range(12, 25):
                 cls.get(i)
             Icons().set_font_registry(cls.font_registry, fonts_path)

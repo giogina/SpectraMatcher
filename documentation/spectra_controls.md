@@ -43,17 +43,6 @@ The displayed computed vibronic spectral profiles are obtained by convolution of
 
 <figure><img src=".gitbook/assets/drag_line_width_scale.gif" alt="Spectrum slider controls"><figcaption></figcaption></figure>
 
-## Anharmonic correction factors
-
-Computed vibronic spectra typically rely on the harmonic approximation, which often overestimates vibrational frequencies. To better match experimental spectra, SpectraMatcher allows users to apply empirical scaling factors to the computed wavenumbers, separately for different vibrational mode types (X–H stretches, out-of-plane bends, and other deformations):
-
-<figure><img src=".gitbook/assets/anharm_correction_settings.png" alt="vibronic transition label settings"><figcaption></figcaption></figure>
-
-Typically, X-H stretches require a slightly lower correction factor than other deformations.
-
-SpectraMatcher automatically classifies each vibrational mode into one of these types.
-By ticking the **Show stick spectra** checkbox, you can display the transitions making up each computed spectrum as individual sticks, which are color coded by vibrational type. This allows you to directly identify which peaks will be influenced by which anharmonic correction factor.
-
 ## Transition labels
 
 Transition labels in the spectrum can be shown by checking either of the **Show Mulliken labels** or **Show Gaussian labels** checkboxes. (The label notations used in both are [explained below](#gaussian-vs-mulliken-labels).)
@@ -89,6 +78,21 @@ Gaussian sometimes returns point group names such as "?F". SpectraMatcher append
 Click on any mode label (while the **Mode visualization** panel is open) to animate this mode's vibrational motion. You can drag the animation to inspect it from different perspectives.
 
 <figure><img src=".gitbook/assets/animation.gif" alt="Spectrum slider controls"><figcaption></figcaption></figure>
+
+
+## Anharmonic correction factors
+
+Computed vibronic spectra typically rely on the harmonic approximation, which often overestimates vibrational frequencies. To better match experimental spectra, SpectraMatcher allows users to apply empirical scaling factors to the computed wavenumbers, separately for different vibrational mode types (X–H stretches, out-of-plane bends, and other deformations):
+
+<figure><img src=".gitbook/assets/anharm_correction_settings.png" alt="anharmonic correction factors for different vibrational mode types"><figcaption></figcaption></figure>
+
+Typically, X-H stretches require a slightly lower correction factor than other deformations.
+
+SpectraMatcher automatically classifies each vibrational mode into one of these types. For example, mode # 46 in our spectrum is classified as an X-H stretch, as is obvious from its [vibrational animation](#vibrational-mode-animations):
+
+<figure><img src=".gitbook/assets/mode_46_hydrogen_stretches.gif" alt="vibronic transition label settings"><figcaption></figcaption></figure>
+
+By ticking the **Show stick spectra** checkbox, you can display the transitions making up each computed spectrum as individual sticks, which are color coded by vibrational type. This allows you to directly identify which peaks will be influenced by which anharmonic correction factor.
 
 ## Experimental peak detection
 

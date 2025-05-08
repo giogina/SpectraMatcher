@@ -230,7 +230,7 @@ class PlotsOverview:
                                 dpg.add_spacer(width=6)
                                 with dpg.group(horizontal=False):
                                     for i, x_scale_key in enumerate(['H stretches', 'bends', 'others']):
-                                        dpg.add_slider_float(label=[' H-* stretches', ' Bends', ' Others'][i], tag=f"{x_scale_key} {self.viewmodel.is_emission} slider", vertical=False, max_value=1.0, min_value=0.8, callback=lambda s, a, u: self.viewmodel.change_correction_factor(u, a), user_data=x_scale_key)  #, format=""
+                                        dpg.add_slider_float(label=[' X–H', ' Bends', ' Others'][i], tag=f"{x_scale_key} {self.viewmodel.is_emission} slider", vertical=False, max_value=1.0, min_value=0.8, callback=lambda s, a, u: self.viewmodel.change_correction_factor(u, a), user_data=x_scale_key)  #, format=""
                                         dpg.bind_item_theme(dpg.last_item(), f"slider_theme_{self.viewmodel.is_emission} {['Red', 'Blue', 'Green'][i]}")
                                     self.show_sticks = dpg.add_checkbox(label=" Show stick spectra", callback=self.toggle_sticks)
                             dpg.add_spacer(height=6)
@@ -590,7 +590,7 @@ class PlotsOverview:
         if not self.gaussian_labels and len(modes) > 1:
             modes.sort(key=lambda m: m.name)
         mode = modes[mode_index]
-        dpg.set_value(self.animation_mode_text, f"{mode.wavenumber:.2f} cm⁻¹, {mode.IR}, {mode.vibration_type.replace('others', 'Other deformation')}")
+        dpg.set_value(self.animation_mode_text, f"{mode.wavenumber:.2f} cm⁻¹, {mode.IR}, {mode.vibration_type.replace('H stretches', 'X-H stretch').replace('others', 'Other deformation')}")
         self.draw_molecule([[clicked_peak.transition[mode_index][1], mode]])
         self.viewmodel.set_displayed_animation(clicked_peak)
         self.viewmodel.pause_animation(pause=False)
