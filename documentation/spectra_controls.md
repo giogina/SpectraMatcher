@@ -92,7 +92,12 @@ SpectraMatcher automatically classifies each vibrational mode into one of these 
 
 <figure><img src=".gitbook/assets/mode_46_hydrogen_stretches.gif" alt="vibronic transition label settings"><figcaption></figcaption></figure>
 
-By ticking the **Show stick spectra** checkbox, you can display the transitions making up each computed spectrum as individual sticks, which are color coded by vibrational type. This allows you to directly identify which peaks will be influenced by which anharmonic correction factor.
+By ticking the **Show stick spectra** checkbox, you can display the transitions making up each computed spectrum as individual sticks, which are color coded by vibrational type. This allows you to directly identify which peaks will be influenced by which anharmonic correction factor. In our example, the peak associated with the transitions $$46_{1}^{0}$$ and $$3_{1}^{0}$$ is the only one involving X-H stretch modes (shown as red sticks). All other transitions are other deformations (green sticks); no out-of-plane bend transitions (blue sticks) have any noticeable intensity. 
+
+<figure><img src=".gitbook/assets/red_sticks.png" alt="Stick spectrum color coded by vibrational mode type"></figure>
+
+TODO("Red peak can be shifted")
+
 
 ## Experimental peak detection
 
