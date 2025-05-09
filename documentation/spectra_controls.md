@@ -96,7 +96,11 @@ By ticking the **Show stick spectra** checkbox, you can display the transitions 
 
 <figure><img src=".gitbook/assets/red_sticks.png" alt="Stick spectrum color coded by vibrational mode type"></figure>
 
-TODO("Red peak can be shifted")
+In the above plot, all anharmonic correction factors are set to 0.990. While most of the intense peaks in the computed spectrum match the experiment quite well, the X-H stretch peak $$46_{1}^{0}, 3_{1}^{0}$$ appears considerably too far right. This happens because the potential energy surface associated with X-H stretch vibrations tends to be much more anharmonic than is the case for other vibration types, resulting in a higher error induced by the neglect of anharmonicity in the frequency and Franck-Condon / Herzberg-Teller computations. In SpectraMatcher, this can be corrected very easily: Using the **X-H** slider, the correction factor for just the X-H stretch modes can be reduced to 0.975, which aligns the corresponding computed peak(s) with the experiment:
+
+<figure><img src=".gitbook/assets/hydrogen_stretch_peak_moving.gif" alt="Stick spectrum color coded by vibrational mode type"></figure>
+
+Typical vibrational frequency scaling factors for various methods and basis sets can be found in the [NIST database](https://cccbdb.nist.gov/vsfx.asp); however, the optimal values of these factors depend on a variety of circumstances (e.g. emission vs. excitation, the medium the molecule is in, ...), and are best determined by comparison with the available experimental data for the given case.  
 
 
 ## Experimental peak detection
