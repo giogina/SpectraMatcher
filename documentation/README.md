@@ -40,6 +40,17 @@ No need to hunt for controls — just grab and drag. Move entire spectra, shift 
 
 <figure><img src=".gitbook/assets/label_moving.gif" alt="Label drag"><figcaption>Drag labels to reposition them exactly where you want.</figcaption></figure>
 
+## [Physically accurate fine-tuning](spectra_controls.md#anharmonic-correction-factors)
+
+Computed spectra often overestimate vibrational frequencies due to the harmonic approximation. SpectraMatcher lets you correct this — not just globally, but per **vibration type**: X–H stretches, out-of-plane bends, and other modes can each have their own correction factor.
+
+<figure><img src=".gitbook/assets/anharmonic_correction_sliders.png" alt="anharmonic correction settings"><figcaption>Each vibrational mode type gets its own correction factor.</figcaption></figure>
+
+Vibrational modes are auto-classified based on their displacement vectors, and sticks in the spectrum are color-coded by type (e.g. red = X–H stretch). Adjust the sliders, and watch matching peaks snap into place:
+
+<figure><img src=".gitbook/assets/hydrogen_stretch_peak_moving.gif" alt="X-H stretch correction in action"><figcaption>Only X–H stretch peaks shift — the rest stay put.</figcaption></figure>
+
+This lets you apply physically meaningful corrections with high precision — and without overfitting.
 
 
 ## [Vibrational mode animations](spectra_controls.md#vibrational-mode-animations)
@@ -47,6 +58,16 @@ No need to hunt for controls — just grab and drag. Move entire spectra, shift 
 Visualize what vibrational mode is responsible for a peak by clicking its label to animate the molecular motion: 
 
 <figure><img src=".gitbook/assets/anim.gif" alt="Spectrum slider controls"><figcaption></figcaption></figure>
+
+
+## [Build composite spectra from excited states](spectra_controls.md#composite-spectrum)
+
+Overlay spectra from multiple excited states into a single composite — perfect when experimental peaks arise from overlapping transitions. Click spectra or use checkboxes to include/exclude components in real time.
+
+<figure><img src=".gitbook/assets/composite.gif" alt="Composite spectra"><figcaption>Interactively overlay excited-state contributions and see how well they explain experiment.</figcaption></figure>
+
+Display the result as a single curve, stacked colored components, or shaded areas. A powerful tool when one state isn't enough.
+
 
 ## [Clean, publication-ready export](exports.md)
 
