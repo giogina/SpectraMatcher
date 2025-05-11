@@ -48,7 +48,7 @@ class ExperimentParser:
                 return
 
             # Convert to numeric, coercing errors (non-numeric to NaN), then drop rows with NaN
-            df = df.apply(pd.to_numeric, errors='coerce').dropna()
+            df = df.apply(pd.to_numeric, errors='coerce').fillna(-1)
 
             # Return columns as numpy arrays, excluding non-numeric rows
             columns_as_arrays = {col: df[col].to_numpy() for col in df}

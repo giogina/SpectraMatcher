@@ -182,6 +182,9 @@ class ExperimentalSpectrum:
         # Try to figure out which column is which
         column_keys = list(self.columns)
         available_column_indices = [i for i, _ in enumerate(column_keys)]
+        if len(available_column_indices) < 3:
+            print(f"Error parsing {file.path}: Only {len(available_column_indices)} columns found. Please include columns for absolute wavenumber, relative wavenumber, and intensity.")
+            return
         int_found = False
         rel_found = False
         abs_found = False
@@ -210,7 +213,7 @@ class ExperimentalSpectrum:
                     break
         if not abs_found:
             for i in available_column_indices:
-                if column_keys[i].find("abs") > -1:
+                if column_keys[i].find("abs") > -1 or (rel_found and column_keys[i].find("wave") > -1):
                     self.settings["absolute wavenumber column"] = i
                     abs_found = True
                     available_column_indices.remove(i)
@@ -239,12 +242,12 @@ class ExperimentalSpectrum:
                         available_column_indices.remove(i)
                         available_column_indices.remove(j)
                         break
-        if not int_found:                                                               # 4.) Blind guess
-            self.settings["intensity column"] = available_column_indices[-1]
         if not rel_found:
             self.settings["relative wavenumber column"] = available_column_indices[0]
+        if not int_found:                                                               # 4.) Blind guess
+            self.settings["intensity column"] = available_column_indices[-1]
         if not abs_found:
-            self.settings["absolute wavenumber column"] = available_column_indices[1]
+            self.settings["absolute wavenumber column"] = available_column_indices[1 if len(available_column_indices)>1 else 0]
 
         file.experiment = None
         rel_col = self.columns[column_keys[self.settings['relative wavenumber column']]]
@@ -253,14 +256,16 @@ class ExperimentalSpectrum:
         self.determine_peaks()
 
     def get_x_data(self):
-        column_keys = list(self.columns)
-        key = column_keys[self.settings["relative wavenumber column"]]
-        return self.columns.get(key)
+        # column_keys = list(self.columns)
+        # key = column_keys[self.settings["relative wavenumber column"]]
+        # return self.columns.get(key)
+        return self.xdata
 
     def get_y_data(self):
-        column_keys = list(self.columns)
-        key = column_keys[self.settings["intensity column"]]
-        return self.columns.get(key)
+        # column_keys = list(self.columns)
+        # key = column_keys[self.settings["intensity column"]]
+        # return self.columns.get(key)
+        return self.ydata
 
     def set_column_usage(self, key, usage):
         column_keys = list(self.columns)
@@ -278,24 +283,33 @@ class ExperimentalSpectrum:
     def determine_peaks(self):
         self.errors = []
         if self.columns is None:
+            print(f"Parsing {self.settings['path']}: No data columns found.")
             self.errors.append("No data columns found")
             return
         int_index = self.settings.get("intensity column")
         if int_index not in range(0, len(list(self.columns))):
+            print(f"Parsing {self.settings['path']}: Intensity column not known.")
             self.errors.append(f"Intensity column not known")
             return
         rel_index = self.settings.get("relative wavenumber column")
         if rel_index not in range(0, len(list(self.columns))):
+            print(f"Parsing {self.settings['path']}: Relative wavenumber column not known.")
             self.errors.append(f"Relative wavenumber column not known")
             return
         abs_index = self.settings.get("absolute wavenumber column")
         if abs_index not in range(0, len(list(self.columns))):
+            print(f"Parsing {self.settings['path']}: Absolute wavenumber column not known.")
             self.errors.append(f"Absolute wavenumber column not known")
             return
 
-        xdata = self.columns.get(list(self.columns)[rel_index])
-        wndata = self.columns.get(list(self.columns)[abs_index])
-        ydata = self.columns.get(list(self.columns)[int_index])
+        xdata = np.array(self.columns.get(list(self.columns)[rel_index]))
+        wndata = np.array(self.columns.get(list(self.columns)[abs_index]))
+        ydata = np.array(self.columns.get(list(self.columns)[int_index]))
+
+        mask = ydata > -1
+        xdata = xdata[mask]
+        wndata = wndata[mask]
+        ydata = ydata[mask]
 
         self.x_min = min(xdata)
         self.x_max = max(xdata)
@@ -307,11 +321,12 @@ class ExperimentalSpectrum:
             interval = ydata[max(0, iy - 3):min(len(ydata), iy + 4)]
             smooth_ydata.append(sum(interval) / len(interval))
 
-        if int(xdata[0] - wndata[0]) == int(xdata[-1] - wndata[-1]):
+        if int((xdata[0] - wndata[0])-(xdata[-1] - wndata[-1])) == 0:
             self.zero_zero_transition = int(xdata[0] - wndata[0])
-        elif int(xdata[0] + wndata[0]) == int(xdata[-1] + wndata[-1]):
+        elif int((xdata[0] + wndata[0]) - (xdata[-1] + wndata[-1])) == 0:
             self.zero_zero_transition = int(xdata[0] + wndata[0])
         else:
+            print(f"Parsing {self.settings['path']}: Absolute and relative wavenumber columns don't match.")
             self.errors.append(f"Absolute and relative wavenumber columns don't match")
         self.smooth_ydata = smooth_ydata
 

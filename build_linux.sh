@@ -17,6 +17,6 @@ mv linux_installer/SpectraMatcher_Linux_Installer.zip "linux_installer/SpectraMa
 echo "=> Cleaning up..."
 sudo docker rm "$container_id"
 
-echo "Done. Output available at: linux_installer/SpectraMatcher_Linux_Installer.zip"
+echo "Done. Output available at: linux_installer/SpectraMatcher_Linux_Installer_$VERSION.zip"
 
 
