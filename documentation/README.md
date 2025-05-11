@@ -32,6 +32,15 @@ Experimental spectra in `.txt`, `.csv`, Excel, or OpenOffice format are recogniz
 
 It also distinguishes excitation vs. emission based on filename keywords, so you can batch-import with minimal prep.
 
+## [Interactive spectra adjustments - right in the plot](plot_controls.md)
+
+No need to hunt for controls — just grab and drag. Move entire spectra, shift peaks, adjust widths, or reposition labels by interacting directly with the plot. Hold Alt to show all available handles.
+
+<figure><img src=".gitbook/assets/scroll_and_wavenumber_shift_using_drag_lines.gif" alt="Spectra x shift drag line"><figcaption>Quickly shift wavenumbers or adjust peak broadening.</figcaption></figure>
+
+<figure><img src=".gitbook/assets/label_moving.gif" alt="Label drag"><figcaption>Drag labels to reposition them exactly where you want.</figcaption></figure>
+
+
 
 ## [Vibrational mode animations](spectra_controls.md#vibrational-mode-animations)
 
