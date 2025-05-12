@@ -1,6 +1,8 @@
 import sys
 from launcher import Launcher
 
+# Windows compilation: main.py right-click -> External tools -> Nuitka; then run wizard_creator.iss; rename .exe to current version number.
+# Linux compilation: run ./build_linux.sh. (Necessary for compatibility with older versions)
 
 # Windows: -m nuitka --assume-yes-for-downloads --standalone --follow-imports --include-data-dir=C:/Users/Giogina/SpectraMatcher/fonts=fonts  --include-data-dir=C:/Users/Giogina/SpectraMatcher/resources=resources --windows-icon-from-ico=C:/Users/Giogina/SpectraMatcher/resources/SpectraMatcher.ico --enable-plugin=tk-inter --windows-disable-console --output-filename=SpectraMatcher.exe $FilePath$
 #         Installation wizard:
