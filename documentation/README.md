@@ -13,7 +13,6 @@ Check out the features below, or jump right to the [Quick Start Guide](quickstar
 <figure><img src=".gitbook/assets/screenshot.png" alt="SpectraMatcher Screenshot"><figcaption></figcaption></figure>
 
 
-
 # Features
 
 ## [Smart import & auto-detection of Gaussian files](file_explorer.md#file-explorer)
@@ -40,7 +39,7 @@ No need to hunt for controls — just grab and drag. Move entire spectra, shift 
 
 <figure><img src=".gitbook/assets/label_moving.gif" alt="Label drag"><figcaption>Drag labels to reposition them exactly where you want.</figcaption></figure>
 
-## [Physically accurate fine-tuning](spectra_controls.md#anharmonic-correction-factors)
+## [Fine-tuning of anharmonic corrections](spectra_controls.md#anharmonic-correction-factors)
 
 Computed spectra often overestimate vibrational frequencies due to the harmonic approximation. SpectraMatcher lets you correct this — not just globally, but per **vibration type**: X–H stretches, out-of-plane bends, and other modes can each have their own correction factor.
 
