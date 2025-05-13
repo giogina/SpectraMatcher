@@ -64,6 +64,8 @@ Lowering the stick size thresholds results in more transitions per peak being la
 
 The font size of all text in the plot - including the transition labels as well as the axis tickmarks and titles - is adjustable using the **Font size** slider.
 
+> 💡 To avoid displaying individual labels, you can drag them out of the visible plot range to the bottom-left. The labels are re-drawn whenever the plot zoom or background (or any properties of the plotted spectra) change; but not when you pan (drag) the plot.
+
 ### Gaussian vs. Mulliken labels
 
 The vibrational modes can be named using two notations: Either as **Gaussian labels** (i.e., the number Gaussian lists the vibrational mode under), or as **Mulliken labels**.
