@@ -4,12 +4,12 @@ icon: bat
 
 # Interactive Plot Controls
 
-The "Emission Spectra" and "Excitation Spectra" tabs display plots of the respective experimental and computed spectra, together with a variety of control options:
+The "Emission Spectra" and "Excitation Spectra" tabs display interactive plots of the respective experimental and computed spectra, together with a variety of control options:
 
 <figure><img src=".gitbook/assets/emission_tab.png" alt="SpectraMatcher Emission Spectra overview"><figcaption></figcaption></figure>
 
 * The **experimental spectrum** (white) is shown at the bottom.
-* All **computed spectra** are plotted above and color-coded by excited state.
+* All **computed vibronic spectra** are plotted above and color-coded by excited state.
 * The left panel lists each computed excited state and provides individual control sliders.
 * The right panel contains global controls.
 * Matched peaks, labels, and assignments are shown as overlays directly on the plot.

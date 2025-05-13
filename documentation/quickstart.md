@@ -6,7 +6,7 @@ icon: rocket-launch
 
 ## Installation
 
-To get started with SpectraMatcher, you can either run the installation wizard for Windows or Linux, or launch it directly with Python.
+To get started with SpectraMatcher, you can either run the installation wizard for Windows or Linux, or launch it directly with [Python](https://www.python.org/).
 
 {% tabs %}
 {% tab title="Windows" %}
@@ -18,7 +18,7 @@ To install:
 2. Run the installation wizard and follow the on-screen instructions. It is recommended to keep the default installation directory.
 
 No Python or additional setup is needed.\
-Once installed, you can open SpectraMatcher from the Start Menu or by double-clicking any `.smp` project file.
+Once installed, you can open SpectraMatcher from the Start Menu or by double-clicking any `.smp` file, which is the project file format used to store vibronic spectra analysis sessions.
 
 > 💡  If Windows SmartScreen shows a warning, click “More info” → “Run anyway”.
 
