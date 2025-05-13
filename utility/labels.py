@@ -75,10 +75,10 @@ class Labels:
     @classmethod
     def label2tex(cls, label):
         tex_label = Labels.label2html(label)
-        tex_label = tex_label.replace("<sub>", "_{")
-        tex_label = tex_label.replace("</sub>", "}")
-        tex_label = tex_label.replace("<sup>", "^{")
-        tex_label = tex_label.replace("</sup>", "}")
+        tex_label = tex_label.replace("<sub>", "_{\smash{\scriptstyle ")
+        tex_label = tex_label.replace("</sub>", "}}")
+        tex_label = tex_label.replace("<sup>", "^{\smash{\scriptstyle ")
+        tex_label = tex_label.replace("</sup>", "}}")  #_{\smash{\scriptstyle 1}}
         return '$'+tex_label+'$'
 
     @classmethod

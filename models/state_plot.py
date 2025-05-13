@@ -367,9 +367,10 @@ class MatchPlot:
     def get_match_table_tex(self, use_gaussian_labels):
         table = self.get_match_table(use_gaussian_labels=use_gaussian_labels)
 
+
         column_alignment = " ".join(["c" for _ in range(len(table[0]))])
         # latex_table = "\\begin{tabular}{" + " " + column_alignment + " }\n\\hline\n"
-        latex_table = "\\begin{tabular}{" + " " + column_alignment + " }\n\\toprule\n"
+        latex_table = "\\begin{table*}[t]\n\\centering\n\\caption{}\n\\renewcommand{\\arraystretch}{1.1}\n\\begin{tabular}{" + " " + column_alignment + " }\n\\toprule\n"
         latex_table += "\\multicolumn{2}{c}{Experiment} & \\multicolumn{2}{c}{Computed} & & \\multicolumn{6}{c}{Transition}\\\\\n"
         latex_table += "\\cmidrule(lr){1-2} \\cmidrule(lr){3-4} \\cmidrule(lr){5-11}\n"
         latex_table += "$\\tilde{\\nu}$ & intensity & $\\tilde{\\nu}$ & intensity & state & $\\tilde{\\nu}$ & $\\tilde{\\nu}^\\text{corr}$ & intensity & & sym & type \\\\\n"
@@ -378,10 +379,16 @@ class MatchPlot:
         for line in table[1:]:
             line[4] = str(line[4]).replace(' excited state', '')
             line[-6] = Labels.label2tex(line[-6]).replace("$$", " ")
+            try:
+                sub = line[-2].split("'")[0][1:]
+                subscript = "_{"+str(sub).lower()+"}" if len(sub) > 0 else ""
+                line[-2] = f"${line[-2].replace(sub, subscript)}$" if len(line[-2]) > 0 else ""
+            except Exception as e:
+                print("IR formatting error: ", e)
             line[-1] = str(line[-1]).replace("X-H stretch", "X-H").replace("Other", "")
             latex_table += " & ".join([str(entry) for entry in line]) + " \\\\\n"
 
-        latex_table += "\\bottomrule\n\\end{tabular}"
+        latex_table += "\\bottomrule\n\\end{tabular}\n\\renewcommand{\\arraystretch}{1.0}\n\\end{table*}"
         return latex_table
 
     def get_match_table_tsv(self, use_gaussian_labels):

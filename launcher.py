@@ -204,8 +204,8 @@ class Launcher:
         elif sys.platform.startswith("linux"):
             try:
                 result = subprocess.run(["wmctrl", "-a", window_title])
-                if result.returncode != 0:
-                    subprocess.run(["notify-send", "SpectraMatcher", "Already running — please switch to it."])
+                # if result.returncode != 0:
+                #     subprocess.run(["notify-send", "SpectraMatcher", "Already running — please switch to it."])
                 return result.returncode == 0
             except FileNotFoundError:
                 print("wmctrl not installed. Cannot raise window.")
