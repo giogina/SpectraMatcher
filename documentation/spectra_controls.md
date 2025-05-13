@@ -4,7 +4,7 @@ icon: wave-pulse
 
 # Spectra Controls
 
-This section explains the various ways in which the plot and spectra can be manipulated:
+This section explains the various ways in which the vibronic emission and excitation spectra can be manipulated:
 * [**Moving and scaling**](#moving-and-scaling-computed-spectra) of computed spectra
 * Setting the [**half-width**](#peak-half-width) of computed spectra
 * Applying [**anharmonic correction factors**](#anharmonic-correction-factors) to different vibration types
@@ -15,11 +15,11 @@ This section explains the various ways in which the plot and spectra can be mani
 
 ## Moving and scaling computed spectra
 
-The computed spectra can be moved horizontally and vertically, as well as scaled, in three equivalent ways:
+The computed spectra can be moved horizontally (i.e., adjusting their wavenumber offset) and vertically, as well as scaled, in three equivalent ways:
 
 ### Directly in the plot
 
-Each computed spectrum possesses two hidden drag lines - a horizontal line at its base, and a vertical line at its largest peak. These lines can be used to move the spectrum (click & drag), and to scale its height or peak width (hover & scroll). [Click here](plot_controls.md#plot-drag-lines) to read more about drag lines.
+Each computed spectrum possesses two hidden drag lines - a horizontal line at its base, and a vertical line at its largest peak. These lines can be used to move the spectrum (click & drag), and to scale its intensity or peak width (hover & scroll). [Click here](plot_controls.md#plot-drag-lines) to read more about drag lines.
 
 ### Spectra control panel
 
@@ -27,7 +27,7 @@ The panel to the left of the plot contains controls for individual computed spec
 
 <figure><img src=".gitbook/assets/state_sliders.png" alt="Spectrum slider controls"><figcaption></figcaption></figure>
 
-In addition to the sliders for **wavenumber shift**, spectrum **scale**, and **vertical position** in the plot, the three buttons on the left let you **toggle spectrum visibility** off/on, choose the spectrum's **display color**, and **reset** the shift & scale parameters.
+In addition to the sliders for **wavenumber shift**, spectrum intensity **scaling**, and **vertical position** in the plot, the three buttons on the left let you **toggle spectrum visibility** off/on, choose the spectrum's **display color**, and **reset** the shift & scale parameters.
 
 ### Global vertical spacing
 
@@ -37,7 +37,7 @@ The global "vertical spacing" slider on the top right places all visible spectra
 
 ## Peak half-width
 
-The displayed computed vibronic spectral profiles are obtained by convolution of the transition stick spectra with Lorentzian profile, using a user-defined half-width. This half-width can be set in two equivalent ways:
+The displayed computed vibronic spectral profiles are obtained by convolution of the transition stick spectra with a [Lorentzian](https://en.wikipedia.org/wiki/Spectral_line_shape#Lorentzian) profile, using a user-defined half-width. This half-width can be set in two equivalent ways:
 * Using the half-width slider on the top-right, or 
 * By hovering the vertical drag line on the highest peak, and scrolling the mouse wheel:
 
@@ -82,7 +82,7 @@ Click on any mode label (while the **Mode visualization** panel is open) to anim
 
 ## Anharmonic correction factors
 
-Computed vibronic spectra typically rely on the harmonic approximation, which often overestimates vibrational frequencies. To better match experimental spectra, SpectraMatcher allows users to apply empirical scaling factors to the computed wavenumbers, separately for different vibrational mode types (X–H stretches, out-of-plane bends, and other deformations):
+Computed vibronic spectra typically rely on the harmonic approximation, which often overestimates vibrational frequencies. To better match experimental spectra, SpectraMatcher allows users to apply empirical [frequency scaling factors](https://doi.org/10.1021/jp073974n) to the computed wavenumbers, separately for different vibrational mode types (X–H stretches, out-of-plane bends, and other deformations):
 
 <figure><img src=".gitbook/assets/anharm_correction_settings.png" alt="anharmonic correction factors for different vibrational mode types"><figcaption></figcaption></figure>
 
