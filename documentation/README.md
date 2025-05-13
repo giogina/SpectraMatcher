@@ -36,7 +36,8 @@ It also distinguishes excitation vs. emission based on filename keywords, so you
 
 ### [Interactive spectra adjustments - right in the plot](plot_controls.md)
 
-No need to hunt for controls — just grab and drag. Move entire spectra, shift peaks, adjust widths, or reposition labels by interacting directly with the plot. Hold Alt to show all available handles.
+The experimental and computed [vibronic spectra](https://en.wikipedia.org/wiki/Vibronic_spectroscopy) are displayed in highly interactive plots; both for the fluorescence and the excitation spectra.
+No need to hunt for controls — just grab and drag. Move entire spectra, shift peaks, adjust peak half-widths, or reposition labels by interacting directly with the plot.
 
 <figure><img src=".gitbook/assets/scroll_and_wavenumber_shift_using_drag_lines.gif" alt="Spectra x shift drag line"><figcaption><p>Quickly shift wavenumbers or adjust peak broadening.</p></figcaption></figure>
 
