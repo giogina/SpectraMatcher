@@ -284,10 +284,29 @@ class ModeList:
         self.modes[mode.gaussian_name] = mode
         if sym in self.IRs.keys():
             self.IRs[sym] = [mode] + self.IRs[sym]
-        else:
+        elif len(sym) > 0:
             self.IRs[sym] = [mode]
             self.IR_order.append(sym)
+            try:
+                self.IR_order.sort(key=self.irreps_sort_key)
+            except Exception as e:
+                print(f"Problem sorting IRs: {e}")
             print(f"Added extra IR: {sym}")
+
+    def irreps_sort_key(self, sym: str):
+        if len(sym) == 0:
+            return 2, "x"
+        elif '?' in sym:
+            return 1, sym  # all questionmarked ones at the end, in alphabetical order
+        else:
+            head = sym[0]
+            try:
+                number = int(sym[1])
+                tail = sym[2:]
+            except Exception:
+                number = 0  # no number present in irrep string
+                tail = sym[1:]
+            return 0, tail, head, number
 
     def determine_mode_names(self):
         for ml in self.IRs.values():
