@@ -37,7 +37,7 @@ The global "vertical spacing" slider on the top right places all visible spectra
 
 ## Peak half-width
 
-The displayed computed vibronic spectral profiles are obtained by convolution of the transition stick spectra with a [Lorentzian](https://en.wikipedia.org/wiki/Spectral_line_shape#Lorentzian) profile, using a user-defined half-width. This half-width can be set in two equivalent ways:
+The displayed computed spectral profiles are obtained by convolution of the transition stick spectra with a [Lorentzian](https://en.wikipedia.org/wiki/Spectral_line_shape#Lorentzian) profile, using a user-defined half-width. This half-width can be set in two equivalent ways:
 * Using the half-width slider on the top-right, or 
 * By hovering the vertical drag line on the highest peak, and scrolling the mouse wheel:
 
@@ -56,11 +56,11 @@ The amount of labeled peaks is governed by three sliders specifying thresholds f
 
 Lowering the minimum intensity threshold results in smaller peaks receiving a label:
 
-<figure><img src=".gitbook/assets/low_min_int.png" alt="vibronic transition label settings"><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/low_min_int.png" alt="Reducing the minimum intensity matching threshold"><figcaption></figcaption></figure>
 
 Lowering the stick size thresholds results in more transitions per peak being labeled:
 
-<figure><img src=".gitbook/assets/low_stick_thr.png" alt="vibronic transition label settings"><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/low_stick_thr.png" alt="Reducing the minimum stick size matching thresholds"><figcaption></figcaption></figure>
 
 The font size of all text in the plot - including the transition labels as well as the axis tickmarks and titles - is adjustable using the **Font size** slider.
 
@@ -90,7 +90,7 @@ Typically, X-H stretches require a slightly lower correction factor than other d
 
 SpectraMatcher automatically classifies each vibrational mode into one of these types. For example, mode # 46 in our spectrum is classified as an X-H stretch, as is obvious from its [vibrational animation](#vibrational-mode-animations):
 
-<figure><img src=".gitbook/assets/mode_46_hydrogen_stretches.gif" alt="vibronic transition label settings"><figcaption></figcaption></figure>
+<figure><img src=".gitbook/assets/mode_46_hydrogen_stretches.gif" alt="animation of X-H stretching vibrational mode"><figcaption></figcaption></figure>
 
 By ticking the **Show stick spectra** checkbox, you can display the transitions making up each computed spectrum as individual sticks, which are color coded by vibrational type. This allows you to directly identify which peaks will be influenced by which anharmonic correction factor. In our example, the peak associated with the transitions $$46_{1}^{0}$$ and $$3_{1}^{0}$$ is the only one involving X-H stretch modes (shown as red sticks). All other transitions are other deformations (green sticks); no out-of-plane bend transitions (blue sticks) have any noticeable intensity. 
 

@@ -33,9 +33,11 @@ Once enabled, SpectraMatcher assigns experimental peaks to computed ones based o
 
     are matched. The setting $$\tau_I=1$$ would allow only equally-sized peaks to be matched; $$\tau_I=0$$ imposes no restrictions. (Note that intensities within each spectrum are defined relative to its highest peak.)
 
-To fine-tune the amount of assigned peaks, you can also enable **“Assign only labeled peaks”** — this restricts matching to only those computed peaks that are currently labeled in the plot (based on your label display settings).
+Applying this peak matching algorithm, rather than manually assigning computed to experimental peaks, makes the analysis of vibronic spectra not only more efficient, but also more reproducible and robust. 
 
 <figure><img src=".gitbook/assets/match_plot.png" alt="Plot of matched labeled vibronic spectra"><figcaption></figcaption></figure>
+
+To fine-tune the amount of assigned peaks, you can also enable **“Assign only labeled peaks”** — this restricts matching to only those computed peaks that are currently labeled in the plot (based on your label display settings).
 
 ## Peak Assignment Table
 
