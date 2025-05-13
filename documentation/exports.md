@@ -6,13 +6,13 @@ icon: sheep
 
 Once your spectra are aligned and peak matching is complete, SpectraMatcher lets you export your results in formats ready for publication or further analysis.
 
-## Assignment Table Export
+## Export Peak Assignment Table
 
-The table of matched peaks — including intensities, transition labels, and wavenumbers — can be exported in several formats:
+The table of matched peaks — including intensities, transition labels, and wavenumbers — can be exported in several publication-ready formats:
 
-- **.txt** (tab-separated plain text) for spreadsheet analysis or scripting
-- **.docx** (Word) for easy insertion into reports or manuscripts
-- **.tex** (LaTeX) for direct inclusion in scientific publications
+- **.txt** (tab-separated plain text) compatible with spreadsheet software and scientific plotting tools
+- **.docx** ([Word](https://www.microsoft.com/en-us/microsoft-365/word)) for easy insertion into reports or manuscripts
+- **.tex** ([LaTeX](https://www.latex-project.org/)) for direct inclusion in scientific publications
 
 Choose the format in the drop-down menu in the **Match settings** panel, then click **Copy table** to copy the data to your clipboard, ready to paste into your text editor of choice.
 
@@ -26,9 +26,9 @@ The Word and LaTeX tables feature properly aligned columns and math-mode formatt
 
 > 💡 Ensure you use `\usepackage{booktabs}` in your preamble to enable proper formatting of the LaTeX table. Alternatively, replace the `\toprule` etc. by `\hline` commands.
 
-## Computed Spectra as Numerical Data
+## Export Vibrational Spectra Data
 
-To export the underlying data of the computed convoluted spectra, open the **Composite Spectrum** panel, select the spectra you are interested in, and click **Copy selected spectra**.
+To export the underlying numerical data of the computed convoluted spectra, open the **Composite Spectrum** panel, select the spectra you are interested in, and click **Copy selected spectra**.
 
 <figure><img src=".gitbook/assets/copy_spectra.png" alt="Copy spectra button"></figure>
 

@@ -20,7 +20,7 @@ Check out the features below, or jump right to the [Quick Start Guide](quickstar
 
 ### [Smart import & auto-detection of Gaussian files](file_explorer.md#file-explorer)
 
-SpectraMatcher scans all added files — including entire folders — to automatically detect and classify [Gaussian 16](https://gaussian.com/) frequency and ([Franck-Condon](https://en.wikipedia.org/wiki/Franck%E2%80%93Condon_principle)/[Herzberg-Teller](https://condensedconcepts.blogspot.com/2013/03/what-is-herzberg-teller-coupling.html)) [vibronic computations](https://gaussian.com/g16vibronic-spectra/), as well as experimental spectra. Icons indicate job type and status (complete, error, negative frequencies), while additional data (molecular formula, method, $$u_{00}$$, etc.) is extracted on the fly.
+SpectraMatcher scans all added files — including entire folders — to automatically detect and classify [Gaussian 16](https://gaussian.com/) frequency and ([Franck-Condon](https://en.wikipedia.org/wiki/Franck%E2%80%93Condon_principle) / [Herzberg-Teller](https://condensedconcepts.blogspot.com/2013/03/what-is-herzberg-teller-coupling.html)) [vibronic computations](https://gaussian.com/g16vibronic-spectra/), as well as experimental spectra. Icons indicate job type and status (complete, error, negative frequencies), while additional data (molecular formula, method, $$u_{00}$$, etc.) is extracted on the fly.
 
 <figure><img src=".gitbook/assets/file_explorer.png" alt="File explorer panel"><figcaption><p>Gaussian jobs are scanned and labeled automatically during import.</p></figcaption></figure>
 
@@ -44,9 +44,9 @@ No need to hunt for controls — just grab and drag. Move entire spectra, shift 
 
 ### [Fine-tuning of anharmonic corrections](spectra_controls.md#anharmonic-correction-factors)
 
-Computed spectra often overestimate vibrational frequencies due to the harmonic approximation. SpectraMatcher lets you correct this — not just globally, but per **vibration type**: X–H stretches, out-of-plane bends, and other modes can each have their own correction factor.
+Computed spectra often overestimate [vibrational frequencies](https://en.wikipedia.org/wiki/Molecular_vibration) due to the harmonic approximation. SpectraMatcher lets you correct this using anharmonic correction [frequency scaling factors](https://doi.org/10.1021/jp073974n) — not just globally, but per **vibrational mode type**: X–H stretches, [out-of-plane bends](https://doi.org/10.1051/0004-6361:20010242), and other modes can each have their own correction factor.
 
-<figure><img src=".gitbook/assets/anharmonic_correction_sliders.png" alt="anharmonic correction settings"><figcaption><p>Each vibrational mode type gets its own correction factor.</p></figcaption></figure>
+<figure><img src=".gitbook/assets/anharmonic_correction_sliders.png" alt="anharmonic correction settings"><figcaption><p>Each vibrational mode type gets its own scaling factor.</p></figcaption></figure>
 
 Vibrational modes are auto-classified based on their displacement vectors, and sticks in the spectrum are color-coded by type (e.g. red = X–H stretch). Adjust the sliders, and watch matching peaks snap into place:
 

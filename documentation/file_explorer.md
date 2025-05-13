@@ -14,7 +14,9 @@ If you added data files or folders during the project creation, this file explor
 
 <figure><img src=".gitbook/assets/Import_Data.png" alt=""><figcaption></figcaption></figure>
 
-The available data files are immediately read to detect experimental spectra and outputs of Gaussian 16 frequency and [vibronic computations](https://gaussian.com/g16vibronic-spectra). An overview of the contents these files is displayed alongside their names:
+The available data files are immediately read to detect experimental spectra and outputs of Gaussian 16 log files for frequency and
+[Franck-Condon](https://en.wikipedia.org/wiki/Franck%E2%80%93Condon_principle)/[Herzberg-Teller](https://doi.org/10.1515/zpch-1933-2136)
+ [vibronic computations](https://gaussian.com/g16vibronic-spectra). An overview of the contents these files is displayed alongside their names:
 * The file icon indicates the type:
   * ![Emission file icon](../resources/FC-down-2-16-red.png): Emission Franck-Condon / Herzberg-Teller computations
   * ![Excitation file icon](../resources/FC-up-2-16-green.png): Excitation Franck-Condon / Herzberg-Teller computations
@@ -82,17 +84,19 @@ If this automatic column detection fails, after import the columns can be select
 
 #### Excitation vs. Emission
 
-Experimental files are interpreted as excitation or emission spectra based on their file names: Any file containing one of the sub-strings "DF\_", "fluor" or "emmi" is interpreted as an emission spectrum; all other data table files are interpreted as excitation spectra.
+Experimental files are interpreted as excitation or emission spectra based on their file names: Any file containing one of the sub-strings "DF\_", "fluor" or "emmi" is interpreted as an experimental emission (fluorescence) spectrum; all other well-formatted data table files are interpreted as experimental excitation spectra.
 
 ### Computed Spectra Files
 
-SpectraMatcher parses Gaussian 16 output files, and detects the following three types relevant for the rendering and analysis of vibronic spectra:
+SpectraMatcher parses and analyses Gaussian 16 output files, and detects the following three types relevant for the rendering and analysis of vibronic spectra:
 
 * ![Emission file icon](../resources/FC-down-2-16-red.png): Emission Franck-Condon / Herzberg-Teller computations
 * ![Excitation file icon](../resources/FC-up-2-16-green.png): Excitation Franck-Condon / Herzberg-Teller computations
 * ![Frequency file icon](../resources/file-freq-16-blue.png): Frequency & vibrational mode computations
 
-Example Gaussian input (.gjf) and output (.log) files necessary for creating vibronic spectra of ovalene ($$C_{32}H_{14}$$, a polycyclic aromatic hydrocarbon) can be found [here](https://github.com/giogina/SpectraMatcher/tree/main/demo/ovalene.zip). All screenshots and outputs presented in this manual have been produced using this demo data - you can use it to follow along and test the features.
+This automatic classification of Gaussian .log files makes batch import of computed spectra easy.
+
+Example Gaussian input (.gjf) and output (.log) files necessary for creating vibronic spectra of [ovalene](https://doi.org/10.1021/acs.jpclett.4c02494) ($$C_{32}H_{14}$$, a polycyclic aromatic hydrocarbon) can be found [here](https://github.com/giogina/SpectraMatcher/tree/main/demo/ovalene.zip). All screenshots and outputs presented in this manual have been produced using this demo data - you can use it to follow along and test the features.
 
 #### Frequency Files
 
