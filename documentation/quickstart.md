@@ -18,7 +18,7 @@ To install:
 2. Run the installation wizard and follow the on-screen instructions. It is recommended to keep the default installation directory.
 
 No Python or additional setup is needed.\
-Once installed, you can open SpectraMatcher from the Start Menu or by double-clicking any `.smp` file, which is the project file format used to store vibronic spectra analysis sessions.
+Once installed, you can open SpectraMatcher from the Start Menu or by double-clicking any `.smp` vibronic analysis project file.
 
 > 💡  If Windows SmartScreen shows a warning, click “More info” → “Run anyway”.
 
@@ -162,11 +162,12 @@ When you launch SpectraMatcher, the startup dashboard lets you open a recent pro
 
 When you start a new project, you may add your data files right away by clicking the folder icon or dragging files into the import area (Windows only).
 
-Project files use the `.smp` extension and are by default saved in a `{home}/SpectraMatcher/` directory.
+Vibronic spectra analysis sessions are stored in project files using the `.smp` extension, which by default are saved in a `{home}/SpectraMatcher/` directory.
+
 
 ## Data Import
 
-After creating a project, you’ll be taken to the **Import Data** tab. This screen shows all files available for analysis, together with their types and an overview of their contents.
+After creating a project, you’ll be taken to the **Import Data** tab. This screen shows all files available for analysis, together with their types (such as Gaussian output files, or experimental vibronic spectra), and an overview of their contents (e.g. the computation methods, level of theory, and first vibrational frequencies).
 
 If you added data in the setup screen, they’ll already be listed in the left-hand panel. You can add more files at any time by:
 - Clicking the **“Add file”** or **“Add folder”** buttons in the top-right, or
@@ -184,7 +185,7 @@ For supported file types and further import options, see the [Data Import](file_
 When you're ready, click **Done** to proceed to the spectrum viewer.
 
 
-## Emission and Excitation Spectra
+## Emission and Excitation Vibronic Spectra
 
 Once data is imported, the **Emission** and **Excitation** tabs display both the experimental spectrum (white) and computed spectra (colored by excited state).
 
@@ -228,7 +229,7 @@ The table of matched peaks — including wavenumbers, intensities, and transitio
 
 Choose your preferred format from the menu at the bottom of the **Match Settings** dropdown, and use the **Copy Table** button to copy the table to your clipboard.
 
-#### Spectrum Data
+#### Convoluted Vibronic Spectrum Data
 To export numerical data for the convoluted computed spectra, open the **Composite Spectrum** dropdown, check the spectra you want to export, and click **Copy selected spectra** to copy the full spectrum, as tab-separated text, to your clipboard.
 
 This data includes wavenumber–intensity pairs and can be pasted directly into analysis tools or plotting software.
