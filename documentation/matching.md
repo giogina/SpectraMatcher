@@ -2,13 +2,13 @@
 icon: atom
 ---
 
-# Spectrum Matching
+# Vibronic Spectrum Matching
 
-SpectraMatcher can automatically match computed and experimental peaks based on their proximity and intensity. This allows you to quickly identify which transitions contribute to which features in the experimental spectrum — even in complex, overlapping cases.
+SpectraMatcher can automatically match peaks of computed and experimental fluorescence and excitation spectra, based on the peak's proximity and intensity. This allows you to quickly identify which vibronic transitions contribute to which features in the experimental spectrum — even in complex, overlapping cases. The detected peak assignments, together with respective wavenumbers, peak intensities, involved vibrational modes and excited states, are listed in a peak assignment table, which can be conveniently [exported in various formats](exports.md#export-peak-assignment-table), e.g. as LaTeX table suitable for direct inclusion in publications.
 
 ## Activation of Peak Matching
 
-THe automatic matching algorithm matches the experimental data to a [**composite spectrum**](spectra_controls.md#composite-spectrum) — a sum of selected computed excited-state spectra. (Of course, you can also include just a single excited state here.) By default, when matching is first activated and no composite spectrum has been manually selected, all currently visible computed spectra are added to the composite.
+The automatic matching algorithm matches the experimental data to a [**composite spectrum**](spectra_controls.md#composite-spectrum) — a sum of selected computed excited-state vibronic spectra. (Of course, you can also include just a single excited state here.) By default, when matching is first activated and no composite spectrum has been manually selected, all currently visible computed spectra are added to the composite.
 
 To activate automatic matching, open the **Match settings** panel and check the box labeled **Match peaks**.
 
