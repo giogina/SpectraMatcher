@@ -4,11 +4,13 @@ icon: binoculars
 
 # About SpectraMatcher
 
-## SpectraMatcher: A vibronic spectra analysis tool.
+## SpectraMatcher: Interactive analysis of vibronic spectra
 
-**SpectraMatcher** is a graphical tool for analyzing and matching computed and experimental vibronic spectra. It provides an intuitive interface for importing data, visualizing and interactively adjusting spectra, and automatically assigning peak correspondences.
+**SpectraMatcher** is a graphical cross-platform desktop tool for analyzing and matching **computed and experimental vibronic spectra**. Designed for chemists working with **Gaussian** output files, it streamlines **Franck–Condon/Herzberg–Teller** spectral analysis through intuitive visualization, real-time spectrum adjustment, and interactive **peak assignment**.
 
-The software is open source and actively maintained on [github.com/giogina/SpectraMatcher/](https://github.com/giogina/SpectraMatcher/), where you can find the latest releases, example files, and installation options.
+It supports automatic import of frequency and vibronic calculations for multiple excited states, overlaying and editing spectra directly on the plot, and exporting publication-ready tables and figures — no coding required.
+
+The software is available open source under the [MIT license](https://opensource.org/licenses/MIT) and actively maintained at [github.com/giogina/SpectraMatcher](https://github.com/giogina/SpectraMatcher/), where you’ll find the latest releases, example files, and installation instructions.
 
 Check out the features below, or jump right to the [Quick Start Guide](quickstart.md).
 
@@ -18,7 +20,7 @@ Check out the features below, or jump right to the [Quick Start Guide](quickstar
 
 ### [Smart import & auto-detection of Gaussian files](file_explorer.md#file-explorer)
 
-SpectraMatcher scans all added files — including entire folders — to automatically detect and classify Gaussian frequency and vibronic (Franck-Condon/Herzberg-Teller) computations, as well as experimental spectra. Icons indicate job type and status (complete, error, negative frequencies), while additional data (molecular formula, method, $$u_{00}$$, etc.) is extracted on the fly.
+SpectraMatcher scans all added files — including entire folders — to automatically detect and classify [Gaussian 16](https://gaussian.com/) frequency and ([Franck-Condon](https://en.wikipedia.org/wiki/Franck%E2%80%93Condon_principle)/[Herzberg-Teller](https://condensedconcepts.blogspot.com/2013/03/what-is-herzberg-teller-coupling.html)) [vibronic computations](https://gaussian.com/g16vibronic-spectra/), as well as experimental spectra. Icons indicate job type and status (complete, error, negative frequencies), while additional data (molecular formula, method, $$u_{00}$$, etc.) is extracted on the fly.
 
 <figure><img src=".gitbook/assets/file_explorer.png" alt="File explorer panel"><figcaption><p>Gaussian jobs are scanned and labeled automatically during import.</p></figcaption></figure>
 

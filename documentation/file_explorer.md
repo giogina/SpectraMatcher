@@ -14,7 +14,7 @@ If you added data files or folders during the project creation, this file explor
 
 <figure><img src=".gitbook/assets/Import_Data.png" alt=""><figcaption></figcaption></figure>
 
-The available data files are immediately read to detect experimental spectra and outputs of frequency and vibronic calculations. An overview of the contents these files is displayed alongside their names:
+The available data files are immediately read to detect experimental spectra and outputs of Gaussian 16 frequency and [vibronic computations](https://gaussian.com/g16vibronic-spectra). An overview of the contents these files is displayed alongside their names:
 * The file icon indicates the type:
   * ![Emission file icon](../resources/FC-down-2-16-red.png): Emission Franck-Condon / Herzberg-Teller computations
   * ![Excitation file icon](../resources/FC-up-2-16-green.png): Excitation Franck-Condon / Herzberg-Teller computations
