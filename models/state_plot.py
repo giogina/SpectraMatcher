@@ -373,7 +373,7 @@ class MatchPlot:
         latex_table = "\\begin{table*}[t]\n\\centering\n\\caption{}\n\\renewcommand{\\arraystretch}{1.1}\n\\begin{tabular}{" + " " + column_alignment + " }\n\\toprule\n"
         latex_table += "\\multicolumn{2}{c}{Experiment} & \\multicolumn{2}{c}{Computed} & & \\multicolumn{6}{c}{Transition}\\\\\n"
         latex_table += "\\cmidrule(lr){1-2} \\cmidrule(lr){3-4} \\cmidrule(lr){5-11}\n"
-        latex_table += "$\\tilde{\\nu}$ & intensity & $\\tilde{\\nu}$ & intensity & state & $\\tilde{\\nu}$ & $\\tilde{\\nu}^\\text{corr}$ & intensity & & sym & type \\\\\n"
+        latex_table += "$\\tilde{\\nu}$ & intensity & $\\tilde{\\nu}$ & intensity & state & & $\\tilde{\\nu}$ & $\\tilde{\\nu}^\\text{corr}$ & intensity & sym & type \\\\\n"
         latex_table += "\\midrule\n"
 
         for line in table[1:]:
