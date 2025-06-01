@@ -200,6 +200,7 @@ class GaussianParser:
         if geometry is None:
             print(f"No geometry found!")
             return
+
         frequencies = []
         reduced_masses = []
         normal_mode_vectors = []
@@ -211,7 +212,7 @@ class GaussianParser:
             for l in range(hpmodes_start, len(lines)):
                 line = lines[l]
                 if line.strip().startswith('Frequencies ---'):  # Next set of modes starts!
-                    syms.extend(re.findall(r'([a-zA-Z0-9?]+)', lines[l - 1]))
+                    syms.extend(re.findall(r'([a-zA-Z0-9?]+[\'"]?)', lines[l - 1]))
                     reduced_masses.extend([float(n) for n in re.findall(r'\s+([-\d.]+)', lines[l + 1].split("---")[1])])
                     new_freqs = [float(n) for n in re.findall(r'\s+([-\d.]+)', line.split("---")[1])]
                     frequencies.extend(new_freqs)
@@ -237,7 +238,7 @@ class GaussianParser:
             for l in range(lpmodes_start, len(lines)):
                 line = lines[l]
                 if line.strip().startswith('Frequencies --'):  # Next set of modes starts!
-                    syms.extend(re.findall(r'([a-zA-Z0-9?]+)', lines[l - 1]))
+                    syms.extend(re.findall(r"([a-zA-Z0-9?]+['\"]?)", lines[l - 1]))
                     reduced_masses.extend([float(n) for n in re.findall(r'\s+([-\d.]+)', lines[l + 1].split("--")[1])])
                     new_freqs = [float(n) for n in re.findall(r'\s+([-\d.]+)', line.split("--")[1])]
                     frequencies.extend(new_freqs)
