@@ -371,6 +371,7 @@ class File:
             lines = self._read_file_lines()
 
             finished, self.error, self.routing_info, self.charge, self.multiplicity, self.start_lines, self.energy = GaussianParser.scan_log_file(lines)
+            print(self.routing_info, self.routing_info.get("jobs"))
             for job in self.routing_info.get("jobs", []):
                 if job.startswith("freq"):
                     if re.search(r"(?<![a-zA-Z])(fc|fcht|ht)", job):
@@ -508,6 +509,7 @@ class File:
                             break
 
         return self
+
 
     @classmethod
     def get_molecule_energy_options(cls):

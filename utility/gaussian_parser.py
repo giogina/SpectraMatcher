@@ -41,7 +41,7 @@ class GaussianParser:
                 if tracker is None and line.strip().startswith("#"):
                     tracker = ""
                 if type(tracker) == str:
-                    tracker += ' ' + line.strip('\n').strip('\r')
+                    tracker += line.strip('\n').strip('\r')
                     tracker = tracker.replace('  ', ' ')
                 elif tracker == 0:
                     match = re.fullmatch(r"(-?\d+)\s+(-?\d+)", line.strip())
@@ -72,7 +72,7 @@ class GaussianParser:
                     routing_info = GaussianParser.parse_gaussian_hash_line(tracker)
                     tracker = None
                 else:
-                    tracker += line.strip('\n').strip('\r').strip(' ')
+                    tracker += line.strip('\n').strip('\r').lstrip(' ')
             if charge is None:
                 chm_match = re.search(r"Charge\s*=\s*(\d+)\s*Multiplicity\s*=\s*(\d+)", line)
                 if chm_match:
@@ -133,6 +133,7 @@ class GaussianParser:
                 geometry.z.append(float(coord_match[x_column + 2]))
             else:
                 break
+
         return geometry
 
     @staticmethod
@@ -161,7 +162,6 @@ class GaussianParser:
             "sp", "opt", "freq", "irc", "ircmax", "scan", "polar",
             "admp", "bomd", "eet", "force", "stable", "volume", "density=checkpoint", "guess=only"
         ]
-
         parts = GaussianParser.split_hash_line(hash_line.lower())  # Split string, but not between parentheses
 
         jobs = []
@@ -174,7 +174,7 @@ class GaussianParser:
                 pass
             elif any(part.startswith(job) for job in job_types):
                 jobs.append(part)
-            elif part.startswith('td='):
+            elif part.lower().startswith('td'):
                 td = part
             elif '/' in part and '=' not in part and loth is None:
                 loth = part
@@ -201,6 +201,7 @@ class GaussianParser:
             print(f"No geometry found!")
             return
         frequencies = []
+        reduced_masses = []
         normal_mode_vectors = []
         new_normal_mode_vectors = []
         read_atoms = False
@@ -211,6 +212,7 @@ class GaussianParser:
                 line = lines[l]
                 if line.strip().startswith('Frequencies ---'):  # Next set of modes starts!
                     syms.extend(re.findall(r'([a-zA-Z0-9?]+)', lines[l - 1]))
+                    reduced_masses.extend([float(n) for n in re.findall(r'\s+([-\d.]+)', lines[l + 1].split("---")[1])])
                     new_freqs = [float(n) for n in re.findall(r'\s+([-\d.]+)', line.split("---")[1])]
                     frequencies.extend(new_freqs)
                     if new_normal_mode_vectors:
@@ -236,6 +238,7 @@ class GaussianParser:
                 line = lines[l]
                 if line.strip().startswith('Frequencies --'):  # Next set of modes starts!
                     syms.extend(re.findall(r'([a-zA-Z0-9?]+)', lines[l - 1]))
+                    reduced_masses.extend([float(n) for n in re.findall(r'\s+([-\d.]+)', lines[l + 1].split("--")[1])])
                     new_freqs = [float(n) for n in re.findall(r'\s+([-\d.]+)', line.split("--")[1])]
                     frequencies.extend(new_freqs)
                     if new_normal_mode_vectors:
@@ -269,7 +272,7 @@ class GaussianParser:
                         y_vector.append(float(c))
                     elif n % 3 == 2:
                         z_vector.append(float(c))
-                mode_list.add_mode(frequencies[i], syms[i], x_vector, y_vector, z_vector, geometry)
+                mode_list.add_mode(frequencies[i], syms[i], reduced_masses[i], x_vector, y_vector, z_vector, geometry)
             mode_list.determine_mode_names()
             return mode_list
         else:
