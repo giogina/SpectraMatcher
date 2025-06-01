@@ -259,6 +259,7 @@ class GaussianParser:
                         read_atoms = False
                 if line.strip().startswith("------------"):
                     break
+            normal_mode_vectors.extend(new_normal_mode_vectors)
         if len(normal_mode_vectors):
             mode_list = ModeList()
             for i, vector in enumerate(normal_mode_vectors):
