@@ -72,7 +72,10 @@ class GaussianParser:
                     routing_info = GaussianParser.parse_gaussian_hash_line(tracker)
                     tracker = None
                 else:
-                    tracker += line.strip('\n').strip('\r').lstrip(' ')
+                    newstr = line.strip('\n').strip('\r')
+                    if newstr.startswith(' '):
+                        newstr = newstr[1:]  # Remove single leading space
+                    tracker += newstr
             if charge is None:
                 chm_match = re.search(r"Charge\s*=\s*(\d+)\s*Multiplicity\s*=\s*(\d+)", line)
                 if chm_match:
