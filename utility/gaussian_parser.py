@@ -102,6 +102,8 @@ class GaussianParser:
                 start_lines["FC transitions"] = i-1
             elif line.strip() == "Duschinsky matrix":
                 start_lines["Duschinsky"] = i
+            elif line.strip() == "Reduced system":
+                start_lines["Mode mapping"] = i+3
             elif re.search('Proceeding to internal job step number', line):
                 nr_jobs += 1
             elif re.search('Normal termination', line):
@@ -315,13 +317,34 @@ class GaussianParser:
                     })
 
     @staticmethod
-    def get_FC_spectrum(lines, is_emission: bool = False, start_line=0):
+    def get_FC_spectrum(lines, is_emission: bool = False, start_line=0, mode_mapping_start=None):
         wavenumbers = []
         transitions = []
         intensities = []
         read_transs = False
         peaks = []
         zero = 0
+        mode_mapping_initial = {}
+        mode_mapping_final = {}
+
+        if mode_mapping_start is not None:  # fcht calculation was run in reduced-dimensionality mode
+            for l in range(mode_mapping_start, len(lines)):
+                line = lines[l]
+                if line.strip() == "" or line.strip().startswith("Final"):
+                    break
+                match = re.search(r'(\d+)\s*=\s*(\d+)\s+(\d+)\s*=\s*(\d+)', line)
+                if match:
+                    mode_nums = [int(g) for g in match.groups()]
+                    if len(mode_nums) == 4:
+                        mode_mapping_initial[mode_nums[0]] = mode_nums[1]
+                        mode_mapping_final[mode_nums[2]] = mode_nums[3]
+            def mode_map(t): # Takes transition of type [mode, v], maps mode back to original name.
+                t[0] = mode_mapping_final.get(t[0], t[0])
+                return t
+        else:
+            def mode_map(t):
+                return t
+
         for l in range(start_line, len(lines)):
             line = lines[l]
             if line.strip() == "Information on Transitions":
@@ -345,7 +368,7 @@ class GaussianParser:
         for i, wavenumber in enumerate(wavenumbers):
             peak = FCPeak(intensity=intensities[i] / max_intensity,
                           wavenumber=wavenumber,
-                          transition=[[int(n) for n in t.split('^')] for t in
+                          transition=[mode_map([int(n) for n in t.split('^')]) for t in
                                       transitions[i].split('|')[2].strip('>\n').split(';')]
                           )
             peaks.append(peak)
