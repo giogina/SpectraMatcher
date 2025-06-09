@@ -222,9 +222,10 @@ class PlotsOverviewViewmodel:
         self.last_action_y = lambda d: self.set_y_shifts(value+0.1*d)
 
     def resize_half_width(self, direction, relative=True):
+        r = SpecPlotter.change_half_width(self.is_emission, direction, relative)
         self._callbacks.get("post load update")(half_width=True)
         self.last_action_x = self.resize_half_width
-        return SpecPlotter.change_half_width(self.is_emission, direction, relative)
+        return r
 
     def change_correction_factor(self, key, value):
         self.last_correction_factor_change_time = time.time()

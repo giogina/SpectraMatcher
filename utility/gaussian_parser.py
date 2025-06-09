@@ -41,7 +41,7 @@ class GaussianParser:
                 if tracker is None and line.strip().startswith("#"):
                     tracker = ""
                 if type(tracker) == str:
-                    tracker += ' ' + line.strip('\n').strip('\r')
+                    tracker += line.strip('\n').strip('\r')
                     tracker = tracker.replace('  ', ' ')
                 elif tracker == 0:
                     match = re.fullmatch(r"(-?\d+)\s+(-?\d+)", line.strip())
@@ -72,7 +72,10 @@ class GaussianParser:
                     routing_info = GaussianParser.parse_gaussian_hash_line(tracker)
                     tracker = None
                 else:
-                    tracker += line.strip('\n').strip('\r').strip(' ')
+                    newstr = line.strip('\n').strip('\r')
+                    if newstr.startswith(' '):
+                        newstr = newstr[1:]  # Remove single leading space
+                    tracker += newstr
             if charge is None:
                 chm_match = re.search(r"Charge\s*=\s*(\d+)\s*Multiplicity\s*=\s*(\d+)", line)
                 if chm_match:
@@ -99,6 +102,8 @@ class GaussianParser:
                 start_lines["FC transitions"] = i-1
             elif line.strip() == "Duschinsky matrix":
                 start_lines["Duschinsky"] = i
+            elif line.strip() == "Reduced system":
+                start_lines["Mode mapping"] = i+3
             elif re.search('Proceeding to internal job step number', line):
                 nr_jobs += 1
             elif re.search('Normal termination', line):
@@ -133,6 +138,7 @@ class GaussianParser:
                 geometry.z.append(float(coord_match[x_column + 2]))
             else:
                 break
+
         return geometry
 
     @staticmethod
@@ -161,7 +167,6 @@ class GaussianParser:
             "sp", "opt", "freq", "irc", "ircmax", "scan", "polar",
             "admp", "bomd", "eet", "force", "stable", "volume", "density=checkpoint", "guess=only"
         ]
-
         parts = GaussianParser.split_hash_line(hash_line.lower())  # Split string, but not between parentheses
 
         jobs = []
@@ -174,7 +179,7 @@ class GaussianParser:
                 pass
             elif any(part.startswith(job) for job in job_types):
                 jobs.append(part)
-            elif part.startswith('td='):
+            elif part.lower().startswith('td'):
                 td = part
             elif '/' in part and '=' not in part and loth is None:
                 loth = part
@@ -200,7 +205,9 @@ class GaussianParser:
         if geometry is None:
             print(f"No geometry found!")
             return
+
         frequencies = []
+        reduced_masses = []
         normal_mode_vectors = []
         new_normal_mode_vectors = []
         read_atoms = False
@@ -210,7 +217,8 @@ class GaussianParser:
             for l in range(hpmodes_start, len(lines)):
                 line = lines[l]
                 if line.strip().startswith('Frequencies ---'):  # Next set of modes starts!
-                    syms.extend(re.findall(r'([a-zA-Z0-9?]+)', lines[l - 1]))
+                    syms.extend(re.findall(r'([a-zA-Z0-9?]+[\'"]?)', lines[l - 1]))
+                    reduced_masses.extend([float(n) for n in re.findall(r'\s+([-\d.]+)', lines[l + 1].split("---")[1])])
                     new_freqs = [float(n) for n in re.findall(r'\s+([-\d.]+)', line.split("---")[1])]
                     frequencies.extend(new_freqs)
                     if new_normal_mode_vectors:
@@ -235,7 +243,8 @@ class GaussianParser:
             for l in range(lpmodes_start, len(lines)):
                 line = lines[l]
                 if line.strip().startswith('Frequencies --'):  # Next set of modes starts!
-                    syms.extend(re.findall(r'([a-zA-Z0-9?]+)', lines[l - 1]))
+                    syms.extend(re.findall(r"([a-zA-Z0-9?]+['\"]?)", lines[l - 1]))
+                    reduced_masses.extend([float(n) for n in re.findall(r'\s+([-\d.]+)', lines[l + 1].split("--")[1])])
                     new_freqs = [float(n) for n in re.findall(r'\s+([-\d.]+)', line.split("--")[1])]
                     frequencies.extend(new_freqs)
                     if new_normal_mode_vectors:
@@ -256,6 +265,7 @@ class GaussianParser:
                         read_atoms = False
                 if line.strip().startswith("------------"):
                     break
+            normal_mode_vectors.extend(new_normal_mode_vectors)
         if len(normal_mode_vectors):
             mode_list = ModeList()
             for i, vector in enumerate(normal_mode_vectors):
@@ -269,7 +279,7 @@ class GaussianParser:
                         y_vector.append(float(c))
                     elif n % 3 == 2:
                         z_vector.append(float(c))
-                mode_list.add_mode(frequencies[i], syms[i], x_vector, y_vector, z_vector, geometry)
+                mode_list.add_mode(frequencies[i], syms[i], reduced_masses[i], x_vector, y_vector, z_vector, geometry)
             mode_list.determine_mode_names()
             return mode_list
         else:
@@ -307,13 +317,34 @@ class GaussianParser:
                     })
 
     @staticmethod
-    def get_FC_spectrum(lines, is_emission: bool = False, start_line=0):
+    def get_FC_spectrum(lines, is_emission: bool = False, start_line=0, mode_mapping_start=None):
         wavenumbers = []
         transitions = []
         intensities = []
         read_transs = False
         peaks = []
         zero = 0
+        mode_mapping_initial = {}
+        mode_mapping_final = {}
+
+        if mode_mapping_start is not None:  # fcht calculation was run in reduced-dimensionality mode
+            for l in range(mode_mapping_start, len(lines)):
+                line = lines[l]
+                if line.strip() == "" or line.strip().startswith("Final"):
+                    break
+                match = re.search(r'(\d+)\s*=\s*(\d+)\s+(\d+)\s*=\s*(\d+)', line)
+                if match:
+                    mode_nums = [int(g) for g in match.groups()]
+                    if len(mode_nums) == 4:
+                        mode_mapping_initial[mode_nums[0]] = mode_nums[1]
+                        mode_mapping_final[mode_nums[2]] = mode_nums[3]
+            def mode_map(t): # Takes transition of type [mode, v], maps mode back to original name.
+                t[0] = mode_mapping_final.get(t[0], t[0])
+                return t
+        else:
+            def mode_map(t):
+                return t
+
         for l in range(start_line, len(lines)):
             line = lines[l]
             if line.strip() == "Information on Transitions":
@@ -337,7 +368,7 @@ class GaussianParser:
         for i, wavenumber in enumerate(wavenumbers):
             peak = FCPeak(intensity=intensities[i] / max_intensity,
                           wavenumber=wavenumber,
-                          transition=[[int(n) for n in t.split('^')] for t in
+                          transition=[mode_map([int(n) for n in t.split('^')]) for t in
                                       transitions[i].split('|')[2].strip('>\n').split(';')]
                           )
             peaks.append(peak)

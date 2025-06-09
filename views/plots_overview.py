@@ -590,7 +590,7 @@ class PlotsOverview:
         if not self.gaussian_labels and len(modes) > 1:
             modes.sort(key=lambda m: m.name)
         mode = modes[mode_index]
-        dpg.set_value(self.animation_mode_text, f"{mode.wavenumber:.2f} cm⁻¹, {mode.IR}, {mode.vibration_type.replace('H stretches', 'X-H stretch').replace('others', 'Other deformation')}")
+        dpg.set_value(self.animation_mode_text, f"{mode.wavenumber:.2f} cm⁻¹, {mode.IR}, q_turn={mode.q_turnaround:.2f}, {mode.vibration_type.replace('H stretches', 'X-H stretch').replace('others', 'Other deformation')}")
         self.draw_molecule([[clicked_peak.transition[mode_index][1], mode]])
         self.viewmodel.set_displayed_animation(clicked_peak)
         self.viewmodel.pause_animation(pause=False)
@@ -1159,7 +1159,7 @@ class PlotsOverview:
                 if not self.gaussian_labels and len(modes) > 1:
                     modes.sort(key=lambda m: m.name)
                 mode = modes[mode_index]
-                dpg.set_value(self.animation_mode_text, f"{mode.wavenumber:.2f} cm⁻¹, {mode.IR}, {mode.vibration_type.replace('H stretches', 'X-H stretch').replace('others', 'Other deformation')}")
+                dpg.set_value(self.animation_mode_text, f"{mode.wavenumber:.2f} cm⁻¹, {mode.IR}, q_turn={mode.q_turnaround:.2f}, {mode.vibration_type.replace('H stretches', 'X-H stretch').replace('others', 'Other deformation')}")
                 self.draw_molecule([[clicked_peak.transition[mode_index][1], mode]])
                 self.viewmodel.set_displayed_animation(clicked_peak)
                 self.viewmodel.pause_animation(pause=False)

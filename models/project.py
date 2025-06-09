@@ -129,6 +129,13 @@ class Project(FileObserver):
         self._auto_saved_json = None
         self._last_change = None
 
+    def abspath(self, path):
+        if type(path) == str and path.startswith("."):
+            altpath = os.path.split(self.project_file)[0] + path[1:]
+            if os.path.exists(altpath):
+                return altpath
+        return path
+
     # react to observations from my data file manager / SpecPlotter
     def update(self, event_type, *args):
         if event_type == "directory structure changed":
@@ -190,14 +197,23 @@ class Project(FileObserver):
         # Initialize everything based on loaded data!
         if "ignored" not in self._data.keys():
             self._data["ignored"] = []
+        else:
+            self._data["ignored"] = [self.abspath(f) for f in self._data["ignored"]]
         if "files marked as emission" not in self._data.keys():
             self._data["files marked as emission"] = []
+        else:
+            self._data["files marked as emission"] = [self.abspath(f) for f in self._data["files marked as emission"]]
         if "files marked as excitation" not in self._data.keys():
             self._data["files marked as excitation"] = []
+        else:
+            self._data["files marked as excitation"] = [self.abspath(f) for f in self._data["files marked as excitation"]]
+        self._data["open data files"] = [self.abspath(f) for f in self._data["open data files"]]
+        self._data["open data folders"] = [self.abspath(f) for f in self._data["open data folders"]]
         if "experiment settings" not in self._data.keys():  # Excited states
             self._data["experiment settings"] = []
         for s in self._data["experiment settings"]:
-            path = s.get("path")
+            path = self.abspath(s.get("path"))
+            # s["path"] = path
             marked = None
             if path in self._data["files marked as excitation"]:
                 marked = "excitation"
@@ -210,13 +226,16 @@ class Project(FileObserver):
                 print(f"WARNING: Experimental file {path} not found. Ignoring.")
         if "ground state path" not in self._data.keys():
             self._data["ground state path"] = None
-        State({"freq file": self._data["ground state path"]})
+        State({"freq file": self.abspath(self._data["ground state path"])})
         if "State class info" not in self._data.keys():
             self._data["State class info"] = {"molecule": None, "ground state energy": None}
         State.molecule_and_method = self._data["State class info"]
         if "state settings" not in self._data.keys():  # Excited states
             self._data["state settings"] = [{}]
         for s in self._data["state settings"]:
+            for key, value in s.items():
+                if key.endswith("file"):
+                    s[key] = self.abspath(value)
             State(s)
         if "directory toggle states" not in self._data.keys():
             self._data["directory toggle states"] = {}
@@ -329,6 +348,8 @@ class Project(FileObserver):
             if not os.path.exists(self.project_file):
                 return
 
+        project_path = os.path.split(self.project_file)[0]
+        current_json = current_json.replace(project_path, ".")  # use relative paths when possible
         with self._project_file_lock:
             temp_file_path = ""
             if auto:

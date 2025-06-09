@@ -371,6 +371,7 @@ class File:
             lines = self._read_file_lines()
 
             finished, self.error, self.routing_info, self.charge, self.multiplicity, self.start_lines, self.energy = GaussianParser.scan_log_file(lines)
+            # print(self.routing_info, self.routing_info.get("jobs"))
             for job in self.routing_info.get("jobs", []):
                 if job.startswith("freq"):
                     if re.search(r"(?<![a-zA-Z])(fc|fcht|ht)", job):
@@ -459,7 +460,7 @@ class File:
         if self.type in (FileType.FC_EMISSION, FileType.FC_EXCITATION):
             is_emission = self.type == FileType.FC_EMISSION
             if self.spectrum is None:
-                self.spectrum = GaussianParser.get_FC_spectrum(self.lines, is_emission, start_line=self.start_lines.get("FC transitions", 0))
+                self.spectrum = GaussianParser.get_FC_spectrum(self.lines, is_emission, start_line=self.start_lines.get("FC transitions", 0), mode_mapping_start=self.start_lines.get("Mode mapping", None))
         if self.type in (FileType.FREQ_GROUND, FileType.FREQ_EXCITED, FileType.FC_EMISSION, FileType.FC_EXCITATION):
             if self.modes is None:
                 self.modes = GaussianParser.get_vibrational_modes(self.lines, hpmodes_start=self.start_lines.get("hp freq"), lpmodes_start=self.start_lines.get("lp freq"), geometry=self.geometry)
@@ -508,6 +509,7 @@ class File:
                             break
 
         return self
+
 
     @classmethod
     def get_molecule_energy_options(cls):
