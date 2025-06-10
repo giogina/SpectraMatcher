@@ -182,7 +182,8 @@ class State:
             if gse is not None:
                 delta_E = abs(file.energy - gse)
                 if checks and self.delta_E is not None:  # 0-0 transition energy known from FC file
-                    if abs(delta_E - self.delta_E) > 20:
+                    if abs(delta_E - self.delta_E) > 1000:  # todo: doublecheck the criteria
+                        print(f"Freq file rejected: {self.own_ground_state_energy}, {delta_E}, {self.delta_E}")
                         self.freq_hint = "File rejected: New freq file energy does not match previously added files."
                         self._notify_observers(self.imported_file_changed_notification)
                         return
@@ -241,7 +242,17 @@ class State:
         else:
             self._notify_observers(self.imported_file_changed_notification)
         # file.state = None  # remove state from file to avoid future interferences
+        self.compute_shift_vector()
         self.check()
+
+    def compute_shift_vector(self):
+        if self.ground_geometry is not None and self.excited_geometry is not None:
+            if not self.is_ground and self.vibrational_modes is not None:
+                print(f"Shift vector of {self.name} in own normal mode vectors: ", self.ground_geometry, self.excited_geometry, self.vibrational_modes)
+                print(self.vibrational_modes.shift_vector(self.ground_geometry))
+                print(f' ~~~ Shift vector of {self.name} in ground state normal mode vectors:  ~~~ ')
+                for g in [s for s in State.state_list if s.is_ground and (s.vibrational_modes is not None)]:
+                    print(g.vibrational_modes.shift_vector(self.excited_geometry))
 
     @classmethod
     def sort_states_by_energy(cls):

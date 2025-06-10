@@ -23,6 +23,8 @@ _ELEMENT_NAMES = {'1': "H", '2': "He", '3': "Li", '4': "Be", '5': "B", '6': "C",
                       '89': "Ac", '90': "Th", '91': "Pa", '92': "U", '93': "Np", '94': "Pu", '95': "Am", '96': "Cm", '97': "Bk", '98': "Cf",
                       '99': "Es", '100': "Fm"}
 
+_ELEMENT_MASSES = {"H": 1.007, "He": 3.999, "Li": 6.934, "Be": 9.004, "B": 10.800, "C": 12.000, "N": 13.994, "O": 15.984, "F": 18.981, "Ne": 20.162, "Na": 22.969, "Mg": 24.283, "Al": 26.957, "Si": 28.059, "P": 30.946, "S": 32.031, "Cl": 35.418, "Ar": 39.913, "K": 39.062, "Ca": 40.041, "Sc": 44.915, "Ti": 47.823, "V": 50.895, "Cr": 51.948, "Mn": 54.888, "Fe": 55.794, "Co": 58.879, "Ni": 58.639, "Cu": 63.488, "Zn": 65.320, "Ga": 69.659, "Ge": 72.563, "As": 74.853, "Se": 78.899, "Br": 79.831, "Kr": 83.721, "Rb": 85.390, "Sr": 87.540, "Y": 88.825, "Zr": 91.138, "Nb": 92.821, "Mo": 95.862, "Tc": 97.910, "Ru": 100.977, "Rh": 102.816, "Pd": 106.323, "Ag": 107.771, "Cd": 112.307, "In": 114.715, "Sn": 118.601, "Sb": 121.648, "Te": 127.483, "I": 126.784, "Xe": 131.170, "Cs": 132.788, "Ba": 137.204, "La": 138.783, "Ce": 139.992, "Pr": 140.781, "Nd": 144.108, "Pm": 145.866, "Sm": 150.222, "Eu": 151.821, "Gd": 157.106, "Tb": 158.784, "Dy": 162.351, "Ho": 164.779, "Er": 167.107, "Tm": 168.775, "Yb": 172.892, "Lu": 174.810, "Hf": 178.327, "Ta": 180.784, "W": 183.672, "Re": 186.039, "Os": 190.056, "Ir": 192.044, "Pt": 194.901, "Au": 196.790, "Hg": 200.406, "Tl": 204.193, "Pb": 207.010, "Bi": 208.789}
+
 
 def format_float(f: float, target_len=10):
     res = f"{f: .6f}"
@@ -45,6 +47,59 @@ class Geometry:
         self.Bz = None
 
         self._ortho_dim = None
+        self._center_of_mass = None
+
+    def center_of_mass(self):
+        if self._center_of_mass is not None:
+            return self._center_of_mass
+        comx = 0
+        comy = 0
+        comz = 0
+        full_mass = 0
+        for a, x, y, z in zip(self.atoms, self.x, self.y, self.z):
+            mass = _ELEMENT_MASSES.get(a, 0)
+            comx += mass*x
+            comy += mass*y
+            comz += mass*z
+            full_mass += mass
+        self._center_of_mass = [comx/full_mass, comy/full_mass, comz/full_mass]
+        return self._center_of_mass
+
+    def to_numpy_coords(self):
+        return np.stack([np.array(self.x), np.array(self.y), np.array(self.z)], axis=1)
+
+    def align(self, other_geom):
+        ref_coords = self.to_numpy_coords()
+        mov_coords = other_geom.to_numpy_coords()
+        ref_COM = self.center_of_mass()
+        mov_COM = other_geom.center_of_mass()
+        masses = np.array([_ELEMENT_MASSES[a] for a in self.atoms])
+        ref_centered = (ref_coords - ref_COM) * np.sqrt(masses[:, np.newaxis])
+        mov_centered = (mov_coords - mov_COM) * np.sqrt(masses[:, np.newaxis])
+
+        H = mov_centered.T @ ref_centered
+        U, S, Vt = np.linalg.svd(H)
+        R = Vt.T @ U.T
+        if np.linalg.det(R) < 0:
+            Vt[-1, :] *= -1
+            R = Vt.T @ U.T
+        R = np.round(R / 1e-12) * 1e-12
+
+        rotated_coords = ((mov_coords - mov_COM) @ R.T)+ref_COM
+        rotated = Geometry()
+        rotated.atoms = self.atoms
+        rotated.x = [round(c*1e10)/1e10 for c in rotated_coords[:, 0].tolist()]
+        rotated.y = [round(c*1e10)/1e10 for c in rotated_coords[:, 1].tolist()]
+        rotated.z = [round(c*1e10)/1e10 for c in rotated_coords[:, 2].tolist()]
+        return rotated
+
+    def distance(self, other_geom):
+        ref_coords = self.to_numpy_coords()
+        other_coords = other_geom.to_numpy_coords()
+        masses = np.array([_ELEMENT_MASSES[a] for a in self.atoms])
+        mass_weighted_shift = (other_coords-ref_coords) * np.sqrt(masses[:, np.newaxis])
+        return mass_weighted_shift.flatten()
+        # return (other_coords-ref_coords).flatten()
 
     def atom_distance(self, a, b, mode=None):
         """Compute distance between atoms #a and #b in this geometry"""
@@ -164,10 +219,12 @@ class Geometry:
 
 class VibrationalMode:
 
-    def __init__(self, index, wavenumber, IR, x, y, z, geometry):
+    def __init__(self, index, wavenumber, IR, reduced_mass, x, y, z, geometry):
         self.name = None
         self.wavenumber = wavenumber
         self.IR = IR
+        self.reduced_mass = reduced_mass
+        self.q_turnaround = self.compute_potential_width()  # distance in (mass-weighted-normalized) normal coords q at which potential == E(v=0)
         self.vector_x = x
         self.vector_y = y
         self.vector_z = z
@@ -210,6 +267,34 @@ class VibrationalMode:
             self.vibration_type = 'H stretches'
         else:                                       # Other stretches and deformations
             self.vibration_type = 'others'
+
+    def compute_potential_width(self):
+        """ Returns coordinate q_t of (classical) turnaround point of the v=0 vibration along the mass-weighted-*normalized* normal mode vector. """
+        return 5.806484163/math.sqrt(abs(self.wavenumber))
+
+    # Eh := 4.3597447222071e-18*(kg*m^2/s^2)/Hartree;
+    # IDalton := 1.66053906660e-27*kg/amu;
+    # c := 2.99792458e8*m/s;
+    # IDyne := 1e-5*kg*m/s^2/Dyne;
+    # IAng :=1e-10*m/Angstrom;
+    #
+    # wavenumber = simplify(omega/sqrt(1*amu)/sqrt(IDalton)/IAng*sqrt(Eh)/c/(100*cm/m)/2/Pi,symbolic);
+    # omega = solve(%,omega);  # omega = 0.3676161564e-3*wavenumber*sqrt(Hartree)*cm/Angstrom
+    #
+    # nu := wavenumber*c*(100*cm/m);
+    # dE := h*nu;
+    # dEau := dE/Eh;
+    # 1/2*omega^2*qt^2 = dEau/2;
+    # qt = [solve(%,qt)][1];
+    # simplify(eval(%,omega = 0.3676161564e-3*wavenumber*sqrt(Hartree)*cm/Angstrom),symbolic);  # qt = 5.806484163*Angstrom/(sqrt(wavenumber*cm))
+
+    def mass_weighted_xyz(self):
+        xyz = np.stack([np.array(self.vector_x), np.array(self.vector_y), np.array(self.vector_z)], axis=1)
+        masses = np.array([_ELEMENT_MASSES[a] for a in self.geometry.atoms])
+        com = np.sum(xyz * masses[:, np.newaxis], axis=0)/np.sum(masses)
+        xyz -= com
+        mass_weighted_xyz = xyz * np.sqrt(masses[:, np.newaxis])
+        return mass_weighted_xyz
 
     def bond_stretch(self, geometry, a, b):
         bond_eq = [geometry.x[a] - geometry.x[b],
@@ -279,8 +364,8 @@ class ModeList:
         self.modes = {}
         ModeList.instances.append(self)
 
-    def add_mode(self, wavenumber, sym, x, y, z, geometry):
-        mode = VibrationalMode(len(list(self.modes.keys())), wavenumber, sym, x, y, z, geometry)
+    def add_mode(self, wavenumber, sym, reduced_mass, x, y, z, geometry):
+        mode = VibrationalMode(len(list(self.modes.keys())), wavenumber, sym, reduced_mass, x, y, z, geometry)
         self.modes[mode.gaussian_name] = mode
         if sym in self.IRs.keys():
             self.IRs[sym] = [mode] + self.IRs[sym]
@@ -356,6 +441,75 @@ class ModeList:
             mode_list.determine_mode_names()
         cls._notify_observers("IR order updated")
 
+    def shift_vector(self, initial_geom: Geometry):  # TODO: Call this from file manager option (rather than state)
+        shift_vector = []
+        if self.modes == {}:
+            return 0
+        final_geom = self.get_mode(1).geometry
+        initial_geom = final_geom.align(initial_geom)
+        distance = final_geom.distance(initial_geom)  # mass weighted distance
+        #sqrt_masses = np.sqrt(np.array([_ELEMENT_MASSES.get(a) for a in final_geom.atoms]))
+        acc_shift = 0
+        for mode in self.modes.values():
+
+            mw_mode_vector = mode.mass_weighted_xyz()
+            vec_abs = np.sqrt(np.dot(mw_mode_vector.flatten(), mw_mode_vector.flatten()))
+            shift = np.dot(mw_mode_vector.flatten() / vec_abs, distance)  # in terms of mass-normalized displacement vector
+            displacement_factor = abs(shift/mode.q_turnaround)
+            acc_shift += shift**2
+
+            if abs(displacement_factor) > 0.00:
+                print(mode.gaussian_name, mode.IR, shift, f"{displacement_factor:.5f}", mode.vibration_type, mode.wavenumber)
+            shift_vector.append(shift)
+            # if False:
+            # if displacement_factor > 0.1:
+            # if mode.IR == "A'":
+            if mode.gaussian_name == 1:
+                # print(f"Mode {mode.gaussian_name} has a large displacement factor of {displacement_factor}. Creating PES determination input files.")
+                # print(f"Mass-normalized displacement
+                print(mode.wavenumber)
+                print('atoms = '+str(mode.geometry.atoms))
+                #
+                print('ground_x = '+str(mode.geometry.x))
+                print('ground_y = '+str(mode.geometry.y))
+                print('ground_z = '+str(mode.geometry.z))
+                print(f'\nif mode == {mode.gaussian_name}:')
+                print('    Dx = ['+', '.join(map(str, mode.vector_x / vec_abs))+']')
+                print('    Dy = ['+', '.join(map(str, mode.vector_y / vec_abs))+']')
+                print('    Dz = ['+', '.join(map(str, mode.vector_z / vec_abs))+']')
+                # for q in np.linspace(-1.5*shift, 1.5*shift, 30):
+
+                # print(vec_abs, vec_abs**2, mode.reduced_mass)
+                if False:
+                # for q in np.linspace(-0.5, 0.5, 11):
+                    x = np.array(final_geom.x) + q * dx
+                    y = np.array(final_geom.y) + q * dy
+                    z = np.array(final_geom.z) + q * dz
+                    # print( np.sqrt(np.dot(np.array(mode.vector_x),np.array(mode.vector_x))+np.dot(np.array(mode.vector_y),np.array(mode.vector_y))+np.dot(np.array(mode.vector_z),np.array(mode.vector_z))))
+                    # av=0
+                    # for i, x in enumerate(mode.vector_x):
+                    #     av +=mode.vector_x[i]**2* _ELEMENT_MASSES[final_geom.atoms[i]]
+                    #     av +=mode.vector_y[i]**2* _ELEMENT_MASSES[final_geom.atoms[i]]
+                    #     av +=mode.vector_z[i]**2* _ELEMENT_MASSES[final_geom.atoms[i]]
+                    # print(np.sqrt(av))
+
+                    disp_int = int(round(q * 1000))
+                    disp_str = f"d{disp_int:+04d}"  # includes sign, e.g., +020, -120
+                    gjf = f"%NProcShared=8\n%mem=26GB\n%chk=pes_mode{mode.gaussian_name}_d{disp_str}.chk\n#p b3lyp/cc-pvdz td=(root=1) nosymm int=ultrafine scf=conver=10\n\n1D PES scan mode {mode.gaussian_name}, displacement {disp_str}\n\n0 1\n"
+                    # gjf = f"%NProcShared=8\n%mem=26GB\n%chk=pes_mode{mode.gaussian_name}_d{disp_str}.chk\n#p b3lyp/cc-pvdz td=(root=1) nosymm\n\n1D PES scan mode {mode.gaussian_name}, displacement {disp_str}\n\n0 1\n"
+                    for i, atom in enumerate(final_geom.atoms):
+                        gjf += f" {_ELEMENT_NAMES.get(atom, str(atom))}        {format_float(x[i])}    {format_float(y[i])}    {format_float(z[i])}\n"
+                    gjf += "\n\n\n"
+                    pes_dir = f"/home/giogina/Downloads/quinoline/PES/{mode.gaussian_name}/"
+                    import os
+                    os.makedirs(pes_dir, exist_ok=True)
+                    print(pes_dir)
+                    filename = f"mode_{mode.gaussian_name}_{disp_str}.gjf"
+                    filepath = os.path.join(pes_dir, filename)
+                    with open(filepath, 'w') as f:
+                        f.write(gjf)
+                    print("Written to ", filepath)
+        print("Shift vector length: ", np.sqrt(acc_shift))
 
 class FCPeak:
     def __init__(self, wavenumber, transition, intensity):
