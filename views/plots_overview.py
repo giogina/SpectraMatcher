@@ -1,8 +1,11 @@
 import math
 import threading
+import traceback
 
 import dearpygui.dearpygui as dpg
 import time
+
+import numpy as np
 
 from launcher import Launcher
 from models.experimental_spectrum import ExperimentalSpectrum
@@ -36,6 +39,30 @@ except Exception as e:
 
     pyperclip = DummyPyperclip
 
+
+def compute_tick_step(pixels_per_plot_x: float) -> float:
+    """
+    Compute a 'nice' tick spacing (10, 20, 50, 100, 500, 1000, 2000, 5000, ...)
+    based on the current pixel density per data unit.
+
+    Each tick should be roughly ~69 px apart.
+    """
+    if pixels_per_plot_x <= 0:
+        return 10.0  # fallback
+
+    target_spacing = 69 / pixels_per_plot_x  # in data units
+    if target_spacing <= 0:
+        return 10.0
+
+    base = np.array([1.0, 2.0, 5.0])  # generates 10,20,50,... across decades
+    exp = math.floor(math.log10(target_spacing))
+    mag = 10.0 ** exp
+    cands = base * mag
+    mask = cands >= target_spacing - 1e-12   # pick the smallest >= target_spacing
+    if np.any(mask):
+        return float(np.min(cands[mask]))
+    else:
+        return float(1.0 * mag * 10.0)  # nothing big enough in this decade → go to next decade
 
 
 class PlotsOverview:
@@ -768,8 +795,31 @@ class PlotsOverview:
             transformed_x = app_data[1]
             transformed_y = app_data[2]
             redraw_labels = self.pixels_per_plot_y == 1
+            old_pppx = self.pixels_per_plot_x
             self.pixels_per_plot_x = (transformed_x[1]-transformed_x[0])/1000
             self.pixels_per_plot_y = transformed_y[1]-transformed_y[0]
+
+            if old_pppx != self.pixels_per_plot_x:
+                step = compute_tick_step(self.pixels_per_plot_x)
+                try:
+                    v00 = abs(ExperimentalSpectrum.get_v00(self.viewmodel.is_emission))
+                    sign  = -1 if self.viewmodel.is_emission else 1
+                    axis_tag = f"x_axis_{self.viewmodel.is_emission}"
+                    x_min, x_max = dpg.get_axis_limits(axis_tag)
+                    x_min = min(-2*step, x_min)
+                    x_max = max(2*step, x_max)
+                    n_ticks = int((x_max - x_min) / step)*2
+                    x_start = int((sign*v00 + x_min*2) / step) * step
+                    rel_start = x_start - sign*v00
+                    ticks = []
+                    for i in range(n_ticks):
+                        rel = rel_start + i * step
+                        absV = v00 + sign*rel
+                        ticks.append((f"{absV:.0f}", float(rel)))
+                    dpg.set_axis_ticks(axis_tag, tuple(ticks))
+                except Exception as e:
+                    print("Re-labeling error: ", e)
+                    traceback.print_exc()
 
             if redraw_labels:
                 for tag in self.viewmodel.state_plots.keys():

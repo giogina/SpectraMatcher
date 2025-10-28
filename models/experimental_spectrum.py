@@ -20,6 +20,8 @@ class ExperimentalSpectrum:
     spectrum_analyzed_notification = "Experimental spectrum analyzed"
     peaks_changed_notification = "Experimental spectrum peaks changed"
     notify_changed_callback = noop  # to inform project
+    v00_emission = 0  # for absolute wavenumber plot x axes
+    v00_excitation = 0
 
     @classmethod
     def defaults(cls):
@@ -93,6 +95,10 @@ class ExperimentalSpectrum:
     @classmethod
     def get(cls, is_emission, keyword, default=None):
         return cls._settings[is_emission].get(keyword, default)
+
+    @classmethod
+    def get_v00(cls, is_emission):
+        return cls.v00_emission if is_emission else cls.v00_excitation
 
     @classmethod
     def reset_defaults(cls, is_emission):
@@ -329,6 +335,30 @@ class ExperimentalSpectrum:
             print(f"Parsing {self.settings['path']}: Absolute and relative wavenumber columns don't match.")
             self.errors.append(f"Absolute and relative wavenumber columns don't match")
         self.smooth_ydata = smooth_ydata
+
+        # --- Synchronize v00 values across all spectra ---
+        if self.is_emission:
+            if ExperimentalSpectrum.v00_emission == 0:
+                ExperimentalSpectrum.v00_emission = self.zero_zero_transition
+            else:
+                offset = self.zero_zero_transition - ExperimentalSpectrum.v00_emission
+                if abs(offset) > 1e-6:  # different origin detected
+                    print(f"Adjusting emission spectrum by offset {offset} cm⁻¹ to match global v00.")
+                    self.xdata = self.xdata - offset
+                    self.x_min -= offset
+                    self.x_max -= offset
+                    self.zero_zero_transition -= offset
+        else:
+            if ExperimentalSpectrum.v00_excitation == 0:
+                ExperimentalSpectrum.v00_excitation = self.zero_zero_transition
+            else:
+                offset = self.zero_zero_transition - ExperimentalSpectrum.v00_excitation
+                if abs(offset) > 1e-6:
+                    print(f"Adjusting excitation spectrum by offset {offset} cm⁻¹ to match global v00.")
+                    self.xdata = self.xdata - offset
+                    self.x_min -= offset
+                    self.x_max -= offset
+                    self.zero_zero_transition -= offset
 
         self.detect_peaks()  #prominence=0.05, width=10 / (abs(xdata[-1] - xdata[0]) / len(xdata))
 
