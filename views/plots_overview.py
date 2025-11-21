@@ -796,8 +796,8 @@ class PlotsOverview:
             transformed_y = app_data[2]
             redraw_labels = self.pixels_per_plot_y == 1
             old_pppx = self.pixels_per_plot_x
-            self.pixels_per_plot_x = (transformed_x[1]-transformed_x[0])/1000
-            self.pixels_per_plot_y = transformed_y[1]-transformed_y[0]
+            self.pixels_per_plot_x = abs(transformed_x[1]-transformed_x[0])/1000
+            self.pixels_per_plot_y = abs(transformed_y[1]-transformed_y[0])
 
             if old_pppx != self.pixels_per_plot_x:
                 step = compute_tick_step(self.pixels_per_plot_x)
